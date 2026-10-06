@@ -278,10 +278,17 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   </div>
   <div class="panel">
     <h2>Connect Claude Code</h2>
-    <p class="hint">Your computer is a second device: it signs in once to the same account, then the skill reads your queue and publishes your sheets. In a terminal, inside the Reelbook folder, paste:</p>
+    <p class="hint">Your computer is a second device: it signs in once to the same account, then the skill reads your queue and publishes your sheets. First time on a computer, paste one line in a terminal. It installs everything (code, Python tools, the skill) and asks for your email and password, nothing else.</p>
+    <p class="hint"><b>macOS / Linux</b> (Terminal)</p>
+    <pre id="s-install-sh"></pre>
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-install-sh">Copy</button><span class="hint" data-copied="s-install-sh"></span></div>
+    <p class="hint"><b>Windows</b> (PowerShell)</p>
+    <pre id="s-install-ps"></pre>
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-install-ps">Copy</button><span class="hint" data-copied="s-install-ps"></span></div>
+    <p class="hint">Already installed and only need to sign in again? Inside the Reelbook folder:</p>
     <pre id="s-cli"></pre>
-    <div class="actions"><button class="btn sm ghost" type="button" id="s-copy">Copy command</button><span class="hint" id="s-copied"></span></div>
-    <p class="hint">It asks for your email and password, nothing else, and keeps a session in <code>~/.config/reelbook/</code>. Signing out here does not sign out the computer.</p>
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-cli">Copy</button><span class="hint" data-copied="s-cli"></span></div>
+    <p class="hint">The session is kept in <code>~/.config/reelbook/</code>. Signing out here does not sign out the computer. You also need <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> and the Claude in Chrome extension.</p>
   </div>
 </div>
 
@@ -548,12 +555,15 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
   // ---------- settings ----------
   const cliCmd = () => backend ? `python3 tools/rb.py login --url ${backend.url} --key ${backend.key}` : '';
+  const base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
+  const installSh = () => backend ? `curl -fsSL ${base}install.sh | bash -s -- --url ${backend.url} --key ${backend.key}` : '';
+  const installPs = () => backend ? `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex` : '';
   const renderSettings = () => {
-    $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd();
+    $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd(); $('s-install-sh').textContent = installSh(); $('s-install-ps').textContent = installPs();
     $('nblist').innerHTML = themes.map(t => { const n = sheets.filter(e => e.theme === t.id).length; return `<div style="--t:${colorOf(t)}"><span><b>${esc(t.title)}</b><small>${esc(t.builtin ? plural(n, 'sheet') : (t.description || '') + ' · ' + plural(n, 'sheet'))}</small></span><button class="btn sm ghost" type="button" data-rm="${esc(t.id)}" ${n ? 'disabled' : ''}>Remove</button></div>`; }).join('') || '<p class="hint">No notebook yet.</p>';
   };
   $('nblist').addEventListener('click', async ev => { const b = ev.target.closest('[data-rm]'); if (!b) return; b.disabled = true; try { await removeTheme(b.dataset.rm); renderSettings(); } catch { b.disabled = false; } });
-  $('s-copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(cliCmd()); $('s-copied').textContent = 'Copied.'; } catch { $('s-copied').textContent = 'Select and copy the command above.'; } });
+  $('settings').addEventListener('click', async ev => { const b = ev.target.closest('[data-copy]'); if (!b) return; const out = $('settings').querySelector(`[data-copied="${b.dataset.copy}"]`); try { await navigator.clipboard.writeText($(b.dataset.copy).textContent); out.textContent = 'Copied.'; } catch { out.textContent = 'Select and copy the command above.'; } });
 
   // ---------- routing ----------
   const route = () => {

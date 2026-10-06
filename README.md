@@ -33,24 +33,22 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 
 1. Open the app, pick a backend, create an account. Install it on your phone (*Add to Home screen*).
 2. Save a reel: **+ Add a reel**, paste the link. It shows under *In the queue*.
-3. On your computer:
+3. On your computer, paste the install line shown in the app's **Settings** page (it carries your
+   backend's URL and key). macOS / Linux:
 
    ```
-   git clone https://github.com/lt20/reelbook
-   cd reelbook
-   python3 -m pip install pillow
-   python3 tools/rb.py login --url … --key …      # once: paste the command from the app's Settings page, then email + password
-   ln -s "$PWD/skill/reelbook" ~/.claude/skills/reelbook
+   curl -fsSL https://lt20.github.io/reelbook/install.sh | bash -s -- --url … --key …
    ```
 
-   On Windows (PowerShell), same thing with `python` instead of `python3` and a copy of the
-   skill folder instead of a symlink:
+   Windows (PowerShell):
 
    ```
-   python -m pip install pillow
-   python tools\rb.py login --url … --key …
-   Copy-Item -Recurse skill\reelbook "$HOME\.claude\skills\reelbook"
+   $env:REELBOOK_URL = "…"; $env:REELBOOK_KEY = "…"; irm https://lt20.github.io/reelbook/install.ps1 | iex
    ```
+
+   It clones this repository into `~/reelbook`, installs Pillow in a private venv, links the
+   skill into `~/.claude/skills/`, and asks for your email and password. Prefer doing it by
+   hand? [docs/manual-install.md](docs/manual-install.md).
 
 4. Start Claude Code anywhere, open Chrome next to it, and type `/reelbook`.
    Keep the computer unlocked and the reel tab in front: the video does not load in the
