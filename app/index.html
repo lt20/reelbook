@@ -56,7 +56,7 @@ input,textarea{font:16px var(--body);color:var(--ink);background:var(--bg);borde
 textarea{line-height:1.5;min-height:120px;resize:vertical}
 .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
-pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:0}
+pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
 /* ---- header ---- */
 .head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:22px;flex-wrap:wrap}
 .head .cnt{font-size:14px;color:var(--muted)}
@@ -64,7 +64,9 @@ pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--
 .topbar{display:flex;justify-content:flex-end;gap:12px;font-size:14px;margin-bottom:8px}
 .topbar a{text-decoration:none;font-weight:600}
 /* ---- panels (setup, auth, settings) ---- */
-.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px;margin-top:14px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px;margin-top:14px;min-width:0}
+.panel>*{min-width:0}
+.panel ul{margin:0;padding-left:20px;display:grid;gap:4px}
 .panel h2{margin:0}
 .choice{display:grid;gap:10px}
 .choice button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;display:grid;gap:4px}
@@ -281,13 +283,13 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <h2>2 · Claude turns them into sheets</h2>
     <p>Every now and then, when a few reels are waiting, you run the Reelbook skill on your computer. Claude opens each reel, watches it, picks the key frames and writes a sheet: photos, why it matters, key points, the steps in order.</p>
     <p><b>What you need on that computer</b></p>
-    <ul style="margin:0;padding-left:20px;display:grid;gap:4px">
+    <ul>
       <li><a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> (terminal, desktop app or VS Code), Pro plan or above.</li>
       <li>Chrome with the <a href="https://claude.com/chrome" target="_blank" rel="noopener">Claude in Chrome</a> extension.</li>
       <li>Being signed in to Instagram and/or TikTok in that Chrome.</li>
     </ul>
     <p><b>How a run goes</b></p>
-    <ul style="margin:0;padding-left:20px;display:grid;gap:4px">
+    <ul>
       <li>Open Claude Code and type <code>/reelbook</code>. Claude reads your queue and processes the reels one by one.</li>
       <li>Keep Chrome open, not minimised, with the reel tab in front: the video does not play in the background.</li>
       <li>Expect 10 to 15 minutes per sheet. You can leave the computer to it.</li>
@@ -318,13 +320,14 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <p class="hint">A notebook with sheets in it cannot be removed. Add notebooks from the home page.</p>
   </div>
   <div class="panel">
-    <h2>Connect Claude Code</h2>
-    <p class="hint">Your computer is a second device: it signs in once to the same account, then the skill reads your queue and publishes your sheets. First time on a computer, paste one line in a terminal. It installs everything (code, Python tools, the skill) and asks for your email and password, nothing else.</p>
+    <h2>Your computer</h2>
+    <p class="hint">Claude turns your queued reels into sheets on a computer that has <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>, Chrome with the Claude in Chrome extension, and is signed in to Instagram or TikTok. You type <code>/reelbook</code> in Claude Code, keep Chrome open and in front, and wait. <a href="#welcome">Full guide</a>.</p>
+    <p><b>Set it up once</b> <span class="hint">· paste one line in a terminal: code, Python tools, the skill, then your email and password.</span></p>
     <div id="s-install"></div>
-    <p class="hint">Already installed and only need to sign in again? Inside the Reelbook folder:</p>
+    <p><b>Already installed, sign in again</b> <span class="hint">· inside the Reelbook folder.</span></p>
     <pre id="s-cli"></pre>
     <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-cli">Copy</button><span class="hint" data-copied="s-cli"></span></div>
-    <p class="hint">The session is kept in <code>~/.config/reelbook/</code>. Signing out here does not sign out the computer. You also need <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> and the Claude in Chrome extension.</p>
+    <p class="hint">The computer keeps its own session in <code>~/.config/reelbook/</code>; signing out here does not sign it out.</p>
   </div>
 </div>
 
