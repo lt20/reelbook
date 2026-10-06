@@ -43,6 +43,15 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    ln -s "$PWD/skill/reelbook" ~/.claude/skills/reelbook
    ```
 
+   On Windows (PowerShell), same thing with `python` instead of `python3` and a copy of the
+   skill folder instead of a symlink:
+
+   ```
+   python -m pip install pillow
+   python tools\rb.py login --url … --key …
+   Copy-Item -Recurse skill\reelbook "$HOME\.claude\skills\reelbook"
+   ```
+
 4. Start Claude Code anywhere, open Chrome next to it, and type `/reelbook`.
    Keep the computer unlocked and the reel tab in front: the video does not load in the
    background. Claude asks you to bring the tab forward when needed.
@@ -117,10 +126,16 @@ shell; sheets and photos need the network.
 - **Quotas.** Free Supabase: 1 GB of storage, roughly 400 sheets. The hosted backend will set a
   per-account limit.
 
+## Platforms
+
+The app runs in any browser. The skill needs Claude Code and Chrome with the Claude in Chrome
+extension: macOS is what we use daily; Windows and Linux should work (Claude Code and the
+extension exist there, the tools are plain Python + Pillow) but have not been tried. Reports welcome.
+
 ## Contributing
 
-Issues and pull requests welcome, in particular for: TikTok page quirks, a Linux or Windows
-check of the tools, better templates for yoga and fight sheets. Keep the app a single file and
+Issues and pull requests welcome, in particular for: TikTok page quirks, a Windows or Linux
+run of the skill, better templates for yoga and fight sheets. Keep the app a single file and
 the tools standard-library plus Pillow.
 
 ## License
