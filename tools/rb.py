@@ -3,6 +3,7 @@
 
     rb.py login [--url U --key K]   sign in (email + password; URL and anon key asked unless given) and keep a session
     rb.py whoami                show the signed-in account and backend
+    rb.py themes                list the account's notebooks (id, title, description, groups), JSON lines
     rb.py queue                 list queued requests (JSON lines)
     rb.py claim <id>            mark a request as processing
     rb.py publish <dir>         upload <dir>/img/* and upsert the sheet described by <dir>/meta.json + <dir>/index.html
@@ -104,6 +105,14 @@ def cmd_whoami(args):
 # requests
 # ---------------------------------------------------------------------------
 
+def cmd_themes(args):
+    cfg = session()
+    rows = rest(cfg, "GET", "user_themes", params={"select": "id,title,description,groups,builtin", "order": "position.asc,title.asc"})
+    for r in rows or []:
+        print(json.dumps(r, ensure_ascii=False))
+    if not rows:
+        print("no notebook yet: open the app once, it creates the default ones", file=sys.stderr)
+
 def cmd_queue(args):
     cfg = session()
     rows = rest(cfg, "GET", "requests", params={"status": "eq.queued", "order": "created_at.asc", "select": "id,url,theme,created_at"})
@@ -151,6 +160,9 @@ def cmd_publish(args):
         if not meta.get(k): die(f"meta.json: missing {k}")
     cfg = session()
     slug = meta["slug"]
+    known = {r["id"] for r in (rest(cfg, "GET", "user_themes", params={"select": "id"}) or [])}
+    if known and meta["theme"] not in known:
+        die(f"theme '{meta['theme']}' is not one of this account's notebooks ({', '.join(sorted(known))}); add it in the app or pick another")
     # images
     n = 0
     if img_d.is_dir():
@@ -183,7 +195,7 @@ def cmd_delete(args):
     rest(cfg, "DELETE", "notes", params={"slug": f"eq.{slug}"})
     print(f"deleted {slug} ({len(objs)} image(s))")
 
-COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
+COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "themes": cmd_themes, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
             "done": cmd_done, "error": cmd_error, "list": cmd_list, "delete": cmd_delete}
 
 if __name__ == "__main__":

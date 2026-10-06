@@ -107,3 +107,24 @@ create trigger sheets_touch before update on public.sheets
 drop trigger if exists notes_touch on public.notes;
 create trigger notes_touch before update on public.notes
   for each row execute function public.touch_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Notebooks (themes) chosen by each user: built-in ones turned on, or custom ones.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.user_themes (
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  id          text not null,                 -- built-in id (see app/config.js) or custom-<slug>
+  title       text not null,
+  description text not null default '',      -- custom notebooks: what goes in, read by the skill
+  groups      jsonb not null default '[]'::jsonb,
+  builtin     boolean not null default true,
+  position    int not null default 0,
+  created_at  timestamptz not null default now(),
+  primary key (user_id, id)
+);
+
+alter table public.user_themes enable row level security;
+drop policy if exists "own themes" on public.user_themes;
+create policy "own themes" on public.user_themes
+  for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());

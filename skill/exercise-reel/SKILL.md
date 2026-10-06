@@ -10,15 +10,20 @@ Reelbook repository: the folder that contains this skill's parent `skill/` direc
 `tools/crop.py`, `tools/vstack.py` (Pillow) and `templates/`. Backend: the user's Supabase
 project, reached through `rb.py` (sign-in done once with `rb.py login`).
 
-**Themes** (same list as `app/config.js`): `strength`, `yoga`, `fight`. Each sheet has a `theme`
-and a `group` chosen from that theme's groups; add a new group only when nothing fits.
-Routes in the app: `#` portal, `#<theme>`, `#<slug>`, `#<slug>~<anchor>`.
+**Notebooks (themes)**: each account has its own set. `python3 tools/rb.py themes` lists them
+(`id`, `title`, `description`, `groups`): built-in ones from `app/config.js` (strength, yoga,
+fight, kitesurf, cooking, pilates…) and **custom ones** the user described themselves
+(`id` starts with `custom-`, the `description` says what belongs in it: follow it). A sheet
+needs a `theme` from that list and a `group`: use the notebook's groups when it has some, else
+create a short, reusable group name (custom notebooks start with none). If no notebook fits at
+all, do not invent one: publish in the closest and tell the user, who can add a notebook in the
+app. Routes in the app: `#` portal, `#<theme>`, `#<slug>`, `#<slug>~<anchor>`.
 
 **Language**: write the sheet in the user's language (the one they talk to you in). Section
 titles follow the template, translated.
 
 ## 1. Take the queue
-- `python3 tools/rb.py queue` lists queued requests (`id`, `url`, `theme` hint, `created_at`), or
+- `python3 tools/rb.py themes` then `python3 tools/rb.py queue` lists queued requests (`id`, `url`, `theme` hint, `created_at`), or
   use the link given as argument. A request carries only a URL: **you decide theme and group**
   after watching the video. The `theme` field is the page the link was pasted from: a hint, not
   an instruction.

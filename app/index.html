@@ -14,13 +14,13 @@
 :root{
   --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd;
   --accent:#1f4fa3; --accent-ink:#ffffff; --tag:#e4eaf6; --warn:#8a5a12; --warn-bg:#f6ead3; --ok:#1f6b3a; --ok-bg:#e1f0e6;
-  --th-strength:#1f4fa3; --th-yoga:#3f8f5f; --th-fight:#b4432f;
+  --p0:#1f4fa3; --p1:#3f8f5f; --p2:#b4432f; --p3:#1d7a8c; --p4:#c2651d; --p5:#b23a6e; --p6:#8a6a12; --p7:#6b4fa3;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--th-strength:#7fa6ea;--th-yoga:#7fc79b;--th-fight:#e58a78;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--th-strength:#7fa6ea;--th-yoga:#7fc79b;--th-fight:#e58a78;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-inline:16px;padding-block:20px 56px}
@@ -76,6 +76,17 @@ pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--
 .tcard .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
 .tcard .thumbs img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;max-width:100%;background:var(--tag)}
 .tcard .empty{margin:4px 0 0;padding:12px;font-size:14px}
+.tcard.add{border-top-color:var(--line);border-style:dashed;cursor:pointer;font:inherit;text-align:left;background:transparent}
+.tcard.add h2{color:var(--muted);font-size:30px}
+.picker{margin-top:14px}
+.picker .lib{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:720px){.picker .lib{grid-template-columns:1fr 1fr}}
+.picker .lib button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:grid;gap:2px;border-left:5px solid var(--t,var(--line))}
+.picker .lib button b{font-family:var(--display);font-size:20px;line-height:1}
+.picker .lib button span{font-size:13px;color:var(--muted)}
+.nblist{display:grid;gap:8px}
+.nblist div{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;border-left:5px solid var(--t,var(--line))}
+.nblist small{color:var(--muted);display:block}
 .howto{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
 .howto h2{margin:0 0 10px}
 .howto ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:15px;line-height:1.45}
@@ -224,6 +235,18 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   </section>
 
   <div id="portal" class="portal" hidden></div>
+  <section class="panel picker" id="picker" hidden>
+    <h2>Add a notebook</h2>
+    <p class="hint">Pick one from the list, or describe your own. The description tells Claude what belongs in it.</p>
+    <div class="lib" id="lib"></div>
+    <form id="custom-form" style="display:grid;gap:10px">
+      <label>Custom notebook name <input id="c-name" type="text" maxlength="40" placeholder="Pottery" required></label>
+      <label>What goes in it <textarea id="c-desc" minlength="30" maxlength="400" placeholder="Wheel throwing, trimming, glazing and kiln tips. Hand-building too." required></textarea></label>
+      <p class="hint">At least 30 characters. Written for Claude: what the reels are about and how you want them grouped.</p>
+      <p class="err" id="c-err" hidden></p>
+      <div class="actions"><button class="btn" type="submit" id="c-submit">Create notebook</button><button class="btn ghost" type="button" id="c-cancel">Close</button></div>
+    </form>
+  </section>
   <div id="groups"></div>
 
   <section class="howto" id="howto" hidden>
@@ -249,6 +272,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <div class="actions"><button class="btn ghost" type="button" id="s-signout">Sign out</button><button class="btn ghost" type="button" id="s-reset">Change backend</button></div>
   </div>
   <div class="panel">
+    <h2>Notebooks</h2>
+    <div class="nblist" id="nblist"></div>
+    <p class="hint">A notebook with sheets in it cannot be removed. Add notebooks from the home page.</p>
+  </div>
+  <div class="panel">
     <h2>Connect Claude Code</h2>
     <p class="hint">Your computer is a second device: it signs in once to the same account, then the skill reads your queue and publishes your sheets. In a terminal, inside the Reelbook folder, paste:</p>
     <pre id="s-cli"></pre>
@@ -265,7 +293,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 <script>
 (() => {
   'use strict';
-  const CFG = window.REELBOOK, themes = CFG.themes, themeById = new Map(themes.map(t => [t.id, t]));
+  const CFG = window.REELBOOK, library = CFG.library || [], libById = new Map(library.map(t => [t.id, t]));
+  let themes = [], themeById = new Map();
+  const hue = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 8; };
+  const colorOf = t => `var(--p${t.color != null ? t.color : hue(t.id)})`;
+  const slugify = str => str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'}); } catch { return ''; } };
@@ -337,10 +369,28 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   };
   const spath = (slug, rel) => `${user.id}/${slug}/${rel.replace(/^\.?\/?/, '')}`;
 
+  const setThemes = rows => {
+    themes = rows.map(r => { const lib = libById.get(r.id); return {id: r.id, title: r.title || (lib && lib.title) || r.id, sub: r.description || (lib && lib.sub) || '', description: r.description || '', groups: (r.groups && r.groups.length) ? r.groups : (lib ? lib.groups : []), color: lib ? lib.color : null, builtin: r.builtin, position: r.position}; });
+    themes.sort((a, b) => a.position - b.position || a.title.localeCompare(b.title));
+    themeById = new Map(themes.map(t => [t.id, t]));
+  };
+  const loadThemes = async () => {
+    let {data, error} = await sb.from('user_themes').select('id,title,description,groups,builtin,position');
+    if (error) throw error;
+    if (!data || !data.length) {
+      const seed = (CFG.defaults || []).map((id, i) => libById.get(id)).filter(Boolean).map((t, i) => ({id: t.id, title: t.title, groups: t.groups, builtin: true, position: i}));
+      if (seed.length) { const r = await sb.from('user_themes').insert(seed).select('id,title,description,groups,builtin,position'); if (r.error) throw r.error; data = r.data; }
+    }
+    setThemes(data || []);
+  };
+  const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
+  const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
   const loadCatalogue = async () => {
+    await loadThemes();
     const {data, error} = await sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,exercises,added_at').order('title');
     if (error) throw error;
     sheets = data || []; bySlug = new Map(sheets.map(s => [s.slug, s]));
+    for (const sh of sheets) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
     const paths = [];
     for (const s of sheets) { if (s.thumbnail) paths.push(spath(s.slug, s.thumbnail)); for (const x of (s.exercises || [])) if (x.thumbnail) paths.push(spath(s.slug, x.thumbnail)); }
     await signAll(paths);
@@ -365,11 +415,34 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       const sessions = list.filter(e => e.kind === 'session').length, n = list.length - sessions;
       const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (sessions ? ` · ${plural(sessions, 'session')}` : '');
       const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="">`).join('');
-      return `<a class="tcard" href="#${esc(t.id)}" style="--t:var(--th-${esc(t.id)})">
+      return `<a class="tcard" href="#${esc(t.id)}" style="--t:${colorOf(t)}">
         <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
         ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
-    }).join('');
+    }).join('') + `<button type="button" class="tcard add" id="add-nb"><p class="eyebrow">${plural(library.filter(t => !themeById.has(t.id)).length, 'more to pick')}</p><h2>+ Add a notebook</h2><p>Kitesurf, cooking, pilates… or one you describe yourself.</p></button>`;
+    $('add-nb').addEventListener('click', () => { renderPicker(); $('picker').hidden = !$('picker').hidden; if (!$('picker').hidden) $('picker').scrollIntoView({block: 'start'}); });
   };
+  const renderPicker = () => {
+    const rest = library.filter(t => !themeById.has(t.id));
+    $('lib').innerHTML = rest.map(t => `<button type="button" data-add="${esc(t.id)}" style="--t:${colorOf(t)}"><b>${esc(t.title)}</b><span>${esc(t.sub)}</span></button>`).join('') || '<p class="hint">Every built-in notebook is already on. Describe your own below.</p>';
+  };
+  $('lib').addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-add]'); if (!b) return; const t = libById.get(b.dataset.add); if (!t) return; b.disabled = true;
+    try { await addTheme({id: t.id, title: t.title, groups: t.groups, builtin: true, position: themes.length}); $('picker').hidden = true; renderHome(); }
+    catch (e) { b.disabled = false; $('c-err').textContent = 'Could not add it: ' + (e.message || ''); $('c-err').hidden = false; }
+  });
+  $('c-cancel').addEventListener('click', () => { $('picker').hidden = true; });
+  $('custom-form').addEventListener('submit', async ev => {
+    ev.preventDefault(); const err = $('c-err'); err.hidden = true;
+    const title = $('c-name').value.trim(), description = $('c-desc').value.trim();
+    if (!title) { err.textContent = 'Give it a name.'; err.hidden = false; return; }
+    if (description.length < 30) { err.textContent = 'Describe it in at least 30 characters: that is what Claude reads to sort your reels.'; err.hidden = false; return; }
+    const id = 'custom-' + (slugify(title) || Date.now().toString(36));
+    if (themeById.has(id)) { err.textContent = 'You already have a notebook with that name.'; err.hidden = false; return; }
+    $('c-submit').disabled = true;
+    try { await addTheme({id, title, description, groups: [], builtin: false, position: themes.length}); $('custom-form').reset(); $('picker').hidden = true; renderHome(); }
+    catch (e) { err.textContent = 'Could not create it: ' + (e.message || ''); err.hidden = false; }
+    finally { $('c-submit').disabled = false; }
+  });
   const renderGroups = t => {
     const all = sheets.filter(e => e.theme === t.id);
     const sessions = all.filter(e => e.kind === 'session'), solo = all.filter(e => e.kind !== 'session');
@@ -389,9 +462,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('h-crumb').hidden = !t;
     $('h-eyebrow').textContent = t ? 'Movements to find fast, from the mat' : 'Three notebooks, one place';
     $('h-title').textContent = t ? t.title : 'Reelbook';
-    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t;
+    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);
-    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'theme')}`; }
+    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     document.title = t ? `${t.title} · Reelbook` : 'Reelbook';
   };
 
@@ -474,7 +547,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
   // ---------- settings ----------
   const cliCmd = () => backend ? `python3 tools/rb.py login --url ${backend.url} --key ${backend.key}` : '';
-  const renderSettings = () => { $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd(); };
+  const renderSettings = () => {
+    $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd();
+    $('nblist').innerHTML = themes.map(t => { const n = sheets.filter(e => e.theme === t.id).length; return `<div style="--t:${colorOf(t)}"><span><b>${esc(t.title)}</b><small>${esc(t.builtin ? plural(n, 'sheet') : (t.description || '') + ' · ' + plural(n, 'sheet'))}</small></span><button class="btn sm ghost" type="button" data-rm="${esc(t.id)}" ${n ? 'disabled' : ''}>Remove</button></div>`; }).join('') || '<p class="hint">No notebook yet.</p>';
+  };
+  $('nblist').addEventListener('click', async ev => { const b = ev.target.closest('[data-rm]'); if (!b) return; b.disabled = true; try { await removeTheme(b.dataset.rm); renderSettings(); } catch { b.disabled = false; } });
   $('s-copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(cliCmd()); $('s-copied').textContent = 'Copied.'; } catch { $('s-copied').textContent = 'Select and copy the command above.'; } });
 
   // ---------- routing ----------

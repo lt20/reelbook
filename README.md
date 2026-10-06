@@ -46,9 +46,18 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 5. Ten to fifteen minutes later the sheet is in the app, under its theme and group. A reel with
    several exercises becomes one *session* page, each exercise also listed in its group.
 
+## Notebooks
+
+Sheets live in notebooks. A new account starts with three (Strength, Yoga & stretching, Fight
+techniques). **+ Add a notebook** on the home page offers the built-in library (kitesurf,
+wingfoil, surfing, running, pilates, barre, dance, prenatal, cooking, beauty, crafts… 28 in
+`app/config.js`) and a **custom notebook**: a name plus a description of what goes in it. The
+description is written for Claude: it is what the skill reads to decide where a reel belongs
+and how to group it. Notebooks are per account; remove one from Settings when it is empty.
+
 ## How a sheet is made
 
-1. `rb.py queue` lists your queued links; Claude claims one.
+1. `rb.py themes` lists your notebooks, `rb.py queue` your queued links; Claude claims one.
 2. Chrome opens the reel. Claude reads caption and comments, draws a grid of frames (one per
    second, then every half second on the useful phase) and reads the burned-in subtitles.
 3. It picks the key positions, captures them full size, crops them so the **whole body** stays
@@ -68,6 +77,7 @@ security (`supabase/schema.sql`):
 | `requests` | pasted links: `url`, `status` (queued → processing → done / error), `theme` hint, `slug` |
 | `sheets` | one row per sheet or session: `slug`, `theme`, `group`, `title`, `summary`, `source`, `exercises`, `html` |
 | `notes` | your personal note per sheet |
+| `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
 | `sheets/<user_id>/<slug>/img/*` | the photos |
 
 The app renders `sheets.html` inside its own styles and signs image URLs on the fly. Nothing is
