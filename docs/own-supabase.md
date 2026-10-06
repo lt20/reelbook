@@ -45,7 +45,7 @@ Install it on your phone from the browser menu: *Add to Home screen* (Android, C
 On the computer where Claude Code and Chrome run:
 
 ```
-git clone https://github.com/REPLACE_ME/reelbook
+git clone https://github.com/lt20/reelbook
 cd reelbook
 python3 -m pip install pillow
 python3 tools/rb.py login        # project URL, anon key, email, password

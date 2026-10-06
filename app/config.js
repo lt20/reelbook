@@ -16,5 +16,5 @@ window.REELBOOK = {
     { id: 'fight', title: 'Fight techniques', sub: 'Striking, defense, clinch, footwork.',
       groups: ['Punches', 'Kicks & knees', 'Defense', 'Clinch & grappling', 'Footwork', 'Bag & pads'] }
   ],
-  repo: 'https://github.com/REPLACE_ME/reelbook'
+  repo: 'https://github.com/lt20/reelbook'
 };

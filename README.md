@@ -33,7 +33,7 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 3. On your computer:
 
    ```
-   git clone https://github.com/REPLACE_ME/reelbook
+   git clone https://github.com/lt20/reelbook
    cd reelbook
    python3 -m pip install pillow
    python3 tools/rb.py login                      # once: project URL, anon key, email, password
