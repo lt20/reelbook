@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""rb.py — Reelbook command line, used by the exercise-reel skill. Standard library only.
+"""rb.py — Reelbook command line, used by the reelbook skill. Standard library only.
 
     rb.py login [--url U --key K]   sign in (email + password; URL and anon key asked unless given) and keep a session
     rb.py whoami                show the signed-in account and backend

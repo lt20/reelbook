@@ -90,7 +90,7 @@ public, nothing is shared between accounts.
 
 ```
 app/        the web app (index.html, config.js, manifest, service worker, vendored supabase-js)
-skill/      the Claude Code skill (exercise-reel/SKILL.md)
+skill/      the Claude Code skill (reelbook/SKILL.md)
 templates/  sheet.html and session.html, the HTML the skill fills in
 tools/      rb.py (backend CLI), crop.py, vstack.py (Pillow)
 supabase/   schema.sql
