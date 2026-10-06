@@ -7,8 +7,9 @@
 <meta name="description" content="Turn the how-to reels you save into sheets you can read on the mat, at the beach or in the kitchen.">
 <title>Reelbook</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/reelbook-app.svg" type="image/svg+xml">
+<link rel="icon" href="icons/reelbook-icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/reelbook-icon-180.png" sizes="180x180">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
 <style>
 :root{
@@ -29,6 +30,13 @@ a{color:var(--accent)}
 .wrap{max-width:640px;margin:0 auto}
 .wide{max-width:980px;margin:0 auto}
 .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 6px;font-weight:600}
+.brand{display:flex;align-items:center;gap:10px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:32px;font-weight:800;line-height:1.1;letter-spacing:-.055em;margin:0 0 20px;text-decoration:none}
+.brand img{display:block;width:40px;height:40px;flex:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand img{content:url("icons/reelbook-mark-light.svg")} :root:not([data-theme="light"]) h1.brand-title::before{background-image:url("icons/reelbook-mark-light.svg")}}
+:root[data-theme="dark"] .brand img{content:url("icons/reelbook-mark-light.svg")}
+:root[data-theme="dark"] h1.brand-title::before{background-image:url("icons/reelbook-mark-light.svg")}
+h1.brand-title{display:flex;align-items:center;gap:12px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:clamp(40px,10vw,60px);font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1.1}
+h1.brand-title::before{content:"";display:block;flex:none;width:.95em;height:.95em;background:url("icons/reelbook-mark.svg") center/contain no-repeat}
 h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,12vw,64px);line-height:.95;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
 h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1;margin:30px 0 10px;text-transform:uppercase;letter-spacing:.02em}
 h2 small{font-family:var(--body);font-weight:600;font-size:13px;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px}
@@ -169,7 +177,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
 <!-- ===== Setup: pick a backend ===== -->
 <div id="setup" class="wrap" hidden>
-  <p class="eyebrow">Reelbook</p>
+  <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><span>reelbook</span></p>
   <h1>Your reels, as sheets</h1>
   <p class="lead">Paste the reels you want to keep: a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
   <div class="panel">
@@ -192,7 +200,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
 <!-- ===== Auth ===== -->
 <div id="auth" class="wrap" hidden>
-  <p class="eyebrow">Reelbook</p>
+  <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><span>reelbook</span></p>
   <h1 id="auth-title">Sign in</h1>
   <form class="panel" id="auth-form">
     <label>Email <input id="a-email" type="email" autocomplete="email" required></label>
@@ -214,7 +222,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <div>
       <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
       <p class="eyebrow" id="h-eyebrow">Three notebooks, one place</p>
-      <h1 id="h-title">Reelbook</h1>
+      <h1 id="h-title" class="brand-title">Reelbook</h1>
       <p class="cnt" id="count"></p>
     </div>
     <button class="btn" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a reel</button>
@@ -470,6 +478,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('h-crumb').hidden = !t;
     $('h-eyebrow').textContent = t ? 'Find it fast, when you need it' : 'Your reels, by notebook';
     $('h-title').textContent = t ? t.title : 'Reelbook';
+    $('h-title').classList.toggle('brand-title', !t);
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);
     else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
