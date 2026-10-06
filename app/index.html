@@ -288,12 +288,13 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
 
-<script src="vendor/supabase.js"></script>
-<script src="config.js"></script>
+<script src="vendor/supabase.js?v=2"></script>
+<script src="config.js?v=5"></script>
 <script>
 (() => {
   'use strict';
-  const CFG = window.REELBOOK, library = CFG.library || [], libById = new Map(library.map(t => [t.id, t]));
+  const CFG = window.REELBOOK || {}, library = CFG.library || [], libById = new Map(library.map(t => [t.id, t]));
+  if (!library.length) document.body.insertAdjacentHTML('afterbegin', '<p class="err" style="padding:8px 16px">The app configuration did not load (stale cache?). Reload the page.</p>');
   let themes = [], themeById = new Map();
   const hue = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 8; };
   const colorOf = t => `var(--p${t.color != null ? t.color : hue(t.id)})`;
