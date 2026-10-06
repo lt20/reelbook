@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f4fa3">
+<meta name="description" content="Turn the reels you save into exercise sheets you can read on the mat.">
+<title>Reelbook</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd;
+  --accent:#1f4fa3; --accent-ink:#ffffff; --tag:#e4eaf6; --warn:#8a5a12; --warn-bg:#f6ead3; --ok:#1f6b3a; --ok-bg:#e1f0e6;
+  --th-strength:#1f4fa3; --th-yoga:#3f8f5f; --th-fight:#b4432f;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--th-strength:#7fa6ea;--th-yoga:#7fc79b;--th-fight:#e58a78;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--th-strength:#7fa6ea;--th-yoga:#7fc79b;--th-fight:#e58a78;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-inline:16px;padding-block:20px 56px}
+img{max-width:100%}
+a{color:var(--accent)}
+.wrap{max-width:640px;margin:0 auto}
+.wide{max-width:980px;margin:0 auto}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 6px;font-weight:600}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,12vw,64px);line-height:.95;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1;margin:30px 0 10px;text-transform:uppercase;letter-spacing:.02em}
+h2 small{font-family:var(--body);font-weight:600;font-size:13px;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px}
+h2 .n{font-family:var(--body);font-size:14px;color:var(--muted);font-weight:600;margin-left:6px;vertical-align:middle}
+p{margin:0 0 10px}
+.btn{appearance:none;font:600 16px var(--body);color:var(--accent-ink);background:var(--accent);border:0;border-radius:999px;padding:10px 18px;cursor:pointer}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.sm{font-size:14px;padding:7px 14px}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.err{color:var(--warn);font-size:14px;margin:0}
+.flash{background:var(--ok-bg);color:var(--ok);border-radius:8px;padding:10px 12px;font-size:15px;margin-bottom:16px}
+.empty{color:var(--muted);font-size:15px;border:1px dashed var(--line);border-radius:10px;padding:14px}
+.loading{color:var(--muted);padding:40px 0;text-align:center}
+label{display:grid;gap:4px;font-size:14px;font-weight:600;color:var(--muted)}
+input,textarea{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
+textarea{line-height:1.5;min-height:120px;resize:vertical}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:0}
+/* ---- header ---- */
+.head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+.head .cnt{font-size:14px;color:var(--muted)}
+.crumb{font-size:14px;margin:0 0 6px}.crumb a{text-decoration:none;font-weight:600}
+.topbar{display:flex;justify-content:flex-end;gap:12px;font-size:14px;margin-bottom:8px}
+.topbar a{text-decoration:none;font-weight:600}
+/* ---- panels (setup, auth, settings) ---- */
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px;margin-top:14px}
+.panel h2{margin:0}
+.choice{display:grid;gap:10px}
+.choice button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;display:grid;gap:4px}
+.choice button b{font-family:var(--display);font-size:22px;line-height:1}
+.choice button span{font-size:14px;color:var(--muted)}
+.choice button:disabled{opacity:.5;cursor:default}
+/* ---- add sheet ---- */
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:22px;display:grid;gap:12px}
+.sheet h2{margin:0}
+/* ---- portal ---- */
+.portal{display:grid;gap:14px;margin-top:4px}
+@media (min-width:720px){.portal{grid-template-columns:repeat(3,1fr)}}
+.tcard{display:grid;gap:10px;align-content:start;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;color:inherit;text-decoration:none;border-top:6px solid var(--t,var(--accent))}
+.tcard .eyebrow{margin:0}
+.tcard h2{font-size:38px;margin:0;text-transform:none;letter-spacing:-.01em;color:var(--t,var(--accent))}
+.tcard p{margin:0;font-size:15px;color:var(--muted)}
+.tcard .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
+.tcard .thumbs img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;max-width:100%;background:var(--tag)}
+.tcard .empty{margin:4px 0 0;padding:12px;font-size:14px}
+.howto{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+.howto h2{margin:0 0 10px}
+.howto ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:15px;line-height:1.45}
+.howto li>strong{font-family:var(--display);font-size:18px;letter-spacing:.01em;text-transform:uppercase;display:block}
+.howto .tip{margin:12px 0 0;font-size:14px;color:var(--muted)}
+/* ---- cards ---- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
+@media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{display:block;color:inherit;text-decoration:none;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;max-width:100%;background:var(--tag)}
+.card .b{padding:10px 12px 12px}
+.card h3{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.05;margin:0 0 4px}
+.card p{margin:0;font-size:14px;line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card .m{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+.card .m span{background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px}
+.card .m span.note{background:var(--ok-bg);color:var(--ok)}
+.card .m span.session{background:var(--accent);color:var(--accent-ink)}
+.card.big img{aspect-ratio:2/1}
+/* ---- queue ---- */
+.queue{display:grid;gap:8px}
+.q{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.q .ico{width:36px;height:36px;border-radius:8px;background:var(--tag);display:grid;place-items:center;font-family:var(--display);font-weight:700;color:var(--accent)}
+.q .t{min-width:0}
+.q .t a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.q .t small{color:var(--muted);font-size:13px}
+.q .st{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;background:var(--warn-bg);color:var(--warn);white-space:nowrap}
+.q button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;padding:4px 6px}
+/* ---- sheet page (styles used by templates/sheet.html and templates/session.html) ---- */
+.top{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.top span{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:600}
+.fiche header{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;margin-bottom:8px}
+.fiche header img{width:112px;height:112px;object-fit:cover;object-position:50% 20%;border-radius:12px;border:1px solid var(--line)}
+.fiche h1{margin-bottom:6px}
+.lead{font-size:19px;margin:0 0 14px;max-width:34em}
+.kit{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 28px}
+.kit span{background:var(--tag);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600}
+blockquote{margin:12px 0 0;padding:10px 14px;border-left:3px solid var(--accent);color:var(--muted);font-style:italic}
+blockquote cite{display:block;font-style:normal;font-size:13px;margin-top:4px}
+.dose{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 8px}
+@media (max-width:460px){.dose{grid-template-columns:1fr 1fr}.dose .d:last-child{grid-column:1/-1}}
+.dose .d{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.dose b{font-family:var(--display);font-size:34px;line-height:1;display:block;color:var(--accent);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.dose span{font-size:14px;color:var(--muted)}
+.note{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:14px;margin:0}
+ol.keys{margin:0;padding-left:0;list-style:none;counter-reset:k}
+ol.keys li{position:relative;padding-left:40px;margin-bottom:10px;counter-increment:k}
+ol.keys li::before{content:counter(k);position:absolute;left:0;top:1px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:17px;display:grid;place-items:center}
+ol.keys b{font-weight:600}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;margin-top:6px}
+@media (min-width:720px){.steps{grid-template-columns:repeat(3,1fr)}}
+.step{min-width:0}
+.step figure{margin:0;position:relative;border-radius:10px;overflow:hidden;background:var(--paper);border:1px solid var(--line)}
+.step img{display:block;width:100%;height:auto;max-width:100%}
+.step .k{position:absolute;left:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:16px;line-height:1;padding:5px 8px 4px;border-radius:6px}
+.step .palm{position:absolute;right:8px;bottom:8px;background:var(--paper);color:var(--ink);font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
+.step h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.05;margin:8px 0 3px}
+.step p{font-size:15px;line-height:1.35;color:var(--ink);margin:0}
+.arrow{color:var(--accent);font-weight:700}
+.loop{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:15px}
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.plan{margin:0 0 6px;padding:0;list-style:none;display:grid;gap:6px}
+.plan li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:baseline;border-bottom:1px solid var(--line);padding:6px 0;font-size:16px}
+.plan li b{font-family:var(--display);font-size:20px;color:var(--accent)}
+.plan li a{text-decoration:none;color:inherit;font-weight:600}
+.plan li span{font-size:13px;color:var(--muted)}
+.exo{scroll-margin-top:16px;margin-top:34px;padding-top:18px;border-top:2px solid var(--line)}
+.exo h2{margin-top:0}
+.exo .desc{max-width:40em}
+.exo ul{margin:12px 0 0;padding-left:20px;font-size:15px;line-height:1.4}
+.exo ul li{margin-bottom:4px}
+.exo .easy{margin-top:10px}
+.notes{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:30px;display:grid;gap:10px}
+.notes h2{margin:0}
+.notes .status{font-size:14px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.card img,.step img{transition:transform .25s}.card:hover img,.step figure:hover img{transform:scale(1.02)}}
+</style>
+</head>
+<body>
+
+<!-- ===== Setup: pick a backend ===== -->
+<div id="setup" class="wrap" hidden>
+  <p class="eyebrow">Reelbook</p>
+  <h1>Your reels, as sheets</h1>
+  <p class="lead">Paste the reels you want to keep. Claude Code turns them into exercise sheets with photos and key points, grouped by theme.</p>
+  <div class="panel">
+    <h2>Where should your data live?</h2>
+    <div class="choice">
+      <button type="button" id="pick-hosted"><b id="hosted-name">Hosted backend</b><span id="hosted-blurb">Free for now. No setup, your data stays private to your account.</span></button>
+      <button type="button" id="pick-own"><b>My own Supabase project</b><span>Free tier is enough. You run one SQL file, then paste the project URL and anon key here.</span></button>
+    </div>
+    <form id="own-form" hidden>
+      <div style="display:grid;gap:10px">
+        <label>Project URL <input id="own-url" type="url" placeholder="https://xxxx.supabase.co" required></label>
+        <label>Anon key <input id="own-key" type="text" placeholder="eyJhbGciOi…" required autocomplete="off"></label>
+        <p class="hint">Both are in your Supabase dashboard under Project settings → API. The anon key is safe to keep in a browser: row level security keeps your data yours. Setup guide: <a id="own-guide" href="#" target="_blank" rel="noopener">docs/own-supabase.md</a>.</p>
+        <p class="err" id="own-err" hidden></p>
+        <div class="actions"><button class="btn" type="submit">Use this project</button><button class="btn ghost" type="button" id="own-cancel">Back</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Auth ===== -->
+<div id="auth" class="wrap" hidden>
+  <p class="eyebrow">Reelbook</p>
+  <h1 id="auth-title">Sign in</h1>
+  <form class="panel" id="auth-form">
+    <label>Email <input id="a-email" type="email" autocomplete="email" required></label>
+    <label>Password <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
+    <p class="err" id="a-err" hidden></p>
+    <p class="hint" id="a-info" hidden></p>
+    <div class="actions">
+      <button class="btn" type="submit" id="a-submit">Sign in</button>
+      <button class="btn ghost" type="button" id="a-toggle">Create an account</button>
+    </div>
+    <p class="hint">Backend: <span id="a-backend"></span> · <a href="#" id="a-reset">change</a></p>
+  </form>
+</div>
+
+<!-- ===== Home: portal / theme ===== -->
+<div id="home" class="wide" hidden>
+  <div class="topbar"><a href="#settings">Settings</a></div>
+  <div class="head">
+    <div>
+      <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
+      <p class="eyebrow" id="h-eyebrow">Three notebooks, one place</p>
+      <h1 id="h-title">Reelbook</h1>
+      <p class="cnt" id="count"></p>
+    </div>
+    <button class="btn" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a reel</button>
+  </div>
+
+  <form class="sheet" id="sheet-new" hidden>
+    <h2>Add a reel</h2>
+    <label>Instagram or TikTok link <input id="f-url" type="url" inputmode="url" placeholder="https://www.instagram.com/reel/…" required></label>
+    <p class="hint" id="f-hint">Theme and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/exercise-reel</code>.</p>
+    <p class="err" id="f-err" hidden></p>
+    <div class="actions"><button class="btn" type="submit" id="f-submit">Queue it</button><button class="btn ghost" type="button" id="f-cancel">Cancel</button></div>
+  </form>
+  <div class="flash" id="flash" hidden></div>
+
+  <section id="queue-sec" hidden>
+    <h2>In the queue <span class="n" id="queue-n"></span></h2>
+    <div class="queue" id="queue"></div>
+  </section>
+
+  <div id="portal" class="portal" hidden></div>
+  <div id="groups"></div>
+
+  <section class="howto" id="howto" hidden>
+    <h2>How it works</h2>
+    <ol>
+      <li><strong>On your phone</strong> A reel is worth keeping: tap « + Add a reel » and paste the link. From a theme page, the theme is noted. The link waits in the queue.</li>
+      <li><strong>Every few days, on your computer</strong> Chrome open with the Claude in Chrome extension, then in Claude Code: <code>/exercise-reel</code>. Any folder works once the skill is installed.</li>
+      <li><strong>While it runs</strong> Keep the computer unlocked and the reel tab in front: the video does not load in the background. Expect 10 to 15 minutes per sheet, more for a session.</li>
+    </ol>
+    <p class="tip">Skill, templates and setup guide: <a id="howto-repo" href="#" target="_blank" rel="noopener">the Reelbook repository</a>. Notes are taken inside each sheet.</p>
+  </section>
+  <footer>Sheets are built from reels for personal use. Every sheet credits its source.</footer>
+</div>
+
+<!-- ===== Settings ===== -->
+<div id="settings" class="wrap" hidden>
+  <p class="crumb"><a href="#">← Reelbook</a></p>
+  <h1>Settings</h1>
+  <div class="panel">
+    <h2>Account</h2>
+    <p id="s-user"></p>
+    <p class="hint">Backend: <span id="s-backend"></span></p>
+    <div class="actions"><button class="btn ghost" type="button" id="s-signout">Sign out</button><button class="btn ghost" type="button" id="s-reset">Change backend</button></div>
+  </div>
+  <div class="panel">
+    <h2>Connect Claude Code</h2>
+    <p class="hint">The skill reads your queue and publishes sheets with the same account. On your computer, once:</p>
+    <pre id="s-cli">python3 tools/rb.py login</pre>
+    <p class="hint">It asks for the project URL below, the anon key and your email + password, and keeps a session token in <code>~/.config/reelbook/</code>.</p>
+    <pre id="s-url"></pre>
+    <div class="actions"><button class="btn sm ghost" type="button" id="s-copy">Copy URL</button><span class="hint" id="s-copied"></span></div>
+  </div>
+</div>
+
+<!-- ===== Sheet view ===== -->
+<div id="view" class="wide" hidden></div>
+
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  'use strict';
+  const CFG = window.REELBOOK, themes = CFG.themes, themeById = new Map(themes.map(t => [t.id, t]));
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'}); } catch { return ''; } };
+  const views = ['setup', 'auth', 'home', 'settings', 'view'];
+  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); };
+  const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
+
+  // ---------- backend selection ----------
+  const hostedOk = !!(CFG.hosted && CFG.hosted.url && CFG.hosted.anonKey);
+  const readBackend = () => { try { return JSON.parse(ls.get('rb.backend') || 'null'); } catch { return null; } };
+  let backend = readBackend();
+  if (backend && backend.mode === 'hosted') backend = hostedOk ? {mode: 'hosted', url: CFG.hosted.url, key: CFG.hosted.anonKey} : null;
+  let sb = null;
+  const backendLabel = () => backend ? (backend.mode === 'hosted' ? CFG.hosted.name : backend.url.replace(/^https?:\/\//, '')) : '';
+
+  $('hosted-name').textContent = CFG.hosted.name || 'Hosted backend';
+  $('hosted-blurb').textContent = hostedOk ? CFG.hosted.blurb : 'Not available yet.';
+  $('pick-hosted').disabled = !hostedOk;
+  $('own-guide').href = CFG.repo + '/blob/main/docs/own-supabase.md';
+  $('howto-repo').href = CFG.repo;
+  $('pick-hosted').addEventListener('click', () => { backend = {mode: 'hosted', url: CFG.hosted.url, key: CFG.hosted.anonKey}; ls.set('rb.backend', JSON.stringify({mode: 'hosted'})); boot(); });
+  $('pick-own').addEventListener('click', () => { $('own-form').hidden = false; $('own-url').focus(); });
+  $('own-cancel').addEventListener('click', () => { $('own-form').hidden = true; });
+  $('own-form').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const err = $('own-err'); err.hidden = true;
+    let url; try { url = new URL($('own-url').value.trim()); } catch { err.textContent = 'That URL is not valid.'; err.hidden = false; return; }
+    const key = $('own-key').value.trim();
+    if (key.length < 20) { err.textContent = 'That does not look like an anon key.'; err.hidden = false; return; }
+    backend = {mode: 'own', url: url.origin, key};
+    ls.set('rb.backend', JSON.stringify(backend)); boot();
+  });
+  const resetBackend = async () => { if (sb) { try { await sb.auth.signOut(); } catch {} } ls.del('rb.backend'); backend = null; sb = null; location.hash = ''; boot(); };
+  $('a-reset').addEventListener('click', ev => { ev.preventDefault(); resetBackend(); });
+  $('s-reset').addEventListener('click', resetBackend);
+
+  // ---------- auth ----------
+  let mode = 'in';
+  const setMode = m => { mode = m; $('auth-title').textContent = m === 'in' ? 'Sign in' : 'Create an account'; $('a-submit').textContent = m === 'in' ? 'Sign in' : 'Create account'; $('a-toggle').textContent = m === 'in' ? 'Create an account' : 'I already have an account'; $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-info').hidden = true; };
+  $('a-toggle').addEventListener('click', () => setMode(mode === 'in' ? 'up' : 'in'));
+  $('auth-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const err = $('a-err'), info = $('a-info'); err.hidden = true; info.hidden = true; $('a-submit').disabled = true;
+    const email = $('a-email').value.trim(), password = $('a-pass').value;
+    try {
+      if (mode === 'in') {
+        const {error} = await sb.auth.signInWithPassword({email, password}); if (error) throw error;
+      } else {
+        const {data, error} = await sb.auth.signUp({email, password}); if (error) throw error;
+        if (!data.session) { info.textContent = 'Account created. Check your inbox to confirm your email, then sign in.'; info.hidden = false; setMode('in'); }
+      }
+    } catch (e) { err.textContent = e.message || 'Could not sign in.'; err.hidden = false; }
+    finally { $('a-submit').disabled = false; }
+  });
+  $('s-signout').addEventListener('click', async () => { await sb.auth.signOut(); location.hash = ''; });
+
+  // ---------- data ----------
+  let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null;
+  const signed = new Map(); // storage path -> {url, exp}
+  const signAll = async paths => {
+    const need = [...new Set(paths)].filter(p => { const s = signed.get(p); return !s || s.exp < Date.now() + 60000; });
+    if (need.length) {
+      try {
+        const {data} = await sb.storage.from('sheets').createSignedUrls(need, 3600);
+        for (const d of data || []) if (d.signedUrl) signed.set(d.path, {url: d.signedUrl, exp: Date.now() + 3600000});
+      } catch {}
+    }
+    return p => (signed.get(p) || {}).url || '';
+  };
+  const spath = (slug, rel) => `${user.id}/${slug}/${rel.replace(/^\.?\/?/, '')}`;
+
+  const loadCatalogue = async () => {
+    const {data, error} = await sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,exercises,added_at').order('title');
+    if (error) throw error;
+    sheets = data || []; bySlug = new Map(sheets.map(s => [s.slug, s]));
+    const paths = [];
+    for (const s of sheets) { if (s.thumbnail) paths.push(spath(s.slug, s.thumbnail)); for (const x of (s.exercises || [])) if (x.thumbnail) paths.push(spath(s.slug, x.thumbnail)); }
+    await signAll(paths);
+    try { const {data: n} = await sb.from('notes').select('slug').neq('body', ''); notesIndex = new Set((n || []).map(r => r.slug)); } catch {}
+  };
+  const thumb = (slug, rel) => rel ? (signed.get(spath(slug, rel)) || {}).url || '' : '';
+
+  // ---------- home rendering ----------
+  const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">
+      <img src="${esc(thumbUrl)}" alt="" loading="lazy">
+      <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>
+      <div class="m">${(extra && extra.meta || []).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  const renderPortal = () => {
+    $('portal').innerHTML = themes.map(t => {
+      const list = sheets.filter(e => e.theme === t.id);
+      const sessions = list.filter(e => e.kind === 'session').length, n = list.length - sessions;
+      const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (sessions ? ` · ${plural(sessions, 'session')}` : '');
+      const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="">`).join('');
+      return `<a class="tcard" href="#${esc(t.id)}" style="--t:var(--th-${esc(t.id)})">
+        <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
+        ${thumbs ? `<div class="thumbs">${thumbs}</div>` : '<p class="empty">Nothing yet. Paste a first link from this page.</p>'}</a>`;
+    }).join('');
+  };
+  const renderGroups = t => {
+    const all = sheets.filter(e => e.theme === t.id);
+    const sessions = all.filter(e => e.kind === 'session'), solo = all.filter(e => e.kind !== 'session');
+    const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
+    const push = (g, h) => { if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(h); };
+    for (const e of solo) push(e.group, card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [{txt: e.duration}, {txt: (e.source || {}).author || ''}, ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)}));
+    for (const sc of sessions) for (const x of (sc.exercises || [])) push(x.group, card(x, `#${esc(sc.slug)}~${esc(x.anchor)}`, thumb(sc.slug, x.thumbnail), {meta: [{txt: x.duration || ''}, {txt: 'session · ' + sc.title, cls: 'session'}].filter(m => m.txt)}));
+    let html = '';
+    if (sessions.length) html += `<section><h2>Sessions <span class="n">${sessions.length}</span></h2><div class="grid">` + sessions.map(sc => card(sc, `#${esc(sc.slug)}`, thumb(sc.slug, sc.thumbnail), {big: true, meta: [{txt: sc.duration}, {txt: plural((sc.exercises || []).length, 'exercise')}, {txt: (sc.source || {}).author || ''}, ...(notesIndex.has(sc.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)})).join('') + '</div></section>';
+    for (const [g, list] of byGroup) { if (list.length) html += `<section><h2>${esc(g)} <span class="n">${list.length}</span></h2><div class="grid">${list.join('')}</div></section>`; }
+    $('groups').innerHTML = html || '<p class="empty">No sheet in this theme yet. Paste a first link.</p>';
+    const g = [...byGroup].filter(([, l]) => l.length).length;
+    return `${plural(solo.length, 'sheet')}${sessions.length ? ` · ${plural(sessions.length, 'session')}` : ''} · ${plural(g, 'group')}`;
+  };
+  const renderHome = () => {
+    const t = currentTheme ? themeById.get(currentTheme) : null;
+    $('h-crumb').hidden = !t;
+    $('h-eyebrow').textContent = t ? 'Movements to find fast, from the mat' : 'Three notebooks, one place';
+    $('h-title').textContent = t ? t.title : 'Reelbook';
+    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t;
+    if (t) $('count').textContent = renderGroups(t);
+    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'theme')}`; }
+    document.title = t ? `${t.title} · Reelbook` : 'Reelbook';
+  };
+
+  // ---------- queue ----------
+  const sheetForm = $('sheet-new'), btn = $('btn-new');
+  const openForm = v => { sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (v) $('f-url').focus(); };
+  btn.addEventListener('click', () => openForm(sheetForm.hidden));
+  $('f-cancel').addEventListener('click', () => openForm(false));
+  const okHost = h => /(^|\.)instagram\.com$/.test(h) || /(^|\.)tiktok\.com$/.test(h);
+  const renderQueue = docs => {
+    $('queue-sec').hidden = docs.length === 0; $('queue-n').textContent = docs.length || '';
+    $('queue').innerHTML = docs.map(d => {
+      let host = ''; try { host = new URL(d.url).hostname; } catch {}
+      const st = d.status === 'processing' ? 'in progress' : d.status === 'error' ? 'needs a look' : 'queued';
+      return `<div class="q"><div class="ico">${host.includes('tiktok') ? 'TT' : 'IG'}</div>
+        <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
+        <small>added ${fmtDate(d.created_at)}${d.theme && themeById.has(d.theme) ? ' · ' + esc(themeById.get(d.theme).title) : ''}${d.note ? ' · ' + esc(d.note) : ''}</small></div>
+        <div style="display:flex;align-items:center;gap:4px"><span class="st">${st}</span><button type="button" data-del="${esc(d.id)}" aria-label="Remove from the queue" title="Remove">×</button></div></div>`;
+    }).join('');
+  };
+  const refreshQueue = async () => { try { const {data} = await sb.from('requests').select('id,url,status,theme,note,created_at').neq('status', 'done').order('created_at', {ascending: false}).limit(50); renderQueue(data || []); } catch {} };
+  $('queue').addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-del]'); if (!b) return; b.disabled = true;
+    try { await sb.from('requests').delete().eq('id', b.dataset.del); await refreshQueue(); } catch { b.disabled = false; }
+  });
+  sheetForm.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const err = $('f-err'); err.hidden = true;
+    let u; try { u = new URL($('f-url').value.trim()); } catch { err.textContent = 'That link is not valid.'; err.hidden = false; return; }
+    if (!okHost(u.hostname)) { err.textContent = 'Paste an instagram.com or tiktok.com link.'; err.hidden = false; return; }
+    $('f-submit').disabled = true;
+    try {
+      const row = {url: u.toString()}; if (currentTheme) row.theme = currentTheme;
+      const {error} = await sb.from('requests').insert(row); if (error) throw error;
+      sheetForm.reset(); openForm(false); refreshQueue();
+      const f = $('flash'); f.textContent = 'Queued. The sheet will be built on your next Claude Code run.'; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000);
+    } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; }
+    finally { $('f-submit').disabled = false; }
+  });
+
+  // ---------- sheet view ----------
+  const view = $('view'), cache = new Map();
+  const loadSheet = async slug => {
+    if (cache.has(slug)) return cache.get(slug);
+    const {data, error} = await sb.from('sheets').select('html').eq('slug', slug).single();
+    if (error || !data) throw new Error('not found');
+    const doc = new DOMParser().parseFromString(data.html, 'text/html');
+    const frag = document.createDocumentFragment();
+    for (const el of [...doc.body.children]) { if (['TITLE', 'LINK', 'STYLE', 'SCRIPT'].includes(el.tagName)) continue; frag.appendChild(document.importNode(el, true)); }
+    frag.querySelectorAll('nav.top, script').forEach(n => n.remove());
+    const imgs = [...frag.querySelectorAll('img')];
+    const get = await signAll(imgs.map(i => spath(slug, (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'))));
+    imgs.forEach(i => { const rel = (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'); i.setAttribute('src', get(spath(slug, rel))); i.removeAttribute('loading'); });
+    frag.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (h === '../index.html' || h === '../' || h === '#') a.setAttribute('href', '#'); else if (h.startsWith('#') && h.length > 1) a.setAttribute('href', `#${slug}~${h.slice(1)}`); });
+    const wrap = document.createElement('div'); wrap.appendChild(frag);
+    cache.set(slug, wrap.innerHTML); return wrap.innerHTML;
+  };
+  const jump = a => { if (!a) return; const el = view.querySelector('#' + CSS.escape(a)); if (el) el.scrollIntoView({block: 'start'}); };
+  const showSheet = async (slug, anchor) => {
+    const e = bySlug.get(slug);
+    if (shown === slug && !view.hidden) { jump(anchor); return; }
+    shown = slug; show('view');
+    view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
+    const th = themeById.get(e.theme);
+    const back = `<div class="wrap"><nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span>${esc(e.kind === 'session' ? 'Session' : e.group)}</span></nav></div>`;
+    let html; try { html = await loadSheet(slug); } catch { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>'; return; }
+    view.innerHTML = back + html + `<div class="wrap"><section class="notes"><h2>My notes <small>only you can see them</small></h2>
+      <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes"></textarea>
+      <div class="actions"><button class="btn" type="button" id="n-save">Save</button><span class="status" id="n-status">Loading…</span></div></section></div>`;
+    if (anchor) requestAnimationFrame(() => jump(anchor));
+    const ta = $('n-text'), st = $('n-status'), save = $('n-save');
+    try { const {data} = await sb.from('notes').select('body,updated_at').eq('slug', slug).maybeSingle(); ta.value = data ? data.body : ''; st.textContent = data && data.body ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.'; }
+    catch { st.textContent = 'Could not read the note.'; }
+    save.addEventListener('click', async () => {
+      save.disabled = true; st.textContent = 'Saving…';
+      try { const body = ta.value.trim(); const {error} = await sb.from('notes').upsert({slug, body}); if (error) throw error; if (body) notesIndex.add(slug); else notesIndex.delete(slug); st.textContent = 'Saved.'; }
+      catch { st.textContent = 'Could not save. Try again.'; } finally { save.disabled = false; }
+    });
+  };
+
+  // ---------- settings ----------
+  const renderSettings = () => { $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-url').textContent = backend ? backend.url : ''; };
+  $('s-copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(backend.url); $('s-copied').textContent = 'Copied.'; } catch { $('s-copied').textContent = 'Select and copy the URL above.'; } });
+
+  // ---------- routing ----------
+  const route = () => {
+    if (!backend) { show('setup'); return; }
+    if (!user) { $('a-backend').textContent = backendLabel(); show('auth'); return; }
+    const [tok, anchor] = decodeURIComponent(location.hash.slice(1)).split('~');
+    if (tok === 'settings') { renderSettings(); show('settings'); return; }
+    if (tok && bySlug.has(tok)) { showSheet(tok, anchor); return; }
+    shown = null; currentTheme = themeById.has(tok) ? tok : null; view.innerHTML = ''; renderHome(); show('home');
+  };
+  window.addEventListener('hashchange', route);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && user && !$('home').hidden) refreshQueue(); });
+
+  // ---------- boot ----------
+  let booted = null;
+  const boot = () => {
+    if (!backend) { user = null; route(); return; }
+    if (booted !== backend.url) {
+      sb = supabase.createClient(backend.url, backend.key, {auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
+      booted = backend.url;
+      sb.auth.onAuthStateChange(async (ev, session) => {
+        const next = session ? session.user : null;
+        const changed = (next && next.id) !== (user && user.id);
+        user = next;
+        if (changed && user) { try { await loadCatalogue(); refreshQueue(); } catch (e) { console.error(e); } }
+        if (changed || ev === 'INITIAL_SESSION') route();
+      });
+    } else route();
+  };
+  boot();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
