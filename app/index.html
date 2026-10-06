@@ -299,7 +299,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     backend = {mode: 'own', url: url.origin, key};
     ls.set('rb.backend', JSON.stringify(backend)); boot();
   });
-  const resetBackend = async () => { if (sb) { try { await sb.auth.signOut(); } catch {} } ls.del('rb.backend'); backend = null; sb = null; location.hash = ''; boot(); };
+  const resetBackend = async () => { if (sb) { try { await sb.auth.signOut(); } catch {} } ls.del('rb.backend'); backend = null; sb = null; $('own-form').hidden = true; $('own-form').reset(); location.hash = ''; boot(); };
   $('a-reset').addEventListener('click', ev => { ev.preventDefault(); resetBackend(); });
   $('s-reset').addEventListener('click', resetBackend);
 
