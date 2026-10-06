@@ -4,8 +4,8 @@ window.REELBOOK = {
   // The hosted backend offered by the Reelbook maintainers. Leave url empty to hide the option.
   hosted: {
     name: 'Reelbook hosted',
-    url: '',
-    anonKey: '',
+    url: 'https://xgarsygrkfnfyvxkcxdm.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnYXJzeWdya2ZuZnl2eGtjeGRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyODk1NjIsImV4cCI6MjEwNjg2NTU2Mn0.ThclH-X2LC4MURxf27jFsjYHXzohJ8HYrscbd8E8U3I',
     blurb: 'Free for now. No setup, your data stays private to your account.'
   },
   themes: [
