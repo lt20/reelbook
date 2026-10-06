@@ -36,7 +36,7 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    git clone https://github.com/lt20/reelbook
    cd reelbook
    python3 -m pip install pillow
-   python3 tools/rb.py login                      # once: project URL, anon key, email, password
+   python3 tools/rb.py login                      # once, in a normal terminal: project URL, anon key, email, password
    ln -s "$PWD/skill/exercise-reel" ~/.claude/skills/exercise-reel
    ```
 

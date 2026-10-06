@@ -53,13 +53,19 @@ def http(method, url, headers=None, data=None, raw=False):
 # ---------------------------------------------------------------------------
 
 def cmd_login(args):
+    """Interactive by default. Non-interactive: environment variables REELBOOK_URL,
+    REELBOOK_ANON_KEY, REELBOOK_EMAIL, REELBOOK_PASSWORD (each falls back to the saved value)."""
     old = json.loads(CFG_PATH.read_text()) if CFG_PATH.exists() else {}
-    url = input(f"Supabase project URL [{old.get('url', '')}]: ").strip() or old.get("url", "")
-    key = input(f"Anon key [{'keep current' if old.get('anon_key') else ''}]: ").strip() or old.get("anon_key", "")
-    email = input(f"Email [{old.get('email', '')}]: ").strip() or old.get("email", "")
-    pwd = getpass.getpass("Password: ")
+    env = {k: os.environ.get("REELBOOK_" + k.upper(), "") for k in ("url", "anon_key", "email", "password")}
+    if not sys.stdin.isatty() and not env["password"]:
+        die("no terminal to ask for the password: run this in a normal terminal, or set REELBOOK_EMAIL and REELBOOK_PASSWORD")
+    ask = lambda label, cur: (input(f"{label} [{cur or ''}]: ").strip() or cur) if sys.stdin.isatty() else cur
+    url = env["url"] or ask("Supabase project URL", old.get("url", ""))
+    key = env["anon_key"] or (old.get("anon_key", "") if not sys.stdin.isatty() else (input(f"Anon key [{'keep current' if old.get('anon_key') else ''}]: ").strip() or old.get("anon_key", "")))
+    email = env["email"] or ask("Email", old.get("email", ""))
+    pwd = env["password"] or getpass.getpass("Password: ")
     if not (url and key and email and pwd):
-        die("all four values are needed")
+        die("project URL, anon key, email and password are all needed")
     url = url.rstrip("/")
     tok = http("POST", f"{url}/auth/v1/token?grant_type=password", {"apikey": key}, {"email": email, "password": pwd})
     cfg = {"url": url, "anon_key": key, "email": email, "user_id": tok["user"]["id"],
