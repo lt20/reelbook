@@ -323,7 +323,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   $('s-signout').addEventListener('click', async () => { await sb.auth.signOut(); location.hash = ''; });
 
   // ---------- data ----------
-  let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null;
+  let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null, loading = false, loadError = '';
   const signed = new Map(); // storage path -> {url, exp}
   const signAll = async paths => {
     const need = [...new Set(paths)].filter(p => { const s = signed.get(p); return !s || s.exp < Date.now() + 60000; });
@@ -346,6 +346,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     await signAll(paths);
     try { const {data: n} = await sb.from('notes').select('slug').neq('body', ''); notesIndex = new Set((n || []).map(r => r.slug)); } catch {}
   };
+  const reload = async () => {
+    loading = true; loadError = ''; if (!$('home').hidden) renderHome();
+    try { await loadCatalogue(); } catch (e) { loadError = (e && e.message) || 'unknown error'; console.error(e); }
+    loading = false; route(); refreshQueue();
+  };
   const thumb = (slug, rel) => rel ? (signed.get(spath(slug, rel)) || {}).url || '' : '';
 
   // ---------- home rendering ----------
@@ -362,7 +367,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="">`).join('');
       return `<a class="tcard" href="#${esc(t.id)}" style="--t:var(--th-${esc(t.id)})">
         <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
-        ${thumbs ? `<div class="thumbs">${thumbs}</div>` : '<p class="empty">Nothing yet. Paste a first link from this page.</p>'}</a>`;
+        ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
     }).join('');
   };
   const renderGroups = t => {
@@ -386,7 +391,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('h-title').textContent = t ? t.title : 'Reelbook';
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t;
     if (t) $('count').textContent = renderGroups(t);
-    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'theme')}`; }
+    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'theme')}`; }
     document.title = t ? `${t.title} · Reelbook` : 'Reelbook';
   };
 
@@ -491,12 +496,14 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     if (booted !== backend.url) {
       sb = supabase.createClient(backend.url, backend.key, {auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
       booted = backend.url;
-      sb.auth.onAuthStateChange(async (ev, session) => {
+      // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
+      sb.auth.onAuthStateChange((ev, session) => {
         const next = session ? session.user : null;
         const changed = (next && next.id) !== (user && user.id);
         user = next;
-        if (changed && user) { try { await loadCatalogue(); refreshQueue(); } catch (e) { console.error(e); } }
+        if (changed) { sheets = []; bySlug = new Map(); notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
+        if (changed && user) setTimeout(reload, 0);
       });
     } else route();
   };
