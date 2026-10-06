@@ -50,7 +50,7 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 
 Sheets live in notebooks. A new account starts with three (Strength, Yoga & stretching, Fight
 techniques). **+ Add a notebook** on the home page offers the built-in library (kitesurf,
-wingfoil, surfing, running, pilates, barre, dance, prenatal, cooking, beauty, crafts… 28 in
+wingfoil, surfing, running, pilates, barre, pole dance, dance, prenatal, cooking, beauty, crafts… 29 in
 `app/config.js`) and a **custom notebook**: a name plus a description of what goes in it. The
 description is written for Claude: it is what the skill reads to decide where a reel belongs
 and how to group it. Notebooks are per account; remove one from Settings when it is empty.

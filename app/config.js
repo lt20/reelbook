@@ -52,6 +52,8 @@ window.REELBOOK = {
       groups: ['Core', 'Spine', 'Hips', 'Shoulders', 'Reformer', 'Flows'] },
     { id: 'barre', title: 'Barre', sub: 'Ballet-inspired strength: legs, glutes, posture.', color: 5,
       groups: ['Legs', 'Glutes', 'Arms', 'Core', 'Posture', 'Flows'] },
+    { id: 'pole', title: 'Pole dance', sub: 'Spins, climbs, inverts, holds, floorwork, conditioning.', color: 5,
+      groups: ['Spins', 'Climbs', 'Inverts', 'Holds', 'Floorwork', 'Conditioning'] },
     { id: 'dance', title: 'Dance', sub: 'Steps, combos, isolations, musicality.', color: 5,
       groups: ['Basics', 'Combos', 'Isolations', 'Turns', 'Musicality'] },
     { id: 'mobility', title: 'Mobility & rehab', sub: 'Joint health, injury recovery, daily routines.', color: 1,
