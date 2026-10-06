@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """rb.py — Reelbook command line, used by the exercise-reel skill. Standard library only.
 
-    rb.py login                 sign in (project URL, anon key, email, password) and keep a session
+    rb.py login [--url U --key K]   sign in (email + password; URL and anon key asked unless given) and keep a session
     rb.py whoami                show the signed-in account and backend
     rb.py queue                 list queued requests (JSON lines)
     rb.py claim <id>            mark a request as processing
@@ -57,6 +57,10 @@ def cmd_login(args):
     REELBOOK_ANON_KEY, REELBOOK_EMAIL, REELBOOK_PASSWORD (each falls back to the saved value)."""
     old = json.loads(CFG_PATH.read_text()) if CFG_PATH.exists() else {}
     env = {k: os.environ.get("REELBOOK_" + k.upper(), "") for k in ("url", "anon_key", "email", "password")}
+    # `rb.py login --url U --key K` : the command the app's Settings page gives to copy
+    for i, a in enumerate(args):
+        if a == "--url" and i + 1 < len(args): env["url"] = args[i + 1]
+        if a == "--key" and i + 1 < len(args): env["anon_key"] = args[i + 1]
     if not sys.stdin.isatty() and not env["password"]:
         die("no terminal to ask for the password: run this in a normal terminal, or set REELBOOK_EMAIL and REELBOOK_PASSWORD")
     ask = lambda label, cur: (input(f"{label} [{cur or ''}]: ").strip() or cur) if sys.stdin.isatty() else cur

@@ -250,11 +250,10 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   </div>
   <div class="panel">
     <h2>Connect Claude Code</h2>
-    <p class="hint">The skill reads your queue and publishes sheets with the same account. On your computer, once:</p>
-    <pre id="s-cli">python3 tools/rb.py login</pre>
-    <p class="hint">It asks for the project URL below, the anon key and your email + password, and keeps a session token in <code>~/.config/reelbook/</code>.</p>
-    <pre id="s-url"></pre>
-    <div class="actions"><button class="btn sm ghost" type="button" id="s-copy">Copy URL</button><span class="hint" id="s-copied"></span></div>
+    <p class="hint">Your computer is a second device: it signs in once to the same account, then the skill reads your queue and publishes your sheets. In a terminal, inside the Reelbook folder, paste:</p>
+    <pre id="s-cli"></pre>
+    <div class="actions"><button class="btn sm ghost" type="button" id="s-copy">Copy command</button><span class="hint" id="s-copied"></span></div>
+    <p class="hint">It asks for your email and password, nothing else, and keeps a session in <code>~/.config/reelbook/</code>. Signing out here does not sign out the computer.</p>
   </div>
 </div>
 
@@ -469,8 +468,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   };
 
   // ---------- settings ----------
-  const renderSettings = () => { $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-url').textContent = backend ? backend.url : ''; };
-  $('s-copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(backend.url); $('s-copied').textContent = 'Copied.'; } catch { $('s-copied').textContent = 'Select and copy the URL above.'; } });
+  const cliCmd = () => backend ? `python3 tools/rb.py login --url ${backend.url} --key ${backend.key}` : '';
+  const renderSettings = () => { $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd(); };
+  $('s-copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(cliCmd()); $('s-copied').textContent = 'Copied.'; } catch { $('s-copied').textContent = 'Select and copy the command above.'; } });
 
   // ---------- routing ----------
   const route = () => {
