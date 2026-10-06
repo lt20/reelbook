@@ -1,6 +1,6 @@
 ---
-name: exercise-reel
-description: Turn an Instagram/TikTok reel into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/exercise-reel", "/exercise-reel <link>", or pastes a reel link while talking about an exercise.
+name: reelbook
+description: Turn an Instagram/TikTok reel into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/reelbook", "/reelbook <link>", or pastes a reel link while talking about an exercise.
 ---
 
 # Exercise sheet from a reel

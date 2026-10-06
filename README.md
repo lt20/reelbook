@@ -12,7 +12,7 @@ Two parts:
 
 - **The app** (`app/`): a small installable web app. You paste reel links from your phone and
   read your sheets there. No store, no build step: a static page talking to a Supabase backend.
-- **The skill** (`skill/exercise-reel/`): instructions for [Claude Code](https://claude.com/claude-code).
+- **The skill** (`skill/reelbook/`): instructions for [Claude Code](https://claude.com/claude-code).
   Every few days you run it on your computer. It opens each queued reel in Chrome, watches it,
   extracts the key frames, writes the sheet and publishes it to your backend.
 
@@ -40,10 +40,10 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    cd reelbook
    python3 -m pip install pillow
    python3 tools/rb.py login --url … --key …      # once: paste the command from the app's Settings page, then email + password
-   ln -s "$PWD/skill/exercise-reel" ~/.claude/skills/exercise-reel
+   ln -s "$PWD/skill/reelbook" ~/.claude/skills/reelbook
    ```
 
-4. Start Claude Code anywhere, open Chrome next to it, and type `/exercise-reel`.
+4. Start Claude Code anywhere, open Chrome next to it, and type `/reelbook`.
    Keep the computer unlocked and the reel tab in front: the video does not load in the
    background. Claude asks you to bring the tab forward when needed.
 5. Ten to fifteen minutes later the sheet is in the app, under its theme and group. A reel with

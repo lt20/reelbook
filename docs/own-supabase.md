@@ -49,10 +49,10 @@ git clone https://github.com/lt20/reelbook
 cd reelbook
 python3 -m pip install pillow
 python3 tools/rb.py login --url … --key …   # copy the exact command from the app's Settings page
-ln -s "$PWD/skill/exercise-reel" ~/.claude/skills/exercise-reel
+ln -s "$PWD/skill/reelbook" ~/.claude/skills/reelbook
 ```
 
-Then, in any Claude Code session: `/exercise-reel`. See the README for what happens next.
+Then, in any Claude Code session: `/reelbook`. See the README for what happens next.
 
 ## Limits of the free tier
 
