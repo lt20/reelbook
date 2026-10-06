@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4fa3">
-<meta name="description" content="Turn the reels you save into exercise sheets you can read on the mat.">
+<meta name="description" content="Turn the how-to reels you save into sheets you can read on the mat, at the beach or in the kitchen.">
 <title>Reelbook</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -171,7 +171,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 <div id="setup" class="wrap" hidden>
   <p class="eyebrow">Reelbook</p>
   <h1>Your reels, as sheets</h1>
-  <p class="lead">Paste the reels you want to keep. Claude Code turns them into exercise sheets with photos and key points, grouped by theme.</p>
+  <p class="lead">Paste the reels you want to keep: a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
   <div class="panel">
     <h2>Where should your data live?</h2>
     <div class="choice">
@@ -223,7 +223,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   <form class="sheet" id="sheet-new" hidden>
     <h2>Add a reel</h2>
     <label>Instagram or TikTok link <input id="f-url" type="url" inputmode="url" placeholder="https://www.instagram.com/reel/…" required></label>
-    <p class="hint" id="f-hint">Theme and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/exercise-reel</code>.</p>
+    <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/exercise-reel</code>.</p>
     <p class="err" id="f-err" hidden></p>
     <div class="actions"><button class="btn" type="submit" id="f-submit">Queue it</button><button class="btn ghost" type="button" id="f-cancel">Cancel</button></div>
   </form>
@@ -252,13 +252,13 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   <section class="howto" id="howto" hidden>
     <h2>How it works</h2>
     <ol>
-      <li><strong>On your phone</strong> A reel is worth keeping: tap « + Add a reel » and paste the link. From a theme page, the theme is noted. The link waits in the queue.</li>
+      <li><strong>On your phone</strong> A reel is worth keeping: tap « + Add a reel » and paste the link. From a notebook page, the notebook is noted. The link waits in the queue.</li>
       <li><strong>Every few days, on your computer</strong> Chrome open with the Claude in Chrome extension, then in Claude Code: <code>/exercise-reel</code>. Any folder works once the skill is installed.</li>
       <li><strong>While it runs</strong> Keep the computer unlocked and the reel tab in front: the video does not load in the background. Expect 10 to 15 minutes per sheet, more for a session.</li>
     </ol>
     <p class="tip">Skill, templates and setup guide: <a id="howto-repo" href="#" target="_blank" rel="noopener">the Reelbook repository</a>. Notes are taken inside each sheet.</p>
   </section>
-  <footer>Sheets are built from reels for personal use. Every sheet credits its source.</footer>
+  <footer>Sheets are built from reels for personal use. Every sheet credits its author.</footer>
 </div>
 
 <!-- ===== Settings ===== -->
@@ -461,7 +461,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null;
     $('h-crumb').hidden = !t;
-    $('h-eyebrow').textContent = t ? 'Movements to find fast, from the mat' : 'Three notebooks, one place';
+    $('h-eyebrow').textContent = t ? 'Find it fast, when you need it' : 'Your reels, by notebook';
     $('h-title').textContent = t ? t.title : 'Reelbook';
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);

@@ -1,9 +1,12 @@
 # Reelbook
 
-Turn the exercise reels you save on Instagram or TikTok into **sheets you can read on the mat**:
-photos taken from the video, why the exercise matters, how much to do, the key points, the
-sequence step by step, the source. Sheets are grouped in three notebooks: strength, yoga &
-stretching, fight techniques.
+Turn the how-to reels you save on Instagram or TikTok into **sheets you can actually use**:
+photos taken from the video, why it matters, how much to do, the key points, the steps in
+order, the source. A kitesurf transition, a yoga flow, a knife technique, a pole spin, a judo
+throw: one reel, one sheet, filed in the notebook of your choice.
+
+Notebooks are yours to pick: 29 built-in ones (strength, yoga, running, surfing, pilates,
+cooking, beauty, crafts…) plus any notebook you describe yourself.
 
 Two parts:
 

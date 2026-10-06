@@ -1,7 +1,7 @@
 {
   "name": "Reelbook",
   "short_name": "Reelbook",
-  "description": "Turn the reels you save into exercise sheets you can read on the mat.",
+  "description": "Turn the how-to reels you save into sheets you can read anywhere.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
