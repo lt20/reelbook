@@ -264,9 +264,42 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       <li><strong>Every few days, on your computer</strong> Chrome open with the Claude in Chrome extension, then in Claude Code: <code>/reelbook</code>. Any folder works once the skill is installed.</li>
       <li><strong>While it runs</strong> Keep the computer unlocked and the reel tab in front: the video does not load in the background. Expect 10 to 15 minutes per sheet, more for a session.</li>
     </ol>
-    <p class="tip">Skill, templates and setup guide: <a id="howto-repo" href="#" target="_blank" rel="noopener">the Reelbook repository</a>. Notes are taken inside each sheet.</p>
+    <p class="tip"><a href="#welcome">Setup guide for a new computer</a> · <a id="howto-repo" href="#" target="_blank" rel="noopener">the Reelbook repository</a>. Notes are taken inside each sheet.</p>
   </section>
   <footer>Sheets are built from reels for personal use. Every sheet credits its author.</footer>
+</div>
+
+<!-- ===== Welcome (after sign-up, and from "Setup guide") ===== -->
+<div id="welcome" class="wrap" hidden>
+  <p class="eyebrow">Welcome to Reelbook</p>
+  <h1>How it works</h1>
+  <div class="panel">
+    <h2>1 · Save reels on your phone</h2>
+    <p>A reel is worth keeping: tap <b>+ Add a reel</b> and paste the link. It waits in the queue. That is all the phone does.</p>
+  </div>
+  <div class="panel">
+    <h2>2 · Claude turns them into sheets</h2>
+    <p>Every now and then, when a few reels are waiting, you run the Reelbook skill on your computer. Claude opens each reel, watches it, picks the key frames and writes a sheet: photos, why it matters, key points, the steps in order.</p>
+    <p><b>What you need on that computer</b></p>
+    <ul style="margin:0;padding-left:20px;display:grid;gap:4px">
+      <li><a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> (terminal, desktop app or VS Code), Pro plan or above.</li>
+      <li>Chrome with the <a href="https://claude.com/chrome" target="_blank" rel="noopener">Claude in Chrome</a> extension.</li>
+      <li>Being signed in to Instagram and/or TikTok in that Chrome.</li>
+    </ul>
+    <p><b>How a run goes</b></p>
+    <ul style="margin:0;padding-left:20px;display:grid;gap:4px">
+      <li>Open Claude Code and type <code>/reelbook</code>. Claude reads your queue and processes the reels one by one.</li>
+      <li>Keep Chrome open, not minimised, with the reel tab in front: the video does not play in the background.</li>
+      <li>Expect 10 to 15 minutes per sheet. You can leave the computer to it.</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h2>3 · Set up the computer, once</h2>
+    <p class="hint">Paste one line in a terminal. It installs the code, the Python tools and the skill, then asks for the email and password you just chose.</p>
+    <div id="w-install"></div>
+    <p class="hint">You can find these lines again anytime in Settings.</p>
+  </div>
+  <div class="actions" style="margin-top:14px"><button class="btn" type="button" id="w-done">Open my notebooks</button></div>
 </div>
 
 <!-- ===== Settings ===== -->
@@ -287,12 +320,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   <div class="panel">
     <h2>Connect Claude Code</h2>
     <p class="hint">Your computer is a second device: it signs in once to the same account, then the skill reads your queue and publishes your sheets. First time on a computer, paste one line in a terminal. It installs everything (code, Python tools, the skill) and asks for your email and password, nothing else.</p>
-    <p class="hint"><b>macOS / Linux</b> (Terminal)</p>
-    <pre id="s-install-sh"></pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-install-sh">Copy</button><span class="hint" data-copied="s-install-sh"></span></div>
-    <p class="hint"><b>Windows</b> (PowerShell)</p>
-    <pre id="s-install-ps"></pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-install-ps">Copy</button><span class="hint" data-copied="s-install-ps"></span></div>
+    <div id="s-install"></div>
     <p class="hint">Already installed and only need to sign in again? Inside the Reelbook folder:</p>
     <pre id="s-cli"></pre>
     <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-cli">Copy</button><span class="hint" data-copied="s-cli"></span></div>
@@ -317,7 +345,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'}); } catch { return ''; } };
-  const views = ['setup', 'auth', 'home', 'settings', 'view'];
+  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view'];
   const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
 
@@ -415,7 +443,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const reload = async () => {
     loading = true; loadError = ''; if (!$('home').hidden) renderHome();
     try { await loadCatalogue(); } catch (e) { loadError = (e && e.message) || 'unknown error'; console.error(e); }
-    loading = false; route(); refreshQueue();
+    loading = false;
+    if (!loadError && !sheets.length && !ls.get(welcomeKey()) && !location.hash) { location.hash = 'welcome'; } else route();
+    refreshQueue();
   };
   const thumb = (slug, rel) => rel ? (signed.get(spath(slug, rel)) || {}).url || '' : '';
 
@@ -567,12 +597,21 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
   const installSh = () => backend ? `curl -fsSL ${base}install.sh | bash -s -- --url ${backend.url} --key ${backend.key}` : '';
   const installPs = () => backend ? `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex` : '';
+  const installBlock = () => `<p class="hint"><b>macOS / Linux</b> (Terminal)</p><pre data-cmd="sh">${esc(installSh())}</pre>
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="sh">Copy</button><span class="hint" data-copied="sh"></span></div>
+    <p class="hint"><b>Windows</b> (PowerShell)</p><pre data-cmd="ps">${esc(installPs())}</pre>
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="ps">Copy</button><span class="hint" data-copied="ps"></span></div>`;
+  const copyHandler = root => async ev => { const b = ev.target.closest('[data-copy]'); if (!b) return; const pre = root.querySelector(`[data-cmd="${b.dataset.copy}"]`) || $(b.dataset.copy); const out = root.querySelector(`[data-copied="${b.dataset.copy}"]`); try { await navigator.clipboard.writeText(pre.textContent); out.textContent = 'Copied.'; } catch { out.textContent = 'Select and copy the command above.'; } };
+  const welcomeKey = () => 'rb.welcome.' + (user ? user.id : '');
+  const renderWelcome = () => { $('w-install').innerHTML = installBlock(); };
+  $('welcome').addEventListener('click', copyHandler($('welcome')));
+  $('w-done').addEventListener('click', () => { ls.set(welcomeKey(), '1'); location.hash = ''; });
   const renderSettings = () => {
-    $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd(); $('s-install-sh').textContent = installSh(); $('s-install-ps').textContent = installPs();
+    $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd(); $('s-install').innerHTML = installBlock();
     $('nblist').innerHTML = themes.map(t => { const n = sheets.filter(e => e.theme === t.id).length; return `<div style="--t:${colorOf(t)}"><span><b>${esc(t.title)}</b><small>${esc(t.builtin ? plural(n, 'sheet') : (t.description || '') + ' · ' + plural(n, 'sheet'))}</small></span><button class="btn sm ghost" type="button" data-rm="${esc(t.id)}" ${n ? 'disabled' : ''}>Remove</button></div>`; }).join('') || '<p class="hint">No notebook yet.</p>';
   };
   $('nblist').addEventListener('click', async ev => { const b = ev.target.closest('[data-rm]'); if (!b) return; b.disabled = true; try { await removeTheme(b.dataset.rm); renderSettings(); } catch { b.disabled = false; } });
-  $('settings').addEventListener('click', async ev => { const b = ev.target.closest('[data-copy]'); if (!b) return; const out = $('settings').querySelector(`[data-copied="${b.dataset.copy}"]`); try { await navigator.clipboard.writeText($(b.dataset.copy).textContent); out.textContent = 'Copied.'; } catch { out.textContent = 'Select and copy the command above.'; } });
+  $('settings').addEventListener('click', copyHandler($('settings')));
 
   // ---------- routing ----------
   const route = () => {
@@ -580,6 +619,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     if (!user) { $('a-backend').textContent = backendLabel(); show('auth'); return; }
     const [tok, anchor] = decodeURIComponent(location.hash.slice(1)).split('~');
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
+    if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
     if (tok && bySlug.has(tok)) { showSheet(tok, anchor); return; }
     shown = null; currentTheme = themeById.has(tok) ? tok : null; view.innerHTML = ''; renderHome(); show('home');
   };
