@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1f4fa3">
-<meta name="description" content="Turn the how-to reels you save into sheets you can read on the mat, at the beach or in the kitchen.">
+<meta name="description" content="Turn the how-to videos you save into sheets you can read on the mat, at the beach or in the kitchen.">
 <title>Reelbook</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/reelbook-app.svg" type="image/svg+xml">
@@ -180,8 +180,8 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 <!-- ===== Setup: pick a backend ===== -->
 <div id="setup" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><span>reelbook</span></p>
-  <h1>Your reels, as sheets</h1>
-  <p class="lead">Paste the reels you want to keep: a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
+  <h1>Your videos, as sheets</h1>
+  <p class="lead">Paste the videos you want to keep (Instagram, TikTok, YouTube): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
   <div class="panel">
     <h2>Where should your data live?</h2>
     <div class="choice">
@@ -227,12 +227,12 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       <h1 id="h-title" class="brand-title">Reelbook</h1>
       <p class="cnt" id="count"></p>
     </div>
-    <button class="btn" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a reel</button>
+    <button class="btn" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
   </div>
 
   <form class="sheet" id="sheet-new" hidden>
-    <h2>Add a reel</h2>
-    <label>Instagram or TikTok link <input id="f-url" type="url" inputmode="url" placeholder="https://www.instagram.com/reel/…" required></label>
+    <h2>Add a video</h2>
+    <label>Instagram, TikTok or YouTube link <input id="f-url" type="url" inputmode="url" placeholder="https://…" required></label>
     <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/reelbook</code>.</p>
     <p class="err" id="f-err" hidden></p>
     <div class="actions"><button class="btn" type="submit" id="f-submit">Queue it</button><button class="btn ghost" type="button" id="f-cancel">Cancel</button></div>
@@ -252,7 +252,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <form id="custom-form" style="display:grid;gap:10px">
       <label>Custom notebook name <input id="c-name" type="text" maxlength="40" placeholder="Pottery" required></label>
       <label>What goes in it <textarea id="c-desc" minlength="30" maxlength="400" placeholder="Wheel throwing, trimming, glazing and kiln tips. Hand-building too." required></textarea></label>
-      <p class="hint">At least 30 characters. Written for Claude: what the reels are about and how you want them grouped.</p>
+      <p class="hint">At least 30 characters. Written for Claude: what the videos are about and how you want them grouped.</p>
       <p class="err" id="c-err" hidden></p>
       <div class="actions"><button class="btn" type="submit" id="c-submit">Create notebook</button><button class="btn ghost" type="button" id="c-cancel">Close</button></div>
     </form>
@@ -262,13 +262,13 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   <section class="howto" id="howto" hidden>
     <h2>How it works</h2>
     <ol>
-      <li><strong>On your phone</strong> A reel is worth keeping: tap « + Add a reel » and paste the link. From a notebook page, the notebook is noted. The link waits in the queue.</li>
+      <li><strong>On your phone</strong> A video is worth keeping: tap « + Add a video » and paste the link. From a notebook page, the notebook is noted. The link waits in the queue.</li>
       <li><strong>Every few days, on your computer</strong> Chrome open with the Claude in Chrome extension, then in Claude Code: <code>/reelbook</code>. Any folder works once the skill is installed.</li>
-      <li><strong>While it runs</strong> Keep the computer unlocked and the reel tab in front: the video does not load in the background. Expect 10 to 15 minutes per sheet, more for a session.</li>
+      <li><strong>While it runs</strong> Keep the computer unlocked and the video tab in front: the video does not load in the background. Expect 10 to 15 minutes per sheet, more for a session.</li>
     </ol>
     <p class="tip"><a href="#welcome">Setup guide for a new computer</a> · <a id="howto-repo" href="#" target="_blank" rel="noopener">the Reelbook repository</a>. Notes are taken inside each sheet.</p>
   </section>
-  <footer>Sheets are built from reels for personal use. Every sheet credits its author.</footer>
+  <footer>Sheets are built from videos for personal use. Every sheet credits its author.</footer>
 </div>
 
 <!-- ===== Welcome (after sign-up, and from "Setup guide") ===== -->
@@ -276,22 +276,22 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   <p class="eyebrow">Welcome to Reelbook</p>
   <h1>How it works</h1>
   <div class="panel">
-    <h2>1 · Save reels on your phone</h2>
-    <p>A reel is worth keeping: tap <b>+ Add a reel</b> and paste the link. It waits in the queue. That is all the phone does.</p>
+    <h2>1 · Save videos on your phone</h2>
+    <p>A video is worth keeping: tap <b>+ Add a video</b> and paste the link. It waits in the queue. That is all the phone does.</p>
   </div>
   <div class="panel">
     <h2>2 · Claude turns them into sheets</h2>
-    <p>Every now and then, when a few reels are waiting, you run the Reelbook skill on your computer. Claude opens each reel, watches it, picks the key frames and writes a sheet: photos, why it matters, key points, the steps in order.</p>
+    <p>Every now and then, when a few videos are waiting, you run the Reelbook skill on your computer. Claude opens each video, watches it, picks the key frames and writes a sheet: photos, why it matters, key points, the steps in order.</p>
     <p><b>What you need on that computer</b></p>
     <ul>
       <li><a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> (terminal, desktop app or VS Code), Pro plan or above.</li>
       <li>Chrome with the <a href="https://claude.com/chrome" target="_blank" rel="noopener">Claude in Chrome</a> extension.</li>
-      <li>Being signed in to Instagram and/or TikTok in that Chrome.</li>
+      <li>Being signed in to Instagram and/or TikTok in that Chrome (YouTube needs no sign-in).</li>
     </ul>
     <p><b>How a run goes</b></p>
     <ul>
-      <li>Open Claude Code and type <code>/reelbook</code>. Claude reads your queue and processes the reels one by one.</li>
-      <li>Keep Chrome open, not minimised, with the reel tab in front: the video does not play in the background.</li>
+      <li>Open Claude Code and type <code>/reelbook</code>. Claude reads your queue and processes the videos one by one.</li>
+      <li>Keep Chrome open, not minimised, with the video tab in front: the video does not play in the background.</li>
       <li>Expect 10 to 15 minutes per sheet. You can leave the computer to it.</li>
     </ul>
   </div>
@@ -321,7 +321,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   </div>
   <div class="panel">
     <h2>Your computer</h2>
-    <p class="hint">Claude turns your queued reels into sheets on a computer that has <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>, Chrome with the Claude in Chrome extension, and is signed in to Instagram or TikTok. You type <code>/reelbook</code> in Claude Code, keep Chrome open and in front, and wait. <a href="#welcome">Full guide</a>.</p>
+    <p class="hint">Claude turns your queued videos into sheets on a computer that has <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>, Chrome with the Claude in Chrome extension, and, for Instagram or TikTok, is signed in to them. You type <code>/reelbook</code> in Claude Code, keep Chrome open and in front, and wait. <a href="#welcome">Full guide</a>.</p>
     <p><b>Set it up once</b> <span class="hint">· paste one line in a terminal: code, Python tools, the skill, then your email and password.</span></p>
     <div id="s-install"></div>
     <p><b>Already installed, sign in again</b> <span class="hint">· inside the Reelbook folder.</span></p>
@@ -484,7 +484,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     ev.preventDefault(); const err = $('c-err'); err.hidden = true;
     const title = $('c-name').value.trim(), description = $('c-desc').value.trim();
     if (!title) { err.textContent = 'Give it a name.'; err.hidden = false; return; }
-    if (description.length < 30) { err.textContent = 'Describe it in at least 30 characters: that is what Claude reads to sort your reels.'; err.hidden = false; return; }
+    if (description.length < 30) { err.textContent = 'Describe it in at least 30 characters: that is what Claude reads to sort your videos.'; err.hidden = false; return; }
     const id = 'custom-' + (slugify(title) || Date.now().toString(36));
     if (themeById.has(id)) { err.textContent = 'You already have a notebook with that name.'; err.hidden = false; return; }
     $('c-submit').disabled = true;
@@ -509,7 +509,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null;
     $('h-crumb').hidden = !t;
-    $('h-eyebrow').textContent = t ? 'Find it fast, when you need it' : 'Your reels, by notebook';
+    $('h-eyebrow').textContent = t ? 'Find it fast, when you need it' : 'Your videos, by notebook';
     $('h-title').textContent = t ? t.title : 'Reelbook';
     $('h-title').classList.toggle('brand-title', !t);
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; if (t) $('picker').hidden = true;
@@ -523,13 +523,14 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const openForm = v => { sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (v) $('f-url').focus(); };
   btn.addEventListener('click', () => openForm(sheetForm.hidden));
   $('f-cancel').addEventListener('click', () => openForm(false));
-  const okHost = h => /(^|\.)instagram\.com$/.test(h) || /(^|\.)tiktok\.com$/.test(h);
+  const okHost = h => /(^|\.)(instagram|tiktok|youtube)\.com$/.test(h) || h === 'youtu.be';
+  const platformTag = h => /tiktok/.test(h) ? 'TT' : /youtube|youtu\.be/.test(h) ? 'YT' : 'IG';
   const renderQueue = docs => {
     $('queue-sec').hidden = docs.length === 0; $('queue-n').textContent = docs.length || '';
     $('queue').innerHTML = docs.map(d => {
       let host = ''; try { host = new URL(d.url).hostname; } catch {}
       const st = d.status === 'processing' ? 'in progress' : d.status === 'error' ? 'needs a look' : 'queued';
-      return `<div class="q"><div class="ico">${host.includes('tiktok') ? 'TT' : 'IG'}</div>
+      return `<div class="q"><div class="ico">${platformTag(host)}</div>
         <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
         <small>added ${fmtDate(d.created_at)}${d.theme && themeById.has(d.theme) ? ' · ' + esc(themeById.get(d.theme).title) : ''}${d.note ? ' · ' + esc(d.note) : ''}</small></div>
         <div style="display:flex;align-items:center;gap:4px"><span class="st">${st}</span><button type="button" data-del="${esc(d.id)}" aria-label="Remove from the queue" title="Remove">×</button></div></div>`;
@@ -544,7 +545,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     ev.preventDefault();
     const err = $('f-err'); err.hidden = true;
     let u; try { u = new URL($('f-url').value.trim()); } catch { err.textContent = 'That link is not valid.'; err.hidden = false; return; }
-    if (!okHost(u.hostname)) { err.textContent = 'Paste an instagram.com or tiktok.com link.'; err.hidden = false; return; }
+    if (!okHost(u.hostname)) { err.textContent = 'Paste an instagram.com, tiktok.com or youtube.com link.'; err.hidden = false; return; }
     $('f-submit').disabled = true;
     try {
       const row = {url: u.toString()}; if (currentTheme) row.theme = currentTheme;

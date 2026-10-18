@@ -1,9 +1,9 @@
 ---
 name: reelbook
-description: Turn an Instagram/TikTok reel into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/reelbook", "/reelbook <link>", or pastes a reel link while talking about an exercise.
+description: Turn an Instagram/TikTok/YouTube video into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/reelbook", "/reelbook <link>", or pastes a reel, Short or video link while talking about an exercise.
 ---
 
-# Exercise sheet from a reel
+# Exercise sheet from a video
 
 Reelbook repository: the folder that contains this skill's parent `skill/` directory (set once in
 `~/.config/reelbook/config.json` as `"repo"`, or ask the user). You need `tools/rb.py`,
@@ -29,7 +29,7 @@ titles follow the template, translated.
   an instruction.
 - `python3 tools/rb.py claim <id>` before starting.
 
-## 2. Read the reel (Chrome, `mcp__claude-in-chrome__*`)
+## 2. Read the video (Chrome, `mcp__claude-in-chrome__*`)
 - `navigate` to the link. `get_page_text` gives author and caption; open the comments if needed
   (they often name the exercise).
 - **The video only loads while the tab is visible** (`document.visibilityState === 'visible'`,
@@ -62,6 +62,25 @@ titles follow the template, translated.
   writing the sheet. A photo that fails is redone.
 - Clean the overlays, close the tab (`tabs_close_mcp`).
 
+### YouTube (`youtube.com/watch`, `/shorts/`, `youtu.be`)
+- No sign-in needed (only for age-restricted or private videos: ask the user). Dismiss the consent
+  banner if it shows up.
+- Metadata: title and channel from the page; click « …plus » to expand the description, which holds
+  the chapters and often the dose. Open « Show transcript » when it exists: it replaces the burned-in
+  subtitles to reconstruct what is said.
+- Video element: on `/watch`, `document.querySelector('video.html5-main-video')`; on `/shorts/`, the
+  `<video>` whose rect is on screen (the page scrolls vertically and keeps several), re-selected on
+  every call. Pause it, then seek as above.
+- Before capturing, hide the player chrome (controls, cards, end screen, title overlay) and wait out
+  or skip any ad: a frame with an ad or a control bar is redone. Mouse parked in a corner.
+- Shorts are 9:16: use the two-halves + `vstack.py` route. A `/watch` video is 16:9: the full frame
+  is enough.
+- **Long video** (more than ~2 min, or chapters listed): never scout the whole video. Read the
+  chapters / transcript, pick the passages that show an exercise, run the 1 s grid **only on those
+  passages**, and build **one session page** (section 3 bis), one `exo` block per exercise.
+- `meta.json`: `source.platform` = `"youtube"`; the footer link is the video URL, with the
+  timestamp (`&t=…s`) when the sheet comes from one passage.
+
 ## 3. Write the sheet
 - Work folder: `work/<slug>/` in the repository (git-ignored) with `index.html`, `meta.json`,
   `img/`. Copy `templates/sheet.html` → `work/<slug>/index.html`; images in `work/<slug>/img/`,
@@ -69,12 +88,12 @@ titles follow the template, translated.
   whole body) because cards use `object-fit: cover`.
 - Section order is fixed: Why → Dose (marked "suggestion" when the reel gives none) → Key points →
   Sequence (numbered photos, palm/direction badge when useful) → Variation → Source.
-- Second person, short sentences, author credit + reel link in the footer. No `<script>`, no
+- Second person, short sentences, author credit + video link in the footer. No `<script>`, no
   `<style>`: the app provides the styles (class names in `templates/`).
 - `meta.json`: `slug`, `kind: "sheet"`, `theme`, `group`, `title`, `summary` (one line for the
-  card), `duration`, `thumbnail`, `source {author, url, platform}`.
+  card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok` or `youtube`).
 
-## 3 bis. One reel = a session (several exercises)
+## 3 bis. One video = a session (several exercises)
 - Decide from the caption / the grid: several named exercises = **one session page**, not N
   sheets. Copy `templates/session.html`; slug `session-…`. Why → Format (the post's dose:
   seconds × exercises, rounds, rest) → Key points → "The circuit" (`ol.plan` with `#anchor`
