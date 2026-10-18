@@ -139,6 +139,10 @@ Issues and pull requests welcome, in particular for: TikTok and YouTube page qui
 run of the skill, better templates for yoga and fight sheets. Keep the app a single file and
 the tools standard-library plus Pillow.
 
+Pull requests run authentication flow checks in GitHub Actions. Run them locally with
+`node --test tests/auth-flow.test.cjs` (Node.js 22 or newer). The required check must pass before
+merging to `main`.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
