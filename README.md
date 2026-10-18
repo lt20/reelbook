@@ -27,11 +27,14 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 - A backend for your data. Two options:
   - **Your own Supabase project**, free tier. Ten minutes: [docs/own-supabase.md](docs/own-supabase.md).
   - **The hosted backend** run by the maintainers, when enabled in `app/config.js`. Free for now;
-    it may become a paid option later. Your data stays private to your account either way.
+    a paid hosted plan is planned. Your data stays private to your account either way.
 
 ## Quick start
 
-1. Open the app, pick a backend, create an account. Install it on your phone (*Add to Home screen*).
+1. Open the app and choose **Create an account**. Pick a backend, then enter your email and
+   password. Returning users sign in directly; on a new device, **Sign in to my own instance**
+   lets self-hosted users enter their Supabase URL and anon key once. Install the app on your
+   phone (*Add to Home screen*).
 2. Save a video: **+ Add a video**, paste the link. It shows under *In the queue*.
 3. On your computer, paste the install line shown in the app's **Settings** page (it carries your
    backend's URL and key). macOS / Linux:

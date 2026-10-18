@@ -34,8 +34,10 @@ and every table in the schema is locked to the signed-in user.
 ## 5. Open the app and sign up
 
 Open the Reelbook app (the hosted copy at the URL given in the README, or your own copy of
-`app/` served from any static host or `python3 -m http.server` inside `app/`). Choose **My own
-Supabase project**, paste URL and anon key, create an account with an email and a password.
+`app/` served from any static host or `python3 -m http.server` inside `app/`). Choose **Create
+an account**, then **My own Supabase project**. Paste the URL and anon key, and create your
+account with an email and a password. On another device, use **Sign in to my own instance**
+to enter the same URL and anon key once before signing in.
 
 Install it on your phone from the browser menu: *Add to Home screen* (Android, Chrome) or
 *Share → Add to Home Screen* (iOS, Safari).
