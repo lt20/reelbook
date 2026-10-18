@@ -17,7 +17,7 @@ Session file: ~/.config/reelbook/config.json (chmod 600). Override with REELBOOK
 meta.json for publish:
     {"slug": "floor-angel", "kind": "sheet", "theme": "strength", "group": "Shoulders",
      "title": "Floor angel", "summary": "…", "duration": "3 min", "thumbnail": "img/thumb.jpg",
-     "source": {"author": "Georges St-Pierre", "url": "https://…", "platform": "instagram"},
+     "source": {"author": "Georges St-Pierre", "url": "https://…", "platform": "instagram | tiktok | youtube"},
      "exercises": []}      # sessions only: [{"anchor","title","group","summary","duration","thumbnail"}]
 """
 import json, os, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error

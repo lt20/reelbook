@@ -1,19 +1,19 @@
 # Reelbook
 
-Turn the how-to reels you save on Instagram or TikTok into **sheets you can actually use**:
+Turn the how-to videos you save on Instagram, TikTok or YouTube into **sheets you can actually use**:
 photos taken from the video, why it matters, how much to do, the key points, the steps in
 order, the source. A kitesurf transition, a yoga flow, a knife technique, a pole spin, a judo
-throw: one reel, one sheet, filed in the notebook of your choice.
+throw: one video, one sheet, filed in the notebook of your choice.
 
 Notebooks are yours to pick: 29 built-in ones (strength, yoga, running, surfing, pilates,
 cooking, beauty, crafts…) plus any notebook you describe yourself.
 
 Two parts:
 
-- **The app** (`app/`): a small installable web app. You paste reel links from your phone and
+- **The app** (`app/`): a small installable web app. You paste video links from your phone and
   read your sheets there. No store, no build step: a static page talking to a Supabase backend.
 - **The skill** (`skill/reelbook/`): instructions for [Claude Code](https://claude.com/claude-code).
-  Every few days you run it on your computer. It opens each queued reel in Chrome, watches it,
+  Every few days you run it on your computer. It opens each queued video in Chrome, watches it,
   extracts the key frames, writes the sheet and publishes it to your backend.
 
 This is a tinkerer's tool. It works, we use it daily, but it leans on Claude Code, a Chrome
@@ -22,7 +22,7 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 ## What you need
 
 - **Claude Code** with a Pro plan or above, and the **Claude in Chrome** extension installed in
-  a Chrome where you are signed in to Instagram and/or TikTok.
+  a Chrome where you are signed in to Instagram and/or TikTok (YouTube needs no sign-in).
 - **Python 3.10+** with Pillow (`pip install pillow`) for the image tools.
 - A backend for your data. Two options:
   - **Your own Supabase project**, free tier. Ten minutes: [docs/own-supabase.md](docs/own-supabase.md).
@@ -32,7 +32,7 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 ## Quick start
 
 1. Open the app, pick a backend, create an account. Install it on your phone (*Add to Home screen*).
-2. Save a reel: **+ Add a reel**, paste the link. It shows under *In the queue*.
+2. Save a video: **+ Add a video**, paste the link. It shows under *In the queue*.
 3. On your computer, paste the install line shown in the app's **Settings** page (it carries your
    backend's URL and key). macOS / Linux:
 
@@ -51,9 +51,9 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    hand? [docs/manual-install.md](docs/manual-install.md).
 
 4. Start Claude Code anywhere, open Chrome next to it, and type `/reelbook`.
-   Keep the computer unlocked and the reel tab in front: the video does not load in the
+   Keep the computer unlocked and the video tab in front: the video does not load in the
    background. Claude asks you to bring the tab forward when needed.
-5. Ten to fifteen minutes later the sheet is in the app, under its theme and group. A reel with
+5. Ten to fifteen minutes later the sheet is in the app, under its theme and group. A video with
    several exercises becomes one *session* page, each exercise also listed in its group.
 
 ## Notebooks
@@ -62,13 +62,13 @@ Sheets live in notebooks. A new account starts with three (Strength, Yoga & stre
 techniques). **+ Add a notebook** on the home page offers the built-in library (kitesurf,
 wingfoil, surfing, running, pilates, barre, pole dance, dance, prenatal, cooking, beauty, crafts… 29 in
 `app/config.js`) and a **custom notebook**: a name plus a description of what goes in it. The
-description is written for Claude: it is what the skill reads to decide where a reel belongs
+description is written for Claude: it is what the skill reads to decide where a video belongs
 and how to group it. Notebooks are per account; remove one from Settings when it is empty.
 
 ## How a sheet is made
 
 1. `rb.py themes` lists your notebooks, `rb.py queue` your queued links; Claude claims one.
-2. Chrome opens the reel. Claude reads caption and comments, draws a grid of frames (one per
+2. Chrome opens the video. Claude reads caption and comments, draws a grid of frames (one per
    second, then every half second on the useful phase) and reads the burned-in subtitles.
 3. It picks the key positions, captures them full size, crops them so the **whole body** stays
    visible (head, hands, feet), rebuilds vertical frames from two halves, and checks every photo.
@@ -114,7 +114,7 @@ shell; sheets and photos need the network.
 
 ## What can break
 
-- **The capture pipeline.** It drives Instagram and TikTok pages through a browser. A DOM change
+- **The capture pipeline.** It drives Instagram, TikTok and YouTube pages through a browser. A DOM change
   on their side, a login wall or a video element replaced mid-session will need a fix in
   `SKILL.md`. The skill already re-selects the live video and times out seeks for that reason.
 - **Tab visibility.** Browsers do not decode video in background tabs. Claude asks you to bring
@@ -132,7 +132,7 @@ extension exist there, the tools are plain Python + Pillow) but have not been tr
 
 ## Contributing
 
-Issues and pull requests welcome, in particular for: TikTok page quirks, a Windows or Linux
+Issues and pull requests welcome, in particular for: TikTok and YouTube page quirks, a Windows or Linux
 run of the skill, better templates for yoga and fight sheets. Keep the app a single file and
 the tools standard-library plus Pillow.
 
