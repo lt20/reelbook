@@ -177,15 +177,15 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 </head>
 <body>
 
-<!-- ===== Setup: pick a backend ===== -->
+<!-- ===== Sign-up: pick a backend ===== -->
 <div id="setup" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><span>reelbook</span></p>
   <h1>Your videos, as sheets</h1>
   <p class="lead">Paste the videos you want to keep (Instagram, TikTok, YouTube): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
   <div class="panel">
-    <h2>Where should your data live?</h2>
+    <h2>Where should your new account live?</h2>
     <div class="choice">
-      <button type="button" id="pick-hosted"><b id="hosted-name">Hosted backend</b><span id="hosted-blurb">Free for now. No setup, your data stays private to your account.</span></button>
+      <button type="button" id="pick-hosted"><b id="hosted-name">Hosted backend</b><span id="hosted-blurb">Free for now. A paid hosted plan is planned; no setup required.</span></button>
       <button type="button" id="pick-own"><b>My own Supabase project</b><span>Free tier is enough. You run one SQL file, then paste the project URL and anon key here.</span></button>
     </div>
     <form id="own-form" hidden>
@@ -197,6 +197,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
         <div class="actions"><button class="btn" type="submit">Use this project</button><button class="btn ghost" type="button" id="own-cancel">Back</button></div>
       </div>
     </form>
+    <p class="hint">Already have an account? <a href="#" id="setup-signin">Sign in</a></p>
   </div>
 </div>
 
@@ -213,7 +214,15 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       <button class="btn" type="submit" id="a-submit">Sign in</button>
       <button class="btn ghost" type="button" id="a-toggle">Create an account</button>
     </div>
-    <p class="hint">Backend: <span id="a-backend"></span> · <a href="#" id="a-reset">change</a></p>
+    <p class="hint">Backend: <span id="a-backend"></span> · <a href="#" id="a-own">Sign in to my own instance</a><a href="#" id="a-hosted" hidden> · Use Reelbook hosted</a></p>
+  </form>
+  <form class="panel" id="login-own-form" hidden>
+    <h2>Connect your own instance</h2>
+    <p class="hint">Enter your Supabase project details once on this device.</p>
+    <label>Project URL <input id="login-own-url" type="url" placeholder="https://xxxx.supabase.co" required></label>
+    <label>Anon key <input id="login-own-key" type="text" placeholder="eyJhbGciOi…" required autocomplete="off"></label>
+    <p class="err" id="login-own-err" hidden></p>
+    <div class="actions"><button class="btn" type="submit">Use this instance</button><button class="btn ghost" type="button" id="login-own-cancel">Cancel</button></div>
   </form>
 </div>
 
@@ -354,50 +363,72 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
   // ---------- backend selection ----------
   const hostedOk = !!(CFG.hosted && CFG.hosted.url && CFG.hosted.anonKey);
+  const hostedBackend = () => hostedOk ? {mode: 'hosted', url: CFG.hosted.url, key: CFG.hosted.anonKey} : null;
   const readBackend = () => { try { return JSON.parse(ls.get('rb.backend') || 'null'); } catch { return null; } };
-  let backend = readBackend();
-  if (backend && backend.mode === 'hosted') backend = hostedOk ? {mode: 'hosted', url: CFG.hosted.url, key: CFG.hosted.anonKey} : null;
+  const rememberedBackend = () => {
+    const saved = readBackend();
+    if (saved && saved.mode === 'hosted') return hostedBackend();
+    if (saved && saved.mode === 'own' && saved.url && saved.key) return saved;
+    return hostedBackend();
+  };
+  let backend = rememberedBackend();
   let sb = null;
-  const backendLabel = () => backend ? (backend.mode === 'hosted' ? CFG.hosted.name : backend.url.replace(/^https?:\/\//, '')) : '';
+  const backendLabel = () => backend ? (backend.mode === 'hosted' ? (CFG.hosted.name || 'Reelbook hosted') : backend.url.replace(/^https?:\/\//, '')) : 'No backend selected';
+  const selectBackend = (next, remember = true) => { backend = next; if (remember && next) ls.set('rb.backend', JSON.stringify(next.mode === 'hosted' ? {mode: 'hosted'} : next)); boot(); };
+  const ownBackend = (urlInput, keyInput) => {
+    let url; try { url = new URL(urlInput.trim()); } catch { throw new Error('That URL is not valid.'); }
+    if (!['https:', 'http:'].includes(url.protocol)) throw new Error('Use an http or https project URL.');
+    const key = keyInput.trim();
+    if (key.length < 20) throw new Error('That does not look like an anon key.');
+    return {mode: 'own', url: url.origin, key};
+  };
 
   $('hosted-name').textContent = CFG.hosted.name || 'Hosted backend';
   $('hosted-blurb').textContent = hostedOk ? CFG.hosted.blurb : 'Not available yet.';
   $('pick-hosted').disabled = !hostedOk;
   $('own-guide').href = CFG.repo + '/blob/main/docs/own-supabase.md';
   $('howto-repo').href = CFG.repo;
-  $('pick-hosted').addEventListener('click', () => { backend = {mode: 'hosted', url: CFG.hosted.url, key: CFG.hosted.anonKey}; ls.set('rb.backend', JSON.stringify({mode: 'hosted'})); boot(); });
+  $('pick-hosted').addEventListener('click', () => { signupBackendChosen = true; selectBackend(hostedBackend(), false); });
   $('pick-own').addEventListener('click', () => { $('own-form').hidden = false; $('own-url').focus(); });
   $('own-cancel').addEventListener('click', () => { $('own-form').hidden = true; });
   $('own-form').addEventListener('submit', ev => {
     ev.preventDefault();
     const err = $('own-err'); err.hidden = true;
-    let url; try { url = new URL($('own-url').value.trim()); } catch { err.textContent = 'That URL is not valid.'; err.hidden = false; return; }
-    const key = $('own-key').value.trim();
-    if (key.length < 20) { err.textContent = 'That does not look like an anon key.'; err.hidden = false; return; }
-    backend = {mode: 'own', url: url.origin, key};
-    ls.set('rb.backend', JSON.stringify(backend)); boot();
+    try { const next = ownBackend($('own-url').value, $('own-key').value); signupBackendChosen = true; selectBackend(next, false); }
+    catch (e) { err.textContent = e.message; err.hidden = false; }
   });
-  const resetBackend = async () => { if (sb) { try { await sb.auth.signOut(); } catch {} } ls.del('rb.backend'); backend = null; sb = null; $('own-form').hidden = true; $('own-form').reset(); location.hash = ''; boot(); };
-  $('a-reset').addEventListener('click', ev => { ev.preventDefault(); resetBackend(); });
-  $('s-reset').addEventListener('click', resetBackend);
+  $('login-own-form').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const err = $('login-own-err'); err.hidden = true;
+    try { selectBackend(ownBackend($('login-own-url').value, $('login-own-key').value)); $('login-own-form').hidden = true; }
+    catch (e) { err.textContent = e.message; err.hidden = false; }
+  });
+  $('a-own').addEventListener('click', ev => { ev.preventDefault(); $('login-own-err').hidden = true; $('login-own-form').hidden = false; $('login-own-url').focus(); });
+  $('login-own-cancel').addEventListener('click', () => { $('login-own-form').hidden = true; });
+  $('a-hosted').addEventListener('click', ev => { ev.preventDefault(); $('login-own-form').hidden = true; selectBackend(hostedBackend()); });
+  $('s-reset').addEventListener('click', async () => { if (sb) await sb.auth.signOut(); ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
 
   // ---------- auth ----------
-  let mode = 'in';
-  const setMode = m => { mode = m; $('auth-title').textContent = m === 'in' ? 'Sign in' : 'Create an account'; $('a-submit').textContent = m === 'in' ? 'Sign in' : 'Create account'; $('a-toggle').textContent = m === 'in' ? 'Create an account' : 'I already have an account'; $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-info').hidden = true; };
-  $('a-toggle').addEventListener('click', () => setMode(mode === 'in' ? 'up' : 'in'));
+  let mode = 'in', signupBackendChosen = false, authBusy = false;
+  const setMode = m => { mode = m; $('auth-title').textContent = m === 'in' ? 'Sign in' : 'Create an account'; $('a-submit').textContent = m === 'in' ? 'Sign in' : 'Create account'; $('a-toggle').textContent = m === 'in' ? 'Create an account' : 'I already have an account'; $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-info').hidden = true; $('login-own-form').hidden = true; };
+  const returnToSignin = () => { setMode('in'); signupBackendChosen = false; selectBackend(rememberedBackend(), false); };
+  $('a-toggle').addEventListener('click', () => { if (mode === 'up') returnToSignin(); else { setMode('up'); signupBackendChosen = false; route(); } });
+  $('setup-signin').addEventListener('click', ev => { ev.preventDefault(); returnToSignin(); });
   $('auth-form').addEventListener('submit', async ev => {
     ev.preventDefault();
-    const err = $('a-err'), info = $('a-info'); err.hidden = true; info.hidden = true; $('a-submit').disabled = true;
-    const email = $('a-email').value.trim(), password = $('a-pass').value;
+    const err = $('a-err'), info = $('a-info'); err.hidden = true; info.hidden = true; authBusy = true; $('a-submit').disabled = true;
+    const email = $('a-email').value.trim(), password = $('a-pass').value, client = sb, selectedBackend = backend, authMode = mode;
     try {
-      if (mode === 'in') {
-        const {error} = await sb.auth.signInWithPassword({email, password}); if (error) throw error;
+      if (authMode === 'in') {
+        const {error} = await client.auth.signInWithPassword({email, password}); if (client !== sb) return; if (error) throw error;
+        ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
       } else {
-        const {data, error} = await sb.auth.signUp({email, password}); if (error) throw error;
-        if (!data.session) { info.textContent = 'Account created. Check your inbox to confirm your email, then sign in.'; info.hidden = false; setMode('in'); }
+        const {data, error} = await client.auth.signUp({email, password}); if (client !== sb) return; if (error) throw error;
+        ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
+        if (!data.session) { setMode('in'); route(); info.textContent = 'Account created. Check your inbox to confirm your email, then sign in.'; info.hidden = false; }
       }
-    } catch (e) { err.textContent = e.message || 'Could not sign in.'; err.hidden = false; }
-    finally { $('a-submit').disabled = false; }
+    } catch (e) { if (client === sb) { err.textContent = e.message || 'Could not sign in.'; err.hidden = false; } }
+    finally { authBusy = false; $('a-submit').disabled = !backend; }
   });
   $('s-signout').addEventListener('click', async () => { await sb.auth.signOut(); location.hash = ''; });
 
@@ -619,8 +650,15 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
   // ---------- routing ----------
   const route = () => {
-    if (!backend) { show('setup'); return; }
-    if (!user) { $('a-backend').textContent = backendLabel(); show('auth'); return; }
+    if (!user) {
+      if (mode === 'up' && !signupBackendChosen) { show('setup'); return; }
+      $('a-backend').textContent = backendLabel();
+      $('a-submit').disabled = !backend || authBusy;
+      $('a-own').hidden = mode !== 'in';
+      $('a-own').textContent = backend && backend.mode === 'own' ? 'Change instance' : 'Sign in to my own instance';
+      $('a-hosted').hidden = mode !== 'in' || !hostedOk || !backend || backend.mode === 'hosted';
+      show('auth'); return;
+    }
     const [tok, anchor] = decodeURIComponent(location.hash.slice(1)).split('~');
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
@@ -631,22 +669,32 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && user && !$('home').hidden) refreshQueue(); });
 
   // ---------- boot ----------
-  let booted = null;
+  let booted = null, authSubscription = null;
   const boot = () => {
-    if (!backend) { user = null; route(); return; }
-    if (booted !== backend.url) {
+    const identity = backend ? backend.url + '|' + backend.key : null;
+    if (booted !== identity) {
+      if (authSubscription) authSubscription.unsubscribe();
+      authSubscription = null;
+      booted = identity;
+      sb = null; user = null; sheets = []; bySlug = new Map(); notesIndex = new Set(); signed.clear(); cache.clear(); loadError = '';
+    }
+    if (!backend) { route(); return; }
+    if (!sb) {
       sb = supabase.createClient(backend.url, backend.key, {auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
-      booted = backend.url;
+      const client = sb;
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
-      sb.auth.onAuthStateChange((ev, session) => {
+      const {data} = client.auth.onAuthStateChange((ev, session) => {
+        if (client !== sb) return;
         const next = session ? session.user : null;
         const changed = (next && next.id) !== (user && user.id);
         user = next;
         if (changed) { sheets = []; bySlug = new Map(); notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
-        if (changed && user) setTimeout(reload, 0);
+        if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });
-    } else route();
+      authSubscription = data.subscription;
+    }
+    route();
   };
   boot();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

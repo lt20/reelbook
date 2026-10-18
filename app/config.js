@@ -8,7 +8,7 @@ window.REELBOOK = {
     name: 'Reelbook hosted',
     url: 'https://xgarsygrkfnfyvxkcxdm.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnYXJzeWdya2ZuZnl2eGtjeGRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyODk1NjIsImV4cCI6MjEwNjg2NTU2Mn0.ThclH-X2LC4MURxf27jFsjYHXzohJ8HYrscbd8E8U3I',
-    blurb: 'Free for now. No setup, your data stays private to your account.'
+    blurb: 'Free for now. A paid hosted plan is planned; no setup required.'
   },
   // Notebooks turned on for a brand-new account.
   defaults: ['strength', 'yoga', 'fight'],
