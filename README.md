@@ -1,6 +1,6 @@
 # Reelbook
 
-Turn the how-to videos you save on Instagram, TikTok or YouTube into **sheets you can actually use**:
+Turn the how-to videos you save on Instagram, TikTok, YouTube or Facebook into **sheets you can actually use**:
 photos taken from the video, why it matters, how much to do, the key points, the steps in
 order, the source. A kitesurf transition, a yoga flow, a knife technique, a pole spin, a judo
 throw: one video, one sheet, filed in the notebook of your choice.
@@ -22,7 +22,7 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 ## What you need
 
 - **Claude Code** with a Pro plan or above, and the **Claude in Chrome** extension installed in
-  a Chrome where you are signed in to Instagram and/or TikTok (YouTube needs no sign-in).
+  a Chrome where you are signed in to Instagram, TikTok and/or Facebook (YouTube needs no sign-in).
 - **Python 3.10+** with Pillow (`pip install pillow`) for the image tools.
 - A backend for your data. Two options:
   - **Your own Supabase project**, free tier. Ten minutes: [docs/own-supabase.md](docs/own-supabase.md).
@@ -117,7 +117,7 @@ shell; sheets and photos need the network.
 
 ## What can break
 
-- **The capture pipeline.** It drives Instagram, TikTok and YouTube pages through a browser. A DOM change
+- **The capture pipeline.** It drives Instagram, TikTok, YouTube and Facebook pages through a browser. A DOM change
   on their side, a login wall or a video element replaced mid-session will need a fix in
   `SKILL.md`. The skill already re-selects the live video and times out seeks for that reason.
 - **Tab visibility.** Browsers do not decode video in background tabs. Claude asks you to bring
@@ -135,7 +135,7 @@ extension exist there, the tools are plain Python + Pillow) but have not been tr
 
 ## Contributing
 
-Issues and pull requests welcome, in particular for: TikTok and YouTube page quirks, a Windows or Linux
+Issues and pull requests welcome, in particular for: TikTok, YouTube and Facebook page quirks, a Windows or Linux
 run of the skill, better templates for yoga and fight sheets. Keep the app a single file and
 the tools standard-library plus Pillow.
 
