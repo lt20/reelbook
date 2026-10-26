@@ -16,6 +16,9 @@ set -u
 LABEL="com.reelbook.nightly"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 LOG="$HOME/Library/Logs/reelbook-nightly.log"
+# macOS lists background items by the file launchd starts: a launcher with a readable name, which
+# stays the same when this script is updated (so the « background item added » notice does not return).
+LAUNCHER="$HOME/Library/Application Support/Reelbook/Reelbook night run"
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 # Main checkout, even when called from a git worktree (work/ and .venv/ live there).
 REPO="$(cd "$(dirname "$SELF")" && cd "$(git rev-parse --git-common-dir 2>/dev/null || echo ..)/.." && pwd)"
@@ -83,7 +86,10 @@ cmd_install() {
   case "$at" in [0-2][0-9]:[0-5][0-9]) ;; *) echo "time must be HH:MM" >&2; exit 2 ;; esac
   [ -x "$CLAUDE" ] || { echo "claude not found: set CLAUDE_BIN" >&2; exit 1; }
   local notify_url="${REELBOOK_NOTIFY_URL:-${RALPH_NOTIFY_URL:-}}"
-  mkdir -p "$(dirname "$PLIST")" "$(dirname "$LOG")"
+  mkdir -p "$(dirname "$PLIST")" "$(dirname "$LOG")" "$(dirname "$LAUNCHER")"
+  printf '#!/bin/bash\n# Reelbook: processes the video queue at night. Remove with: %s uninstall\nexec "%s" "$@"\n' \
+    "$REPO/tools/nightly.sh" "$REPO/tools/nightly.sh" > "$LAUNCHER"
+  chmod +x "$LAUNCHER"
   cat > "$PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -91,7 +97,7 @@ cmd_install() {
 <dict>
   <key>Label</key><string>$LABEL</string>
   <key>ProgramArguments</key>
-  <array><string>$SELF</string><string>run</string><string>--at</string><string>$at</string></array>
+  <array><string>$LAUNCHER</string><string>run</string><string>--at</string><string>$at</string></array>
   <key>StartCalendarInterval</key>
   <dict><key>Hour</key><integer>$((10#${at%%:*}))</integer><key>Minute</key><integer>$((10#${at##*:}))</integer></dict>
   <key>EnvironmentVariables</key>
@@ -107,12 +113,12 @@ cmd_install() {
 EOF
   launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null
   launchctl bootstrap "gui/$(id -u)" "$PLIST" || exit 1
-  echo "Installed: every night at $at. Log: $LOG"
+  echo "Installed: every night at $at, listed by macOS as « Reelbook night run ». Log: $LOG"
 }
 
 cmd_uninstall() {
   launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null
-  rm -f "$PLIST"
+  rm -f "$PLIST" "$LAUNCHER"
   echo "Uninstalled."
 }
 
