@@ -1,6 +1,7 @@
 ---
 name: reelbook
 description: Turn an Instagram/TikTok/YouTube/Facebook video into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/reelbook", "/reelbook <link>", or pastes a reel, Short or video link while talking about an exercise.
+model: claude-opus-5-5
 ---
 
 # Exercise sheet from a video

@@ -23,6 +23,9 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 
 - **Claude Code** with a Pro plan or above, and the **Claude in Chrome** extension installed in
   a Chrome where you are signed in to Instagram, TikTok and/or Facebook (YouTube needs no sign-in).
+- **Claude Opus 5.5.** The skill and the overnight run ask for it (`model: claude-opus-5-5`). It is
+  the only model Reelbook is tested with: picking the peak frame and cropping the whole body lean
+  on vision, and lighter models are not guaranteed to get them right.
 - **Python 3.10+** with Pillow (`pip install pillow`) for the image tools.
 - A backend for your data. Two options:
   - **Your own Supabase project**, free tier. Ten minutes: [docs/own-supabase.md](docs/own-supabase.md).

@@ -70,7 +70,7 @@ cmd_run() {
   log "$n queued, processing up to $max"
   cd "$REPO" || exit 1
   # -u wakes the display, -d keeps it on while Claude works.
-  caffeinate -dimsu "$CLAUDE" -p --chrome --permission-mode auto \
+  caffeinate -dimsu "$CLAUDE" -p --chrome --model claude-opus-5-5 --permission-mode auto \
     "/reelbook process the queue, at most $max requests, then stop and list the sheet links" </dev/null
   status=$?
   left="$(queued || echo '?')"
