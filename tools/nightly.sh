@@ -85,7 +85,9 @@ cmd_install() {
   local at="${1:-02:00}"
   case "$at" in [0-2][0-9]:[0-5][0-9]) ;; *) echo "time must be HH:MM" >&2; exit 2 ;; esac
   [ -x "$CLAUDE" ] || { echo "claude not found: set CLAUDE_BIN" >&2; exit 1; }
-  local notify_url="${REELBOOK_NOTIFY_URL:-${RALPH_NOTIFY_URL:-}}"
+  # a reinstall keeps the topic already in the LaunchAgent
+  local kept; kept="$(plutil -extract EnvironmentVariables.REELBOOK_NOTIFY_URL raw "$PLIST" 2>/dev/null)"
+  local notify_url="${REELBOOK_NOTIFY_URL:-${kept:-${RALPH_NOTIFY_URL:-}}}"
   mkdir -p "$(dirname "$PLIST")" "$(dirname "$LOG")" "$(dirname "$LAUNCHER")"
   printf '#!/bin/bash\n# Reelbook: processes the video queue at night. Remove with: %s uninstall\nexec "%s" "$@"\n' \
     "$REPO/tools/nightly.sh" "$REPO/tools/nightly.sh" > "$LAUNCHER"
