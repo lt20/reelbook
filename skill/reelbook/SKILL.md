@@ -37,9 +37,51 @@ titles follow the template, translated.
 - Find the video: `[...document.querySelectorAll('video')].find(v => v.getBoundingClientRect().width > 100)`,
   `pause()`, seek via `currentTime` + the `seeked` event (4 s timeout: Instagram sometimes
   replaces the `<video>` element mid-session, re-select it on every call).
-- Scouting grid: a 148×263 canvas per second, then every 0.5 s on the useful phase, drawn in a
-  fixed full-screen `div` → `screenshot`. Burned-in subtitles sit in the 60–75 % band of the
-  height: read them to reconstruct what is said.
+- **Scouting, three passes.** One frame per second misses movements: a rep plus its variation
+  lasts about 1 s, so 1 fps keeps landing on the same phase (a reel of 10 push-ups, each followed
+  by a different tap, came out as "plank, push-up, pike"). Helper, pasted once per tab with
+  `javascript_tool`; it draws timestamped thumbnails in a fixed full-screen `div#__grid` →
+  `screenshot`:
+  ```js
+  window.__sheet = async (t0, step, n, W = 230, H = 205, y0 = 0, y1 = 1) => {
+    const pick = () => [...document.querySelectorAll('video')].find(v => v.getBoundingClientRect().width > 100);
+    const seek = t => new Promise(res => { const v = pick(); v.pause();
+      const to = setTimeout(() => res(v), 4000);
+      v.addEventListener('seeked', () => { clearTimeout(to); res(v); }, { once: true });
+      v.currentTime = t; });
+    document.getElementById('__grid')?.remove();
+    const g = document.createElement('div'); g.id = '__grid';
+    g.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#000;display:flex;flex-wrap:wrap;align-content:flex-start;gap:2px;padding:2px';
+    document.body.appendChild(g);
+    for (let i = 0; i < n; i++) {
+      const t = t0 + i * step, v = await seek(t), c = document.createElement('canvas');
+      c.width = W; c.height = H; const x = c.getContext('2d');
+      const sy = v.videoHeight * y0, sh = v.videoHeight * (y1 - y0);
+      x.drawImage(v, 0, sy, v.videoWidth, sh, 0, 0, W, H);
+      x.fillStyle = '#ff0'; x.font = 'bold 18px sans-serif'; x.fillText(t.toFixed(1), 4, 20);
+      g.appendChild(c);
+    }
+    return n;
+  };
+  ```
+  `y0`/`y1` crop the thumbnails to the band where the subject is (e.g. `0.3, 0.8` for someone on
+  the floor in a 9:16 video), so hands and feet stay readable; pick `W`/`H` to keep the aspect
+  of that band. Fit the grid to `innerWidth`/`innerHeight` (230×205 gives 5 or 6 columns, about
+  25 per screen) and check the last row is on screen. Remove `#__grid` before the final captures.
+  - **Pass A, inventory, the whole video**: one frame every **0.2 s** from the first to the last
+    second (`__sheet(0, 0.2, 30, …)`, then `__sheet(6, 0.2, 30, …)`…). Video longer than ~60 s:
+    1 s to find the passages, then 0.2 s on each of them.
+  - **Pass B, written timeline**: before any photo, write the timeline `start–end s → movement`
+    covering **the whole video**, with no unexplained gap over 1 s. Look for cycles (a rep + a
+    variation that alternates sides or changes every pair). Count reps by writing down the time of
+    each one (push-ups at 1.8, 2.8, 3.8 s…), never by estimating: a guessed count was off by two. Every
+    distinct movement in the timeline gets at least one photo. A gap or a doubt = another 0.2 s
+    grid on that passage.
+  - **Pass C, peak**: around each photo kept, a **0.1 s** grid over ±0.3 s to pick the peak frame
+    (hand down, knee closest, hips highest). 0.1 s finds no new movement, it finds the best image.
+- Burned-in subtitles sit in the 60–75 % band of the height: read them (full-frame grid) to
+  reconstruct what is said. **No text, no subtitles, no useful comments**: the timeline is the only
+  source; the sheet says, in a `note`, that the names are read from the images.
 - Final frames: full-viewport canvas (`drawImage(v, 0, sy, sw, sh, 0, 0, cw, ch)`), mouse parked
   in a corner (`hover` 1195,858), `screenshot` with `save_to_disk: true` and **scale 1** (the file
   is saved at the requested scale; 0.25 gives a 300 px file, useless). Note the rendered size.
@@ -57,9 +99,12 @@ titles follow the template, translated.
 - **NUMBER OF PHOTOS**: 2 per movement is a **minimum** (start / end position), never a cap. A
   multi-phase movement (slider plank to pike, candlestick, drop-and-catch…) takes 3 to 5: one per
   key position found on the grid, plus one detail photo when a placement conditions the exercise.
-  Decide the count **from the grid**, exercise by exercise.
+  Decide the count **from the grid**, exercise by exercise. A **flow** (one continuous chain of
+  different moves) takes one photo per distinct movement of the timeline, even beyond 5: the 3–5
+  range is for a single movement.
 - **Mandatory check**: `Read` every final photo and tick head / hands / supports visible before
-  writing the sheet. A photo that fails is redone.
+  writing the sheet. A photo that fails is redone. Then match the photos against the timeline:
+  every line has its photo, or the sheet says why not.
 - Clean the overlays, close the tab (`tabs_close_mcp`).
 
 ### YouTube (`youtube.com/watch`, `/shorts/`, `youtu.be`)
@@ -76,7 +121,7 @@ titles follow the template, translated.
 - Shorts are 9:16: use the two-halves + `vstack.py` route. A `/watch` video is 16:9: the full frame
   is enough.
 - **Long video** (more than ~2 min, or chapters listed): never scout the whole video. Read the
-  chapters / transcript, pick the passages that show an exercise, run the 1 s grid **only on those
+  chapters / transcript, pick the passages that show an exercise, run passes A–C **only on those
   passages**, and build **one session page** (section 3 bis), one `exo` block per exercise.
 - `meta.json`: `source.platform` = `"youtube"`; the footer link is the video URL, with the
   timestamp (`&t=…s`) when the sheet comes from one passage.
