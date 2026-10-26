@@ -59,6 +59,13 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 5. Ten to fifteen minutes later the sheet is in the app, under its theme and group. A video with
    several exercises becomes one *session* page, each exercise also listed in its group.
 
+**Overnight (macOS).** `tools/nightly.sh install` processes the queue every night at 02:00 (or
+`install 23:30`) through a LaunchAgent, at most 5 videos per run. It only starts Claude when the
+queue holds something and the screen is unlocked, with Chrome open: same tab-visibility rule as
+above. `tools/nightly.sh check` shows what a run would do, `run --max 1` tries one video now,
+`uninstall` removes it. Log in `~/Library/Logs/reelbook-nightly.log`; set `REELBOOK_NOTIFY_URL`
+to an [ntfy](https://ntfy.sh) topic before installing to get a phone notice after each run.
+
 ## Notebooks
 
 Sheets live in notebooks. A new account starts with three (Strength, Yoga & stretching, Fight
@@ -102,7 +109,7 @@ public, nothing is shared between accounts.
 app/        the web app (index.html, config.js, manifest, service worker, vendored supabase-js)
 skill/      the Claude Code skill (reelbook/SKILL.md)
 templates/  sheet.html and session.html, the HTML the skill fills in
-tools/      rb.py (backend CLI), crop.py, vstack.py (Pillow)
+tools/      rb.py (backend CLI), crop.py, vstack.py (Pillow), nightly.sh (overnight runs, macOS)
 supabase/   schema.sql
 docs/       setup guides
 work/       local work folders of the skill (git-ignored)
