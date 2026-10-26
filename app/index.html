@@ -76,6 +76,17 @@ pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--
 /* ---- add sheet ---- */
 .sheet{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:22px;display:grid;gap:12px}
 .sheet h2{margin:0}
+.addrow{display:flex;gap:8px;align-items:center}
+.addrow input{flex:1}
+.addrow .btn{flex:none}
+.sheet .actions{justify-content:flex-end}
+dialog.dlg{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(440px,calc(100vw - 32px));display:grid;gap:12px}
+dialog.dlg:not([open]){display:none}
+dialog.dlg::backdrop{background:rgba(0,0,0,.45)}
+dialog.dlg h2{margin:0}
+dialog.dlg p{margin:0}
+dialog.dlg .u{display:block;font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+dialog.dlg .actions{display:grid;gap:8px}
 /* ---- portal ---- */
 .portal{display:grid;gap:14px;margin-top:4px}
 @media (min-width:720px){.portal{grid-template-columns:repeat(3,1fr)}}
@@ -241,11 +252,18 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
   <form class="sheet" id="sheet-new" hidden>
     <h2>Add a video</h2>
-    <label>Instagram, TikTok, YouTube or Facebook link <input id="f-url" type="url" inputmode="url" placeholder="https://…" required></label>
-    <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/reelbook</code>.</p>
+    <label for="f-url">Instagram, TikTok, YouTube or Facebook link</label>
+    <div class="addrow"><input id="f-url" type="url" inputmode="url" enterkeyhint="go" autocomplete="off" placeholder="https://…" required><button class="btn" type="submit" id="f-submit">Queue it</button></div>
     <p class="err" id="f-err" hidden></p>
-    <div class="actions"><button class="btn" type="submit" id="f-submit">Queue it</button><button class="btn ghost" type="button" id="f-cancel">Cancel</button></div>
+    <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/reelbook</code>.</p>
+    <div class="actions"><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
   </form>
+  <dialog class="dlg" id="pending-dlg" aria-labelledby="pd-title">
+    <h2 id="pd-title">Not queued yet</h2>
+    <p>This video is not in the queue. Leave it out?<span class="u" id="pd-url"></span></p>
+    <p class="err" id="pd-err" hidden></p>
+    <div class="actions"><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-discard">Discard the link</button><button class="btn ghost" type="button" id="pd-stay">Keep editing</button></div>
+  </dialog>
   <div class="flash" id="flash" hidden></div>
 
   <section id="queue-sec" hidden>
@@ -552,8 +570,40 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   // ---------- queue ----------
   const sheetForm = $('sheet-new'), btn = $('btn-new');
   const openForm = v => { sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (v) $('f-url').focus(); };
-  btn.addEventListener('click', () => openForm(sheetForm.hidden));
-  $('f-cancel').addEventListener('click', () => openForm(false));
+  // A pasted link survives a closed tab or a killed PWA: it is kept until queued or discarded.
+  const DRAFT = 'rb.draft';
+  const pendingUrl = () => !$('home').hidden && !sheetForm.hidden ? $('f-url').value.trim() : '';
+  const discardDraft = () => { sheetForm.reset(); ls.del(DRAFT); $('f-err').hidden = true; };
+  if (ls.get(DRAFT)) { $('f-url').value = ls.get(DRAFT); sheetForm.hidden = false; btn.setAttribute('aria-expanded', 'true'); $('f-err').textContent = 'This link is not queued yet.'; $('f-err').hidden = false; }
+  $('f-url').addEventListener('input', () => { const v = $('f-url').value.trim(); if (v) ls.set(DRAFT, v); else ls.del(DRAFT); });
+  const dlg = $('pending-dlg');
+  let afterPending = null;
+  const askPending = (next, queueLabel) => {
+    afterPending = next;
+    $('pd-url').textContent = pendingUrl(); $('pd-queue').textContent = queueLabel || 'Queue it before leaving'; $('pd-err').hidden = true;
+    dlg.showModal();
+  };
+  const closePending = () => dlg.close();
+  $('pd-stay').addEventListener('click', () => { closePending(); $('f-url').focus(); });
+  $('pd-discard').addEventListener('click', () => { closePending(); discardDraft(); afterPending(); });
+  $('pd-queue').addEventListener('click', async () => {
+    $('pd-queue').disabled = true;
+    try { if (await queueLink()) { closePending(); afterPending(); } else { $('pd-err').textContent = $('f-err').textContent; $('pd-err').hidden = false; } }
+    finally { $('pd-queue').disabled = false; }
+  });
+  // « + Add a video » with a link still in the field would drop it: ask first, then open a fresh form.
+  btn.addEventListener('click', () => {
+    if (pendingUrl()) askPending(() => openForm(true), 'Queue it, then add another');
+    else openForm(sheetForm.hidden);
+  });
+  $('f-cancel').addEventListener('click', () => { discardDraft(); openForm(false); });
+  document.addEventListener('click', ev => {
+    const a = ev.target.closest && ev.target.closest('a[href^="#"]');
+    if (!a || !pendingUrl() || a.closest('dialog')) return;
+    ev.preventDefault();
+    askPending(() => { location.hash = a.hash; });
+  }, true);
+  window.addEventListener('beforeunload', ev => { if (pendingUrl()) { ev.preventDefault(); ev.returnValue = ''; } });
   const okHost = h => /(^|\.)(instagram|tiktok|youtube|facebook)\.com$/.test(h) || h === 'youtu.be' || h === 'fb.watch';
   const platformTag = h => /tiktok/.test(h) ? 'TT' : /youtube|youtu\.be/.test(h) ? 'YT' : /facebook|fb\.watch/.test(h) ? 'FB' : 'IG';
   const renderQueue = docs => {
@@ -572,20 +622,22 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     const b = ev.target.closest('[data-del]'); if (!b) return; b.disabled = true;
     try { await sb.from('requests').delete().eq('id', b.dataset.del); await refreshQueue(); } catch { b.disabled = false; }
   });
-  sheetForm.addEventListener('submit', async ev => {
-    ev.preventDefault();
+  const queueLink = async () => {
     const err = $('f-err'); err.hidden = true;
-    let u; try { u = new URL($('f-url').value.trim()); } catch { err.textContent = 'That link is not valid.'; err.hidden = false; return; }
-    if (!okHost(u.hostname)) { err.textContent = 'Paste an instagram.com, tiktok.com, youtube.com or facebook.com link.'; err.hidden = false; return; }
+    const fail = msg => { err.textContent = msg; err.hidden = false; return false; };
+    let u; try { u = new URL($('f-url').value.trim()); } catch { return fail('That link is not valid.'); }
+    if (!okHost(u.hostname)) return fail('Paste an instagram.com, tiktok.com, youtube.com or facebook.com link.');
     $('f-submit').disabled = true;
     try {
       const row = {url: u.toString()}; if (currentTheme) row.theme = currentTheme;
       const {error} = await sb.from('requests').insert(row); if (error) throw error;
-      sheetForm.reset(); openForm(false); refreshQueue();
+      discardDraft(); openForm(false); refreshQueue();
       const f = $('flash'); f.textContent = 'Queued. The sheet will be built on your next Claude Code run.'; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000);
-    } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; }
+      return true;
+    } catch { return fail('Could not save it right now. Try again in a moment.'); }
     finally { $('f-submit').disabled = false; }
-  });
+  };
+  sheetForm.addEventListener('submit', ev => { ev.preventDefault(); queueLink(); });
 
   // ---------- sheet view ----------
   const view = $('view'), cache = new Map();

@@ -13,16 +13,17 @@ const hostedUrl = 'https://hosted.example.test';
 const ownUrl = 'https://personal.example.test';
 const ownKey = 'a-public-anon-key-long-enough';
 
-async function app({remembered, sessions = {}} = {}) {
+async function app({remembered, sessions = {}, stored = {}} = {}) {
   const elements = new Map();
-  const storage = new Map(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []);
+  const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
       hidden: true, disabled: false, value: '', textContent: '', innerHTML: '',
       listeners: {}, classList: {toggle() {}},
       addEventListener(type, listener) { this.listeners[type] = listener; },
-      focus() {}, reset() {}, setAttribute() {}, scrollIntoView() {}
+      focus() {}, reset() {}, setAttribute() {}, scrollIntoView() {},
+      showModal() { this.open = true; }, close() { this.open = false; }
     });
     return elements.get(id);
   };
@@ -52,7 +53,9 @@ async function app({remembered, sessions = {}} = {}) {
     navigator: {},
     supabase: {
       createClient(url, key, options) {
-        const client = {url, key, options, calls: [], auth: {
+        const client = {url, key, options, calls: [], from: table => ({
+          async insert(row) { client.calls.push(['insert', table, row]); return {error: null}; }
+        }), auth: {
           onAuthStateChange(listener) {
             queueMicrotask(() => listener('INITIAL_SESSION', sessions[url] ? {user: sessions[url]} : null));
             return {data: {subscription: {unsubscribe() {}}}};
@@ -146,4 +149,42 @@ test('sign-up saves its chosen backend after account creation', async () => {
   assert.deepEqual(JSON.parse(page.storage.get('rb.backend')), {mode: 'own', url: ownUrl, key: ownKey});
   assert.equal(page.element('auth-title').textContent, 'Sign in');
   assert.equal(page.element('a-info').hidden, false);
+});
+
+const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'existing-user', email: 'user@example.test'}}};
+const reel = 'https://www.instagram.com/reel/DeGBCfjsbTt/';
+
+test('a pasted link is kept until queued, and « + Add a video » asks before dropping it', async () => {
+  const page = await app(signedIn);
+  await page.fire('btn-new');
+  assert.equal(page.element('sheet-new').hidden, false);
+  page.element('f-url').value = reel;
+  await page.fire('f-url', 'input');
+  assert.equal(page.storage.get('rb.draft'), reel);
+  await page.fire('btn-new');
+  assert.equal(page.element('sheet-new').hidden, false, 'the form stays open');
+  assert.equal(page.element('pending-dlg').open, true);
+  assert.equal(page.element('pd-url').textContent, reel, 'the dialog names the pending link');
+  assert.equal(page.element('pd-queue').textContent, 'Queue it, then add another');
+  await page.fire('pd-queue');
+  const insert = page.clients.at(-1).calls.find(c => c[0] === 'insert');
+  assert.equal(JSON.stringify(insert), JSON.stringify(['insert', 'requests', {url: reel}]));
+  assert.equal(page.storage.has('rb.draft'), false);
+  assert.equal(page.element('pending-dlg').open, false);
+  assert.equal(page.element('sheet-new').hidden, false, 'a fresh form is open for the next link');
+});
+
+test('a link left in the field comes back on the next launch', async () => {
+  const page = await app({...signedIn, stored: {'rb.draft': reel}});
+  assert.equal(page.element('f-url').value, reel);
+  assert.equal(page.element('sheet-new').hidden, false);
+  assert.equal(page.element('f-err').hidden, false);
+});
+
+test('discarding from the dialog forgets the link', async () => {
+  const page = await app({...signedIn, stored: {'rb.draft': reel}});
+  await page.fire('btn-new');
+  await page.fire('pd-discard');
+  assert.equal(page.storage.has('rb.draft'), false);
+  assert.equal(page.clients.at(-1).calls.some(c => c[0] === 'insert'), false);
 });
