@@ -1,6 +1,6 @@
 ---
 name: reelbook
-description: Turn an Instagram/TikTok/YouTube video into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/reelbook", "/reelbook <link>", or pastes a reel, Short or video link while talking about an exercise.
+description: Turn an Instagram/TikTok/YouTube/Facebook video into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/reelbook", "/reelbook <link>", or pastes a reel, Short or video link while talking about an exercise.
 ---
 
 # Exercise sheet from a video
@@ -126,6 +126,17 @@ titles follow the template, translated.
 - `meta.json`: `source.platform` = `"youtube"`; the footer link is the video URL, with the
   timestamp (`&t=…s`) when the sheet comes from one passage.
 
+### Facebook (`facebook.com/reel/…`, `/share/r/…`, `/watch`, `/<page>/videos/…`, `fb.watch`)
+- Needs the user signed in to Facebook in that Chrome. `share/r/` and `fb.watch` links redirect: note the
+  final URL (`facebook.com/reel/<id>`) and use it in `meta.json` and the footer.
+- The page keeps **the next reel's `<video>` loaded below the current one**: pick the video whose rect is on
+  screen (`r.bottom > 0 && r.top < innerHeight`), not the first one, in every helper.
+- The caption is cut after one line: click « See more » / « En voir plus » before reading it.
+- Streams are low resolution (often 540×960, sometimes 720×1280) and heavily compressed: capture a band of
+  the frame around the subject drawn to the full viewport, never a full-frame capture, and expect softer
+  photos. Reels are 9:16; a `/watch` video can be 16:9.
+- `meta.json`: `source.platform` = `"facebook"`.
+
 ## 3. Write the sheet
 - Work folder: `work/<slug>/` in the repository (git-ignored) with `index.html`, `meta.json`,
   `img/`. Copy `templates/sheet.html` → `work/<slug>/index.html`; images in `work/<slug>/img/`,
@@ -136,7 +147,7 @@ titles follow the template, translated.
 - Second person, short sentences, author credit + video link in the footer. No `<script>`, no
   `<style>`: the app provides the styles (class names in `templates/`).
 - `meta.json`: `slug`, `kind: "sheet"`, `theme`, `group`, `title`, `summary` (one line for the
-  card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok` or `youtube`).
+  card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok`, `youtube` or `facebook`).
 
 ## 3 bis. One video = a session (several exercises)
 - Decide from the caption / the grid: several named exercises = **one session page**, not N
