@@ -49,6 +49,8 @@ p{margin:0 0 10px}
 .hint{font-size:14px;color:var(--muted);margin:0}
 .err{color:var(--warn);font-size:14px;margin:0}
 .flash{background:var(--ok-bg);color:var(--ok);border-radius:8px;padding:10px 12px;font-size:15px;margin-bottom:16px}
+.search{margin:0 0 18px}
+.search input{border-radius:999px;padding:10px 16px 10px 40px;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='6'/%3E%3Cpath d='m12.5 12.5 4 4'/%3E%3C/svg%3E") 14px center no-repeat}
 .empty{color:var(--muted);font-size:15px;border:1px dashed var(--line);border-radius:10px;padding:14px}
 .loading{color:var(--muted);padding:40px 0;text-align:center}
 label{display:grid;gap:4px;font-size:14px;font-weight:600;color:var(--muted)}
@@ -270,6 +272,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <h2>In the queue <span class="n" id="queue-n"></span></h2>
     <div class="queue" id="queue"></div>
   </section>
+
+  <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
+  <div id="results" hidden></div>
 
   <div id="portal" class="portal" hidden></div>
   <section class="panel picker" id="picker" hidden>
@@ -541,20 +546,44 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     catch (e) { err.textContent = 'Could not create it: ' + (e.message || ''); err.hidden = false; }
     finally { $('c-submit').disabled = false; }
   });
+  // `pre` puts extra tags first (the notebook name in search results).
+  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const exerciseCard = (sc, x, pre = []) => card(x, `#${esc(sc.slug)}~${esc(x.anchor)}`, thumb(sc.slug, x.thumbnail), {meta: [...pre, {txt: x.duration || ''}, {txt: 'session · ' + sc.title, cls: 'session'}].filter(m => m.txt)});
+  const sessionCard = (sc, pre = [], big = true) => card(sc, `#${esc(sc.slug)}`, thumb(sc.slug, sc.thumbnail), {big, meta: [...pre, {txt: sc.duration}, {txt: plural((sc.exercises || []).length, 'exercise')}, {txt: (sc.source || {}).author || ''}, ...(notesIndex.has(sc.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   const renderGroups = t => {
     const all = sheets.filter(e => e.theme === t.id);
     const sessions = all.filter(e => e.kind === 'session'), solo = all.filter(e => e.kind !== 'session');
     const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
     const push = (g, h) => { if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(h); };
-    for (const e of solo) push(e.group, card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [{txt: e.duration}, {txt: (e.source || {}).author || ''}, ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)}));
-    for (const sc of sessions) for (const x of (sc.exercises || [])) push(x.group, card(x, `#${esc(sc.slug)}~${esc(x.anchor)}`, thumb(sc.slug, x.thumbnail), {meta: [{txt: x.duration || ''}, {txt: 'session · ' + sc.title, cls: 'session'}].filter(m => m.txt)}));
+    for (const e of solo) push(e.group, sheetCard(e));
+    for (const sc of sessions) for (const x of (sc.exercises || [])) push(x.group, exerciseCard(sc, x));
     let html = '';
-    if (sessions.length) html += `<section><h2>Sessions <span class="n">${sessions.length}</span></h2><div class="grid">` + sessions.map(sc => card(sc, `#${esc(sc.slug)}`, thumb(sc.slug, sc.thumbnail), {big: true, meta: [{txt: sc.duration}, {txt: plural((sc.exercises || []).length, 'exercise')}, {txt: (sc.source || {}).author || ''}, ...(notesIndex.has(sc.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)})).join('') + '</div></section>';
+    if (sessions.length) html += `<section><h2>Sessions <span class="n">${sessions.length}</span></h2><div class="grid">` + sessions.map(sc => sessionCard(sc)).join('') + '</div></section>';
     for (const [g, list] of byGroup) { if (list.length) html += `<section><h2>${esc(g)} <span class="n">${list.length}</span></h2><div class="grid">${list.join('')}</div></section>`; }
     $('groups').innerHTML = html || '<p class="empty">No sheet in this theme yet. Paste a first link.</p>';
     const g = [...byGroup].filter(([, l]) => l.length).length;
     return `${plural(solo.length, 'sheet')}${sessions.length ? ` · ${plural(sessions.length, 'session')}` : ''} · ${plural(g, 'group')}`;
   };
+  // ---------- search ----------
+  // Every word must appear, accents and case ignored, in a title, summary, group, notebook or author.
+  const fold = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const searchTerms = () => fold($('q').value).split(/\s+/).filter(Boolean);
+  const hit = (terms, fields) => { const hay = fold(fields.join(' ')); return terms.every(w => hay.includes(w)); };
+  const renderSearch = (terms, t) => {
+    const cards = [];
+    for (const e of sheets) {
+      if (t && e.theme !== t.id) continue;
+      const nb = (themeById.get(e.theme) || {}).title || '', author = (e.source || {}).author || '';
+      const pre = t ? [] : [{txt: nb}];
+      if (e.kind !== 'session') { if (hit(terms, [e.title, e.summary, e.group, nb, author])) cards.push(sheetCard(e, pre)); continue; }
+      if (hit(terms, [e.title, e.summary, nb, author])) cards.push(sessionCard(e, pre, false));
+      for (const x of (e.exercises || [])) if (hit(terms, [x.title, x.summary, x.group, nb])) cards.push(exerciseCard(e, x, pre));
+    }
+    $('results').innerHTML = cards.length ? `<div class="grid">${cards.join('')}</div>` : `<p class="empty">Nothing matches « ${esc($('q').value.trim())} »${t ? ' in this notebook' : ''}.</p>`;
+    return plural(cards.length, 'result');
+  };
+  $('q').addEventListener('input', () => renderHome());
+
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null;
     $('h-crumb').hidden = !t;
@@ -564,6 +593,10 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);
     else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
+    $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
+    const terms = sheets.length ? searchTerms() : [];
+    $('results').hidden = !terms.length;
+    if (terms.length) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t); }
     document.title = t ? `${t.title} · Reelbook` : 'Reelbook';
   };
 

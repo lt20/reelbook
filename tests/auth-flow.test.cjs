@@ -13,7 +13,7 @@ const hostedUrl = 'https://hosted.example.test';
 const ownUrl = 'https://personal.example.test';
 const ownKey = 'a-public-anon-key-long-enough';
 
-async function app({remembered, sessions = {}, stored = {}} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -29,7 +29,7 @@ async function app({remembered, sessions = {}, stored = {}} = {}) {
   };
   const context = {
     URL, console,
-    setTimeout() {},
+    setTimeout: fn => { if (tables) queueMicrotask(fn); },
     location: {href: 'https://app.example.test/', hash: ''},
     localStorage: {
       getItem: key => storage.get(key) ?? null,
@@ -53,9 +53,12 @@ async function app({remembered, sessions = {}, stored = {}} = {}) {
     navigator: {},
     supabase: {
       createClient(url, key, options) {
-        const client = {url, key, options, calls: [], from: table => ({
+        // with `tables`, every query chain resolves to that table's rows; without, only inserts are recorded
+        const query = table => { const done = Promise.resolve({data: tables[table] || [], error: null}); const q = new Proxy({}, {get: (_, k) => k === 'then' ? done.then.bind(done) : () => q}); return q; };
+        const client = {url, key, options, calls: [], from: tables ? query : table => ({
           async insert(row) { client.calls.push(['insert', table, row]); return {error: null}; }
-        }), auth: {
+        }),
+          storage: {from: () => ({createSignedUrls: async () => ({data: []})})}, auth: {
           onAuthStateChange(listener) {
             queueMicrotask(() => listener('INITIAL_SESSION', sessions[url] ? {user: sessions[url]} : null));
             return {data: {subscription: {unsubscribe() {}}}};
@@ -187,4 +190,36 @@ test('discarding from the dialog forgets the link', async () => {
   await page.fire('pd-discard');
   assert.equal(page.storage.has('rb.draft'), false);
   assert.equal(page.clients.at(-1).calls.some(c => c[0] === 'insert'), false);
+});
+
+test('keyword search finds sheets and session exercises, accents and case ignored', async () => {
+  const page = await app({
+    remembered: {mode: 'own', url: ownUrl, key: ownKey},
+    sessions: {[ownUrl]: {id: 'u1', email: 'user@example.test'}},
+    tables: {
+      user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}],
+      sheets: [
+        {slug: 'ange', kind: 'sheet', theme: 'strength', group: 'Shoulders', title: "L'ange au sol", summary: 'À plat ventre, bras tendus.', source: {author: 'Georges'}, exercises: []},
+        {slug: 'curl', kind: 'sheet', theme: 'strength', group: 'Arms', title: 'Curl marteau', summary: 'Haltères, coudes fixes.', exercises: []},
+        {slug: 'routine', kind: 'session', theme: 'strength', title: 'Routine épaules', summary: 'Cinq exercices.', exercises: [{anchor: 'rot', title: "Rotation externe d'épaule", group: 'Shoulders', summary: 'Avec un élastique.'}]}
+      ]
+    }
+  });
+  for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r));
+  assert.equal(page.element('home').hidden, false);
+  assert.equal(page.element('search').hidden, false);
+  const search = async q => { page.element('q').value = q; await page.fire('q', 'input'); return page.element('results').innerHTML; };
+  let html = await search('EPAULE');
+  assert.match(html, /#routine~rot/);
+  assert.match(html, /href="#routine"/);
+  assert.doesNotMatch(html, /#curl/);
+  assert.equal(page.element('portal').hidden, true);
+  html = await search('shoulders plat');
+  assert.match(html, /#ange/);
+  assert.doesNotMatch(html, /#routine/);
+  html = await search('pilates');
+  assert.match(html, /Nothing matches/);
+  await search('');
+  assert.equal(page.element('results').hidden, true);
+  assert.equal(page.element('portal').hidden, false);
 });
