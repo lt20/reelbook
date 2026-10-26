@@ -66,7 +66,8 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 `install 23:30`) through a LaunchAgent, at most 5 videos per run. It only starts Claude when the
 queue holds something and the screen is unlocked, with Chrome open: same tab-visibility rule as
 above. `tools/nightly.sh check` shows what a run would do, `run --max 1` tries one video now,
-`uninstall` removes it. Log in `~/Library/Logs/reelbook-nightly.log`; set `REELBOOK_NOTIFY_URL`
+`uninstall` removes it. On install, macOS notifies a new background item, « Reelbook night run »: that is this
+run, keep it allowed (System Settings → General → Login Items). Log in `~/Library/Logs/reelbook-nightly.log`; set `REELBOOK_NOTIFY_URL`
 to an [ntfy](https://ntfy.sh) topic before installing to get a phone notice after each run.
 
 ## Notebooks
