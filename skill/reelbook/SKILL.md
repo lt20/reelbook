@@ -39,12 +39,12 @@ titles follow the template, translated.
   replaces the `<video>` element mid-session, re-select it on every call).
 - **Scouting, three passes.** One frame per second misses movements: a rep plus its variation
   lasts about 1 s, so 1 fps keeps landing on the same phase (a reel of 10 push-ups, each followed
-  by a different tap, came out as "plank, push-up, pike"). Helper, pasted once per tab with
-  `javascript_tool`; it draws timestamped thumbnails in a fixed full-screen `div#__grid` →
+  by a different tap, came out as "plank, push-up, pike"). Helper, pasted with `javascript_tool`
+  after each page load (a navigation clears it); it draws timestamped thumbnails in a fixed full-screen `div#__grid` →
   `screenshot`:
   ```js
   window.__sheet = async (t0, step, n, W = 230, H = 205, y0 = 0, y1 = 1) => {
-    const pick = () => [...document.querySelectorAll('video')].find(v => v.getBoundingClientRect().width > 100);
+    const pick = () => [...document.querySelectorAll('video')].find(v => { const r = v.getBoundingClientRect(); return r.width > 100 && r.bottom > 0 && r.top < innerHeight; });
     const seek = t => new Promise(res => { const v = pick(); v.pause();
       const to = setTimeout(() => res(v), 4000);
       v.addEventListener('seeked', () => { clearTimeout(to); res(v); }, { once: true });
