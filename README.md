@@ -78,9 +78,11 @@ and how to group it. Notebooks are per account; remove one from Settings when it
 ## How a sheet is made
 
 1. `rb.py themes` lists your notebooks, `rb.py queue` your queued links; Claude claims one.
-2. Chrome opens the video. Claude reads caption and comments, draws a grid of frames (one per
-   second, then every half second on the useful phase) and reads the burned-in subtitles.
-3. It picks the key positions, captures them full size, crops them so the **whole body** stays
+2. Chrome opens the video. Claude reads caption and comments, draws a grid of the whole video
+   (a frame every 0.2 s, so short reps are not missed; on a long video, only the useful passages), reads the burned-in subtitles and writes
+   a second-by-second timeline of the movements.
+3. It takes one photo per distinct movement (start and end at least for a single exercise), picks each peak frame
+   on a 0.1 s grid, captures it full size, crops it so the **whole body** stays
    visible (head, hands, feet), rebuilds vertical frames from two halves, and checks every photo.
 4. It writes the sheet from `templates/sheet.html` (or `templates/session.html`), in your language,
    decides the theme and group, and publishes with `rb.py publish`.
