@@ -86,6 +86,22 @@ Claude filed a sheet in the wrong place? Open it and tap **Move**: pick another 
 group (one it already has, or a new one). A session moves too, to another notebook only: its
 exercise sheets stay where they are.
 
+## Your own sessions
+
+A session is an ordered list of sheets, each with its own dose. Besides the ones Claude builds
+from a video, you can compose your own:
+
+- **+ New session**, in a notebook's Sessions section: a title, then tick the notebook's sheets in
+  the order you want them (grouped, with a filter). The new session opens in Edit mode.
+- **Add to session**, on a sheet page: pick any session (all notebooks), or « New session… » to
+  create one in the sheet's notebook. The sheet goes last; a sheet is never added twice.
+- **Edit**, on a session page: ↑ ↓ to reorder, a dose per exercise (« 30 s », « 3×10 »), the format
+  line (« 5 rounds · 60 s rest »), the title, remove an exercise, or delete the session. Removing or
+  deleting never deletes a sheet. A session from a video is editable too, but processing that
+  video again rewrites it and drops your edits.
+
+Each session page also has its own « My notes ».
+
 ## How a sheet is made
 
 1. `rb.py themes` lists your notebooks, `rb.py queue` your queued links; Claude claims one.
