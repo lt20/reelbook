@@ -38,7 +38,7 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    password. Returning users sign in directly; on a new device, **Sign in to my own instance**
    lets self-hosted users enter their Supabase URL and anon key once. Install the app on your
    phone (*Add to Home screen*).
-2. Save a video: **+ Add a video**, paste the link. It shows under *In the queue*.
+2. Save a video: **+ Add a video**, paste the link. It shows under *In the queue* on the home page.
 3. On your computer, paste the install line shown in the app's **Settings** page (it carries your
    backend's URL and key). macOS / Linux:
 
@@ -78,6 +78,9 @@ wingfoil, surfing, running, pilates, barre, pole dance, dance, prenatal, cooking
 `app/config.js`) and a **custom notebook**: a name plus a description of what goes in it. The
 description is written for Claude: it is what the skill reads to decide where a video belongs
 and how to group it. Notebooks are per account; remove one from Settings when it is empty.
+
+Claude filed a sheet in the wrong place? Open it and tap **Move**: pick another notebook and a
+group (one it already has, or a new one). Sessions cannot be moved for now.
 
 ## How a sheet is made
 
