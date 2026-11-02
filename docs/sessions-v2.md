@@ -67,7 +67,8 @@ Exercises are not sheets: their content and photos live only in the session page
 - Route of a v2 session: `#session/<slug>` (no collision: sheet slugs and notebook ids never contain « / »).
 - Pure helpers in `app/sessions.js`. A notebook holding v2 sessions cannot be removed.
 - « From the session … » shows for video sessions only; user sessions count in « in N sessions » only.
-- Notes on a v2 session page: open question for Laurent (the PR ships without them).
+- Notes on a v2 session page: **yes** (Laurent, 2026-11-02). Same « My notes » block, stored in `notes` under the key
+  `session/<slug>` (no collision with sheet slugs, no schema change). Delivered in S3.
 
 ## Lots
 
