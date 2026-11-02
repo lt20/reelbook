@@ -8,12 +8,14 @@ const html = fs.readFileSync(path.join(__dirname, '../app/index.html'), 'utf8');
 const script = html.match(/<script>\s*([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script, 'the app script exists');
 new vm.Script(script);
+const sessionsJs = fs.readFileSync(path.join(__dirname, '../app/sessions.js'), 'utf8');
 
 const hostedUrl = 'https://hosted.example.test';
 const ownUrl = 'https://personal.example.test';
 const ownKey = 'a-public-anon-key-long-enough';
 
-async function app({remembered, sessions = {}, stored = {}, tables = null} = {}) {
+// `failing`: table -> {error, status} answered instead of rows (a backend without that table).
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, hash = ''} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -30,7 +32,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null} = {})
   const context = {
     URL, console,
     setTimeout: fn => { if (tables) queueMicrotask(fn); },
-    location: {href: 'https://app.example.test/', hash: ''},
+    location: {href: 'https://app.example.test/', hash},
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
@@ -54,7 +56,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null} = {})
     supabase: {
       createClient(url, key, options) {
         // with `tables`, every query chain resolves to that table's rows; without, only inserts are recorded
-        const query = table => { const done = Promise.resolve({data: tables[table] || [], error: null}); const q = new Proxy({}, {get: (_, k) => k === 'then' ? done.then.bind(done) : () => q}); return q; };
+        const query = table => { const done = Promise.resolve(failing[table] ? {data: null, ...failing[table]} : {data: tables[table] || [], error: null}); const q = new Proxy({}, {get: (_, k) => k === 'then' ? done.then.bind(done) : () => q}); return q; };
         const client = {url, key, options, calls: [], from: tables ? query : table => ({
           async insert(row) { client.calls.push(['insert', table, row]); return {error: null}; }
         }),
@@ -72,7 +74,9 @@ async function app({remembered, sessions = {}, stored = {}, tables = null} = {})
       }
     }
   };
-  vm.runInNewContext(script, context);
+  vm.createContext(context);
+  vm.runInContext(sessionsJs, context);
+  vm.runInContext(script, context);
   await Promise.resolve();
   return {
     element, clients, storage,
@@ -222,4 +226,80 @@ test('keyword search finds sheets and session exercises, accents and case ignore
   await search('');
   assert.equal(page.element('results').hidden, true);
   assert.equal(page.element('portal').hidden, false);
+});
+
+const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r)); };
+const v2Tables = () => ({
+  user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}, {id: 'mobility', title: 'Mobility', groups: [], builtin: true, position: 1}],
+  sheets: [
+    {slug: 'gsp-angel', kind: 'sheet', theme: 'strength', group: 'Shoulders', title: 'Floor angel', summary: 'Face down.', duration: '', exercises: []},
+    {slug: 'gsp-rot', kind: 'sheet', theme: 'mobility', group: 'Shoulders', title: 'External rotation', summary: 'With a band.', duration: '', exercises: []},
+    {slug: 'curl', kind: 'sheet', theme: 'strength', group: 'Arms', title: 'Hammer curl', summary: 'Dumbbells.', exercises: []},
+    {slug: 'old-routine', kind: 'session', theme: 'strength', title: 'Old routine', summary: 'One page.', exercises: [{anchor: 'a', title: 'Old move', group: 'Arms', summary: ''}]}
+  ],
+  sessions: [{slug: 'gsp-shoulders', theme: 'strength', title: 'GSP shoulders', format: '5 rounds · 60 s rest', why: 'Healthy shoulders.', key_points: ['Slow', 'Breathe'],
+    source: {author: 'Georges', url: 'https://example.test/v'}, origin: 'video', thumbnail: '',
+    items: [{slug: 'gsp-rot', dose: '3×10'}, {slug: 'deleted-sheet', dose: '1 min'}, {slug: 'gsp-angel', dose: '30 s'}]}]
+});
+
+test('v2 sessions show in their notebook, in search and on their own page', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#strength'});
+  await settle();
+  const groups = page.element('groups').innerHTML;
+  assert.match(groups, /Sessions <span class="n">2<\/span>/);
+  assert.match(groups, /href="#session\/gsp-shoulders"/);
+  assert.match(groups, /href="#old-routine~a"/, 'v1 exercise cards stay');
+  assert.match(groups, /2 exercises/, 'the deleted sheet is not counted');
+  assert.match(groups, /href="#gsp-angel"[\s\S]*?in 1 session/);
+  assert.doesNotMatch(groups.match(/href="#curl"[\s\S]*?<\/a>/)[0], /in \d session/);
+  page.element('q').value = 'rounds'; await page.fire('q', 'input');
+  assert.match(page.element('results').innerHTML, /#session\/gsp-shoulders/);
+});
+
+test('a v2 session page lists its sheets in order with their dose, and moves to another notebook', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#session/gsp-shoulders'});
+  await settle();
+  assert.equal(page.element('view').hidden, false);
+  const html = page.element('view').innerHTML;
+  assert.match(html, /<h1>GSP shoulders<\/h1>/);
+  assert.match(html, /5 rounds · 60 s rest/);
+  assert.match(html, /<li>Slow<\/li><li>Breathe<\/li>/);
+  assert.match(html, /href="https:\/\/example.test\/v"/);
+  assert.match(html, /href="#gsp-rot"><span class="k">1<\/span>[\s\S]*?3×10[\s\S]*?href="#gsp-angel"><span class="k">2<\/span>[\s\S]*?30 s/);
+  assert.doesNotMatch(html, /deleted-sheet|1 min/);
+  page.element('view').listeners.click({target: {closest: () => true}});
+  assert.equal(page.element('move-dlg').open, true);
+  assert.equal(page.element('mv-title').textContent, 'Move this session');
+  assert.equal(page.element('mv-group-l').hidden, true);
+  page.element('mv-theme').value = 'mobility';
+  await page.fire('mv-form', 'submit');
+  assert.match(page.element('sheet-top').innerHTML, /Moved to Mobility\./);
+});
+
+test('an exercise sheet links back to its video session', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#gsp-angel'});
+  await settle();
+  assert.match(page.element('view').innerHTML, /From the session <a href="#session\/gsp-shoulders">GSP shoulders<\/a>/);
+});
+
+test('a backend without the sessions table still loads, and Settings says how to enable sessions', async () => {
+  const failing = {sessions: {error: {code: 'PGRST205', message: 'Could not find the table'}, status: 404}};
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#strength', failing});
+  await settle();
+  assert.doesNotMatch(page.element('count').textContent, /Could not load/);
+  assert.match(page.element('groups').innerHTML, /href="#gsp-angel"/);
+  assert.doesNotMatch(page.element('groups').innerHTML, /#session\/|in 1 session/);
+  const settings = await app({...signedIn, tables: v2Tables(), hash: '#settings', failing});
+  await settle();
+  assert.equal(settings.element('settings').hidden, false);
+  assert.equal(settings.element('s-sessions').hidden, false);
+  const ok = await app({...signedIn, tables: v2Tables(), hash: '#settings'});
+  await settle();
+  assert.equal(ok.element('s-sessions').hidden, true);
+});
+
+test('any other sessions error is a load error', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), failing: {sessions: {error: {code: '42501', message: 'permission denied'}, status: 403}}});
+  await settle();
+  assert.match(page.element('count').textContent, /Could not load your sheets: permission denied/);
 });
