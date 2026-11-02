@@ -53,6 +53,15 @@ Exercises are not sheets: their content and photos live only in the session page
 - Skill (`skill/reelbook/SKILL.md`, `templates/`): section 3 bis rewritten for v2; new `templates/exercise.html`
   (light sheet), `templates/session.html` removed once v1 is gone.
 
+## Notes from S1 (#14)
+
+- Exercise sheets from a video session carry an empty `duration`; the dose lives on the session item (decision 9).
+- The app route of a v2 session is defined in S2; until then the skill links the exercise sheets only.
+- Merge order: S1 stays draft until S2 is ready (the nightly run would otherwise publish sessions the app cannot show).
+  The schema can be applied before: it only adds a table.
+- Left for later lots: README still describes v1 sessions (S2); `tools/import-legacy.py` still emits v1 sessions,
+  which `publish` now refuses (S4).
+
 ## Lots
 
 | Lot | Content | Files | Depends on |
