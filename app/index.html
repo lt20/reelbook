@@ -89,6 +89,13 @@ dialog.dlg h2{margin:0}
 dialog.dlg p{margin:0}
 dialog.dlg .u{display:block;font-size:14px;color:var(--muted);overflow-wrap:anywhere}
 dialog.dlg .actions{display:grid;gap:8px}
+dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
+.picklist{max-height:46dvh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px 10px 10px}
+.picklist h3{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:12px 0 2px}
+.picklist label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:16px;font-weight:400;color:var(--ink);cursor:pointer}
+.picklist input{width:22px;height:22px;flex:none;margin:0}
+.picklist .o{min-width:24px;font-family:var(--display);font-weight:700;color:var(--accent);text-align:right}
+.btn.danger{background:var(--warn);color:var(--paper)}
 /* ---- portal ---- */
 .portal{display:grid;gap:14px;margin-top:4px}
 @media (min-width:720px){.portal{grid-template-columns:repeat(3,1fr)}}
@@ -145,7 +152,7 @@ dialog.dlg .actions{display:grid;gap:8px}
 .top a{text-decoration:none;font-weight:600}
 .top span{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:600}
 .top .r{display:flex;align-items:center;gap:10px}
-.top .mv{appearance:none;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 13px var(--body);text-transform:none;letter-spacing:normal;padding:4px 12px;cursor:pointer}
+.top .mv,.acts .mv{min-height:40px;appearance:none;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 13px var(--body);text-transform:none;letter-spacing:normal;padding:4px 12px;cursor:pointer}
 .fiche header{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;margin-bottom:8px}
 .fiche header img{width:112px;height:112px;object-fit:cover;object-position:50% 20%;border-radius:12px;border:1px solid var(--line)}
 .fiche h1{margin-bottom:6px}
@@ -190,6 +197,18 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 .notes{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:30px;display:grid;gap:10px}
 .notes h2{margin:0}
 .notes .status{font-size:14px;color:var(--muted)}
+/* ---- session composition ---- */
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.sh2{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sh2 .btn{min-height:40px;margin-top:20px}
+.edit{display:grid;gap:12px}
+.edit .row{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.edit .row .k{font-family:var(--display);font-weight:700;font-size:20px;color:var(--accent)}
+.edit .row b{min-width:0;overflow-wrap:anywhere}
+.edit .row .ctl{grid-column:1/-1;display:flex;gap:8px;align-items:center;min-width:0}
+.edit .row .ctl input{flex:1}
+.edit .ib{appearance:none;flex:none;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--accent);font:600 15px var(--body);cursor:pointer;padding:0 10px}
+.edit .ib:disabled{opacity:.35;cursor:default}
 @media (prefers-reduced-motion:no-preference){.card img,.step img{transition:transform .25s}.card:hover img,.step figure:hover img{transform:scale(1.02)}}
 </style>
 </head>
@@ -383,10 +402,38 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <div class="actions"><button class="btn" type="submit" id="mv-submit">Move</button><button class="btn ghost" type="button" id="mv-cancel">Cancel</button></div>
   </form>
 </dialog>
+<dialog class="dlg pick-dlg" id="ns-dlg" aria-labelledby="ns-h">
+  <form id="ns-form" style="display:grid;gap:12px">
+    <h2 id="ns-h">New session</h2>
+    <label>Title <input id="ns-title" type="text" maxlength="80" autocomplete="off" placeholder="Shoulders, Monday"></label>
+    <input id="ns-q" type="search" autocomplete="off" aria-label="Filter the exercises" placeholder="Filter the exercises">
+    <p class="hint" id="ns-count"></p>
+    <div class="picklist" id="ns-list"></div>
+    <p class="err" id="ns-err" hidden></p>
+    <div class="actions"><button class="btn" type="submit" id="ns-submit">Create session</button><button class="btn ghost" type="button" id="ns-cancel">Cancel</button></div>
+  </form>
+</dialog>
+<dialog class="dlg" id="as-dlg" aria-labelledby="as-h">
+  <form id="as-form" style="display:grid;gap:12px">
+    <h2 id="as-h">Add to a session</h2>
+    <p class="u" id="as-sheet"></p>
+    <label>Session <select id="as-session"></select></label>
+    <label id="as-new-l" hidden>New session title <input id="as-new" type="text" maxlength="80" autocomplete="off" placeholder="Shoulders, Monday"></label>
+    <p class="hint" id="as-hint" hidden></p>
+    <p class="err" id="as-err" hidden></p>
+    <div class="actions"><button class="btn" type="submit" id="as-submit">Add</button><button class="btn ghost" type="button" id="as-cancel">Cancel</button></div>
+  </form>
+</dialog>
+<dialog class="dlg" id="del-dlg" aria-labelledby="del-h">
+  <h2 id="del-h">Delete this session?</h2>
+  <p><b id="del-name"></b><span class="u">Its exercise sheets stay in your notebooks.</span></p>
+  <p class="err" id="del-err" hidden></p>
+  <div class="actions"><button class="btn danger" type="button" id="del-ok">Delete session</button><button class="btn ghost" type="button" id="del-cancel">Keep it</button></div>
+</dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
-<script src="sessions.js?v=1"></script>
+<script src="sessions.js?v=2"></script>
 <script>
 (() => {
   'use strict';
@@ -508,6 +555,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   };
   const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
+  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
   const loadCatalogue = async () => {
     await loadThemes();
@@ -515,7 +563,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     if (error) throw error;
     sheets = data || []; bySlug = new Map(sheets.map(s => [s.slug, s]));
     // v2 sessions; a backend without the table only loses them (sessionsOk false, one line in Settings).
-    const r = await sb.from('sessions').select('slug,theme,title,format,why,key_points,source,origin,thumbnail,items').order('title');
+    const r = await sb.from('sessions').select(SESSION_COLS).order('title');
     if (r.error && !RS.missingTable(r.error, r.status)) throw r.error;
     sessionsOk = !r.error; setSessions(r.error ? [] : r.data || []);
     for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
@@ -582,7 +630,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const sessionCard = (sc, pre = [], big = true) => card(sc, `#${esc(sc.slug)}`, thumb(sc.slug, sc.thumbnail), {big, meta: [...pre, {txt: sc.duration}, {txt: plural((sc.exercises || []).length, 'exercise')}, {txt: (sc.source || {}).author || ''}, ...(notesIndex.has(sc.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
-  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, meta: [...pre, {txt: s.format}, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
+  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, meta: [...pre, {txt: s.format}, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   const renderGroups = t => {
     const all = sheets.filter(e => e.theme === t.id);
     const sessions = all.filter(e => e.kind === 'session'), solo = all.filter(e => e.kind !== 'session');
@@ -593,10 +641,13 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     // v1 sessions (one page each) and v2 sessions (a list of sheets) share the section, by title.
     const v2 = v2Sessions.filter(s => s.theme === t.id), nS = sessions.length + v2.length;
     const sCards = [...sessions.map(sc => ({title: sc.title, h: sessionCard(sc)})), ...v2.map(s => ({title: s.title, h: v2Card(s)}))].sort((a, b) => a.title.localeCompare(b.title));
+    // The Sessions section shows as soon as the backend has sessions, for « + New session ».
     let html = '';
-    if (nS) html += `<section><h2>Sessions <span class="n">${nS}</span></h2><div class="grid">` + sCards.map(x => x.h).join('') + '</div></section>';
     for (const [g, list] of byGroup) { if (list.length) html += `<section><h2>${esc(g)} <span class="n">${list.length}</span></h2><div class="grid">${list.join('')}</div></section>`; }
-    $('groups').innerHTML = html || '<p class="empty">No sheet in this theme yet. Paste a first link.</p>';
+    if (!html) html = '<p class="empty">No sheet in this theme yet. Paste a first link.</p>';
+    if (nS || sessionsOk) html = `<section><div class="sh2"><h2>Sessions${nS ? ` <span class="n">${nS}</span>` : ''}</h2>${sessionsOk ? '<button class="btn ghost sm" type="button" id="ns-open">+ New session</button>' : ''}</div>`
+      + (nS ? '<div class="grid">' + sCards.map(x => x.h).join('') + '</div>' : '<p class="hint">No session yet. Make one from the sheets of this notebook.</p>') + '</section>' + html;
+    $('groups').innerHTML = html;
     const g = [...byGroup].filter(([, l]) => l.length).length;
     return `${plural(solo.length, 'sheet')}${nS ? ` · ${plural(nS, 'session')}` : ''} · ${plural(g, 'group')}`;
   };
@@ -736,31 +787,81 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const jump = a => { if (!a) return; const el = view.querySelector('#' + CSS.escape(a)); if (el) el.scrollIntoView({block: 'start'}); };
   // A v1 session (kind 'session', one page) cannot be moved: its exercises live inside its page.
   // A v2 session (v2 true) moves to another notebook on its own.
-  const topNav = (e, v2 = false) => {
+  const topNav = (e, v2 = false, bare = false) => {
     const th = themeById.get(e.theme), v1 = !v2 && e.kind === 'session';
-    return `<nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span class="r"><span>${esc(v1 || v2 ? 'Session' : e.group)}</span>${v1 ? '' : '<button type="button" class="mv" id="mv-open">Move</button>'}</span></nav>`;
+    const btns = bare || v1 ? '' : (v2 ? '<button type="button" class="mv" id="ed-open">Edit</button>' : '') + '<button type="button" class="mv" id="mv-open">Move</button>';
+    return `<nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span class="r"><span>${esc(v1 || v2 ? 'Session' : e.group)}</span>${btns}</span></nav>`;
   };
-  // « From the session … » on an exercise sheet: the video sessions that list it.
+  // « From the session … » on an exercise sheet: the video sessions that list it. A simple sheet can be added to a session.
   const sheetTop = e => {
     const from = e.kind === 'session' ? [] : (inSessions.get(e.slug) || []).filter(s => s.origin === 'video');
-    return topNav(e) + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '');
+    return topNav(e) + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '')
+      + (e.kind !== 'session' && sessionsOk ? '<p class="acts"><button type="button" class="mv" id="as-open">Add to session</button></p>' : '');
   };
   const httpUrl = u => typeof u === 'string' && /^https?:\/\//i.test(u) ? u : '';
   // An item card: the sheet's card with its number in the session and its dose.
   const itemCard = it => card(it.sheet, `#${esc(it.sheet.slug)}`, thumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: (it.sheet.source || {}).author || ''}, ...(notesIndex.has(it.sheet.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
-  // A v2 session page, built from its row: why / key points / source only when present (video sessions).
-  const showSession = slug => {
-    const s = v2BySlug.get(slug);
-    shown = RS.ROUTE + slug; show('view'); document.title = s.title;
-    const items = RS.resolveItems(s, bySlug), img = v2Thumb(s), src = s.source || {}, url = httpUrl(src.url);
+  // « My notes »: one per sheet (key: its slug) and one per v2 session (key: session/<slug>, RS.noteKey).
+  const notesHtml = () => `<div class="wrap"><section class="notes"><h2>My notes <small>only you can see them</small></h2>
+      <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes"></textarea>
+      <div class="actions"><button class="btn" type="button" id="n-save">Save</button><span class="status" id="n-status">Loading…</span></div></section></div>`;
+  const wireNotes = async key => {
+    const ta = $('n-text'), st = $('n-status'), save = $('n-save');
+    save.addEventListener('click', async () => {
+      save.disabled = true; st.textContent = 'Saving…';
+      try { const body = ta.value.trim(); const {error} = await sb.from('notes').upsert({slug: key, body}); if (error) throw error; if (body) notesIndex.add(key); else notesIndex.delete(key); st.textContent = 'Saved.'; }
+      catch { st.textContent = 'Could not save. Try again.'; } finally { save.disabled = false; }
+    });
+    try { const {data} = await sb.from('notes').select('body,updated_at').eq('slug', key).maybeSingle(); ta.value = data ? data.body : ''; st.textContent = data && data.body ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.'; }
+    catch { st.textContent = 'Could not read the note.'; }
+  };
+  // Why / key points / source of a video session: read-only, in both modes.
+  const sessionInfo = s => {
+    const src = s.source || {}, url = httpUrl(src.url);
     const kp = (Array.isArray(s.key_points) ? s.key_points : []).filter(k => typeof k === 'string' && k.trim());
-    view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}</div>
+    return `${s.why ? `<h2>Why</h2><p class="lead">${esc(s.why)}</p>` : ''}
+      ${kp.length ? `<h2>Key points</h2><ol class="keys">${kp.map(k => `<li>${esc(k)}</li>`).join('')}</ol>` : ''}
+      ${url || src.author ? `<p class="src">Video${src.author ? ` by ${esc(src.author)}` : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">Watch the video</a>` : ''}</p>` : ''}`;
+  };
+  // Edit mode of the shown v2 session (user and video alike): a draft saved in one update, items in full.
+  // Items whose sheet was deleted are not in the draft, so saving drops them.
+  let edit = null;
+  const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose}))});
+  const editRows = () => edit.items.map((it, i) => {
+    const sh = bySlug.get(it.slug), t = esc(sh ? sh.title : it.slug);
+    return `<div class="row"><span class="k">${i + 1}</span><b>${t}</b><div class="ctl">
+      <input type="text" data-dose="${i}" value="${esc(it.dose)}" maxlength="${RS.MAX.dose}" autocomplete="off" placeholder="Dose: 30 s, 3×10…" aria-label="Dose of ${t}">
+      <button type="button" class="ib" data-up="${i}" aria-label="Move ${t} up"${i ? '' : ' disabled'}>↑</button><button type="button" class="ib" data-down="${i}" aria-label="Move ${t} down"${i < edit.items.length - 1 ? '' : ' disabled'}>↓</button><button type="button" class="ib" data-out="${i}" aria-label="Remove ${t} from the session">Remove</button></div></div>`;
+  }).join('') || '<p class="empty">No exercise. Add some from a sheet page: « Add to session ».</p>';
+  const renderRows = focus => {
+    $('ed-items').innerHTML = editRows();
+    const el = focus && view.querySelector ? view.querySelector(focus) : null; if (el && !el.disabled) el.focus();
+  };
+  // A v2 session page, built from its row: why / key points / source only when present (video sessions).
+  const showSession = (slug, flash = '') => {
+    const s = v2BySlug.get(slug);
+    if (edit && edit.slug !== slug) edit = null;
+    shown = RS.ROUTE + slug; show('view'); document.title = s.title;
+    if (edit) {
+      view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true, true)}</div>
+        <div class="wrap fiche"><div class="edit"><p class="eyebrow">Editing the session</p>
+        <label>Title <input id="ed-title" type="text" maxlength="${RS.MAX.title}" value="${esc(edit.title)}" autocomplete="off"></label>
+        <label>Format <input id="ed-format" type="text" maxlength="${RS.MAX.format}" value="${esc(edit.format)}" autocomplete="off" placeholder="5 rounds · 60 s rest"></label>
+        ${s.origin === 'video' ? '<p class="hint">If this video is processed again, the session is rewritten and these edits are lost.</p>' : ''}</div>
+        ${sessionInfo(s)}
+        <h2>Exercises</h2><div class="edit" id="ed-items">${editRows()}</div>
+        <p class="err" id="ed-err" hidden></p>
+        <div class="actions" style="margin-top:16px"><button class="btn" type="button" id="ed-save">Save</button><button class="btn ghost" type="button" id="ed-cancel">Cancel</button></div>
+        <div class="actions" style="margin-top:36px"><button class="btn ghost" type="button" id="ed-delete">Delete session</button></div></div>`;
+      return;
+    }
+    const items = RS.resolveItems(s, bySlug), img = v2Thumb(s);
+    view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
       ${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
-      ${s.why ? `<h2>Why</h2><p class="lead">${esc(s.why)}</p>` : ''}
-      ${kp.length ? `<h2>Key points</h2><ol class="keys">${kp.map(k => `<li>${esc(k)}</li>`).join('')}</ol>` : ''}
-      ${url || src.author ? `<p class="src">Video${src.author ? ` by ${esc(src.author)}` : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">Watch the video</a>` : ''}</p>` : ''}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(itemCard).join('')}</div>` : '<p class="empty">No exercise left: its sheets were deleted.</p>'}</div>`;
+      ${sessionInfo(s)}</div>
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(itemCard).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml();
+    wireNotes(RS.noteKey(slug));
   };
   const showSheet = async (slug, anchor) => {
     const e = bySlug.get(slug);
@@ -769,18 +870,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
     const back = `<div class="wrap" id="sheet-top">${sheetTop(e)}</div>`;
     let html; try { html = await loadSheet(slug); } catch { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>'; return; }
-    view.innerHTML = back + html + `<div class="wrap"><section class="notes"><h2>My notes <small>only you can see them</small></h2>
-      <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes"></textarea>
-      <div class="actions"><button class="btn" type="button" id="n-save">Save</button><span class="status" id="n-status">Loading…</span></div></section></div>`;
+    view.innerHTML = back + html + notesHtml();
     if (anchor) requestAnimationFrame(() => jump(anchor));
-    const ta = $('n-text'), st = $('n-status'), save = $('n-save');
-    try { const {data} = await sb.from('notes').select('body,updated_at').eq('slug', slug).maybeSingle(); ta.value = data ? data.body : ''; st.textContent = data && data.body ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.'; }
-    catch { st.textContent = 'Could not read the note.'; }
-    save.addEventListener('click', async () => {
-      save.disabled = true; st.textContent = 'Saving…';
-      try { const body = ta.value.trim(); const {error} = await sb.from('notes').upsert({slug, body}); if (error) throw error; if (body) notesIndex.add(slug); else notesIndex.delete(slug); st.textContent = 'Saved.'; }
-      catch { st.textContent = 'Could not save. Try again.'; } finally { save.disabled = false; }
-    });
+    wireNotes(slug);
   };
 
   // ---------- move a sheet, or a v2 session (Notebook menu only) ----------
@@ -814,7 +906,6 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     if (s) { $('mv-new-l').hidden = true; $('mv-new').required = false; } else fillGroups(e.theme, e.group);
     mdlg.showModal();
   };
-  view.addEventListener('click', ev => { if (ev.target.closest('#mv-open')) openMove(); });
   $('mv-theme').addEventListener('change', () => { if (shownSession()) return; const e = bySlug.get(shown); fillGroups($('mv-theme').value, e ? e.group : ''); });
   $('mv-group').addEventListener('change', () => { syncNewGroup(); if ($('mv-group').value === NEW_GROUP) $('mv-new').focus(); });
   $('mv-cancel').addEventListener('click', () => mdlg.close());
@@ -853,6 +944,141 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     finally { $('mv-submit').disabled = false; }
   });
 
+  // ---------- compose sessions: « + New session », « Add to session », Edit mode, delete ----------
+  // Every write checks it changed a row: RLS answers an empty result, not an error, for a row it hides.
+  const oneRow = ({data, error}) => { if (error || !data || !data.length) throw error || new Error('no row'); return data[0]; };
+  // Slugs a new session must not take: the user's sessions, and notes left by deleted sessions.
+  const takenSlugs = () => new Set([...v2Sessions.map(s => s.slug), ...[...notesIndex].map(RS.sessionSlugOf).filter(Boolean)]);
+  const createSession = async (theme, title, slugs) => {
+    const row = {slug: RS.uniqueSlug(title, takenSlugs()), theme, title, origin: 'user', items: slugs.map(slug => ({slug, dose: ''}))};
+    const s = oneRow(await sb.from('sessions').insert(row).select(SESSION_COLS));
+    setSessions([...v2Sessions, s]);
+    return s;
+  };
+  const flashHome = msg => { const f = $('flash'); f.textContent = msg; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000); };
+
+  // « + New session » (Sessions section of a notebook): a title, then the notebook's sheets ticked in order.
+  const ndlg = $('ns-dlg');
+  let picked = [];
+  const renderPick = () => {
+    const all = sheets.filter(e => e.theme === currentTheme && e.kind !== 'session'), terms = fold($('ns-q').value).split(/\s+/).filter(Boolean);
+    const byG = new Map(groupsOf(currentTheme).map(g => [g, []]));
+    for (const e of all) if (!terms.length || hit(terms, [e.title, e.summary, e.group])) { if (!byG.has(e.group)) byG.set(e.group, []); byG.get(e.group).push(e); }
+    let html = '';
+    for (const [g, l] of byG) if (l.length) html += `<h3>${esc(g)}</h3>` + l.map(e => { const k = picked.indexOf(e.slug); return `<label><input type="checkbox" data-pick="${esc(e.slug)}"${k >= 0 ? ' checked' : ''}><span class="o">${k >= 0 ? k + 1 : ''}</span><span>${esc(e.title)}</span></label>`; }).join('');
+    const list = $('ns-list'), y = list.scrollTop;
+    list.innerHTML = html || `<p class="hint">${all.length ? 'No sheet matches.' : 'No sheet in this notebook yet.'}</p>`; list.scrollTop = y;
+    $('ns-count').textContent = picked.length ? `${plural(picked.length, 'exercise')} ticked. The session follows this order.` : 'Tick the exercises in the order of the session.';
+  };
+  const openNew = () => {
+    if (!currentTheme || !sessionsOk) return;
+    picked = []; $('ns-title').value = ''; $('ns-q').value = ''; $('ns-err').hidden = true;
+    renderPick(); ndlg.showModal(); $('ns-title').focus();
+  };
+  $('groups').addEventListener('click', ev => { if (ev.target.closest('#ns-open')) openNew(); });
+  $('ns-list').addEventListener('change', ev => { const slug = ev.target.dataset && ev.target.dataset.pick; if (slug) { picked = RS.toggle(picked, slug); renderPick(); } });
+  $('ns-q').addEventListener('input', renderPick);
+  $('ns-cancel').addEventListener('click', () => ndlg.close());
+  $('ns-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const title = RS.clip($('ns-title').value, RS.MAX.title), err = $('ns-err');
+    const fail = (m, el) => { err.textContent = m; err.hidden = false; if (el) el.focus(); };
+    if (!title) return fail('Give the session a title.', $('ns-title'));
+    if (!picked.length) return fail('Tick at least one exercise.');
+    $('ns-submit').disabled = true; err.hidden = true;
+    try {
+      const s = await createSession(currentTheme, title, picked);
+      ndlg.close(); edit = draftOf(s); location.hash = RS.sessionHref(s.slug);
+    } catch { fail('Could not create it right now. Try again in a moment.'); }
+    finally { $('ns-submit').disabled = false; }
+  });
+
+  // « Add to session » (simple sheet page): any session, grouped by notebook, or a new one in the sheet's notebook.
+  const NEW_SESSION = '__new_session__';
+  const adlg = $('as-dlg');
+  const syncNewSession = () => { const on = $('as-session').value === NEW_SESSION; $('as-new-l').hidden = !on; $('as-hint').hidden = !on; if (!on) $('as-new').value = ''; };
+  const openAdd = () => {
+    const e = bySlug.get(shown); if (!e || e.kind === 'session' || !sessionsOk) return;
+    const th = themeById.get(e.theme), byTitle = (a, b) => a.title.localeCompare(b.title);
+    const groups = themes.map(t => [t, v2Sessions.filter(s => s.theme === t.id).sort(byTitle)]).filter(([, l]) => l.length);
+    $('as-sheet').textContent = e.title; $('as-err').hidden = true; $('as-new').value = '';
+    $('as-hint').textContent = `It is created in ${th ? th.title : e.theme}.`;
+    $('as-session').innerHTML = groups.map(([t, l]) => `<optgroup label="${esc(t.title)}">${l.map(s => `<option value="${esc(s.slug)}">${esc(s.title)}</option>`).join('')}</optgroup>`).join('') + `<option value="${NEW_SESSION}">New session…</option>`;
+    const first = (groups.find(([t]) => t.id === e.theme) || groups[0] || [null, []])[1][0];
+    $('as-session').value = first ? first.slug : NEW_SESSION;
+    syncNewSession(); adlg.showModal();
+  };
+  $('as-session').addEventListener('change', () => { syncNewSession(); if ($('as-session').value === NEW_SESSION) $('as-new').focus(); });
+  $('as-cancel').addEventListener('click', () => adlg.close());
+  $('as-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const e = bySlug.get(shown), v = $('as-session').value, err = $('as-err'); if (!e) { adlg.close(); return; }
+    const fail = (m, el) => { err.textContent = m; err.hidden = false; if (el) el.focus(); };
+    const title = RS.clip($('as-new').value, RS.MAX.title);
+    let s = v === NEW_SESSION ? null : v2BySlug.get(v), add = null;
+    if (v === NEW_SESSION) { if (!title) return fail('Give the new session a title.', $('as-new')); }
+    else if (!s) return fail('Pick a session.');
+    else { add = RS.addItem(s.items, e.slug); if (!add.added) return fail('This sheet is already in that session.'); }
+    $('as-submit').disabled = true; err.hidden = true;
+    try {
+      if (s) { oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); }
+      else s = await createSession(e.theme, title, [e.slug]);
+      adlg.close();
+      const top = $('sheet-top');
+      if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Added to <a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>.</p>`;
+    } catch { fail('Could not add it right now. Try again in a moment.'); }
+    finally { $('as-submit').disabled = false; }
+  });
+
+  // Edit mode: reorder, dose, format, title, remove an item; one update with the items in full.
+  const reorder = (i, d) => { edit.items = RS.moveItem(edit.items, i, d); renderRows(`[data-${d < 0 ? 'up' : 'down'}="${i + d}"]`); };
+  const saveEdit = async () => {
+    const s = v2BySlug.get(edit.slug), err = $('ed-err'), b = $('ed-save');
+    const row = {title: RS.clip(edit.title, RS.MAX.title), format: RS.clip(edit.format, RS.MAX.format), items: RS.cleanItems(edit.items)};
+    if (!row.title) { err.textContent = 'Give the session a title.'; err.hidden = false; $('ed-title').focus(); return; }
+    b.disabled = true; err.hidden = true;
+    try {
+      oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
+      Object.assign(s, row); setSessions(v2Sessions); edit = null;
+      showSession(s.slug, 'Saved.');
+    } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; }
+  };
+  view.addEventListener('input', ev => {
+    const t = ev.target; if (!edit || !t) return;
+    if (t.id === 'ed-title') edit.title = t.value;
+    else if (t.id === 'ed-format') edit.format = t.value;
+    else if (t.dataset && t.dataset.dose != null) { const it = edit.items[+t.dataset.dose]; if (it) it.dose = t.value; }
+  });
+  // Delete a session: the row only. Its sheets stay; its note is kept, as for a sheet (takenSlugs keeps it unseen).
+  const ddlg = $('del-dlg');
+  const openDelete = () => { const s = shownSession(); if (!s) return; $('del-name').textContent = s.title; $('del-err').hidden = true; ddlg.showModal(); };
+  $('del-cancel').addEventListener('click', () => ddlg.close());
+  $('del-ok').addEventListener('click', async () => {
+    const s = shownSession(), err = $('del-err'), b = $('del-ok'); if (!s) { ddlg.close(); return; }
+    b.disabled = true; err.hidden = true;
+    try {
+      oneRow(await sb.from('sessions').delete().eq('slug', s.slug).select('slug'));
+      setSessions(v2Sessions.filter(x => x !== s)); edit = null; ddlg.close();
+      flashHome('Session deleted. Its exercise sheets stay in your notebooks.');
+      location.hash = s.theme;
+    } catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; }
+    finally { b.disabled = false; }
+  });
+  view.addEventListener('click', ev => {
+    const at = sel => ev.target.closest(sel);
+    let b;
+    if (at('#mv-open')) openMove();
+    else if (at('#as-open')) openAdd();
+    else if (at('#ed-open')) { const s = shownSession(); if (s) { edit = draftOf(s); showSession(s.slug); } }
+    else if (!edit) return;
+    else if ((b = at('[data-up]'))) reorder(+b.dataset.up, -1);
+    else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);
+    else if ((b = at('[data-out]'))) { edit.items = RS.removeItem(edit.items, +b.dataset.out); renderRows(); }
+    else if (at('#ed-save')) saveEdit();
+    else if (at('#ed-cancel')) { const slug = edit.slug; edit = null; showSession(slug); }
+    else if (at('#ed-delete')) openDelete();
+  });
+
   // ---------- settings ----------
   const cliCmd = () => backend ? `python3 tools/rb.py login --url ${backend.url} --key ${backend.key}` : '';
   const base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
@@ -887,6 +1113,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       show('auth'); return;
     }
     const [tok, anchor] = decodeURIComponent(location.hash.slice(1)).split('~');
+    if (edit && RS.sessionSlugOf(tok) !== edit.slug) edit = null; // leaving a session page drops its unsaved edits
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
     if (tok && bySlug.has(tok)) { showSheet(tok, anchor); return; }

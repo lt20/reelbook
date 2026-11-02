@@ -36,6 +36,48 @@
     return m;
   };
 
-  const api = {ROUTE, sessionHref, sessionSlugOf, missingTable, resolveItems, sessionsBySheet};
+  // ---------- composition (S3): pure, the app saves what they return in one update ----------
+  // Free-text limits of a session: its title and format line, and an item's dose.
+  const MAX = {title: 80, format: 80, dose: 40};
+  const clip = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+
+  // The notes of a v2 session live in `notes` under « session/<slug> »: a sheet slug never holds a « / ».
+  const noteKey = slug => ROUTE + slug;
+
+  // A slug from a title, unique among `taken` (the user's session slugs, and the slugs of notes left by
+  // deleted sessions, so an old note never shows up on a new session): « shoulders-monday », then « -2 »…
+  const slugBase = title => String(title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48).replace(/-+$/, '') || 'session';
+  const uniqueSlug = (title, taken) => {
+    const has = taken instanceof Set ? s => taken.has(s) : s => (taken || []).includes(s);
+    const base = slugBase(title);
+    if (!has(base)) return base;
+    for (let i = 2; ; i++) if (!has(`${base}-${i}`)) return `${base}-${i}`;
+  };
+
+  // Ticking in the « + New session » list: a tick appends the sheet, an untick removes it; order = tick order.
+  const toggle = (picked, slug) => picked.includes(slug) ? picked.filter(s => s !== slug) : [...picked, slug];
+
+  // « Add to session »: the sheet goes last, never twice. {items, added}; `items` is a new array when added.
+  const addItem = (items, slug) => {
+    const list = itemsOf({items});
+    if (list.some(it => it.slug === slug)) return {items: list, added: false};
+    return {items: [...list, {slug, dose: ''}], added: true};
+  };
+
+  // Edit mode: ↑ (delta -1) / ↓ (+1) swaps an item with its neighbour; out of range changes nothing.
+  const moveItem = (items, i, delta) => {
+    const out = [...items], j = i + delta;
+    if (i < 0 || i >= out.length || j < 0 || j >= out.length) return out;
+    [out[i], out[j]] = [out[j], out[i]];
+    return out;
+  };
+  const removeItem = (items, i) => items.filter((_, k) => k !== i);
+
+  // What Edit saves: {slug, dose} only, dose trimmed to its limit.
+  const cleanItems = items => itemsOf({items}).map(it => ({slug: it.slug, dose: clip(it.dose, MAX.dose)}));
+
+  const api = {ROUTE, sessionHref, sessionSlugOf, missingTable, resolveItems, sessionsBySheet,
+    MAX, clip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);
