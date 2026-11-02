@@ -70,6 +70,13 @@ Exercises are not sheets: their content and photos live only in the session page
 - Notes on a v2 session page: **yes** (Laurent, 2026-11-02). Same « My notes » block, stored in `notes` under the key
   `session/<slug>` (no collision with sheet slugs, no schema change). Delivered in S3.
 
+## Notes from S3 (#16)
+
+- User session slugs are `my-<title>`: never in the `session-…` space that `rb.py publish` upserts for video sessions.
+- A new session needs at least one ticked sheet. Saving in Edit drops items whose sheet is gone.
+- Deleting a session keeps its note; slugs are never reused, so the note never shows on another session.
+- Title ≤ 80 characters; renaming keeps the slug. « My notes » is hidden in Edit mode.
+
 ## Lots
 
 | Lot | Content | Files | Depends on |
