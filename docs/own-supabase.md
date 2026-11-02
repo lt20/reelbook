@@ -12,8 +12,10 @@ Ten minutes, free tier, no card. You get a private backend that only you can rea
 
 1. Dashboard → **SQL Editor** → **New query**.
 2. Paste the whole content of [`supabase/schema.sql`](../supabase/schema.sql) and click **Run**.
-   It creates three tables (`requests`, `sheets`, `notes`), their row level security policies and
-   a private storage bucket `sheets`. It is safe to run again later.
+   It creates the tables (`requests`, `sheets`, `notes`, `user_themes`, `sessions`), their row
+   level security policies and a private storage bucket `sheets`. It is safe to run again later.
+3. **After each Reelbook update**, run the latest `supabase/schema.sql` again the same way: it only
+   adds what is missing (sessions, for instance, need the `sessions` table) and keeps your data.
 
 ## 3. Allow password sign-in without email confirmation (recommended for a single user)
 

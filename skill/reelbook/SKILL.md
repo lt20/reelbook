@@ -18,7 +18,8 @@ fight, kitesurf, cooking, pilates…) and **custom ones** the user described the
 needs a `theme` from that list and a `group`: use the notebook's groups when it has some, else
 create a short, reusable group name (custom notebooks start with none). If no notebook fits at
 all, do not invent one: publish in the closest and tell the user, who can add a notebook in the
-app. Routes in the app: `#` portal, `#<theme>`, `#<slug>`, `#<slug>~<anchor>`.
+app. Routes in the app: `#` portal, `#<theme>`, `#<slug>` (`#<slug>~<anchor>` only for the old
+one-page sessions, which section 3 bis no longer writes).
 
 **Language**: write the sheet in the user's language (the one they talk to you in). Section
 titles follow the template, translated.
@@ -123,7 +124,7 @@ titles follow the template, translated.
   is enough.
 - **Long video** (more than ~2 min, or chapters listed): never scout the whole video. Read the
   chapters / transcript, pick the passages that show an exercise, run passes A–C **only on those
-  passages**, and build **one session page** (section 3 bis), one `exo` block per exercise.
+  passages**, and build **one session** (section 3 bis): one exercise sheet per exercise.
 - `meta.json`: `source.platform` = `"youtube"`; the footer link is the video URL, with the
   timestamp (`&t=…s`) when the sheet comes from one passage.
 
@@ -151,18 +152,55 @@ titles follow the template, translated.
   card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok`, `youtube` or `facebook`).
 
 ## 3 bis. One video = a session (several exercises)
-- Decide from the caption / the grid: several named exercises = **one session page**, not N
-  sheets. Copy `templates/session.html`; slug `session-…`. Why → Format (the post's dose:
-  seconds × exercises, rounds, rest) → Key points → "The circuit" (`ol.plan` with `#anchor`
-  links) → one `<section class="exo" id="<anchor>">` per exercise (h2 "n · Title", description,
-  `.steps`, `ul` of 2–3 cues + an easier version). Grid per exercise, photos per the count rule.
-- `meta.json`: `kind: "session"`, `group: "Sessions"`, `exercises[]` with `anchor`, `title`,
-  `group`, `summary`, `duration`, `thumbnail` (3:2, whole body, cropped from a photo). The app
-  builds the group cards and the `#<slug>~<anchor>` links by itself.
+- Decide from the caption / the grid: several named exercises = **one session**: one light
+  exercise sheet per exercise, plus one session that links them **in the video's order**. Grid per
+  exercise, photos per the count rule. Processing is the same as for the old one-page session:
+  only the output is split.
+- Work folder: `work/<session-slug>/` holds the session `meta.json` and **one sub-folder per
+  exercise**, `work/<session-slug>/<exercise-slug>/` (`index.html`, `meta.json`, `img/`, as in
+  section 3). No `index.html` at the session level: the app draws the session page itself.
+- **Slugs, unique and stable**: session `session-<…>`; each exercise `<session-slug>-<anchor>`
+  (anchor: lowercase ascii with dashes, from the exercise name, e.g. `session-gsp-floor-angel`).
+  Reprocessing the same video must give the same slugs, so the publish rewrites the sheets
+  instead of adding duplicates. The same exercise twice in the circuit = one sheet, two items.
+- **Exercise sheet**: copy `templates/exercise.html` (light sheet): description, numbered photos,
+  2–3 cues, an easier version, footer with author credit + video link (YouTube: with the
+  `&t=…s` of the passage). **No** Why, Dose or Key points on it: they go on the session. Its
+  `meta.json`: `kind: "sheet"`, `theme` = the session's notebook, `group` = the exercise's own
+  group (Shoulders, Legs…, never "Sessions"), `title`, `summary` (one line for the card),
+  `duration: ""` (the dose lives on the session), `thumbnail` (`img/thumb.jpg`, 3:2, whole body),
+  `source` = the session's.
+- **Session `meta.json`**:
+  ```json
+  {"slug": "session-gsp", "kind": "session", "theme": "strength", "title": "…",
+   "format": "5 rounds · 60 s rest",
+   "why": "What the session is for, two or three sentences.",
+   "key_points": ["Cue for the whole session.", "Second cue."],
+   "source": {"author": "…", "url": "https://…", "platform": "instagram"},
+   "items": [{"slug": "session-gsp-floor-angel", "dose": "30 s"}, {"slug": "session-gsp-squat", "dose": "3×10"}]}
+  ```
+  `format`: one free-text line, the post's format (rounds, time per exercise, rest); when the
+  video gives none, a suggestion marked as such (« suggestion: 3 rounds »). `items`: every
+  exercise sub-folder, in video order, each with its own free-text `dose` (`""` when none is
+  given). `why` and `key_points` are written in the user's language, like the sheets. Optional
+  `"thumbnail": "<exercise slug>/img/thumb.jpg"`; leave it out and the app uses the first
+  item's.
+- Old one-page sessions (`templates/session.html`, `exercises[]`) are **no longer written**:
+  `rb.py publish` refuses them.
+- **Requeued old sessions** (`rb.py requeue-sessions` put their videos back in the queue): process
+  them like any video, and keep `source.url` **exactly** the request's URL: the publish deletes
+  the old page that has the same `source.url` (with its images), and nothing else does.
 
 ## 4. Publish and close
-- `python3 tools/rb.py publish work/<slug>` uploads the images and upserts the sheet.
-- Check in the app (Chrome): open `<app url>#<slug>`; a deep link `#<slug>~<anchor>` only
-  reaches the page at load, so navigate elsewhere first.
-- `python3 tools/rb.py done <id> --slug <slug>`. On failure: `rb.py error <id> --note "<why>"`.
-- Give the user the sheet link. Then take the next queued request.
+- Sheet: `python3 tools/rb.py publish work/<slug>` uploads the images and upserts the sheet.
+- Session: `python3 tools/rb.py publish work/<session-slug>` checks the whole folder first, then
+  publishes each exercise sheet, then the session, then deletes the old one-page session of the
+  same video if there is one. « no sessions table »: the user has to re-run
+  `supabase/schema.sql` on their project (`docs/own-supabase.md`); say so and flag the request
+  with `rb.py error`. Reprocessing a video rewrites its session: changes made to it in the app
+  (order, doses, removed items) are lost.
+- Check in the app (Chrome): open `<app url>#<slug>` (for a session, each exercise sheet).
+- `python3 tools/rb.py done <id> --slug <slug>` (a session: its slug). On failure:
+  `rb.py error <id> --note "<why>"`.
+- Give the user the sheet link (a session: the links of its exercise sheets). Then take the next
+  queued request.
