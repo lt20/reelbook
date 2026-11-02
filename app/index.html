@@ -126,7 +126,10 @@ dialog.dlg .actions{display:grid;gap:8px}
 .card .m{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
 .card .m span{background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px}
 .card .m span.note{background:var(--ok-bg);color:var(--ok)}
-.card .m span.session{background:var(--accent);color:var(--accent-ink)}
+.card .m span.session,.card .m span.dose{background:var(--accent);color:var(--accent-ink)}
+.card{position:relative}
+.card>.k{position:absolute;left:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:16px;line-height:1;padding:5px 8px 4px;border-radius:6px}
+.from,.src{font-size:15px;color:var(--muted);margin:0 0 16px}
 .card.big img{aspect-ratio:2/1}
 /* ---- queue ---- */
 .queue{display:grid;gap:8px}
@@ -346,12 +349,13 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <h2>Account</h2>
     <p id="s-user"></p>
     <p class="hint">Backend: <span id="s-backend"></span></p>
+    <p class="hint" id="s-sessions" hidden>Re-run <code>supabase/schema.sql</code> to enable sessions.</p>
     <div class="actions"><button class="btn ghost" type="button" id="s-signout">Sign out</button><button class="btn ghost" type="button" id="s-reset">Change backend</button></div>
   </div>
   <div class="panel">
     <h2>Notebooks</h2>
     <div class="nblist" id="nblist"></div>
-    <p class="hint">A notebook with sheets in it cannot be removed. Add notebooks from the home page.</p>
+    <p class="hint">A notebook with sheets or sessions in it cannot be removed. Add notebooks from the home page.</p>
   </div>
   <div class="panel">
     <h2>Your computer</h2>
@@ -372,7 +376,8 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <h2 id="mv-title">Move this sheet</h2>
     <p class="u" id="mv-sheet"></p>
     <label>Notebook <select id="mv-theme"></select></label>
-    <label>Group <select id="mv-group"></select></label>
+    <p class="hint" id="mv-hint" hidden>Its exercises stay where they are.</p>
+    <label id="mv-group-l">Group <select id="mv-group"></select></label>
     <label id="mv-new-l" hidden>New group name <input id="mv-new" type="text" maxlength="40" autocomplete="off" placeholder="Shoulders"></label>
     <p class="err" id="mv-err" hidden></p>
     <div class="actions"><button class="btn" type="submit" id="mv-submit">Move</button><button class="btn ghost" type="button" id="mv-cancel">Cancel</button></div>
@@ -381,9 +386,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
+<script src="sessions.js?v=1"></script>
 <script>
 (() => {
   'use strict';
+  const RS = window.RBSessions;
   const CFG = window.REELBOOK || {}, library = CFG.library || [], libById = new Map(library.map(t => [t.id, t]));
   if (!library.length) document.body.insertAdjacentHTML('afterbegin', '<p class="err" style="padding:8px 16px">The app configuration did not load (stale cache?). Reload the page.</p>');
   let themes = [], themeById = new Map();
@@ -469,6 +476,8 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   $('s-signout').addEventListener('click', async () => { await sb.auth.signOut(); location.hash = ''; });
 
   // ---------- data ----------
+  // v2Sessions: rows of the `sessions` table; inSessions: sheet slug -> those sessions; sessionsOk: false when the backend has no such table.
+  let v2Sessions = [], v2BySlug = new Map(), inSessions = new Map(), sessionsOk = true;
   let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null, loading = false, loadError = '';
   const signed = new Map(); // storage path -> {url, exp}
   const signAll = async paths => {
@@ -499,14 +508,20 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   };
   const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
+  const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
   const loadCatalogue = async () => {
     await loadThemes();
     const {data, error} = await sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,exercises,added_at').order('title');
     if (error) throw error;
     sheets = data || []; bySlug = new Map(sheets.map(s => [s.slug, s]));
-    for (const sh of sheets) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
+    // v2 sessions; a backend without the table only loses them (sessionsOk false, one line in Settings).
+    const r = await sb.from('sessions').select('slug,theme,title,format,why,key_points,source,origin,thumbnail,items').order('title');
+    if (r.error && !RS.missingTable(r.error, r.status)) throw r.error;
+    sessionsOk = !r.error; setSessions(r.error ? [] : r.data || []);
+    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
     const paths = [];
     for (const s of sheets) { if (s.thumbnail) paths.push(spath(s.slug, s.thumbnail)); for (const x of (s.exercises || [])) if (x.thumbnail) paths.push(spath(s.slug, x.thumbnail)); }
+    for (const s of v2Sessions) if (s.thumbnail) paths.push(s.thumbnail);
     await signAll(paths);
     try { const {data: n} = await sb.from('notes').select('slug').neq('body', ''); notesIndex = new Set((n || []).map(r => r.slug)); } catch {}
   };
@@ -520,7 +535,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const thumb = (slug, rel) => rel ? (signed.get(spath(slug, rel)) || {}).url || '' : '';
 
   // ---------- home rendering ----------
-  const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">
+  const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}
       <img src="${esc(thumbUrl)}" alt="" loading="lazy">
       <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>
       <div class="m">${(extra && extra.meta || []).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
@@ -528,7 +543,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const renderPortal = () => {
     $('portal').innerHTML = themes.map(t => {
       const list = sheets.filter(e => e.theme === t.id);
-      const sessions = list.filter(e => e.kind === 'session').length, n = list.length - sessions;
+      const v1 = list.filter(e => e.kind === 'session').length, n = list.length - v1, sessions = v1 + v2Sessions.filter(s => s.theme === t.id).length;
       const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (sessions ? ` · ${plural(sessions, 'session')}` : '');
       const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="">`).join('');
       return `<a class="tcard" href="#${esc(t.id)}" style="--t:${colorOf(t)}">
@@ -560,9 +575,14 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     finally { $('c-submit').disabled = false; }
   });
   // `pre` puts extra tags first (the notebook name in search results).
-  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  // « in N sessions »: the v2 sessions that list this sheet, computed from sessions.items.
+  const inTag = slug => { const n = (inSessions.get(slug) || []).length; return n ? [{txt: `in ${plural(n, 'session')}`, cls: 'session'}] : []; };
+  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   const exerciseCard = (sc, x, pre = []) => card(x, `#${esc(sc.slug)}~${esc(x.anchor)}`, thumb(sc.slug, x.thumbnail), {meta: [...pre, {txt: x.duration || ''}, {txt: 'session · ' + sc.title, cls: 'session'}].filter(m => m.txt)});
   const sessionCard = (sc, pre = [], big = true) => card(sc, `#${esc(sc.slug)}`, thumb(sc.slug, sc.thumbnail), {big, meta: [...pre, {txt: sc.duration}, {txt: plural((sc.exercises || []).length, 'exercise')}, {txt: (sc.source || {}).author || ''}, ...(notesIndex.has(sc.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
+  const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
+  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, meta: [...pre, {txt: s.format}, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
   const renderGroups = t => {
     const all = sheets.filter(e => e.theme === t.id);
     const sessions = all.filter(e => e.kind === 'session'), solo = all.filter(e => e.kind !== 'session');
@@ -570,15 +590,19 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     const push = (g, h) => { if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(h); };
     for (const e of solo) push(e.group, sheetCard(e));
     for (const sc of sessions) for (const x of (sc.exercises || [])) push(x.group, exerciseCard(sc, x));
+    // v1 sessions (one page each) and v2 sessions (a list of sheets) share the section, by title.
+    const v2 = v2Sessions.filter(s => s.theme === t.id), nS = sessions.length + v2.length;
+    const sCards = [...sessions.map(sc => ({title: sc.title, h: sessionCard(sc)})), ...v2.map(s => ({title: s.title, h: v2Card(s)}))].sort((a, b) => a.title.localeCompare(b.title));
     let html = '';
-    if (sessions.length) html += `<section><h2>Sessions <span class="n">${sessions.length}</span></h2><div class="grid">` + sessions.map(sc => sessionCard(sc)).join('') + '</div></section>';
+    if (nS) html += `<section><h2>Sessions <span class="n">${nS}</span></h2><div class="grid">` + sCards.map(x => x.h).join('') + '</div></section>';
     for (const [g, list] of byGroup) { if (list.length) html += `<section><h2>${esc(g)} <span class="n">${list.length}</span></h2><div class="grid">${list.join('')}</div></section>`; }
     $('groups').innerHTML = html || '<p class="empty">No sheet in this theme yet. Paste a first link.</p>';
     const g = [...byGroup].filter(([, l]) => l.length).length;
-    return `${plural(solo.length, 'sheet')}${sessions.length ? ` · ${plural(sessions.length, 'session')}` : ''} · ${plural(g, 'group')}`;
+    return `${plural(solo.length, 'sheet')}${nS ? ` · ${plural(nS, 'session')}` : ''} · ${plural(g, 'group')}`;
   };
   // ---------- search ----------
-  // Every word must appear, accents and case ignored, in a title, summary, group, notebook or author.
+  // Every word must appear, accents and case ignored, in a title, summary, group, notebook or author
+  // (a v2 session: its title, format, notebook or author).
   const fold = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const searchTerms = () => fold($('q').value).split(/\s+/).filter(Boolean);
   const hit = (terms, fields) => { const hay = fold(fields.join(' ')); return terms.every(w => hay.includes(w)); };
@@ -591,6 +615,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       if (e.kind !== 'session') { if (hit(terms, [e.title, e.summary, e.group, nb, author])) cards.push(sheetCard(e, pre)); continue; }
       if (hit(terms, [e.title, e.summary, nb, author])) cards.push(sessionCard(e, pre, false));
       for (const x of (e.exercises || [])) if (hit(terms, [x.title, x.summary, x.group, nb])) cards.push(exerciseCard(e, x, pre));
+    }
+    for (const s of v2Sessions) {
+      if (t && s.theme !== t.id) continue;
+      const nb = (themeById.get(s.theme) || {}).title || '';
+      if (hit(terms, [s.title, s.format, nb, (s.source || {}).author || ''])) cards.push(v2Card(s, t ? [] : [{txt: nb}], false));
     }
     $('results').innerHTML = cards.length ? `<div class="grid">${cards.join('')}</div>` : `<p class="empty">Nothing matches « ${esc($('q').value.trim())} »${t ? ' in this notebook' : ''}.</p>`;
     return plural(cards.length, 'result');
@@ -605,7 +634,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('h-title').classList.toggle('brand-title', !t);
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);
-    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
+    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n + v2Sessions.length; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
     const terms = sheets.length ? searchTerms() : [];
     $('results').hidden = !terms.length;
@@ -705,17 +734,40 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     cache.set(slug, wrap.innerHTML); return wrap.innerHTML;
   };
   const jump = a => { if (!a) return; const el = view.querySelector('#' + CSS.escape(a)); if (el) el.scrollIntoView({block: 'start'}); };
-  // Sessions cannot be moved yet: their exercises live inside the session page.
-  const topNav = e => {
-    const th = themeById.get(e.theme);
-    return `<nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span class="r"><span>${esc(e.kind === 'session' ? 'Session' : e.group)}</span>${e.kind === 'session' ? '' : '<button type="button" class="mv" id="mv-open">Move</button>'}</span></nav>`;
+  // A v1 session (kind 'session', one page) cannot be moved: its exercises live inside its page.
+  // A v2 session (v2 true) moves to another notebook on its own.
+  const topNav = (e, v2 = false) => {
+    const th = themeById.get(e.theme), v1 = !v2 && e.kind === 'session';
+    return `<nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span class="r"><span>${esc(v1 || v2 ? 'Session' : e.group)}</span>${v1 ? '' : '<button type="button" class="mv" id="mv-open">Move</button>'}</span></nav>`;
+  };
+  // « From the session … » on an exercise sheet: the video sessions that list it.
+  const sheetTop = e => {
+    const from = e.kind === 'session' ? [] : (inSessions.get(e.slug) || []).filter(s => s.origin === 'video');
+    return topNav(e) + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '');
+  };
+  const httpUrl = u => typeof u === 'string' && /^https?:\/\//i.test(u) ? u : '';
+  // An item card: the sheet's card with its number in the session and its dose.
+  const itemCard = it => card(it.sheet, `#${esc(it.sheet.slug)}`, thumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: (it.sheet.source || {}).author || ''}, ...(notesIndex.has(it.sheet.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  // A v2 session page, built from its row: why / key points / source only when present (video sessions).
+  const showSession = slug => {
+    const s = v2BySlug.get(slug);
+    shown = RS.ROUTE + slug; show('view'); document.title = s.title;
+    const items = RS.resolveItems(s, bySlug), img = v2Thumb(s), src = s.source || {}, url = httpUrl(src.url);
+    const kp = (Array.isArray(s.key_points) ? s.key_points : []).filter(k => typeof k === 'string' && k.trim());
+    view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}</div>
+      <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
+      ${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
+      ${s.why ? `<h2>Why</h2><p class="lead">${esc(s.why)}</p>` : ''}
+      ${kp.length ? `<h2>Key points</h2><ol class="keys">${kp.map(k => `<li>${esc(k)}</li>`).join('')}</ol>` : ''}
+      ${url || src.author ? `<p class="src">Video${src.author ? ` by ${esc(src.author)}` : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">Watch the video</a>` : ''}</p>` : ''}</div>
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(itemCard).join('')}</div>` : '<p class="empty">No exercise left: its sheets were deleted.</p>'}</div>`;
   };
   const showSheet = async (slug, anchor) => {
     const e = bySlug.get(slug);
     if (shown === slug && !view.hidden) { jump(anchor); return; }
     shown = slug; show('view');
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
-    const back = `<div class="wrap" id="sheet-top">${topNav(e)}</div>`;
+    const back = `<div class="wrap" id="sheet-top">${sheetTop(e)}</div>`;
     let html; try { html = await loadSheet(slug); } catch { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>'; return; }
     view.innerHTML = back + html + `<div class="wrap"><section class="notes"><h2>My notes <small>only you can see them</small></h2>
       <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes"></textarea>
@@ -731,7 +783,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     });
   };
 
-  // ---------- move a sheet ----------
+  // ---------- move a sheet, or a v2 session (Notebook menu only) ----------
   const NEW_GROUP = '__new_group__';
   const mdlg = $('move-dlg');
   // A notebook's groups: its own list, then the groups its sheets and session exercises already use.
@@ -751,20 +803,39 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('mv-group').value = gs.includes(keep) ? keep : gs.length ? gs[0] : NEW_GROUP;
     syncNewGroup();
   };
+  const shownSession = () => { const slug = RS.sessionSlugOf(shown); return slug ? v2BySlug.get(slug) : null; };
   const openMove = () => {
-    const e = bySlug.get(shown); if (!e || e.kind === 'session') return;
+    const s = shownSession(), e = s || bySlug.get(shown); if (!e || (!s && e.kind === 'session')) return;
+    $('mv-title').textContent = s ? 'Move this session' : 'Move this sheet';
     $('mv-sheet').textContent = e.title; $('mv-err').hidden = true; $('mv-new').value = '';
+    $('mv-hint').hidden = !s; $('mv-group-l').hidden = !!s;
     $('mv-theme').innerHTML = themes.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
     $('mv-theme').value = e.theme;
-    fillGroups(e.theme, e.group);
+    if (s) { $('mv-new-l').hidden = true; $('mv-new').required = false; } else fillGroups(e.theme, e.group);
     mdlg.showModal();
   };
   view.addEventListener('click', ev => { if (ev.target.closest('#mv-open')) openMove(); });
-  $('mv-theme').addEventListener('change', () => { const e = bySlug.get(shown); fillGroups($('mv-theme').value, e ? e.group : ''); });
+  $('mv-theme').addEventListener('change', () => { if (shownSession()) return; const e = bySlug.get(shown); fillGroups($('mv-theme').value, e ? e.group : ''); });
   $('mv-group').addEventListener('change', () => { syncNewGroup(); if ($('mv-group').value === NEW_GROUP) $('mv-new').focus(); });
   $('mv-cancel').addEventListener('click', () => mdlg.close());
+  // A v2 session: only sessions.theme changes; its exercises stay in their notebooks and groups.
+  const moveSession = async s => {
+    const theme = $('mv-theme').value, err = $('mv-err');
+    if (!themeById.has(theme)) { err.textContent = 'Pick a notebook.'; err.hidden = false; return; }
+    if (theme === s.theme) { mdlg.close(); return; }
+    $('mv-submit').disabled = true; err.hidden = true;
+    try {
+      const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
+      s.theme = theme;
+      mdlg.close();
+      const top = $('sheet-top');
+      if (top && shownSession() === s) top.innerHTML = topNav(s, true) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`;
+    } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
+    finally { $('mv-submit').disabled = false; }
+  };
   $('mv-form').addEventListener('submit', async ev => {
     ev.preventDefault();
+    const s = shownSession(); if (s) { await moveSession(s); return; }
     const e = bySlug.get(shown); if (!e) { mdlg.close(); return; }
     const theme = $('mv-theme').value, group = ($('mv-group').value === NEW_GROUP ? $('mv-new').value : $('mv-group').value).trim();
     const err = $('mv-err');
@@ -777,7 +848,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       e.theme = theme; e.group = group;
       mdlg.close();
       const top = $('sheet-top');
-      if (top && shown === e.slug) top.innerHTML = topNav(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
+      if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
   });
@@ -797,8 +868,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   $('welcome').addEventListener('click', copyHandler($('welcome')));
   $('w-done').addEventListener('click', () => { ls.set(welcomeKey(), '1'); location.hash = ''; });
   const renderSettings = () => {
+    $('s-sessions').hidden = sessionsOk;
     $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd(); $('s-install').innerHTML = installBlock();
-    $('nblist').innerHTML = themes.map(t => { const n = sheets.filter(e => e.theme === t.id).length; return `<div style="--t:${colorOf(t)}"><span><b>${esc(t.title)}</b><small>${esc(t.builtin ? plural(n, 'sheet') : (t.description || '') + ' · ' + plural(n, 'sheet'))}</small></span><button class="btn sm ghost" type="button" data-rm="${esc(t.id)}" ${n ? 'disabled' : ''}>Remove</button></div>`; }).join('') || '<p class="hint">No notebook yet.</p>';
+    $('nblist').innerHTML = themes.map(t => { const n = sheets.filter(e => e.theme === t.id).length, k = v2Sessions.filter(s => s.theme === t.id).length, cnt = plural(n, 'sheet') + (k ? ' · ' + plural(k, 'session') : ''); return `<div style="--t:${colorOf(t)}"><span><b>${esc(t.title)}</b><small>${esc(t.builtin ? cnt : (t.description || '') + ' · ' + cnt)}</small></span><button class="btn sm ghost" type="button" data-rm="${esc(t.id)}" ${n + k ? 'disabled' : ''}>Remove</button></div>`; }).join('') || '<p class="hint">No notebook yet.</p>';
   };
   $('nblist').addEventListener('click', async ev => { const b = ev.target.closest('[data-rm]'); if (!b) return; b.disabled = true; try { await removeTheme(b.dataset.rm); renderSettings(); } catch { b.disabled = false; } });
   $('settings').addEventListener('click', copyHandler($('settings')));
@@ -818,6 +890,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
     if (tok && bySlug.has(tok)) { showSheet(tok, anchor); return; }
+    const ses = RS.sessionSlugOf(tok); if (ses && v2BySlug.has(ses)) { showSession(ses); return; }
     shown = null; currentTheme = themeById.has(tok) ? tok : null; view.innerHTML = ''; renderHome(); show('home');
   };
   window.addEventListener('hashchange', route);
@@ -831,7 +904,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity;
-      sb = null; user = null; sheets = []; bySlug = new Map(); notesIndex = new Set(); signed.clear(); cache.clear(); loadError = '';
+      sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
     if (!sb) {
@@ -843,7 +916,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
         const next = session ? session.user : null;
         const changed = (next && next.id) !== (user && user.id);
         user = next;
-        if (changed) { sheets = []; bySlug = new Map(); notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });

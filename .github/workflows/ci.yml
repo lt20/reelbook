@@ -17,3 +17,5 @@ jobs:
       - run: node --check app/config.js
       - run: node --check app/sw.js
       - run: node --test tests/auth-flow.test.cjs
+      - run: node --check app/sessions.js
+      - run: node --test tests/sessions.test.cjs
