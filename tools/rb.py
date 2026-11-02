@@ -6,19 +6,32 @@
     rb.py themes                list the account's notebooks (id, title, description, groups), JSON lines
     rb.py queue                 list queued requests (JSON lines)
     rb.py claim <id>            mark a request as processing
-    rb.py publish <dir>         upload <dir>/img/* and upsert the sheet described by <dir>/meta.json + <dir>/index.html
-    rb.py done <id> --slug S    close a request once its sheet is published
+    rb.py publish <dir>         sheet folder: upload <dir>/img/* and upsert the sheet (<dir>/meta.json + <dir>/index.html)
+                                session folder: publish each exercise sheet sub-folder, then upsert the session
+    rb.py done <id> --slug S    close a request once its sheet or session is published
     rb.py error <id> --note T   flag a request that could not be processed
-    rb.py list                  list published sheets
+    rb.py list                  list published sheets and sessions
     rb.py delete <slug>         remove a sheet and its images
+    rb.py requeue-sessions [--dry-run]
+                                queue again the video of every old (v1, one HTML page) session, so the skill
+                                rebuilds it as exercise sheets + a session; skips a URL already queued or processing
 
 Session file: ~/.config/reelbook/config.json (chmod 600). Override with REELBOOK_CONFIG.
 
-meta.json for publish:
+meta.json of a sheet folder (meta.json + index.html + img/):
     {"slug": "floor-angel", "kind": "sheet", "theme": "strength", "group": "Shoulders",
      "title": "Floor angel", "summary": "…", "duration": "3 min", "thumbnail": "img/thumb.jpg",
-     "source": {"author": "Georges St-Pierre", "url": "https://…", "platform": "instagram | tiktok | youtube | facebook"},
-     "exercises": []}      # sessions only: [{"anchor","title","group","summary","duration","thumbnail"}]
+     "source": {"author": "Georges St-Pierre", "url": "https://…", "platform": "instagram | tiktok | youtube | facebook"}}
+
+meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no index.html):
+    {"slug": "session-gsp-shoulders", "kind": "session", "theme": "strength", "title": "…",
+     "format": "5 rounds · 60 s rest", "why": "…", "key_points": ["…", "…"],
+     "source": {"author": "…", "url": "https://…", "platform": "…"},
+     "items": [{"slug": "session-gsp-shoulders-floor-angel", "dose": "30 s"}, …]}   # video order
+    Every item slug is the slug of a sub-folder's meta.json, and every sub-folder is an item. Optional
+    "thumbnail": "<item slug>/img/<file>" (else the app uses the first item's). Publishing then deletes
+    the old v1 session (sheets row with kind "session", images included) that has the same source.url.
+    The v1 format (kind "session" with "exercises" and one index.html) is refused.
 """
 import json, os, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error
 
@@ -37,7 +50,12 @@ def save_cfg(cfg):
     CFG_PATH.write_text(json.dumps(cfg, indent=2))
     os.chmod(CFG_PATH, 0o600)
 
-def http(method, url, headers=None, data=None, raw=False):
+class RbHTTPError(Exception):
+    """Raised instead of exiting when the status code is in `tolerate`."""
+    def __init__(self, code, body):
+        super().__init__(f"{code}: {body}"); self.code = code; self.body = body
+
+def http(method, url, headers=None, data=None, raw=False, tolerate=()):
     body = data if raw or data is None else json.dumps(data).encode()
     req = urllib.request.Request(url, method=method, data=body, headers=headers or {})
     if not raw and data is not None:
@@ -47,6 +65,8 @@ def http(method, url, headers=None, data=None, raw=False):
             txt = r.read().decode()
             return json.loads(txt) if txt else None
     except urllib.error.HTTPError as e:
+        if e.code in tolerate:
+            raise RbHTTPError(e.code, e.read().decode()[:400])
         die(f"{method} {url.split('?')[0]} → {e.code}: {e.read().decode()[:400]}")
 
 # ---------------------------------------------------------------------------
@@ -91,11 +111,11 @@ def hdr(cfg, extra=None):
     if extra: h.update(extra)
     return h
 
-def rest(cfg, method, path, data=None, prefer=None, params=None):
+def rest(cfg, method, path, data=None, prefer=None, params=None, tolerate=()):
     url = f"{cfg['url']}/rest/v1/{path}"
     if params: url += "?" + urllib.parse.urlencode(params, safe="=.,*()")
     extra = {"Prefer": prefer} if prefer else {}
-    return http(method, url, hdr(cfg, extra), data)
+    return http(method, url, hdr(cfg, extra), data, tolerate=tolerate)
 
 def cmd_whoami(args):
     cfg = session()
@@ -149,54 +169,189 @@ def now():
 # ---------------------------------------------------------------------------
 
 REQUIRED = ("slug", "theme", "group", "title")
+SESSION_REQUIRED = ("slug", "theme", "title")
+IMG_EXT = (".jpg", ".jpeg", ".png", ".webp")
+NO_SESSIONS = "this backend has no sessions table: re-run supabase/schema.sql (see docs/own-supabase.md)"
 
-def cmd_publish(args):
-    if not args: die("usage: rb.py publish <dir>")
-    d = pathlib.Path(args[0])
-    meta_p, html_p, img_d = d / "meta.json", d / "index.html", d / "img"
+def _known_themes(cfg):
+    return {r["id"] for r in (rest(cfg, "GET", "user_themes", params={"select": "id"}) or [])}
+
+def _check_theme(theme, known, where):
+    if known and theme not in known:
+        die(f"{where}: theme '{theme}' is not one of this account's notebooks ({', '.join(sorted(known))}); add it in the app or pick another")
+
+def _same_url(a, b):
+    norm = lambda u: (u or "").strip().rstrip("/")
+    return bool(norm(a)) and norm(a) == norm(b)
+
+def _read_sheet(d):
+    """Check a sheet folder (meta.json + index.html) without touching the network; return its meta."""
+    meta_p, html_p = d / "meta.json", d / "index.html"
     if not meta_p.exists() or not html_p.exists(): die(f"{d} needs meta.json and index.html")
     meta = json.loads(meta_p.read_text())
     for k in REQUIRED:
-        if not meta.get(k): die(f"meta.json: missing {k}")
-    cfg = session()
+        if not meta.get(k): die(f"{meta_p}: missing {k}")
+    if meta.get("kind", "sheet") != "sheet": die(f"{meta_p}: kind must be \"sheet\" here")
+    return meta
+
+def _publish_sheet(cfg, d, meta):
     slug = meta["slug"]
-    known = {r["id"] for r in (rest(cfg, "GET", "user_themes", params={"select": "id"}) or [])}
-    if known and meta["theme"] not in known:
-        die(f"theme '{meta['theme']}' is not one of this account's notebooks ({', '.join(sorted(known))}); add it in the app or pick another")
-    # images
-    n = 0
+    n, img_d = 0, d / "img"
     if img_d.is_dir():
         for f in sorted(img_d.iterdir()):
-            if f.suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp"): continue
+            if f.suffix.lower() not in IMG_EXT: continue
             ctype = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
             path = f"{cfg['user_id']}/{slug}/img/{f.name}"
             http("POST", f"{cfg['url']}/storage/v1/object/sheets/{path}", hdr(cfg, {"Content-Type": ctype, "x-upsert": "true"}), f.read_bytes(), raw=True)
             n += 1
-    row = {"slug": slug, "kind": meta.get("kind", "sheet"), "theme": meta["theme"], "group": meta["group"], "title": meta["title"],
+    row = {"slug": slug, "kind": "sheet", "theme": meta["theme"], "group": meta["group"], "title": meta["title"],
            "summary": meta.get("summary", ""), "duration": meta.get("duration", ""), "thumbnail": meta.get("thumbnail", "img/thumb.jpg"),
-           "source": meta.get("source", {}), "exercises": meta.get("exercises", []), "html": html_p.read_text()}
+           "source": meta.get("source", {}), "exercises": [], "html": (d / "index.html").read_text()}
     out = rest(cfg, "POST", "sheets", row, prefer="resolution=merge-duplicates,return=representation", params={"on_conflict": "user_id,slug"})
     print(f"published {slug}: {n} image(s), row {out[0]['id']}")
+
+def _read_session(d, meta):
+    """Check a v2 session folder without touching the network; return [(item slug, sub-folder, sheet meta)] in item order."""
+    where = d / "meta.json"
+    for k in SESSION_REQUIRED:
+        if not meta.get(k): die(f"{where}: missing {k}")
+    items = meta.get("items")
+    if not isinstance(items, list) or not items:
+        die(f"{where}: items must be a non-empty list of {{\"slug\", \"dose\"}}")
+    for it in items:
+        if not isinstance(it, dict) or not isinstance(it.get("slug"), str) or not it["slug"] or not isinstance(it.get("dose", ""), str):
+            die(f"{where}: bad item {json.dumps(it, ensure_ascii=False)}: expected {{\"slug\": \"…\", \"dose\": \"…\"}}")
+    for k in ("format", "why"):
+        if not isinstance(meta.get(k, ""), str): die(f"{where}: {k} must be a string")
+    kp = meta.get("key_points", [])
+    if not isinstance(kp, list) or not all(isinstance(x, str) for x in kp): die(f"{where}: key_points must be a list of strings")
+    subs = {}
+    for sub in sorted(p for p in d.iterdir() if p.is_dir() and (p / "meta.json").exists()):
+        m = _read_sheet(sub)
+        if m["slug"] in subs: die(f"{d}: two sub-folders use the slug {m['slug']}")
+        subs[m["slug"]] = (sub, m)
+    wanted = [it["slug"] for it in items]
+    missing = [s for s in dict.fromkeys(wanted) if s not in subs]
+    if missing: die(f"{where}: item(s) without a sheet sub-folder: {', '.join(missing)}")
+    extra = [s for s in subs if s not in wanted]
+    if extra: die(f"{d}: sub-folder sheet(s) not listed in items: {', '.join(extra)}")
+    if meta["slug"] in subs: die(f"{where}: the session slug must differ from its exercise slugs")
+    th = meta.get("thumbnail", "")
+    if th:
+        first = th.split("/", 1)[0]
+        if first not in subs or not th.startswith(f"{first}/img/") or not (subs[first][0] / th[len(first) + 1:]).is_file():
+            die(f"{where}: thumbnail must be \"<item slug>/img/<file>\" of one of the sub-folders, got {th}")
+    return [(s, *subs[s]) for s in dict.fromkeys(wanted)]
+
+def _delete_sheet(cfg, slug, kind=None, notes=True):
+    prefix = f"{cfg['user_id']}/{slug}/img"
+    objs = http("POST", f"{cfg['url']}/storage/v1/object/list/sheets", hdr(cfg), {"prefix": prefix, "limit": 1000}) or []
+    if objs:
+        http("DELETE", f"{cfg['url']}/storage/v1/object/sheets", hdr(cfg), {"prefixes": [f"{prefix}/{o['name']}" for o in objs]})
+    params = {"slug": f"eq.{slug}"}
+    if kind: params["kind"] = f"eq.{kind}"
+    rest(cfg, "DELETE", "sheets", params=params)
+    if notes: rest(cfg, "DELETE", "notes", params={"slug": f"eq.{slug}"})
+    return len(objs)
+
+def _drop_v1_sessions(cfg, url):
+    """Delete the v1 sessions (sheets rows, kind 'session') built from the same video, with their images.
+    Their notes are kept: the cadrage says v1 sessions carry none, and a note is user data."""
+    if not (url or "").strip(): return []
+    rows = rest(cfg, "GET", "sheets", params={"kind": "eq.session", "select": "slug,source"}) or []
+    gone = []
+    for r in rows:
+        if _same_url((r.get("source") or {}).get("url"), url):
+            n = _delete_sheet(cfg, r["slug"], kind="session", notes=False)
+            print(f"deleted v1 session {r['slug']} ({n} image(s)): replaced by the new session")
+            gone.append(r["slug"])
+    return gone
+
+def _publish_session(d, meta):
+    sheets = _read_session(d, meta)
+    cfg = session()
+    try:
+        rest(cfg, "GET", "sessions", params={"select": "id", "limit": "1"}, tolerate=(404,))
+    except RbHTTPError:
+        die(NO_SESSIONS + ", then publish again")
+    known = _known_themes(cfg)
+    _check_theme(meta["theme"], known, d / "meta.json")
+    for _, sub, m in sheets:
+        _check_theme(m["theme"], known, sub / "meta.json")
+    for _, sub, m in sheets:          # the sheets first: the session only links to them
+        _publish_sheet(cfg, sub, m)
+    th = meta.get("thumbnail", "")
+    row = {"slug": meta["slug"], "theme": meta["theme"], "title": meta["title"], "format": meta.get("format", ""),
+           "why": meta.get("why", ""), "key_points": meta.get("key_points", []), "source": meta.get("source", {}),
+           "origin": "video", "thumbnail": f"{cfg['user_id']}/{th}" if th else "",
+           "items": [{"slug": it["slug"], "dose": it.get("dose", "")} for it in meta["items"]]}
+    out = rest(cfg, "POST", "sessions", row, prefer="resolution=merge-duplicates,return=representation", params={"on_conflict": "user_id,slug"})
+    print(f"published session {meta['slug']}: {len(row['items'])} item(s), {len(sheets)} sheet(s), row {out[0]['id']}")
+    _drop_v1_sessions(cfg, (meta.get("source") or {}).get("url"))
+
+def cmd_publish(args):
+    if not args: die("usage: rb.py publish <dir>")
+    d = pathlib.Path(args[0])
+    meta_p = d / "meta.json"
+    if not meta_p.exists(): die(f"{d} needs meta.json")
+    meta = json.loads(meta_p.read_text())
+    if meta.get("kind") == "session":
+        if "items" not in meta or meta.get("exercises"):
+            die(f"{meta_p}: this is the old session format (one page, \"exercises\"), no longer published. "
+                "Write one sheet sub-folder per exercise and a session meta.json with \"items\" "
+                "(skill/reelbook/SKILL.md section 3 bis, or `rb.py` with no argument for the format)")
+        return _publish_session(d, meta)
+    meta = _read_sheet(d)
+    cfg = session()
+    _check_theme(meta["theme"], _known_themes(cfg), meta_p)
+    _publish_sheet(cfg, d, meta)
 
 def cmd_list(args):
     cfg = session()
     rows = rest(cfg, "GET", "sheets", params={"select": "slug,kind,theme,group,title,added_at", "order": "theme,group,title"})
     for r in rows or []:
         print(f"{r['theme']:9} {r['group']:20} {r['kind']:8} {r['slug']:32} {r['title']}")
+    try:
+        ses = rest(cfg, "GET", "sessions", params={"select": "slug,theme,title,items", "order": "theme,title"}, tolerate=(404,))
+    except RbHTTPError:
+        print(NO_SESSIONS + " to enable sessions", file=sys.stderr); return
+    for r in ses or []:   # kind "session2": a v2 session (exercise sheets + order); "session" rows above are v1 pages
+        print(f"{r['theme']:9} {str(len(r.get('items') or [])) + ' item(s)':20} {'session2':8} {r['slug']:32} {r['title']}")
 
 def cmd_delete(args):
     if not args: die("usage: rb.py delete <slug>")
     cfg = session(); slug = args[0]
-    prefix = f"{cfg['user_id']}/{slug}/img"
-    objs = http("POST", f"{cfg['url']}/storage/v1/object/list/sheets", hdr(cfg), {"prefix": prefix, "limit": 1000}) or []
-    if objs:
-        http("DELETE", f"{cfg['url']}/storage/v1/object/sheets", hdr(cfg), {"prefixes": [f"{prefix}/{o['name']}" for o in objs]})
-    rest(cfg, "DELETE", "sheets", params={"slug": f"eq.{slug}"})
-    rest(cfg, "DELETE", "notes", params={"slug": f"eq.{slug}"})
-    print(f"deleted {slug} ({len(objs)} image(s))")
+    n = _delete_sheet(cfg, slug)
+    print(f"deleted {slug} ({n} image(s))")
+
+# ---------------------------------------------------------------------------
+# migration of v1 sessions
+# ---------------------------------------------------------------------------
+
+def cmd_requeue_sessions(args):
+    if any(a != "--dry-run" for a in args): die("usage: rb.py requeue-sessions [--dry-run]")
+    dry = "--dry-run" in args
+    cfg = session()
+    v1 = rest(cfg, "GET", "sheets", params={"kind": "eq.session", "select": "slug,theme,title,source", "order": "added_at.asc"}) or []
+    busy = [r.get("url") for r in (rest(cfg, "GET", "requests", params={"status": "in.(queued,processing)", "select": "url"}) or [])]
+    todo = []
+    for r in v1:
+        url = ((r.get("source") or {}).get("url") or "").strip()
+        if not url:
+            print(f"skip {r['slug']}: no source url, reprocess it by hand", file=sys.stderr); continue
+        if any(_same_url(url, b) for b in busy):
+            print(f"skip {r['slug']}: {url} is already queued or processing", file=sys.stderr); continue
+        if any(_same_url(url, t["url"]) for t in todo):
+            print(f"skip {r['slug']}: same video as another v1 session", file=sys.stderr); continue
+        todo.append({"url": url, "theme": r["theme"]})
+        print(f"{'would queue' if dry else 'queue'} {r['slug']}: {url}")
+    if todo and not dry:
+        rest(cfg, "POST", "requests", todo, prefer="return=minimal")
+    print(f"{len(v1)} v1 session(s), {len(todo)} request(s) {'to insert (dry run, nothing written)' if dry else 'inserted'}")
 
 COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "themes": cmd_themes, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
-            "done": cmd_done, "error": cmd_error, "list": cmd_list, "delete": cmd_delete}
+            "done": cmd_done, "error": cmd_error, "list": cmd_list, "delete": cmd_delete,
+            "requeue-sessions": cmd_requeue_sessions}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
