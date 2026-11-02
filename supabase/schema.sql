@@ -128,3 +128,37 @@ alter table public.user_themes enable row level security;
 drop policy if exists "own themes" on public.user_themes;
 create policy "own themes" on public.user_themes
   for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- Sessions (v2): an ordered list of exercise sheets, each with its own dose.
+-- Added after the first release: re-run this whole file to create it (idempotent).
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.sessions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  slug       text not null,
+  theme      text not null,     -- the notebook the session belongs to (user_themes.id)
+  title      text not null,
+  format     text not null default '',            -- free text: « 5 rounds · 60 s rest »
+  why        text not null default '',            -- video sessions only, written by Claude
+  key_points jsonb not null default '[]'::jsonb,  -- video sessions only: ["…", "…"]
+  source     jsonb not null default '{}'::jsonb,  -- {author, url, platform}; empty for user sessions
+  origin     text not null default 'user' check (origin in ('video', 'user')),
+  thumbnail  text not null default '',            -- storage path <user_id>/<sheet slug>/img/...; first item's if empty
+  items      jsonb not null default '[]'::jsonb,  -- ordered [{slug, dose}]; slug = sheets.slug
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, slug)
+);
+
+create index if not exists sessions_user_theme_idx on public.sessions (user_id, theme);
+
+alter table public.sessions enable row level security;
+drop policy if exists "own sessions" on public.sessions;
+create policy "own sessions" on public.sessions
+  for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+drop trigger if exists sessions_touch on public.sessions;
+create trigger sessions_touch before update on public.sessions
+  for each row execute function public.touch_updated_at();
