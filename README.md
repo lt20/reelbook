@@ -60,7 +60,10 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    Keep the computer unlocked and the video tab in front: the video does not load in the
    background. Claude asks you to bring the tab forward when needed.
 5. Ten to fifteen minutes later the sheet is in the app, under its theme and group. A video with
-   several exercises becomes one *session* page, each exercise also listed in its group.
+   several exercises becomes a *session*: one exercise sheet per exercise, each filed in its group,
+   plus a session that links them in video order, with a dose for each exercise (« 30 s »,
+   « 3×10 ») and the video's format, why and key points. The session shows in the notebook's
+   Sessions section; each of its sheets carries « in 1 session » and links back to it.
 
 **Overnight (macOS).** `tools/nightly.sh install` processes the queue every night at 02:00 (or
 `install 23:30`) through a LaunchAgent, at most 5 videos per run. It only starts Claude when the
@@ -80,7 +83,8 @@ description is written for Claude: it is what the skill reads to decide where a 
 and how to group it. Notebooks are per account; remove one from Settings when it is empty.
 
 Claude filed a sheet in the wrong place? Open it and tap **Move**: pick another notebook and a
-group (one it already has, or a new one). Sessions cannot be moved for now.
+group (one it already has, or a new one). A session moves too, to another notebook only: its
+exercise sheets stay where they are.
 
 ## How a sheet is made
 
@@ -91,33 +95,37 @@ group (one it already has, or a new one). Sessions cannot be moved for now.
 3. It takes one photo per distinct movement (start and end at least for a single exercise), picks each peak frame
    on a 0.1 s grid, captures it full size, crops it so the **whole body** stays
    visible (head, hands, feet), rebuilds vertical frames from two halves, and checks every photo.
-4. It writes the sheet from `templates/sheet.html` (or `templates/session.html`), in your language,
-   decides the theme and group, and publishes with `rb.py publish`.
+4. It writes the sheet from `templates/sheet.html` (for a session: one `templates/exercise.html`
+   sheet per exercise, and the session's order and doses), in your language, decides the theme
+   and group, and publishes with `rb.py publish`.
 5. The request is closed with `rb.py done`. Open the app: the sheet is there, with a notes box
    only you can see.
 
 ## Data model
 
-Three tables and one private storage bucket, all locked to the signed-in user by row level
+Five tables and one private storage bucket, all locked to the signed-in user by row level
 security (`supabase/schema.sql`):
 
 | Table / bucket | Holds |
 | --- | --- |
 | `requests` | pasted links: `url`, `status` (queued → processing → done / error), `theme` hint, `slug` |
-| `sheets` | one row per sheet or session: `slug`, `theme`, `group`, `title`, `summary`, `source`, `exercises`, `html` |
+| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `source`, `html` |
+| `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `items` (ordered `{slug, dose}`, each slug a sheet) |
 | `notes` | your personal note per sheet |
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
 | `sheets/<user_id>/<slug>/img/*` | the photos |
 
-The app renders `sheets.html` inside its own styles and signs image URLs on the fly. Nothing is
-public, nothing is shared between accounts.
+The app renders `sheets.html` inside its own styles, builds session pages from their `sessions`
+row, and signs image URLs on the fly. Nothing is public, nothing is shared between accounts.
+A backend set up before sessions existed has no `sessions` table: re-run `supabase/schema.sql`
+(it only adds what is missing); until then the app hides sessions and says so in Settings.
 
 ## Repository layout
 
 ```
-app/        the web app (index.html, config.js, manifest, service worker, vendored supabase-js)
+app/        the web app (index.html, config.js, sessions.js, manifest, service worker, vendored supabase-js)
 skill/      the Claude Code skill (reelbook/SKILL.md)
-templates/  sheet.html and session.html, the HTML the skill fills in
+templates/  sheet.html and exercise.html (one exercise of a session), the HTML the skill fills in
 tools/      rb.py (backend CLI), crop.py, vstack.py (Pillow), nightly.sh (overnight runs, macOS)
 supabase/   schema.sql
 docs/       setup guides
