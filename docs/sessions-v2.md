@@ -62,6 +62,13 @@ Exercises are not sheets: their content and photos live only in the session page
 - Left for later lots: README still describes v1 sessions (S2); `tools/import-legacy.py` still emits v1 sessions,
   which `publish` now refuses (S4).
 
+## Notes from S2 (#15)
+
+- Route of a v2 session: `#session/<slug>` (no collision: sheet slugs and notebook ids never contain « / »).
+- Pure helpers in `app/sessions.js`. A notebook holding v2 sessions cannot be removed.
+- « From the session … » shows for video sessions only; user sessions count in « in N sessions » only.
+- Notes on a v2 session page: open question for Laurent (the PR ships without them).
+
 ## Lots
 
 | Lot | Content | Files | Depends on |
