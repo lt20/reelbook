@@ -39,11 +39,12 @@ test('a session note never collides with a sheet note', () => {
 });
 
 test('a new session slug comes from its title and is unique', () => {
-  assert.equal(RS.uniqueSlug('Épaules, lundi !', []), 'epaules-lundi');
-  assert.equal(RS.uniqueSlug('Épaules, lundi !', ['epaules-lundi']), 'epaules-lundi-2');
-  assert.equal(RS.uniqueSlug('Epaules lundi', new Set(['epaules-lundi', 'epaules-lundi-2'])), 'epaules-lundi-3');
-  assert.equal(RS.uniqueSlug('  ?!  ', []), 'session');
-  assert.equal(RS.uniqueSlug('???', ['session']), 'session-2');
+  assert.equal(RS.uniqueSlug('Épaules, lundi !', []), 'my-epaules-lundi');
+  assert.equal(RS.uniqueSlug('Épaules, lundi !', ['my-epaules-lundi']), 'my-epaules-lundi-2');
+  assert.equal(RS.uniqueSlug('Epaules lundi', new Set(['my-epaules-lundi', 'my-epaules-lundi-2'])), 'my-epaules-lundi-3');
+  assert.equal(RS.uniqueSlug('  ?!  ', []), 'my-session');
+  assert.equal(RS.uniqueSlug('???', ['my-session']), 'my-session-2');
+  assert.ok(!RS.uniqueSlug('Session X', []).startsWith('session-'), 'never the « session-… » space of video sessions');
   const long = RS.uniqueSlug('a very long title that goes on and on, well past any sensible slug length', []);
   assert.ok(long.length <= 48 && !long.endsWith('-'), long);
   assert.ok(!RS.uniqueSlug('a/b', []).includes('/'), 'never a « / »: the route and the note key rely on it');

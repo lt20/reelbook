@@ -365,7 +365,7 @@ test('« + New session » shows in every notebook, ticks sheets in order and ope
   await page.fire('ns-form', 'submit');
   await settle();
   assert.deepEqual(writesOf(page), [['insert', 'sessions',
-    {slug: 'gsp-shoulders-2', theme: 'strength', title: 'GSP shoulders', origin: 'user', items: [{slug: 'gsp-angel', dose: ''}, {slug: 'curl', dose: ''}]}, []]]);
+    {slug: 'my-gsp-shoulders', theme: 'strength', title: 'GSP shoulders', origin: 'user', items: [{slug: 'gsp-angel', dose: ''}, {slug: 'curl', dose: ''}]}, []]]);
   assert.equal(page.element('ns-dlg').open, false);
   assert.equal(page.element('view').hidden, false);
   const html = page.element('view').innerHTML;
@@ -455,8 +455,8 @@ test('« Add to session » appends the sheet once, says when it is already there
   assert.equal(page.element('as-hint').textContent, 'It is created in Strength.');
   page.element('as-new').value = 'Arms day';
   await page.fire('as-form', 'submit');
-  assert.deepEqual(writesOf(page)[1], ['insert', 'sessions', {slug: 'arms-day', theme: 'strength', title: 'Arms day', origin: 'user', items: [{slug: 'curl', dose: ''}]}, []]);
-  assert.match(page.element('sheet-top').innerHTML, /Added to <a href="#session\/arms-day">Arms day<\/a>/);
+  assert.deepEqual(writesOf(page)[1], ['insert', 'sessions', {slug: 'my-arms-day', theme: 'strength', title: 'Arms day', origin: 'user', items: [{slug: 'curl', dose: ''}]}, []]);
+  assert.match(page.element('sheet-top').innerHTML, /Added to <a href="#session\/my-arms-day">Arms day<\/a>/);
 });
 
 test('« From the session » and « in N sessions » follow an added sheet without a reload', async () => {

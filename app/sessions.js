@@ -45,12 +45,14 @@
   const noteKey = slug => ROUTE + slug;
 
   // A slug from a title, unique among `taken` (the user's session slugs, and the slugs of notes left by
-  // deleted sessions, so an old note never shows up on a new session): « shoulders-monday », then « -2 »…
+  // deleted sessions, so an old note never shows up on a new session): « my-shoulders-monday », then « -2 »…
+  // The « my- » prefix keeps user sessions apart from video sessions (« session-… », written by rb.py publish
+  // as an upsert on the slug): a video session can never overwrite a session the user built.
   const slugBase = title => String(title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48).replace(/-+$/, '') || 'session';
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 45).replace(/-+$/, '') || 'session';
   const uniqueSlug = (title, taken) => {
     const has = taken instanceof Set ? s => taken.has(s) : s => (taken || []).includes(s);
-    const base = slugBase(title);
+    const base = 'my-' + slugBase(title);
     if (!has(base)) return base;
     for (let i = 2; ; i++) if (!has(`${base}-${i}`)) return `${base}-${i}`;
   };
