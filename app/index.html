@@ -54,7 +54,7 @@ p{margin:0 0 10px}
 .empty{color:var(--muted);font-size:15px;border:1px dashed var(--line);border-radius:10px;padding:14px}
 .loading{color:var(--muted);padding:40px 0;text-align:center}
 label{display:grid;gap:4px;font-size:14px;font-weight:600;color:var(--muted)}
-input,textarea{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
+input,textarea,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
 textarea{line-height:1.5;min-height:120px;resize:vertical}
 .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
@@ -141,6 +141,8 @@ dialog.dlg .actions{display:grid;gap:8px}
 .top{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-bottom:18px}
 .top a{text-decoration:none;font-weight:600}
 .top span{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:600}
+.top .r{display:flex;align-items:center;gap:10px}
+.top .mv{appearance:none;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 13px var(--body);text-transform:none;letter-spacing:normal;padding:4px 12px;cursor:pointer}
 .fiche header{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;margin-bottom:8px}
 .fiche header img{width:112px;height:112px;object-fit:cover;object-position:50% 20%;border-radius:12px;border:1px solid var(--line)}
 .fiche h1{margin-bottom:6px}
@@ -365,6 +367,17 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
+<dialog class="dlg" id="move-dlg" aria-labelledby="mv-title">
+  <form id="mv-form" style="display:grid;gap:12px">
+    <h2 id="mv-title">Move this sheet</h2>
+    <p class="u" id="mv-sheet"></p>
+    <label>Notebook <select id="mv-theme"></select></label>
+    <label>Group <select id="mv-group"></select></label>
+    <label id="mv-new-l" hidden>New group name <input id="mv-new" type="text" maxlength="40" autocomplete="off" placeholder="Shoulders"></label>
+    <p class="err" id="mv-err" hidden></p>
+    <div class="actions"><button class="btn" type="submit" id="mv-submit">Move</button><button class="btn ghost" type="button" id="mv-cancel">Cancel</button></div>
+  </form>
+</dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
@@ -590,7 +603,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('h-eyebrow').textContent = t ? 'Find it fast, when you need it' : 'Your videos, by notebook';
     $('h-title').textContent = t ? t.title : 'Reelbook';
     $('h-title').classList.toggle('brand-title', !t);
-    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; if (t) $('picker').hidden = true;
+    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);
     else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.filter(e => e.kind !== 'session').length, sN = sheets.length - n; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
@@ -639,8 +652,10 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   window.addEventListener('beforeunload', ev => { if (pendingUrl()) { ev.preventDefault(); ev.returnValue = ''; } });
   const okHost = h => /(^|\.)(instagram|tiktok|youtube|facebook)\.com$/.test(h) || h === 'youtu.be' || h === 'fb.watch';
   const platformTag = h => /tiktok/.test(h) ? 'TT' : /youtube|youtu\.be/.test(h) ? 'YT' : /facebook|fb\.watch/.test(h) ? 'FB' : 'IG';
+  // The queue shows on the home page only, not inside a notebook.
+  let queueCount = 0;
   const renderQueue = docs => {
-    $('queue-sec').hidden = docs.length === 0; $('queue-n').textContent = docs.length || '';
+    queueCount = docs.length; $('queue-sec').hidden = !!currentTheme || !queueCount; $('queue-n').textContent = docs.length || '';
     $('queue').innerHTML = docs.map(d => {
       let host = ''; try { host = new URL(d.url).hostname; } catch {}
       const st = d.status === 'processing' ? 'in progress' : d.status === 'error' ? 'needs a look' : 'queued';
@@ -665,7 +680,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       const row = {url: u.toString()}; if (currentTheme) row.theme = currentTheme;
       const {error} = await sb.from('requests').insert(row); if (error) throw error;
       discardDraft(); openForm(false); refreshQueue();
-      const f = $('flash'); f.textContent = 'Queued. The sheet will be built on your next Claude Code run.'; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000);
+      const f = $('flash'); f.textContent = currentTheme ? 'Queued. It shows in the queue on the home page. The sheet will be built on your next Claude Code run.' : 'Queued. The sheet will be built on your next Claude Code run.'; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000);
       return true;
     } catch { return fail('Could not save it right now. Try again in a moment.'); }
     finally { $('f-submit').disabled = false; }
@@ -690,13 +705,17 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     cache.set(slug, wrap.innerHTML); return wrap.innerHTML;
   };
   const jump = a => { if (!a) return; const el = view.querySelector('#' + CSS.escape(a)); if (el) el.scrollIntoView({block: 'start'}); };
+  // Sessions cannot be moved yet: their exercises live inside the session page.
+  const topNav = e => {
+    const th = themeById.get(e.theme);
+    return `<nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span class="r"><span>${esc(e.kind === 'session' ? 'Session' : e.group)}</span>${e.kind === 'session' ? '' : '<button type="button" class="mv" id="mv-open">Move</button>'}</span></nav>`;
+  };
   const showSheet = async (slug, anchor) => {
     const e = bySlug.get(slug);
     if (shown === slug && !view.hidden) { jump(anchor); return; }
     shown = slug; show('view');
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
-    const th = themeById.get(e.theme);
-    const back = `<div class="wrap"><nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span>${esc(e.kind === 'session' ? 'Session' : e.group)}</span></nav></div>`;
+    const back = `<div class="wrap" id="sheet-top">${topNav(e)}</div>`;
     let html; try { html = await loadSheet(slug); } catch { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>'; return; }
     view.innerHTML = back + html + `<div class="wrap"><section class="notes"><h2>My notes <small>only you can see them</small></h2>
       <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes"></textarea>
@@ -711,6 +730,57 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       catch { st.textContent = 'Could not save. Try again.'; } finally { save.disabled = false; }
     });
   };
+
+  // ---------- move a sheet ----------
+  const NEW_GROUP = '__new_group__';
+  const mdlg = $('move-dlg');
+  // A notebook's groups: its own list, then the groups its sheets and session exercises already use.
+  const groupsOf = id => {
+    const t = themeById.get(id), out = [...((t && t.groups) || [])];
+    for (const e of sheets) {
+      if (e.theme !== id) continue;
+      if (e.kind === 'session') { for (const x of (e.exercises || [])) if (x.group) out.push(x.group); }
+      else if (e.group) out.push(e.group);
+    }
+    return [...new Set(out)];
+  };
+  const syncNewGroup = () => { const on = $('mv-group').value === NEW_GROUP; $('mv-new-l').hidden = !on; $('mv-new').required = on; if (!on) $('mv-new').value = ''; };
+  const fillGroups = (themeId, keep) => {
+    const gs = groupsOf(themeId);
+    $('mv-group').innerHTML = gs.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('') + `<option value="${NEW_GROUP}">New group…</option>`;
+    $('mv-group').value = gs.includes(keep) ? keep : gs.length ? gs[0] : NEW_GROUP;
+    syncNewGroup();
+  };
+  const openMove = () => {
+    const e = bySlug.get(shown); if (!e || e.kind === 'session') return;
+    $('mv-sheet').textContent = e.title; $('mv-err').hidden = true; $('mv-new').value = '';
+    $('mv-theme').innerHTML = themes.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
+    $('mv-theme').value = e.theme;
+    fillGroups(e.theme, e.group);
+    mdlg.showModal();
+  };
+  view.addEventListener('click', ev => { if (ev.target.closest('#mv-open')) openMove(); });
+  $('mv-theme').addEventListener('change', () => { const e = bySlug.get(shown); fillGroups($('mv-theme').value, e ? e.group : ''); });
+  $('mv-group').addEventListener('change', () => { syncNewGroup(); if ($('mv-group').value === NEW_GROUP) $('mv-new').focus(); });
+  $('mv-cancel').addEventListener('click', () => mdlg.close());
+  $('mv-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const e = bySlug.get(shown); if (!e) { mdlg.close(); return; }
+    const theme = $('mv-theme').value, group = ($('mv-group').value === NEW_GROUP ? $('mv-new').value : $('mv-group').value).trim();
+    const err = $('mv-err');
+    if (!themeById.has(theme)) { err.textContent = 'Pick a notebook.'; err.hidden = false; return; }
+    if (!group) { err.textContent = 'Give the new group a name.'; err.hidden = false; $('mv-new').focus(); return; }
+    if (theme === e.theme && group === e.group) { mdlg.close(); return; }
+    $('mv-submit').disabled = true; err.hidden = true;
+    try {
+      const {data, error} = await sb.from('sheets').update({theme, group}).eq('slug', e.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
+      e.theme = theme; e.group = group;
+      mdlg.close();
+      const top = $('sheet-top');
+      if (top && shown === e.slug) top.innerHTML = topNav(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
+    } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
+    finally { $('mv-submit').disabled = false; }
+  });
 
   // ---------- settings ----------
   const cliCmd = () => backend ? `python3 tools/rb.py login --url ${backend.url} --key ${backend.key}` : '';
