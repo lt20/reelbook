@@ -677,7 +677,7 @@ dialog.ph-dlg::backdrop{background:#000}
     practiceOk = false; lastDone = new Map();
     const last = new Map();
     try {
-      for (let from = 0; from < 50 * PAGE; from += PAGE) {
+      for (let from = 0; ; from += PAGE) { // every row: a key practised only long ago keeps its date
         const {data, error, status} = await sb.from('practice_log').select('slug,done_on').order('done_on', {ascending: false}).order('id').range(from, from + PAGE - 1);
         if (error) { if (!RS.missingTable(error, status)) console.warn('Practice log not read:', error.message || error); return; }
         for (const r of data || []) if (!last.has(r.slug) || r.done_on > last.get(r.slug)) last.set(r.slug, r.done_on);
@@ -1170,7 +1170,7 @@ dialog.ph-dlg::backdrop{background:#000}
   // The page's last 5 entries; an older read (a page left and opened again) is dropped.
   const readPractice = async key => {
     const r = ++logReads, owner = sb;
-    pageLog = {key, entries: null, open: false, draft: '', err: '', busy: false};
+    pageLog = {key, entries: null, open: false, draft: '', err: '', busy: false, attempt: null};
     if (!practiceOk) return;
     let rows;
     try {
@@ -1190,21 +1190,39 @@ dialog.ph-dlg::backdrop{background:#000}
     paintPractice();
     const input = p.open ? $('practice-text') : null; if (input) input.focus();
   };
-  // Saved: the row joins the page's entries and the latest date of its key (cards, home counter). Not saved: the
-  // text stays in the field with « Not saved. Try again. »; nothing reads as done.
+  // Saved: the row joins the page's entries and the latest date of its key (cards, home counter). Not saved: what is
+  // in the field stays there with « Not saved. Try again. »; nothing reads as done.
+  // A try carries its own id: Save again on the same text sends the same row, so a row stored whose answer was lost
+  // comes back as a duplicate key (23505) and counts as saved, never as a second entry.
+  const newId = () => {
+    const c = typeof crypto !== 'undefined' ? crypto : null;
+    if (c && c.randomUUID) return c.randomUUID();
+    const b = Array.from({length: 16}, () => Math.floor(Math.random() * 256)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    const h = b.map(x => x.toString(16).padStart(2, '0')).join('');
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  };
   const savePractice = async () => {
     const p = pageLog; if (!p || !p.open || p.busy) return;
-    const owner = sb, row = {slug: p.key, done_on: todayIso(), text: String($('practice-text').value || '').trim().slice(0, LOG_MAX)};
-    p.draft = row.text; p.busy = true; p.err = ''; $('practice-save').disabled = true;
+    const text = String($('practice-text').value || '').trim().slice(0, LOG_MAX);
+    if (!p.attempt || p.attempt.text !== text) p.attempt = {id: newId(), slug: p.key, done_on: todayIso(), text};
+    const row = p.attempt, owner = {client: sb, uid: user ? user.id : ''};
+    p.draft = text; p.busy = true; p.err = ''; $('practice-save').disabled = true;
     let res;
-    try { res = await owner.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
+    try { res = await owner.client.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
     p.busy = false;
-    if (owner !== sb) return; // signed out meanwhile
-    if (!res || res.error) { p.err = 'Not saved. Try again.'; paintPractice(); return; }
-    const got = (Array.isArray(res.data) ? res.data[0] : res.data) || {};
-    const entry = {id: got.id || '', slug: row.slug, done_on: got.done_on || row.done_on, text: typeof got.text === 'string' ? got.text : row.text, created_at: got.created_at || new Date().toISOString()};
+    if (sb !== owner.client || !user || user.id !== owner.uid) return; // signed out, or another account, meanwhile
+    const stored = res && (!res.error || res.error.code === '23505');
+    if (!stored) {
+      // keep what is in the field now (typed while the save was on its way), not the text that was sent
+      const input = $('practice-text'); if (input && pageLog === p && p.open) p.draft = String(input.value || '');
+      p.err = 'Not saved. Try again.'; paintPractice(); return;
+    }
+    const got = (!res.error && (Array.isArray(res.data) ? res.data[0] : res.data)) || {};
+    const entry = {id: got.id || row.id, slug: row.slug, done_on: got.done_on || row.done_on, text: typeof got.text === 'string' ? got.text : row.text, created_at: got.created_at || new Date().toISOString()};
     if (!lastDone.has(row.slug) || entry.done_on > lastDone.get(row.slug)) lastDone.set(row.slug, entry.done_on);
-    p.entries = [entry, ...p.entries].sort(newestFirst).slice(0, 5); p.open = false; p.draft = '';
+    p.attempt = null;
+    if (!p.entries.some(r => r.id === entry.id)) p.entries = [entry, ...p.entries].sort(newestFirst).slice(0, 5);
+    p.open = false; p.draft = '';
     paintPractice();
   };
 

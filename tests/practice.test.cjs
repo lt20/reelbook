@@ -20,7 +20,9 @@ test('L6 — Save sends the local calendar day, not the server one (UTC), and th
   await click(page, 'practice-done');
   page.element('practice-text').value = '  12 kg, 3x10  ';
   await click(page, 'practice-save');
-  assert.deepEqual(inserts(page).map(c => c[2]), [{slug: 'curl', done_on: localDay(), text: '12 kg, 3x10'}]);
+  const sent = inserts(page).map(c => c[2]);
+  assert.match(sent[0].id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.deepEqual(sent.map(({id, ...r}) => r), [{slug: 'curl', done_on: localDay(), text: '12 kg, 3x10'}]);
   assert.match(page.element('view').innerHTML, /id="practice-done"[^>]*>Done today ✓</);
   assert.doesNotMatch(page.element('view').innerHTML, /id="practice-text"/, 'the field closes once saved');
   assert.match(page.element('view').innerHTML, /<h3>Log<\/h3><ol><li><time datetime="\d{4}-\d\d-\d\d">[^<]+<\/time>12 kg, 3x10<\/li><\/ol>/);
@@ -56,4 +58,29 @@ test('L6 — a day is read as a local date: 2026-10-28 shows « 28 Oct » whatev
   const page = await app({...signedIn, tables: tables([{id: 'a', slug: 'curl', done_on: '2026-10-28', text: '', created_at: '2026-10-28T23:30:00Z'}]), dom: true, hash: '#curl'});
   await settle();
   assert.match(page.element('view').innerHTML, /Last time: 28 Oct</, 'no « — » after the date when the entry has no text');
+});
+
+test('L6 — Save again after a lost answer sends the same row; a duplicate key (23505) counts as saved, once', async () => {
+  const writes = {practice_log: {data: null, error: {message: 'Failed to fetch'}}};
+  const page = await app({...signedIn, tables: tables(), dom: true, hash: '#curl', writes});
+  await settle();
+  await click(page, 'practice-done');
+  page.element('practice-text').value = '3x10';
+  await click(page, 'practice-save');
+  assert.match(page.element('view').innerHTML, /Not saved\. Try again\./);
+  writes.practice_log = {data: null, error: {code: '23505', message: 'duplicate key value violates unique constraint "practice_log_pkey"'}};
+  page.element('practice-text').value = '3x10';
+  await click(page, 'practice-save');
+  const sent = inserts(page).map(c => c[2]);
+  assert.equal(sent.length, 2);
+  assert.deepEqual(sent[1], sent[0], 'the same id, day and text');
+  const html = page.element('view').innerHTML;
+  assert.match(html, /Done today ✓/);
+  assert.equal([...html.matchAll(/<li><time/g)].length, 1, 'one entry in the Log');
+  // another text is another try: a new id
+  writes.practice_log = undefined;
+  await click(page, 'practice-done');
+  page.element('practice-text').value = 'again';
+  await click(page, 'practice-save');
+  assert.notEqual(inserts(page).at(-1)[2].id, sent[0].id);
 });
