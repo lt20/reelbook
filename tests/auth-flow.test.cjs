@@ -367,7 +367,7 @@ test('old one-page sessions are hidden, and Settings says how to rebuild them', 
   assert.match(page.element('nblist').innerHTML, /Strength<\/b><small>2 sheets · 1 session</);
   page.go('');
   await settle();
-  assert.match(page.element('count').textContent, /^3 sheets · 1 session · 2 notebooks$/);
+  assert.match(page.element('count').textContent, /^0 practised · 3 saved · 1 session · 2 notebooks$/); // L6: practice_log empty
   assert.match(page.element('portal').innerHTML, /2 sheets · 1 session/);
   const tables = v2Tables(); tables.sheets = tables.sheets.filter(s => s.kind !== 'session');
   const clean = await app({...signedIn, tables, hash: '#settings'});

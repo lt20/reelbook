@@ -269,6 +269,19 @@ dialog.ph-dlg::backdrop{background:#000}
 .seq .next{flex:1;min-width:0;background:var(--accent);color:var(--accent-ink)}
 .notes .actions{align-items:center;min-height:44px}
 .notes .nretry{appearance:none;min-height:44px;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 14px var(--body);padding:4px 16px;cursor:pointer}
+/* ---- L6: practice log ---- */
+.practice{display:grid;gap:8px;margin:0 0 18px}
+.practice:empty{display:none}
+.practice .btn.done{background:var(--ok-bg);color:var(--ok)}
+.practice .pr-row{display:flex;gap:8px;align-items:center}
+.practice .pr-row input{flex:1;min-height:44px;box-sizing:border-box}
+.practice .err{color:var(--danger)}
+.practice .pr-last{margin:0;font-size:15px;color:var(--muted)}
+.plog:empty{display:none}
+.plog h3{margin:4px 0 6px;font-size:16px}
+.plog ol{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:15px}
+.plog time{color:var(--muted);margin-right:8px;white-space:nowrap}
+.card .m span.done{background:var(--ok-bg);color:var(--ok)}
 </style>
 </head>
 <body>
@@ -522,6 +535,10 @@ dialog.ph-dlg::backdrop{background:#000}
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'}); } catch { return ''; } };
+  // A calendar day (YYYY-MM-DD, practice_log.done_on) read as a local date: new Date('2026-10-28') is UTC midnight,
+  // the day before west of Greenwich.
+  const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
+  const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
   const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view'];
   const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
@@ -601,6 +618,9 @@ dialog.ph-dlg::backdrop{background:#000}
   // v2Sessions: rows of the `sessions` table; inSessions: sheet slug -> those sessions; sessionsOk: false when the backend has no such table.
   let v2Sessions = [], v2BySlug = new Map(), inSessions = new Map(), sessionsOk = true, v1Hidden = 0;
   let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null, loading = false, loadError = '';
+  // L6, practice log: practiceOk true once the user's practice_log rows are read (false: no table, or no answer, so
+  // every practice control and count is hidden); lastDone: key (a sheet slug, or session/<slug>) -> latest done_on.
+  let practiceOk = false, lastDone = new Map();
   const signed = new Map(); // storage path -> {url, exp}
   const signAll = async paths => {
     const need = [...new Set(paths)].filter(p => { const s = signed.get(p); return !s || s.exp < Date.now() + 60000; });
@@ -648,6 +668,23 @@ dialog.ph-dlg::backdrop{background:#000}
     for (const s of v2Sessions) if (s.thumbnail) paths.push(s.thumbnail);
     await signAll(paths);
     try { const {data: n} = await sb.from('notes').select('slug').neq('body', ''); notesIndex = new Set((n || []).map(r => r.slug)); } catch {}
+    await loadPractice();
+  };
+  // The latest date per key, read 1 000 rows at a time (PostgREST's cap). Never fails the catalogue: a backend
+  // without the table (not pushed yet), or a read that fails, only hides the practice log.
+  const PAGE = 1000;
+  const loadPractice = async () => {
+    practiceOk = false; lastDone = new Map();
+    const last = new Map();
+    try {
+      for (let from = 0; from < 50 * PAGE; from += PAGE) {
+        const {data, error, status} = await sb.from('practice_log').select('slug,done_on').order('done_on', {ascending: false}).order('id').range(from, from + PAGE - 1);
+        if (error) { if (!RS.missingTable(error, status)) console.warn('Practice log not read:', error.message || error); return; }
+        for (const r of data || []) if (!last.has(r.slug) || r.done_on > last.get(r.slug)) last.set(r.slug, r.done_on);
+        if (!data || data.length < PAGE) break;
+      }
+    } catch (e) { console.warn('Practice log not read:', (e && e.message) || e); return; }
+    practiceOk = true; lastDone = last;
   };
   const reload = async () => {
     loading = true; loadError = ''; if (!$('home').hidden) renderHome();
@@ -708,10 +745,12 @@ dialog.ph-dlg::backdrop{background:#000}
   // `pre` puts extra tags first (the notebook name in search results).
   // « in N sessions »: the v2 sessions that list this sheet, computed from sessions.items.
   const inTag = slug => { const n = (inSessions.get(slug) || []).length; return n ? [{txt: `in ${plural(n, 'session')}`, cls: 'session'}] : []; };
-  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  // L6: « done 28 Oct », the latest practice of a sheet or a session (key as for notes).
+  const doneTag = key => practiceOk && lastDone.has(key) ? [{txt: 'done ' + fmtDay(lastDone.get(key)), cls: 'done'}] : [];
+  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...inTag(e.slug), ...doneTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
-  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   const renderGroups = t => {
     const solo = sheets.filter(e => e.theme === t.id);
     const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
@@ -755,6 +794,8 @@ dialog.ph-dlg::backdrop{background:#000}
   // A free Supabase project pauses after a week without use: on a self-hosted backend, say how to wake it.
   const loadErrorText = () => `Could not load your sheets: ${loadError}` + (backend && backend.mode === 'own'
     ? `${/[.!?]$/.test(loadError) ? '' : '.'} Your Supabase project may be paused: open your Supabase dashboard and restore it.` : '');
+  // L6: the sheets and sessions practised at least once that still exist.
+  const practisedCount = () => [...lastDone.keys()].filter(k => bySlug.has(k) || v2BySlug.has(RS.sessionSlugOf(k))).length;
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null;
     $('h-crumb').hidden = !t;
@@ -763,7 +804,7 @@ dialog.ph-dlg::backdrop{background:#000}
     $('h-title').classList.toggle('brand-title', !t);
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);
-    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
+    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${practiceOk ? `${practisedCount()} practised · ${n} saved` : plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
     const terms = sheets.length ? searchTerms() : [];
     $('results').hidden = !terms.length;
@@ -996,11 +1037,11 @@ dialog.ph-dlg::backdrop{background:#000}
   const httpUrl = u => typeof u === 'string' && /^https?:\/\//i.test(u) ? u : '';
   // An item card: the sheet's card with its number in the session and its dose; it opens the sheet inside the
   // session (#session/<slug>/<n>: dose banner, previous / next).
-  const itemCard = (it, slug) => card(it.sheet, RS.sessionItemHref(esc(slug), it.n), thumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: (it.sheet.source || {}).author || ''}, ...(notesIndex.has(it.sheet.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const itemCard = (it, slug) => card(it.sheet, RS.sessionItemHref(esc(slug), it.n), thumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: (it.sheet.source || {}).author || ''}, ...doneTag(it.sheet.slug), ...(notesIndex.has(it.sheet.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // « My notes »: one per sheet (key: its slug) and one per v2 session (key: session/<slug>, RS.noteKey).
   const notesHtml = () => `<div class="wrap"><section class="notes"><h2>My notes <small>only you can see them</small></h2>
       <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes" readonly></textarea>
-      <div class="actions"><span class="status" id="n-status" role="status">Loading…</span><button type="button" class="nretry" id="n-retry" hidden>Retry</button></div></section></div>`;
+      <div class="actions"><span class="status" id="n-status" role="status">Loading…</span><button type="button" class="nretry" id="n-retry" hidden>Retry</button></div>${practiceOk ? region('practice-log', 'plog') : ''}</section></div>`;
   // L5: notes save themselves, 800 ms after the last keystroke, and at once when the page is hidden or left
   // (flushNotes: visibilitychange, pagehide, route change). Writes of a note go one after the other (noteQueues), so an
   // older text never lands after a newer one; a text equal to the one stored (or on its way) is not written.
@@ -1083,6 +1124,90 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNotes(); });
   window.addEventListener('pagehide', flushNotes);
+  // ---------- L6: practice log ----------
+  // Under the title of a sheet or a session page: « Done today » opens a one-line field, prefilled with the last
+  // entry's text, and Save, which adds a row (a second one the same day too). « My notes » lists the last 5 entries.
+  // Nothing shows until the page's entries are read: without the table, or offline, the page is as before L6.
+  // pageLog: the shown page's {key, entries (newest first, at most 5; null until read), open, draft, err, busy}.
+  let pageLog = null, logReads = 0;
+  const LOG_MAX = 200; // characters of one entry
+  const newestFirst = (a, b) => String(b.done_on).localeCompare(String(a.done_on)) || String(b.created_at || '').localeCompare(String(a.created_at || '')) || String(b.id || '').localeCompare(String(a.id || ''));
+  // A region of the page repainted on its own (the sheet, its photos and the note around it stay as they are).
+  // It ends with a marker comment so that, without a DOM to query (tests/harness.cjs), the page's markup can be
+  // edited in its place.
+  const region = (id, cls, inner = '') => `<div class="${cls}" id="${id}">${inner}<!--/${id}--></div>`;
+  const repaint = (id, inner) => {
+    const end = `<!--/${id}-->`;
+    if (view.querySelector) { const el = view.querySelector('#' + id); if (el) el.innerHTML = inner + end; return; }
+    view.innerHTML = view.innerHTML.replace(new RegExp(`(id="${id}"[^>]*>)[\\s\\S]*?${end}`), (_, open) => open + inner + end);
+  };
+  const practiceBox = () => practiceOk ? region('practice', 'practice') : '';
+  // The block goes under the title: after the sheet's header when its <h1> is in one, else right after the <h1>.
+  // A sheet without an <h1> gets its title from the catalogue.
+  const underTitle = (html, block, title) => {
+    const h = html.indexOf('</h1>');
+    if (h < 0) return `<div class="wrap fiche"><h1>${esc(title)}</h1>${block}</div>` + html;
+    const open = html.lastIndexOf('<header', h), close = html.indexOf('</header>', h);
+    const at = open >= 0 && close >= 0 && html.lastIndexOf('</header>', h) < open ? close + '</header>'.length : h + '</h1>'.length;
+    return html.slice(0, at) + block + html.slice(at);
+  };
+  const practiceInner = p => {
+    if (!p.entries) return '';
+    const last = p.entries[0], today = !!last && last.done_on === todayIso();
+    return `<p class="actions"><button type="button" class="btn sm${today ? ' done' : ''}" id="practice-done" aria-expanded="${p.open}">Done today${today ? ' ✓' : ''}</button></p>`
+      + (p.open ? `<div class="pr-row"><input id="practice-text" type="text" value="${esc(p.draft)}" maxlength="${LOG_MAX}" autocomplete="off" enterkeyhint="done" placeholder="12 kg, 3x10…" aria-label="What you did today"><button type="button" class="btn sm" id="practice-save"${p.busy ? ' disabled' : ''}>Save</button></div>`
+        + (p.err ? `<p class="err" role="alert">${esc(p.err)}</p>` : '') : '')
+      + (last ? `<p class="pr-last">Last time: ${esc(fmtDay(last.done_on))}${last.text ? ' — ' + esc(last.text) : ''}</p>` : '');
+  };
+  const logInner = p => p.entries && p.entries.length
+    ? `<h3>Log</h3><ol>${p.entries.map(r => `<li><time datetime="${esc(r.done_on)}">${esc(fmtDay(r.done_on))}</time>${esc(r.text)}</li>`).join('')}</ol>` : '';
+  const paintPractice = () => {
+    const p = pageLog; if (!p || shown !== p.key || view.hidden) return;
+    repaint('practice', practiceInner(p)); repaint('practice-log', logInner(p));
+    const input = p.open ? $('practice-text') : null;
+    if (input) input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); savePractice(); } });
+  };
+  // The page's last 5 entries; an older read (a page left and opened again) is dropped.
+  const readPractice = async key => {
+    const r = ++logReads, owner = sb;
+    pageLog = {key, entries: null, open: false, draft: '', err: '', busy: false};
+    if (!practiceOk) return;
+    let rows;
+    try {
+      const {data, error} = await owner.from('practice_log').select('id,slug,done_on,text,created_at').eq('slug', key)
+        .order('done_on', {ascending: false}).order('created_at', {ascending: false}).order('id', {ascending: false}).limit(5);
+      if (error) return;
+      rows = (data || []).filter(x => x.slug === key);
+    } catch { return; }
+    if (r !== logReads || owner !== sb) return;
+    pageLog.entries = rows.sort(newestFirst).slice(0, 5);
+    paintPractice();
+  };
+  const openPractice = () => {
+    const p = pageLog; if (!p || !p.entries || p.busy) return;
+    p.open = !p.open; p.err = '';
+    if (p.open) p.draft = p.entries[0] ? p.entries[0].text : '';
+    paintPractice();
+    const input = p.open ? $('practice-text') : null; if (input) input.focus();
+  };
+  // Saved: the row joins the page's entries and the latest date of its key (cards, home counter). Not saved: the
+  // text stays in the field with « Not saved. Try again. »; nothing reads as done.
+  const savePractice = async () => {
+    const p = pageLog; if (!p || !p.open || p.busy) return;
+    const owner = sb, row = {slug: p.key, done_on: todayIso(), text: String($('practice-text').value || '').trim().slice(0, LOG_MAX)};
+    p.draft = row.text; p.busy = true; p.err = ''; $('practice-save').disabled = true;
+    let res;
+    try { res = await owner.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
+    p.busy = false;
+    if (owner !== sb) return; // signed out meanwhile
+    if (!res || res.error) { p.err = 'Not saved. Try again.'; paintPractice(); return; }
+    const got = (Array.isArray(res.data) ? res.data[0] : res.data) || {};
+    const entry = {id: got.id || '', slug: row.slug, done_on: got.done_on || row.done_on, text: typeof got.text === 'string' ? got.text : row.text, created_at: got.created_at || new Date().toISOString()};
+    if (!lastDone.has(row.slug) || entry.done_on > lastDone.get(row.slug)) lastDone.set(row.slug, entry.done_on);
+    p.entries = [entry, ...p.entries].sort(newestFirst).slice(0, 5); p.open = false; p.draft = '';
+    paintPractice();
+  };
+
   // Why / key points / source of a video session: read-only, in both modes.
   const sessionInfo = s => {
     const src = s.source || {}, url = httpUrl(src.url);
@@ -1130,10 +1255,11 @@ dialog.ph-dlg::backdrop{background:#000}
     const items = RS.resolveItems(s, bySlug), img = v2Thumb(s);
     view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
-      ${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
+      ${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
       <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml();
     wireNotes(RS.noteKey(slug));
+    readPractice(RS.noteKey(slug));
   };
   // `at`: {s, n, items} when the sheet is opened from a session (#session/<slug>/<n>), else null.
   // sheetLoad: the last sheet asked for; an older load that ends later (A, B, then A again) is dropped.
@@ -1151,10 +1277,11 @@ dialog.ph-dlg::backdrop{background:#000}
     let html; try { html = await loadSheet(slug); } catch { html = null; }
     if (load !== sheetLoad || shown !== slug) return; // left (Next tapped twice, another page) while it loaded
     if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav() + del; return; }
-    view.innerHTML = back + html + notesHtml() + seatNav() + del;
+    view.innerHTML = back + (practiceOk ? underTitle(html, practiceBox(), e.title) : html) + notesHtml() + seatNav() + del;
     // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)
     $('sheet-top').innerHTML = sheetTop(e);
     wireNotes(slug);
+    readPractice(slug);
   };
 
   // ---------- L3: keep the screen on, full-screen photos ----------
@@ -1435,6 +1562,8 @@ dialog.ph-dlg::backdrop{background:#000}
     else if (at('#as-open')) openAdd();
     else if (at('#ed-open')) { const s = shownSession(); if (s) { edit = draftOf(s); showSession(s.slug); } }
     else if (at('#sd-open')) openSheetDelete();
+    else if (at('#practice-done')) openPractice();
+    else if (at('#practice-save')) savePractice();
     else if (!edit) return;
     else if ((b = at('[data-up]'))) reorder(+b.dataset.up, -1);
     else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);
@@ -1508,7 +1637,7 @@ dialog.ph-dlg::backdrop{background:#000}
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity;
-      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = '';
+      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); pageLog = null; signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
     if (!sb) {
@@ -1522,7 +1651,7 @@ dialog.ph-dlg::backdrop{background:#000}
         const next = session ? session.user : null;
         const changed = (next && next.id) !== (user && user.id);
         user = next;
-        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });
