@@ -668,3 +668,33 @@ test('C5: a load error on a self-hosted backend says the project may be paused; 
   assert.equal(hosted.clients.at(-1).url, hostedUrl);
   assert.equal(hosted.element('count').textContent, 'Could not load your sheets: Failed to fetch');
 });
+
+test('C6: a sheet is wrapped in its language: its own <html lang>, else French when it reads French, else none', async () => {
+  const shown = async sheetHtml => {
+    const tables = v2Tables();
+    tables.sheets.find(s => s.slug === 'curl').html = sheetHtml;
+    const page = await app({...signedIn, tables, hash: '#curl', dom: true});
+    await settle();
+    const html = page.element('view').innerHTML;
+    assert.match(html, /<a href="#gsp-angel">Floor angel<\/a>/, 'the sheet is shown');
+    return (html.match(/<div lang="([^"]*)"><a href="#gsp-angel">/) || [])[1] || '';
+  };
+  const link = '<a href="#gsp-angel">Floor angel</a>';
+  assert.equal(await shown(`<!doctype html><html lang="fr-CH"><head><style>p{}</style></head><body><p>Hold it.</p>${link}</body></html>`), 'fr-CH');
+  assert.equal(await shown(`<html><body><h1>Curl marteau</h1><p>Debout, les haltères le long du corps, coudes fixes et dos droit.</p>${link}</body></html>`), 'fr');
+  assert.equal(await shown(`<p>Allongez-vous sur le dos : l'épaule reste au sol.</p>${link}`), 'fr');
+  assert.equal(await shown(`<p>Stand tall, dumbbells by your sides, elbows fixed. Curl up, lower slowly. A la carte: le cardio.</p>${link}`), '');
+  assert.equal(await shown(link), '');
+});
+
+test('C6: accessibility base — focus ring, live regions, input border token, theme colours, notch padding', () => {
+  assert.match(html, /a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,[^{]*\{outline:3px solid var\(--ink\);outline-offset:2px\}/);
+  assert.match(html, /<div class="flash" id="flash" role="status" hidden>/);
+  assert.match(html, /<p class="cnt" id="count" aria-live="polite">/);
+  assert.match(html, /--line-strong:#8f8a80;/);
+  assert.equal((html.match(/--line-strong:#6b7079;/g) || []).length, 2, 'dark tokens: system and forced');
+  assert.match(html, /\ninput,textarea,select\{[^}]*border:1px solid var\(--line-strong\)/);
+  assert.match(html, /<meta name="theme-color" content="#f3f1ec" media="\(prefers-color-scheme: light\)">/);
+  assert.match(html, /<meta name="theme-color" content="#15171a" media="\(prefers-color-scheme: dark\)">/);
+  assert.match(html, /padding-inline:max\(16px,env\(safe-area-inset-left\)\) max\(16px,env\(safe-area-inset-right\)\)/);
+});
