@@ -168,8 +168,8 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .howto li>strong{font-family:var(--display);font-size:var(--fs-md);letter-spacing:.01em;text-transform:uppercase;display:block}
 .howto .tip{margin:var(--s-3) 0 0;font-size:var(--fs-sm);color:var(--muted)}
 /* ---- cards ---- */
-/* L20: as many 10.5rem columns as fit: two on a phone, one with a large system text size */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(10.5rem,100%),1fr));gap:14px var(--s-3)}
+/* L20: as many 9.5rem columns as fit: two on a 375 px phone at the default text size (17 px root on iOS: 2 × 161.5 + 12 ≤ 343), one from a larger text size */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(9.5rem,100%),1fr));gap:14px var(--s-3)}
 .card{display:block;color:inherit;text-decoration:none;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
 /* L12: one photo format on every card, 4:5, framed on the upper third (burned-in subtitles sit lower) */
 .card img{display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;object-position:50% 30%;max-width:100%;background:var(--tag)}
@@ -218,7 +218,7 @@ ol.keys{margin:0;padding-left:0;list-style:none;counter-reset:k}
 ol.keys li{position:relative;padding-left:40px;margin-bottom:10px;counter-increment:k}
 ol.keys li::before{content:counter(k);position:absolute;left:0;top:1px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:var(--fs-base);display:grid;place-items:center}
 ol.keys b{font-weight:600}
-.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(10.5rem,100%),1fr));gap:14px var(--s-3);margin-top:6px}
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(9.5rem,100%),1fr));gap:14px var(--s-3);margin-top:6px}
 .step{min-width:0}
 .step figure{margin:0;position:relative;border-radius:10px;overflow:hidden;background:var(--paper);border:1px solid var(--line)}
 .step img{display:block;width:100%;height:auto;max-width:100%}
