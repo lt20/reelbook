@@ -1002,14 +1002,15 @@ dialog.ph-dlg::backdrop{background:#000}
       <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes" readonly></textarea>
       <div class="actions"><span class="status" id="n-status" role="status">Loading…</span><button type="button" class="nretry" id="n-retry" hidden>Retry</button></div></section></div>`;
   // L5: notes save themselves, 800 ms after the last keystroke, and at once when the page is hidden or left
-  // (flushNotes: visibilitychange, pagehide, route change). Writes go one after the other (noteQueue), so an
+  // (flushNotes: visibilitychange, pagehide, route change). Writes of a note go one after the other (noteQueues), so an
   // older text never lands after a newer one; a text equal to the one stored (or on its way) is not written.
   // Until it is stored, a typed text is also kept on the device (rb.draft.<user id>.<note key>): a failed save,
   // or an app closed before its save went out, shows it again with « Not saved » and Retry next time. A failed
   // save never clears the field; Retry or the next keystroke tries again. The field stays read-only until the
   // stored note is read: typing over a note that could not be read would replace it.
   const NOTE_DELAY = 800;
-  let notesNow = null, noteQueue = Promise.resolve();
+  let notesNow = null;
+  const noteQueues = new Map(); // note key -> its last write (a stuck write of one note never holds up another)
   const flushNotes = () => { if (notesNow) notesNow.flush(); };
   const wireNotes = async key => {
     flushNotes();
@@ -1023,7 +1024,7 @@ dialog.ph-dlg::backdrop{background:#000}
     const shownAs = (text, failed) => { if (!live()) return; st.textContent = text; retry.hidden = !failed; };
     const save = body => {
       sending = body;
-      const run = noteQueue.then(async () => {
+      const run = (noteQueues.get(key) || Promise.resolve()).then(async () => {
         if (!ours()) return; // signed out meanwhile: the text stays in rb.draft for its owner
         let ok = body === saved;
         if (!ok) {
@@ -1036,7 +1037,7 @@ dialog.ph-dlg::backdrop{background:#000}
         if (ok && ls.get(draftKey) === body) ls.del(draftKey);
         if (ta.value.trim() === body) shownAs(ok ? 'Saved' : 'Not saved', !ok);
       });
-      noteQueue = run.catch(() => {});
+      noteQueues.set(key, run.catch(() => {}));
     };
     const latest = () => sending !== null ? sending : saved;
     me.flush = () => {
@@ -1056,13 +1057,15 @@ dialog.ph-dlg::backdrop{background:#000}
       setTimeout(() => { if (live() && t === tick) me.flush(); }, NOTE_DELAY);
     });
     // Retry: reads the note again when it could not be read (then saves the device copy at once), else saves.
+    let reading = 0; // the last read asked for (Retry twice): an older answer is dropped
     const read = async again => {
+      const r = ++reading, current = () => live() && r === reading;
       // a save of this note still on its way (the page was left and opened again) lands before the read
-      await noteQueue;
+      await noteQueues.get(key);
       const draft = ls.get(draftKey);
       try {
         const {data, error} = await owner.client.from('notes').select('body,updated_at').eq('slug', key).maybeSingle(); if (error) throw error;
-        if (!live()) return;
+        if (!current()) return;
         saved = data && typeof data.body === 'string' ? data.body : '';
         ta.readOnly = false;
         if (draft !== null && draft !== saved) { ta.value = draft; if (again) me.flush(); else shownAs('Not saved', true); return; }
@@ -1071,7 +1074,8 @@ dialog.ph-dlg::backdrop{background:#000}
         shownAs(saved ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.', false);
       } catch {
         // read-only until read; the device copy, if any, is shown so it is not out of reach
-        if (draft !== null && live()) { ta.value = draft; shownAs('Not saved', true); } else shownAs('Could not read the note.', true);
+        if (!current()) return;
+        if (draft !== null) { ta.value = draft; shownAs('Not saved', true); } else shownAs('Could not read the note.', true);
       }
     };
     retry.addEventListener('click', () => { if (saved === null) read(true); else me.flush(); });
