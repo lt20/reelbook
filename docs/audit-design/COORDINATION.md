@@ -94,7 +94,7 @@ _(P0–P2 questions below were settled by the coordinator's arbitration comments
 and `animationend` toast accepted (#28); L5 double write of the top bar accepted (#30); L6 Log assertion scoped
 (#32); L7 slug and `rb.seen.<user id>` (#31).)_
 
-- **L17, `tests/acceptance/l13/home.test.cjs` contradicts `tests/acceptance/l17/navigation.test.cjs`** (raised by the
+- **L17, `tests/acceptance/l13/home.test.cjs` contradicts `tests/acceptance/l17/navigation.test.cjs`** — **tranché : 3 lignes adaptées (6515f0b, décision du coordinateur)**, #47. (Raised by the
   L17 agent, #47, for Codex): L13 requires `id="btn-new"` with « + Add a video » inside `<header id="brand-bar">`
   (test « Compact brand bar… », line 40) and clicks `btn-new` (lines 55 and 118); L17 requires that button gone from
   the bar (spec: « the old header button goes », decision 7) and puts « + Add a video » on `#add-video-fab`. No code
