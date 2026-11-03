@@ -772,6 +772,14 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   // remembers it open); a failed request can be retried; a removal waits for the « Removed · Undo » toast to end.
   let queueCount = 0, queueRows = [], lastRun = null, pendingDel = null;
   const deleting = new Set(); // ids whose DELETE is in flight: kept out of every read until it answers
+  // queueGen: bumped by every read and every write; a read that answers after a newer one, or after a write, is dropped.
+  // queueEpoch: bumped on an account or backend change; a write answering after it touches nothing.
+  let queueGen = 0, queueEpoch = 0;
+  // Another account or backend: forget the previous queue before any read (a failed read keeps what is shown).
+  const resetQueue = () => {
+    queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear();
+    $('queue-undo').hidden = true; queueCount = 0; $('queue-sec').hidden = true; $('queue-summary').innerHTML = ''; $('queue').innerHTML = '';
+  };
   const rowErr = new Map(), DAY = 86400000, QOPEN = 'rb.queueOpen';
   const queueOpen = () => ls.get(QOPEN) === 'true';
   const hhmm = iso => { try { return new Date(iso).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false}); } catch { return ''; } };
@@ -806,13 +814,14 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   // One read for the list, one for the latest done request (the computer's last run). The read filters are
   // repeated here: a done row or a row being removed stays out of the list.
   const refreshQueue = async () => {
+    const gen = ++queueGen;
     try {
       const [list, last] = await Promise.all([
         sb.from('requests').select('id,url,status,theme,note,created_at,processed_at').neq('status', 'done').order('created_at', {ascending: false}).limit(50),
         sb.from('requests').select('processed_at').eq('status', 'done').order('processed_at', {ascending: false}).limit(1).maybeSingle()
       ]);
       // a failed read keeps what is shown: an empty list is only believed from a successful read
-      if (list.error) return;
+      if (list.error || gen !== queueGen) return;
       queueRows = (list.data || []).filter(d => d.status !== 'done' && !deleting.has(String(d.id)) && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
       if (!last.error) lastRun = (last.data && last.data.processed_at) || null;
       renderQueue();
@@ -823,8 +832,9 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   const commitDel = () => {
     if (!pendingDel) return;
     const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
-    const key = String(row.id); deleting.add(key);
+    const key = String(row.id), epoch = queueEpoch; deleting.add(key); queueGen++;
     const restore = e => {
+      if (epoch !== queueEpoch) return;
       deleting.delete(key);
       if (!queueRows.some(d => String(d.id) === String(row.id))) queueRows.splice(Math.min(i, queueRows.length), 0, row);
       rowErr.set(String(row.id), `Could not remove it: ${(e && e.message) || 'try again in a moment.'}`); renderQueue();
@@ -834,11 +844,13 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   $('queue').addEventListener('click', async ev => {
     const r = ev.target.closest('[data-retry]');
     if (r) {
-      const id = r.dataset.retry; r.disabled = true; rowErr.delete(id);
+      const id = r.dataset.retry, epoch = queueEpoch; r.disabled = true; rowErr.delete(id);
       try {
         const {error} = await sb.from('requests').update({status: 'queued', note: null, processed_at: null}).eq('id', id); if (error) throw error;
+        if (epoch !== queueEpoch) return;
+        queueGen++;
         const d = queueRows.find(x => String(x.id) === id); if (d) Object.assign(d, {status: 'queued', note: null, processed_at: null});
-      } catch (e) { rowErr.set(id, `Retry failed: ${(e && e.message) || 'try again in a moment.'}`); }
+      } catch (e) { if (epoch !== queueEpoch) return; rowErr.set(id, `Retry failed: ${(e && e.message) || 'try again in a moment.'}`); }
       renderQueue(); return;
     }
     const b = ev.target.closest('[data-del]'); if (!b) return;
@@ -1288,7 +1300,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity;
-      sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = '';
+      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
     if (!sb) {
@@ -1302,7 +1314,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
         const next = session ? session.user : null;
         const changed = (next && next.id) !== (user && user.id);
         user = next;
-        if (changed) { sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });
