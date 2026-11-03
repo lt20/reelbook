@@ -105,3 +105,21 @@ test('L5: a typed note not saved yet is kept on the device and shown again, Not 
   assert.deepEqual(JSON.parse(JSON.stringify(noteWrites(page).map(c => c[2]))), [{slug: 'm1', body: 'Heavy today'}]);
   assert.equal(page.storage.has('rb.draft.u1.m1'), false, 'saved: the device copy goes');
 });
+
+test('L5: opened offline, the device copy of a note is shown, Not saved; Retry back online reads then saves it', async () => {
+  const failing = {notes: {error: {message: 'offline'}, status: 0}};
+  const page = await open('#m1', {failing, stored: {'rb.draft.u1.m1': 'Heavy today'}});
+  assert.equal(page.element('n-text').value, 'Heavy today');
+  assert.equal(page.element('n-status').textContent, 'Not saved');
+  assert.equal(page.element('n-retry').hidden, false);
+  delete failing.notes; // back online
+  await page.fire('n-retry'); await settle();
+  assert.equal(page.element('n-status').textContent, 'Saved');
+  assert.deepEqual(JSON.parse(JSON.stringify(noteWrites(page).map(c => c[2]))), [{slug: 'm1', body: 'Heavy today'}]);
+});
+
+test('L5: a session exercise whose sheet cannot be loaded still has Previous / Next', async () => {
+  const page = await open('#session/flow/2', {dom: false}); // no DOMParser: loadSheet fails
+  assert.match(view(page), /This sheet could not be loaded\./);
+  assert.match(view(page), /<a class="prev" href="#session\/flow\/1">← Previous<\/a><a class="next" href="#session\/flow\/3">Next: Three →<\/a>/);
+});

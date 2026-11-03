@@ -1049,25 +1049,33 @@ dialog.ph-dlg::backdrop{background:#000}
     ta.addEventListener('input', () => {
       if (saved === null) return; // not read yet (the field is read-only)
       const t = ++tick, body = ta.value.trim();
-      if (body === saved) ls.del(draftKey); else ls.set(draftKey, body);
+      // the device copy goes only when the field matches the stored text and nothing else is on its way
+      if (body === saved && sending === null) ls.del(draftKey); else ls.set(draftKey, body);
       if (body === latest()) { if (sending === null) shownAs('Saved', false); return; }
       shownAs('Saving…', false);
       setTimeout(() => { if (live() && t === tick) me.flush(); }, NOTE_DELAY);
     });
-    retry.addEventListener('click', () => me.flush());
-    // a save of this note still on its way (the page was left and opened again) lands before the read
-    await noteQueue;
-    try {
-      const {data, error} = await owner.client.from('notes').select('body,updated_at').eq('slug', key).maybeSingle(); if (error) throw error;
-      if (!live()) return;
-      saved = data && typeof data.body === 'string' ? data.body : '';
-      ta.readOnly = false;
+    // Retry: reads the note again when it could not be read (then saves the device copy at once), else saves.
+    const read = async again => {
+      // a save of this note still on its way (the page was left and opened again) lands before the read
+      await noteQueue;
       const draft = ls.get(draftKey);
-      if (draft !== null && draft !== saved) { ta.value = draft; shownAs('Not saved', true); return; }
-      ls.del(draftKey);
-      ta.value = saved;
-      shownAs(saved ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.', false);
-    } catch { shownAs('Could not read the note.', false); }
+      try {
+        const {data, error} = await owner.client.from('notes').select('body,updated_at').eq('slug', key).maybeSingle(); if (error) throw error;
+        if (!live()) return;
+        saved = data && typeof data.body === 'string' ? data.body : '';
+        ta.readOnly = false;
+        if (draft !== null && draft !== saved) { ta.value = draft; if (again) me.flush(); else shownAs('Not saved', true); return; }
+        ls.del(draftKey);
+        ta.value = saved;
+        shownAs(saved ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.', false);
+      } catch {
+        // read-only until read; the device copy, if any, is shown so it is not out of reach
+        if (draft !== null && live()) { ta.value = draft; shownAs('Not saved', true); } else shownAs('Could not read the note.', true);
+      }
+    };
+    retry.addEventListener('click', () => { if (saved === null) read(true); else me.flush(); });
+    await read(false);
   };
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNotes(); });
   window.addEventListener('pagehide', flushNotes);
@@ -1138,7 +1146,7 @@ dialog.ph-dlg::backdrop{background:#000}
     const del = '<div class="wrap"><div class="actions" style="margin-top:36px"><button class="btn ghost" type="button" id="sd-open">Delete sheet</button></div></div>';
     let html; try { html = await loadSheet(slug); } catch { html = null; }
     if (load !== sheetLoad || shown !== slug) return; // left (Next tapped twice, another page) while it loaded
-    if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + del; return; }
+    if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav() + del; return; }
     view.innerHTML = back + html + notesHtml() + seatNav() + del;
     // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)
     $('sheet-top').innerHTML = sheetTop(e);
