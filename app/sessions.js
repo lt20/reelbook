@@ -197,10 +197,11 @@
 
   // The rest between sets or rounds stated in a session format, in seconds (upper bound of a range), else null:
   // « 60 à 90 s de repos » → 90, « repos 1 min » → 60, « 20 s rest » → 20, « no rest » / « sans repos » → 0.
-  const DUR = `(?<!\\d)${RANGE}\\s*(${MIN}|${SEC})${END}(?:\\s*(\\d{1,2})(?:\\s*${SEC})?${END})?`;
+  // No lookbehind (iOS < 16.4 would not even load this file): a non-capturing « start or other character » instead.
+  const DUR = `${RANGE}\\s*(${MIN}|${SEC})${END}(?:\\s*(\\d{1,2})(?:\\s*${SEC})?${END})?`;
   const restRe = [
-    new RegExp(`${DUR}\\s*(?:de |of )?(?:repos|rest|récup(?:ération)?|recovery)${END}`),
-    new RegExp(`(?<![a-zà-ÿ])(?:repos|rest)\\s*:?\\s*(?:suggestion\\s*:?\\s*)?${DUR}`)
+    new RegExp(`(?:^|\\D)${DUR}\\s*(?:de |of )?(?:repos|rest|récup(?:ération)?|recovery)${END}`),
+    new RegExp(`(?:^|[^a-zà-ÿ])(?:repos|rest)\\s*:?\\s*(?:suggestion\\s*:?\\s*)?${DUR}`)
   ];
   const parseRest = text => {
     try {

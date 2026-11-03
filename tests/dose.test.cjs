@@ -114,3 +114,8 @@ test('Edit save: an untouched dose keeps its structured fields, an edited dose d
   assert.deepEqual(RS.cleanItems(draft), [{slug: 'a', dose: '3×10', sets: 3, reps: 10, per_side: true}, {slug: 'b', dose: '45 s'}]);
   assert.deepEqual(RS.cleanItems([{slug: 'a', dose: '3×10', given: {sets: 3}}]), [{slug: 'a', dose: '3×10'}], 'no `was`: a new item');
 });
+
+test('no regex lookbehind in the app modules: iOS Safari before 16.4 would fail to load the file', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  for (const f of ['sessions.js', 'sheet.js']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../app', f), 'utf8'), /\(\?<[=!]/, f);
+});
