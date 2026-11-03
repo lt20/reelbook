@@ -103,7 +103,8 @@ titles follow the template, translated.
   key position found on the grid, plus one detail photo when a placement conditions the exercise.
   Decide the count **from the grid**, exercise by exercise. A **flow** (one continuous chain of
   different moves) takes one photo per distinct movement of the timeline, even beyond 5: the 3–5
-  range is for a single movement.
+  range is for a single movement. A **progression** (stages toward one movement, section 3 bis)
+  takes one or two photos per stage, even beyond 5.
 - **Mandatory check**: `Read` every final photo and tick head / hands / supports visible before
   writing the sheet. A photo that fails is redone. Then match the photos against the timeline:
   every line has its photo, or the sheet says why not.
@@ -124,7 +125,8 @@ titles follow the template, translated.
   is enough.
 - **Long video** (more than ~2 min, or chapters listed): never scout the whole video. Read the
   chapters / transcript, pick the passages that show an exercise, run passes A–C **only on those
-  passages**, and build **one session** (section 3 bis): one exercise sheet per exercise.
+  passages**, and build **one session** (section 3 bis): one exercise sheet per exercise, unless
+  the video teaches one movement in stages (then one sheet, section 3 bis).
 - `meta.json`: `source.platform` = `"youtube"`; the footer link is the video URL, with the
   timestamp (`&t=…s`) when the sheet comes from one passage.
 
@@ -152,7 +154,20 @@ titles follow the template, translated.
   card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok`, `youtube` or `facebook`).
 
 ## 3 bis. One video = a session (several exercises)
-- Decide from the caption / the grid: several named exercises = **one session**: one light
+- **First decide: one movement taught in stages, or a workout?** Several named moves do not make
+  a session. A session is a **workout**: independent exercises, each worth doing for itself with
+  its own dose (circuit, routine, warm-up list, « 5 exercises for… »). A video that teaches **one
+  movement** broken into stages is **one sheet** (section 3), however many stages it names: « X in
+  5 steps », « progression to X », « how to X », « X from beginner to full », drills or lead-ups
+  that end in the full movement. Signs: the title or caption names one movement; the last stage
+  is that movement; each stage adds a piece to the previous one, or only exists to reach the last.
+  Then the stages are the **Sequence**, one numbered step per stage (« Stage 1 · plank »…) with
+  its photos and the sign that it is clean enough to move on, the full movement as the last step;
+  Dose says how to work the stages (« each stage 3×5 until clean, then the next »). Precedent:
+  `side-kick-progression` (one sheet, right). Counter-example: « Front kick through en 5 étapes »
+  was split into a session of 5 sheets (`session-front-kick-through`, wrong: plank, front sit
+  through… are stages of the front kick through). In doubt, one sheet, and say so to the user.
+- A workout: several named exercises = **one session**: one light
   exercise sheet per exercise, plus one session that links them **in the video's order**. Grid per
   exercise, photos per the count rule. Processing is the same as for the old one-page session:
   only the output is split.
