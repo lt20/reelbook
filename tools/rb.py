@@ -148,7 +148,7 @@ def cmd_themes(args):
 
 def cmd_queue(args):
     cfg = session()
-    rows = rest(cfg, "GET", "requests", params={"status": "eq.queued", "order": "created_at.asc", "select": "id,url,theme,note,created_at"})
+    rows = rest(cfg, "GET", "requests", params={"status": "eq.queued", "order": "created_at.asc", "select": "id,url,theme,note,slug,created_at"})
     for r in rows or []:
         if (r.get("note") or "").startswith("Redo:"):
             r["redo_of"] = _published_from(cfg, r["url"])

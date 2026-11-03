@@ -1207,7 +1207,8 @@ dialog.ph-dlg::backdrop{background:#000}
   // ---------- L7: « Something wrong? » ----------
   // In its own block under « My notes » of a sheet or session that has a source video: the dialog queues that
   // video again, in the page's notebook, with the note « Redo: <text> ». The skill reads it as a correction
-  // (same slug, republished over the old sheet). Send stays disabled while the text is blank.
+  // (same slug, republished over the old sheet); `slug` names the page flagged (a session: session/<slug>, as
+  // RS.noteKey) so the skill fixes that one first. Send stays disabled while the text is blank.
   const reportHtml = x => httpUrl(((x && x.source) || {}).url) ? '<div class="wrap report"><button type="button" class="link" id="report-open">Something wrong?</button></div>' : '';
   const rdlg = $('report-dlg');
   const openReport = () => {
@@ -1224,7 +1225,7 @@ dialog.ph-dlg::backdrop{background:#000}
       const text = ta.value.replace(/\s+/g, ' ').trim(); if (!text) return; // one line: see redoLine
       send.disabled = true; st.className = 'status'; st.textContent = 'Sending…';
       try {
-        const {error} = await sb.from('requests').insert({url, theme: x.theme, note: 'Redo: ' + text}); if (error) throw error;
+        const {error} = await sb.from('requests').insert({url, theme: x.theme, note: 'Redo: ' + text, slug: ses ? RS.noteKey(ses) : x.slug}); if (error) throw error;
         ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; $('report-cancel').textContent = 'Close';
         refreshQueue();
       } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }

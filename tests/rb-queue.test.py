@@ -153,6 +153,7 @@ class Queue(Base):
                                 {"id": "s", "url": "https://ig/s", "theme": None, "note": None, "created_at": iso(1)}])
         out, _ = self.run_cmd(rb.cmd_queue, [])
         self.assertIn("note", calls[0][3]["select"].split(","))
+        self.assertIn("slug", calls[0][3]["select"].split(","), "a Redo names the page flagged")
         redo, plain = [json.loads(line) for line in out.strip().split("\n")]
         self.assertEqual(redo["note"], "Redo: correct the angle")
         self.assertEqual(redo["redo_of"], {"sheets": ["gsp-angel", "gsp-press"], "sessions": ["gsp"]})
