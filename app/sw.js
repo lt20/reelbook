@@ -4,7 +4,7 @@
 //   worker. Every change to a module bumps its ?v= here and in index.html, and VERSION (COORDINATION, pitfalls).
 // - Signed photos from Supabase Storage: cache-first, keyed by their URL without the token (a new token is
 //   signed at each start; the app's rbv parameter, the sheet's updated_at, stays in the key so a republished
-//   photo is fetched again), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE).
+//   photo is fetched again), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE), a deleted sheet's dropped (DROP_PHOTOS).
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
 const VERSION = 'rb-shell-27';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300;
@@ -21,6 +21,11 @@ self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Pr
 let epoch = 0;
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'CLEAR_USER_CACHE') { epoch++; e.waitUntil(caches.delete(PHOTOS)); }
+  // A deleted sheet: its photos (path '<user id>/<slug>/') go too.
+  if (e.data && e.data.type === 'DROP_PHOTOS' && typeof e.data.path === 'string' && /^[^/]+\/[^/]+\/$/.test(e.data.path)) {
+    const part = '/storage/v1/object/sign/sheets/' + e.data.path;
+    e.waitUntil(caches.open(PHOTOS).then(async c => Promise.all((await c.keys()).filter(k => k.url.includes(part)).map(k => c.delete(k)))).catch(() => {}));
+  }
 });
 
 // A redirected response cannot answer a navigation (Safari), an error page must not replace a good copy.

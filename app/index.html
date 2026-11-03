@@ -713,9 +713,10 @@ dialog.ph-dlg::backdrop{background:#000}
       signed: cardPaths().filter(p => signed.has(p)).map(p => [p, signed.get(p).url])}));
   };
   // Sign-out: the user's cached catalogue and sheets, and the photos the service worker kept.
+  const toWorker = msg => { try { if (navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage(msg)).catch(() => {}); } catch {} };
   const clearUserCache = uid => {
     idb.drop(RS.catalogueCacheKey('', uid)); // the key prefix of every backend for this user
-    try { if (navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage({type: 'CLEAR_USER_CACHE'})).catch(() => {}); } catch {}
+    toWorker({type: 'CLEAR_USER_CACHE'});
   };
   // Every read at once (L19), then the photos of the cards; nothing is applied here (RS.refreshCatalogue).
   const fetchCatalogue = async () => {
@@ -1786,7 +1787,7 @@ dialog.ph-dlg::backdrop{background:#000}
     } catch {}
     try { await sb.from('notes').delete().eq('slug', e.slug); notesIndex.delete(e.slug); } catch {}
     sheets = sheets.filter(x => x !== e); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
-    idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue();
+    idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue(); toWorker({type: 'DROP_PHOTOS', path: `${user.id}/${e.slug}/`});
     b.disabled = false; sdlg.close();
     flashHome('Sheet deleted.');
     location.hash = e.theme;
@@ -1912,7 +1913,7 @@ dialog.ph-dlg::backdrop{background:#000}
           peeked = false; // another user, or a session removed (revoked): handled as a change below
         }
         const changed = (next && next.id) !== (user && user.id);
-        if (changed && user && !next) clearUserCache(user.id); // signed out (button, reset, or a revoked session)
+        if (changed && user) clearUserCache(user.id); // signed out (button, reset, revoked session) or another account
         user = next;
         if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();

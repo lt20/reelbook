@@ -55,3 +55,12 @@ test('a photo still downloading at sign-out stays out of the cache', async () =>
   await Promise.all(e.waits);
   assert.deepEqual(w.photos(), []);
 });
+
+test('a deleted sheet drops its photos only', async () => {
+  const w = worker(async () => response('bytes'));
+  const other = 'https://s.example.test/storage/v1/object/sign/sheets/u/ab/img/1.jpg';
+  for (const url of [photo + '?token=a', other + '?token=a']) { const e = w.dispatch('fetch', get(url)); await e.answer; await Promise.all(e.waits); }
+  const drop = w.dispatch('message', {data: {type: 'DROP_PHOTOS', path: 'u/a/'}});
+  await Promise.all(drop.waits);
+  assert.deepEqual(w.photos(), [other]);
+});
