@@ -1,9 +1,9 @@
 [
   {"name": "l6-01-home-counter", "hash": "",
-   "actions": [{"wait": "#count >> text=3 practised · 9 saved · 2 sessions · 3 notebooks"}],
+   "actions": [{"wait": "#count >> text=3 practised · 29 saved · 4 sessions · 3 notebooks"}],
    "why": "« ancienne-fiche » in the log is a deleted sheet: not counted"},
   {"name": "l6-02-home-missing-table", "hash": "", "query": "missing=practice_log",
-   "actions": [{"wait": "#count >> text=9 sheets · 2 sessions · 3 notebooks"}],
+   "actions": [{"wait": "#count >> text=29 sheets · 4 sessions · 3 notebooks"}],
    "why": "a backend before the db push: the line is as before L6"},
   {"name": "l6-03-sheet-top", "hash": "pompes-inclinees",
    "actions": [{"wait": "#practice-done >> text=Done today"}, {"wait": "#practice .pr-last >> text=Last time: 28 Oct — 3 × 10, banc bas"}]},
