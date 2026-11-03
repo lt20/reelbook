@@ -216,7 +216,7 @@ class PublishSessionV2(Base):
             row = fake.rest_calls("POST", "sheets")[0][3]
             self.assertEqual(row["duration"], dur)
             self.assertNotIn("steps", row, "no column for it yet")
-        for i, dur in enumerate(("0:45", "5 étapes", "5 steps", "3 exercises", "4 exercices", 5)):
+        for i, dur in enumerate(("0:45", "1:02:30", " 12 : 05 ", "5 étapes", "5 steps", "3 exercises", "4 exercices", 5)):
             self.assertRefused(self.sheet(f"bad-dur-{i}", duration=dur), "practice time")
         for i, steps in enumerate((0, "5", 2.5, True)):
             self.assertRefused(self.sheet(f"bad-steps-{i}", steps=steps), "steps must be")

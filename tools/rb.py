@@ -206,8 +206,9 @@ SESSION_REQUIRED = ("slug", "theme", "title")
 # free-text dose): whole numbers >= 0, and per_side a boolean; null counts as absent.
 ITEM_FIELDS = ("sets", "reps", "seconds", "rest_s", "per_side")
 IMG_EXT = (".jpg", ".jpeg", ".png", ".webp")
-# A sheet's duration is its practice time (« 5 min ») or "": never the video length (« 0:45 ») nor a step count (L15)
-NOT_A_DURATION = re.compile(r"^\s*\d+\s*:\s*\d\d\s*$|\b(steps?|stages?|exercises?|étapes?|exercices?)\b", re.I)
+# A sheet's duration is its practice time (« 5 min ») or "": never the video length (« 0:45 », « 1:02:30 ») nor a
+# step count (L15)
+NOT_A_DURATION = re.compile(r"^\s*\d+(\s*:\s*\d\d){1,2}\s*$|\b(steps?|stages?|exercises?|étapes?|exercices?)\b", re.I)
 NO_SESSIONS = "this backend has no sessions table: re-run supabase/schema.sql (see docs/own-supabase.md)"
 
 def _known_themes(cfg):
