@@ -9,6 +9,13 @@
   const blank = n => n.nodeType === 3 && !n.textContent.trim();
   const text = n => (n && n.textContent || '').replace(/\s+/g, ' ').trim();
   const MORE = 3; // key points shown before « +N more »
+  // The why block is told by its heading, in the languages sheets are written in (« Why », « Pourquoi »…): another
+  // section placed there (« Safety ») must stay open where it is.
+  const WHY = new Set(['why', 'pourquoi', 'por que', 'porque', 'porquê', 'por qué', 'warum', 'perché', 'perche', 'waarom', 'dlaczego', 'varför', 'hvorfor', 'miksi', 'neden', 'почему', 'なぜ', '为什么']);
+  const isWhy = h2 => {
+    const own = [...h2.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ');
+    return WHY.has(own.toLowerCase().replace(/[?¿:!.]/g, ' ').replace(/\s+/g, ' ').trim());
+  };
 
   // A unit is a run of sibling nodes that moves as one: the nodes of a container before its first <h2>
   // (pre), or an <h2> and what follows it up to the next <h2>. A top-level element that is not a
@@ -47,7 +54,7 @@
     const keys = h2s.find(u => u !== seq && u !== dose && holds(u, 'ol.keys'));
     const at = u => u ? units.indexOf(u) : Infinity;
     const why = h2s.find(u => u.box === head.box && ![seq, dose, keys].includes(u)
-      && at(u) < Math.min(at(dose), at(keys), at(seq)));
+      && at(u) < Math.min(at(dose), at(keys), at(seq)) && isWhy(u.h2));
     if (!seq && !dose && !keys && !why) return false;
 
     if (keys) {

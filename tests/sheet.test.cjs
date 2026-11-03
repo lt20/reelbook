@@ -89,6 +89,20 @@ test('a part that is not found stays where it is, nothing is dropped', () => {
   assert.ok(doc.querySelector('p.loose'));
 });
 
+test('a section before the dose that is not « Why » stays open where it is', () => {
+  const html = sheetHtml.replace('<h2>Why</h2>', '<h2>Safety</h2>');
+  const {doc, before} = arranged(html);
+  assert.equal(doc.querySelector('details.rb-why'), null);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:The sequence', 'h2:Dose suggestion, not in the reel', 'h2:Key points',
+    'key:Short bold cue.', 'key:Second cue.', 'key:Third cue.', 'h2:Safety', 'h2:Variation', 'footer']);
+  assert.deepEqual(content(doc), before);
+  // the why is told by its heading in the sheet's language, a small note next to it included
+  for (const h of ['Pourquoi', 'Pourquoi ?', 'WHY', 'Warum', 'Por qué <small>en bref</small>']) {
+    const d = arranged(sheetHtml.replace('<h2>Why</h2>', `<h2>${h}</h2>`)).doc;
+    assert.ok(d.querySelector('details.rb-why summary h2'), h);
+  }
+});
+
 test('a page that is not built from the templates is left as is', () => {
   for (const html of ['<p>Just text</p>', '<div class="wrap"><h2>A</h2><p>B</p></div>', '<div class="wrap fiche"><header><h1>T</h1></header><p>Only a header.</p></div>']) {
     const doc = parse(html), was = doc.body.innerHTML;
