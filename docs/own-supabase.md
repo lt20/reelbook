@@ -35,11 +35,11 @@ and every table in the schema is locked to the signed-in user.
 
 ## 5. Open the app and sign up
 
-Open the Reelbook app (the hosted copy at the URL given in the README, or your own copy of
-`app/` served from any static host or `python3 -m http.server` inside `app/`). Choose **Create
-an account**, then **My own Supabase project**. Paste the URL and anon key, and create your
-account with an email and a password. On another device, use **Sign in to my own instance**
-to enter the same URL and anon key once before signing in.
+Open the Reelbook app: the hosted copy at https://lt20.github.io/reelbook/ (the link at the top of
+the README), or your own copy of `app/` served from any static host or `python3 -m http.server`
+inside `app/`. Choose **Create an account**, then **My own Supabase project**. Paste the URL and
+anon key, and create your account with an email and a password. On another device, use **Sign in
+to my own instance** to enter the same URL and anon key once before signing in.
 
 Install it on your phone from the browser menu: *Add to Home screen* (Android, Chrome) or
 *Share → Add to Home Screen* (iOS, Safari).
@@ -56,4 +56,7 @@ Then, in any Claude Code session: `/reelbook`. See the README for what happens n
 ## Limits of the free tier
 
 - 500 MB database, 1 GB storage. A sheet weighs about 2 MB of images: room for roughly 400 sheets.
-- Projects paused after a week without traffic: open the app, it wakes up in a few seconds.
+- A free project with no activity for 7 days is paused, and opening the app does not wake it up.
+  Restore it by hand from the [Supabase dashboard](https://supabase.com/dashboard) (Project →
+  **Restore**); it takes a few minutes and your data is kept. While the project is paused, the app
+  cannot load your sheets and says your Supabase project may be paused.
