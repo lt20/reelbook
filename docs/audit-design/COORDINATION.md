@@ -81,6 +81,13 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
 - **L7, `tests/acceptance/l7/report-correction.test.cjs` (Redo payload)** — settled (3 Nov, coordinator decision
   after Codex review ×3): slug added (`{url, theme, note, slug}`, spec §B4 updated).
 
+- **L8, `tests/acceptance/l8/to-try.test.cjs` « hidden when no sheet qualifies », case `empty catalogue`**
+  (raised by the L8 agent, for Codex): the test expects `#home` shown with an empty catalogue, but since before L6
+  a signed-in user with no sheet and no `rb.welcome.<id>` is sent to `#welcome` (`reload`), so `#home` is hidden.
+  The shelf itself is hidden (the first assertion passes); only `home.hidden === false` fails. L8 does not change
+  the welcome flow. Proposal: in that case only, store `rb.welcome.u1` (welcome already seen) or drop the
+  `home.hidden` assertion for the empty catalogue. Until then `node --test tests/acceptance/` has this one failure.
+
 ## Known pitfalls
 - `app/index.html` is one ~1 200-line file: never read it whole; `grep -n` then `sed -n`. Parallel lots touch
   different regions; expect small merge conflicts in the CSS head.
