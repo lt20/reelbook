@@ -30,5 +30,5 @@ jobs:
           python-version: '3.9'
       - run: bash -n tools/nightly.sh
       - run: python -m py_compile tools/rb.py tools/crop.py tools/vstack.py
-      - run: python -I tests/rb-sessions.test.py -v
-      - run: python -I tests/rb-queue.test.py -v
+      # every rb.py test file (rb-sessions, rb-queue, rb-search, rb-themes…), so a new one never stays out of CI
+      - run: for f in tests/rb-*.test.py; do echo "== $f"; python -I "$f" -v || exit 1; done
