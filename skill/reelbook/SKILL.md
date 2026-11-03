@@ -192,7 +192,8 @@ languages: translate the English column).
 - `meta.json`: `slug`, `kind: "sheet"`, `theme`, `group`, `title`, `summary` (one line for the
   card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok`, `youtube` or `facebook`).
 - **`duration`** = practice time, the time the dose takes (`"5 min"`), `""` when you cannot tell.
-  Never the video length (`"0:45"`), never a step count (`"5 étapes"`): `rb.py publish` refuses both.
+  Never the video length (`"0:45"`), never a step count (`"5 étapes"`): `rb.py publish` refuses both on a new
+  sheet (a sheet already published only gets a warning: fix it when you redo it).
   A progression or a technique taught in stages adds **`steps`**, a whole number (`"steps": 5`);
   the app shows `duration` only.
 
