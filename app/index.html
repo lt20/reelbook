@@ -840,9 +840,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       ${url || src.author ? `<p class="src">Video${src.author ? ` by ${esc(src.author)}` : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">Watch the video</a>` : ''}</p>` : ''}`;
   };
   // Edit mode of the shown v2 session (user and video alike): a draft saved in one update, items in full.
-  // Items whose sheet was deleted are not in the draft, so saving drops them.
+  // Items whose sheet was deleted are not in the draft, so saving drops them. `was` keeps each text as it was
+  // when Edit opened: saving clips only the texts the user changed (RS.keepOrClip).
   let edit = null;
-  const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose}))});
+  const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
+    items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose, was: it.dose}))});
   const editRows = () => edit.items.map((it, i) => {
     const sh = bySlug.get(it.slug), t = esc(sh ? sh.title : it.slug);
     return `<div class="row"><span class="k">${i + 1}</span><b>${t}</b><div class="ctl">
@@ -1050,7 +1052,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const reorder = (i, d) => { edit.items = RS.moveItem(edit.items, i, d); renderRows(`[data-${d < 0 ? 'up' : 'down'}="${i + d}"]`); };
   const saveEdit = async () => {
     const s = v2BySlug.get(edit.slug), err = $('ed-err'), b = $('ed-save');
-    const row = {title: RS.clip(edit.title, RS.MAX.title), format: RS.clip(edit.format, RS.MAX.format), items: RS.cleanItems(edit.items)};
+    const row = {title: RS.keepOrClip(edit.title, edit.was.title, RS.MAX.title), format: RS.keepOrClip(edit.format, edit.was.format, RS.MAX.format), items: RS.cleanItems(edit.items)};
     if (!row.title) { err.textContent = 'Give the session a title.'; err.hidden = false; $('ed-title').focus(); return; }
     b.disabled = true; err.hidden = true;
     try {

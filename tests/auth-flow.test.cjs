@@ -569,3 +569,31 @@ test('C6: accessibility base — focus ring, live regions, input border token, t
   assert.match(html, /<meta name="theme-color" content="#15171a" media="\(prefers-color-scheme: dark\)">/);
   assert.match(html, /padding-inline:max\(16px,env\(safe-area-inset-left\)\) max\(16px,env\(safe-area-inset-right\)\)/);
 });
+
+test('C1: a text past its limit that the user did not touch is saved as it is; an edited one is clipped', async () => {
+  const tables = v2Tables();
+  const title = 'T'.repeat(85), format = 'F'.repeat(241), longDose = 'D'.repeat(61);
+  Object.assign(tables.sessions[0], {title, format, items: [{slug: 'gsp-rot', dose: longDose}, {slug: 'gsp-angel', dose: '30 s'}]});
+  const page = await app({...signedIn, tables, hash: '#session/gsp-shoulders'});
+  await settle();
+  clickIn(page, 'view', '#ed-open');
+  clickIn(page, 'view', '[data-down]', {down: '0'});
+  typeIn(page, {dataset: {dose: '0'}, value: '40 s'});
+  clickIn(page, 'view', '#ed-save');
+  await settle();
+  let [[, , row]] = writesOf(page);
+  assert.equal(row.title, title, 'untouched title kept whole');
+  assert.equal(row.format, format, 'untouched format kept whole (rb.py publish does not enforce the limit)');
+  assert.deepEqual(row.items, [{slug: 'gsp-angel', dose: '40 s'}, {slug: 'gsp-rot', dose: longDose}], 'untouched dose kept whole, even moved');
+  const edited = await app({...signedIn, tables, hash: '#session/gsp-shoulders'});
+  await settle();
+  clickIn(edited, 'view', '#ed-open');
+  typeIn(edited, {id: 'ed-format', value: format + 'G'});
+  typeIn(edited, {dataset: {dose: '0'}, value: longDose + 'E'});
+  clickIn(edited, 'view', '#ed-save');
+  await settle();
+  [[, , row]] = writesOf(edited);
+  assert.equal(row.format, format.slice(0, 240), 'an edited format is clipped to its limit');
+  assert.equal(row.items[0].dose, longDose.slice(0, 60), 'an edited dose is clipped to its limit');
+  assert.equal(row.title, title);
+});

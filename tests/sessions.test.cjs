@@ -105,3 +105,14 @@ test('C1: the limits leave room for video sessions (formats up to 240, doses up 
   assert.equal(RS.clip(format, RS.MAX.format), format);
   assert.deepEqual(RS.cleanItems([{slug: 'a', dose}]), [{slug: 'a', dose}]);
 });
+
+test('C1: only an edited text is clipped; an untouched one is kept as it is, even past its limit', () => {
+  const long = 'x'.repeat(250);
+  assert.equal(RS.keepOrClip(long, long, RS.MAX.format), long);
+  assert.equal(RS.keepOrClip(long + 'y', long, RS.MAX.format), long.slice(0, 240));
+  assert.equal(RS.keepOrClip('  a  ', undefined, 10), 'a');
+  assert.equal(RS.keepOrClip('', null, 10), '');
+  const dose = 'd'.repeat(70);
+  assert.deepEqual(RS.cleanItems([{slug: 'a', dose, was: dose}, {slug: 'b', dose: dose + '!', was: dose}]),
+    [{slug: 'a', dose}, {slug: 'b', dose: dose.slice(0, 60)}]);
+});
