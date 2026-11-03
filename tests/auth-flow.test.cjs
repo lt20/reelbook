@@ -628,7 +628,9 @@ test('C2: the add-notebook card counts « N more to pick from » and suggests no
   assert.match(card, /1 more to pick from<\/p>[\s\S]*<p>Cooking… or one you describe yourself\.<\/p>/);
   const none = await app({...signedIn, tables, library: lib.slice(0, 3)});
   await settle();
-  assert.match(none.element('portal').innerHTML, /0 more to pick from<\/p>[\s\S]*<p>Describe one yourself\.<\/p>/);
+  card = none.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
+  assert.doesNotMatch(card, /more to pick|class="eyebrow"/, 'nothing left to pick: no eyebrow at all');
+  assert.match(card, /<h2>\+ Add a notebook<\/h2><p>Describe one yourself\.<\/p>/);
 });
 
 test('C2: a queue row without a notebook shows no notebook label, and its reason sits on its own line', async () => {

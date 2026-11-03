@@ -589,11 +589,12 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>
       <div class="m">${(extra && extra.meta || []).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
-  // The « + Add a notebook » card: its examples are the first three library notebooks not added yet.
+  // The « + Add a notebook » card: its examples are the first three library notebooks not added yet; with none
+  // left, no count and no examples, only the custom notebook.
   const addNotebookCard = rest => {
     const ex = rest.slice(0, 3).map((t, i) => i ? t.title.charAt(0).toLowerCase() + t.title.slice(1) : t.title);
     const hint = ex.length ? `${ex.join(', ')}… or one you describe yourself.` : 'Describe one yourself.';
-    return `<button type="button" class="tcard add" id="add-nb"><p class="eyebrow">${rest.length} more to pick from</p><h2>+ Add a notebook</h2><p>${esc(hint)}</p></button>`;
+    return `<button type="button" class="tcard add" id="add-nb">${rest.length ? `<p class="eyebrow">${rest.length} more to pick from</p>` : ''}<h2>+ Add a notebook</h2><p>${esc(hint)}</p></button>`;
   };
   const renderPortal = () => {
     $('portal').innerHTML = themes.map(t => {
