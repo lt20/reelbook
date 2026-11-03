@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fichiers", "notes"],
+  "properties": {
+    "fichiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["chemin", "contenu"],
+        "properties": {
+          "chemin": { "type": "string" },
+          "contenu": { "type": "string" }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}
