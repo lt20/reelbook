@@ -186,7 +186,7 @@
    "slug": "session-gainage-10-min",
    "theme": "strength",
    "title": "Gainage en 10 minutes",
-   "format": "3 exercices en circuit · 3 tours · 30 s de repos entre les tours",
+   "format": "3 exercices en circuit, 40 s de travail et 20 s de transition · 3 tours · 30 s de repos entre les tours ; le dernier tour au tempo lent, 3 s par répétition",
    "why": "Une routine courte pour la sangle abdominale, sans matériel, à placer en fin de séance.",
    "key_points": [
     "Le dos reste neutre : pas de creux dans les lombaires.",
@@ -270,7 +270,8 @@
    "status": "processing",
    "theme": "yoga",
    "note": null,
-   "created_at": "2026-11-02T07:40:00Z"
+   "created_at": "2026-11-02T07:40:00Z",
+   "processed_at": "2026-11-03T09:20:00Z"
   },
   {
    "id": "req-3",
@@ -279,6 +280,15 @@
    "theme": null,
    "note": "Video unavailable: the post is private or was deleted.",
    "created_at": "2026-11-01T21:05:00Z"
+  },
+  {
+   "id": "req-4",
+   "url": "https://www.instagram.com/reel/PREVIEW0104/",
+   "status": "done",
+   "theme": "strength",
+   "note": null,
+   "created_at": "2026-10-31T18:00:00Z",
+   "processed_at": "2026-11-01T22:10:00Z"
   }
  ]
 }

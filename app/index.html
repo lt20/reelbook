@@ -16,13 +16,14 @@
 :root{
   --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd; --line-strong:#8f8a80;
   --accent:#1f4fa3; --accent-ink:#ffffff; --tag:#e4eaf6; --warn:#8a5a12; --warn-bg:#f6ead3; --ok:#1f6b3a; --ok-bg:#e1f0e6;
+  --danger:#b42318; --danger-bg:#fef3f2;
   --p0:#1f4fa3; --p1:#3f8f5f; --p2:#b4432f; --p3:#1d7a8c; --p4:#c2651d; --p5:#b23a6e; --p6:#8a6a12; --p7:#6b4fa3;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));padding-block:20px 56px}
@@ -47,7 +48,7 @@ p{margin:0 0 10px}
 .btn{appearance:none;font:600 16px var(--body);color:var(--accent-ink);background:var(--accent);border:0;border-radius:999px;padding:10px 18px;cursor:pointer}
 .btn:disabled{opacity:.55;cursor:default}
 .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
-.btn.sm{font-size:14px;padding:7px 14px}
+.btn.sm{font-size:14px;padding:7px 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 .hint{font-size:14px;color:var(--muted);margin:0}
 .err{color:var(--warn);font-size:14px;margin:0}
 .flash{background:var(--ok-bg);color:var(--ok);border-radius:8px;padding:10px 12px;font-size:15px;margin-bottom:16px}
@@ -64,9 +65,9 @@ pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--
 /* ---- header ---- */
 .head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:22px;flex-wrap:wrap}
 .head .cnt{font-size:14px;color:var(--muted)}
-.crumb{font-size:14px;margin:0 0 6px}.crumb a{text-decoration:none;font-weight:600}
+.crumb{font-size:14px;margin:0 0 6px}.crumb a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
 .topbar{display:flex;justify-content:flex-end;gap:12px;font-size:14px;margin-bottom:8px}
-.topbar a{text-decoration:none;font-weight:600}
+.topbar a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
 /* ---- panels (setup, auth, settings) ---- */
 .panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px;margin-top:14px;min-width:0}
 .panel>*{min-width:0}
@@ -97,7 +98,7 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .picklist label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:16px;font-weight:400;color:var(--ink);cursor:pointer}
 .picklist input{width:22px;height:22px;flex:none;margin:0}
 .picklist .o{min-width:24px;font-family:var(--display);font-weight:700;color:var(--accent);text-align:right}
-.btn.danger{background:var(--warn);color:var(--paper)}
+.btn.danger{background:transparent;color:var(--danger)}
 /* ---- portal ---- */
 .portal{display:grid;gap:14px;margin-top:4px}
 @media (min-width:720px){.portal{grid-template-columns:repeat(3,1fr)}}
@@ -133,7 +134,7 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .card h3{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.05;margin:0 0 4px}
 .card p{margin:0;font-size:14px;line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .card .m{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
-.card .m span{background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px}
+.card .m span{background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .m span.note{background:var(--ok-bg);color:var(--ok)}
 .card .m span.session,.card .m span.dose{background:var(--accent);color:var(--accent-ink)}
 .card{position:relative}
@@ -148,14 +149,14 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .q .t a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 .q .t small{color:var(--muted);font-size:13px}
 .q .t small.why{display:block}
-.q .st{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;background:var(--warn-bg);color:var(--warn);white-space:nowrap}
-.q button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;padding:4px 6px}
+.q .st{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;background:var(--tag);color:var(--ink);white-space:nowrap}
+.q button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;min-width:44px;min-height:44px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px}
 /* ---- sheet page (styles used by templates/sheet.html and templates/exercise.html) ---- */
 .top{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-bottom:18px}
-.top a{text-decoration:none;font-weight:600}
+.top a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
 .top span{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:600}
 .top .r{display:flex;align-items:center;gap:10px}
-.top .mv,.acts .mv{min-height:40px;appearance:none;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 13px var(--body);text-transform:none;letter-spacing:normal;padding:4px 12px;cursor:pointer}
+.top .mv,.acts .mv{min-height:44px;appearance:none;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 13px var(--body);text-transform:none;letter-spacing:normal;padding:4px 12px;cursor:pointer}
 .fiche header{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;margin-bottom:8px}
 .fiche header img{width:112px;height:112px;object-fit:cover;object-position:50% 20%;border-radius:12px;border:1px solid var(--line)}
 .fiche h1{margin-bottom:6px}
@@ -192,7 +193,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 /* ---- session composition ---- */
 .acts{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
 .sh2{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.sh2 .btn{min-height:40px;margin-top:20px}
+.sh2 .btn{min-height:44px;min-width:44px;margin-top:20px}
 .edit{display:grid;gap:12px}
 .edit .row{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
 .edit .row .k{font-family:var(--display);font-weight:700;font-size:20px;color:var(--accent)}
@@ -201,6 +202,36 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 .edit .row .ctl input{flex:1}
 .edit .ib{appearance:none;flex:none;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--accent);font:600 15px var(--body);cursor:pointer;padding:0 10px}
 .edit .ib:disabled{opacity:.35;cursor:default}
+/* ---- L4: queue states, toast, tap targets, danger colour, session format ---- */
+a,button,summary,.card,.tcard{-webkit-tap-highlight-color:transparent}
+button:not(:disabled):active,.btn:not(:disabled):active,.topbar a:active,.top a:active,.crumb a:active,.q .t a:active{opacity:.6}
+.card:active,.tcard:active{transform:scale(.97)}
+@media (prefers-reduced-motion:no-preference){.card,.tcard{transition:transform .12s}}
+.btn.danger:not(:disabled):hover{background:var(--danger-bg)}
+dialog.dlg .btn.danger{border:1px solid var(--danger)}
+#del-dlg .err,#sd-dlg .err{color:var(--danger)}
+#sd-open,#ed-delete{color:var(--danger);border-color:transparent}
+.card .fmt{font-size:13px;line-height:1.35;color:var(--muted);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qsum{margin:24px 0 10px}
+.qsum button{appearance:none;width:100%;min-height:44px;display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink);font:600 15px var(--body);text-align:left;cursor:pointer}
+.qsum .lbl{flex:1;min-width:0}
+.qsum .dot{width:10px;height:10px;border-radius:50%;background:var(--danger);flex:none}
+.qsum .chev{width:9px;height:9px;flex:none;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-2px) rotate(45deg)}
+.qsum button[aria-expanded="true"] .chev{transform:translateY(2px) rotate(-135deg)}
+.q .st.proc{background:var(--accent);color:var(--accent-ink)}
+.q .st.fail{background:var(--danger-bg);color:var(--danger)}
+.q .side{display:flex;align-items:center;gap:2px}
+.q .qa{grid-column:2/-1;display:flex;gap:8px;margin:-4px 0 -6px -10px}
+.q .qa button{font:600 15px var(--body);color:var(--accent)}
+.q .qa button[data-del]{color:var(--muted)}
+.q .t small.qerr{display:block;color:var(--danger)}
+.qpc{font-size:14px;color:var(--muted);margin:2px 0 14px}
+.toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:10}
+.toast button{appearance:none;position:relative;overflow:hidden;min-height:44px;display:flex;align-items:center;border:0;border-radius:999px;padding:10px 20px;background:var(--ink);color:var(--paper);font:600 15px var(--body);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
+.toast .qbar{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--paper);opacity:.6;transform-origin:left;animation:qbar 5s linear forwards}
+@keyframes qbar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes qhold{to{opacity:.6}}
+@media (prefers-reduced-motion:reduce){.toast .qbar{animation-name:qhold}}
 @media (prefers-reduced-motion:no-preference){.card img,.step img{transition:transform .25s}.card:hover img,.step figure:hover img{transform:scale(1.02)}}
 /* ---- L3: sheet in use (keep screen on, gesture first, full-screen photos) ---- */
 .top{flex-wrap:wrap;gap:8px 10px}
@@ -311,9 +342,9 @@ dialog.ph-dlg::backdrop{background:#000}
   </dialog>
   <div class="flash" id="flash" role="status" hidden></div>
 
-  <section id="queue-sec" hidden>
-    <h2>In the queue <span class="n" id="queue-n"></span></h2>
-    <div class="queue" id="queue"></div>
+  <section id="queue-sec" aria-label="Queue" hidden>
+    <div class="qsum" id="queue-summary"></div>
+    <div class="queue" id="queue" hidden></div>
   </section>
 
   <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
@@ -445,6 +476,8 @@ dialog.ph-dlg::backdrop{background:#000}
     <div class="actions"><button class="btn" type="submit" id="as-submit">Add</button><button class="btn ghost" type="button" id="as-cancel">Cancel</button></div>
   </form>
 </dialog>
+<!-- The « Removed · Undo » toast of a queue removal: the delete is sent when its 5 s bar ends (animationend). -->
+<div class="toast" role="status"><button type="button" id="queue-undo" hidden><span id="queue-toast"></span></button></div>
 <dialog class="dlg" id="del-dlg" aria-labelledby="del-h">
   <h2 id="del-h">Delete this session?</h2>
   <p><b id="del-name"></b><span class="u">Its exercise sheets stay in your notebooks.</span></p>
@@ -619,7 +652,7 @@ dialog.ph-dlg::backdrop{background:#000}
   // ---------- home rendering ----------
   const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}
       <img src="${esc(thumbUrl)}" alt="" loading="lazy">
-      <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>
+      <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>${extra && extra.fmt ? `<p class="fmt">${esc(extra.fmt)}</p>` : ''}
       <div class="m">${(extra && extra.meta || []).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   // The « + Add a notebook » card: its examples are the first three library notebooks not added yet; with none
@@ -669,7 +702,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
-  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, meta: [...pre, {txt: s.format}, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   const renderGroups = t => {
     const solo = sheets.filter(e => e.theme === t.id);
     const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
@@ -768,24 +801,111 @@ dialog.ph-dlg::backdrop{background:#000}
   window.addEventListener('beforeunload', ev => { if (pendingUrl()) { ev.preventDefault(); ev.returnValue = ''; } });
   const okHost = h => /(^|\.)(instagram|tiktok|youtube|facebook)\.com$/.test(h) || h === 'youtu.be' || h === 'fb.watch';
   const platformTag = h => /tiktok/.test(h) ? 'TT' : /youtube|youtu\.be/.test(h) ? 'YT' : /facebook|fb\.watch/.test(h) ? 'FB' : 'IG';
-  // The queue shows on the home page only, not inside a notebook.
-  let queueCount = 0;
-  const renderQueue = docs => {
-    queueCount = docs.length; $('queue-sec').hidden = !!currentTheme || !queueCount; $('queue-n').textContent = docs.length || '';
-    $('queue').innerHTML = docs.map(d => {
-      let host = ''; try { host = new URL(d.url).hostname; } catch {}
-      const st = d.status === 'processing' ? 'in progress' : d.status === 'error' ? 'needs a look' : 'queued';
-      return `<div class="q"><div class="ico">${platformTag(host)}</div>
-        <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
-        <small>added ${fmtDate(d.created_at)}${d.theme && themeById.has(d.theme) ? ' · ' + esc(themeById.get(d.theme).title) : ''}</small>${d.note ? `<small class="why">${esc(d.note)}</small>` : ''}</div>
-        <div style="display:flex;align-items:center;gap:4px"><span class="st">${st}</span><button type="button" data-del="${esc(d.id)}" aria-label="Remove from the queue" title="Remove">×</button></div></div>`;
-    }).join('');
+  // The queue shows on the home page only, not inside a notebook. It folds into one summary row (rb.queueOpen
+  // remembers it open); a failed request can be retried; a removal waits for the « Removed · Undo » toast to end.
+  let queueCount = 0, queueRows = [], lastRun = null, pendingDel = null;
+  const deleting = new Set(); // ids whose DELETE is in flight: kept out of every read until it answers
+  // queueGen: bumped by every read and every write; a read that answers after a newer one, or after a write, is dropped.
+  // queueEpoch: bumped on an account or backend change; a write answering after it touches nothing.
+  let queueGen = 0, queueEpoch = 0;
+  // Another account or backend: forget the previous queue before any read (a failed read keeps what is shown).
+  const resetQueue = () => {
+    commitDel(); // a removal waiting on its toast is sent with the previous client, not dropped
+    queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear();
+    $('queue-undo').hidden = true; queueCount = 0; $('queue-sec').hidden = true; $('queue-summary').innerHTML = ''; $('queue').innerHTML = '';
   };
-  const refreshQueue = async () => { try { const {data} = await sb.from('requests').select('id,url,status,theme,note,created_at').neq('status', 'done').order('created_at', {ascending: false}).limit(50); renderQueue(data || []); } catch {} };
+  const rowErr = new Map(), DAY = 86400000, QOPEN = 'rb.queueOpen';
+  const queueOpen = () => ls.get(QOPEN) === 'true';
+  const hhmm = iso => { try { return new Date(iso).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false}); } catch { return ''; } };
+  const dayStart = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+  const daysAgo = iso => { const n = Math.round((dayStart(Date.now()) - dayStart(iso)) / DAY); return n <= 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`; };
+  const queueRow = d => {
+    let host = ''; try { host = new URL(d.url).hostname; } catch {}
+    const age = Math.floor((Date.now() - new Date(d.created_at).getTime()) / DAY);
+    const info = [`added ${fmtDate(d.created_at)}`];
+    if (d.theme && themeById.has(d.theme)) info.push(esc(themeById.get(d.theme).title));
+    if (d.status === 'processing' && d.processed_at) info.push(`since ${hhmm(d.processed_at)}`);
+    if (d.status === 'queued' && age > 7) info.push(`waiting ${age} days`);
+    const fail = d.status === 'error', pill = fail ? '<span class="st fail">Failed</span>' : d.status === 'processing' ? '<span class="st proc">Processing</span>' : '<span class="st">Waiting</span>';
+    const id = esc(d.id), err = rowErr.get(String(d.id));
+    return `<div class="q"><div class="ico">${platformTag(host)}</div>
+      <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
+      <small>${info.join(' · ')}</small>${fail && d.note ? `<small class="why">${esc(d.note)}</small>` : ''}${err ? `<small class="qerr" role="alert">${esc(err)}</small>` : ''}</div>
+      <div class="side">${pill}${fail ? '' : `<button type="button" data-del="${id}" aria-label="Remove from the queue" title="Remove">×</button>`}</div>
+      ${fail ? `<div class="qa"><button type="button" data-retry="${id}">Retry</button><button type="button" data-del="${id}">Remove</button></div>` : ''}</div>`;
+  };
+  const renderQueue = () => {
+    const rows = queueRows, open = queueOpen(), failed = rows.filter(d => d.status === 'error').length;
+    queueCount = rows.length; $('queue-sec').hidden = !!currentTheme || !queueCount;
+    $('queue-summary').innerHTML = queueCount ? `<button type="button" id="queue-toggle" aria-expanded="${open}" aria-controls="queue">${failed ? '<span class="dot" aria-hidden="true"></span>' : ''}<span class="lbl">${queueCount} in the queue${failed ? ` · ${failed} failed` : ''}</span><span class="chev" aria-hidden="true"></span></button>` : '';
+    if (queueCount) $('queue-toggle').addEventListener('click', toggleQueue);
+    $('queue').hidden = !open;
+    $('queue').innerHTML = rows.map(queueRow).join('') + (lastRun
+      ? `<p class="qpc">Last run: ${daysAgo(lastRun)}</p>`
+      : '<p class="qpc">No computer has processed a video yet. <a href="#welcome">Set up your computer</a></p>');
+  };
+  const toggleQueue = () => { ls.set(QOPEN, String(!queueOpen())); renderQueue(); $('queue-toggle').focus(); };
+  // One read for the list, one for the latest done request (the computer's last run). The read filters are
+  // repeated here: a done row or a row being removed stays out of the list.
+  const refreshQueue = async () => {
+    const gen = ++queueGen;
+    try {
+      const [list, last] = await Promise.all([
+        sb.from('requests').select('id,url,status,theme,note,created_at,processed_at').neq('status', 'done').order('created_at', {ascending: false}).limit(50),
+        sb.from('requests').select('processed_at').eq('status', 'done').order('processed_at', {ascending: false}).limit(1).maybeSingle()
+      ]);
+      // a failed read keeps what is shown: an empty list is only believed from a successful read
+      if (list.error || gen !== queueGen) return;
+      queueRows = (list.data || []).filter(d => d.status !== 'done' && !deleting.has(String(d.id)) && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
+      if (!last.error) lastRun = (last.data && last.data.processed_at) || null;
+      renderQueue();
+    } catch {}
+  };
+  // A removal is sent when the toast's bar ends, when the page is left or hidden, or when another row is removed.
+  // If the delete fails, the row comes back where it was, with the reason.
+  const commitDel = () => {
+    if (!pendingDel) return;
+    const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
+    const key = String(row.id), epoch = queueEpoch; deleting.add(key); queueGen++;
+    const restore = e => {
+      if (epoch !== queueEpoch) return;
+      deleting.delete(key);
+      if (!queueRows.some(d => String(d.id) === String(row.id))) queueRows.splice(Math.min(i, queueRows.length), 0, row);
+      rowErr.set(String(row.id), `Could not remove it: ${(e && e.message) || 'try again in a moment.'}`); renderQueue();
+    };
+    sb.from('requests').delete().eq('id', row.id).then(r => { if (r && r.error) restore(r.error); else deleting.delete(key); }, restore);
+  };
   $('queue').addEventListener('click', async ev => {
-    const b = ev.target.closest('[data-del]'); if (!b) return; b.disabled = true;
-    try { await sb.from('requests').delete().eq('id', b.dataset.del); await refreshQueue(); } catch { b.disabled = false; }
+    const r = ev.target.closest('[data-retry]');
+    if (r) {
+      const id = r.dataset.retry, epoch = queueEpoch; r.disabled = true; rowErr.delete(id);
+      try {
+        // only a request still in error is reset (`in`, not a second eq: the harness records eq filters);
+        // none touched = the computer moved it meanwhile: re-read, no alarm
+        const {data, error} = await sb.from('requests').update({status: 'queued', note: null, processed_at: null}).eq('id', id).in('status', ['error']).select('id'); if (error) throw error;
+        if (epoch !== queueEpoch) return;
+        if (Array.isArray(data) && !data.length) { refreshQueue(); return; }
+        queueGen++;
+        const d = queueRows.find(x => String(x.id) === id); if (d) Object.assign(d, {status: 'queued', note: null, processed_at: null});
+      } catch (e) { if (epoch !== queueEpoch) return; rowErr.set(id, `Retry failed: ${(e && e.message) || 'try again in a moment.'}`); }
+      renderQueue(); return;
+    }
+    const b = ev.target.closest('[data-del]'); if (!b) return;
+    const i = queueRows.findIndex(d => String(d.id) === b.dataset.del); if (i < 0) return;
+    commitDel();
+    pendingDel = {row: queueRows[i], i}; queueRows.splice(i, 1); rowErr.delete(String(pendingDel.row.id)); renderQueue();
+    $('queue-toast').innerHTML = 'Removed · Undo<span class="qbar" aria-hidden="true"></span>'; $('queue-undo').hidden = false;
   });
+  $('queue-undo').addEventListener('click', () => {
+    if (!pendingDel) return;
+    const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
+    queueRows.splice(Math.min(i, queueRows.length), 0, row); renderQueue();
+  });
+  $('queue-undo').addEventListener('animationend', commitDel);
+  window.addEventListener('pagehide', commitDel);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(); });
+  // iOS Safari applies :active (the pressed state) only once the page listens to touchstart.
+  document.addEventListener('touchstart', () => {}, {passive: true});
   const queueLink = async () => {
     const err = $('f-err'); err.hidden = true;
     const fail = msg => { err.textContent = msg; err.hidden = false; return false; };
@@ -1274,11 +1394,13 @@ dialog.ph-dlg::backdrop{background:#000}
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity;
-      sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = '';
+      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
     if (!sb) {
-      sb = supabase.createClient(backend.url, backend.key, {auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
+      // keepalive on DELETE: a queue removal sent as the page goes away (pagehide) outlives the page.
+      const keepaliveFetch = (input, init) => fetch(input, init && init.method === 'DELETE' ? {...init, keepalive: true} : init);
+      sb = supabase.createClient(backend.url, backend.key, {global: {fetch: keepaliveFetch}, auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
       const client = sb;
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
@@ -1286,7 +1408,7 @@ dialog.ph-dlg::backdrop{background:#000}
         const next = session ? session.user : null;
         const changed = (next && next.id) !== (user && user.id);
         user = next;
-        if (changed) { sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });
