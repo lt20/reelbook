@@ -771,6 +771,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   // The queue shows on the home page only, not inside a notebook. It folds into one summary row (rb.queueOpen
   // remembers it open); a failed request can be retried; a removal waits for the « Removed · Undo » toast to end.
   let queueCount = 0, queueRows = [], lastRun = null, pendingDel = null;
+  const deleting = new Set(); // ids whose DELETE is in flight: kept out of every read until it answers
   const rowErr = new Map(), DAY = 86400000, QOPEN = 'rb.queueOpen';
   const queueOpen = () => ls.get(QOPEN) === 'true';
   const hhmm = iso => { try { return new Date(iso).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false}); } catch { return ''; } };
@@ -812,7 +813,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
       ]);
       // a failed read keeps what is shown: an empty list is only believed from a successful read
       if (list.error) return;
-      queueRows = (list.data || []).filter(d => d.status !== 'done' && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
+      queueRows = (list.data || []).filter(d => d.status !== 'done' && !deleting.has(String(d.id)) && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
       if (!last.error) lastRun = (last.data && last.data.processed_at) || null;
       renderQueue();
     } catch {}
@@ -822,11 +823,13 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   const commitDel = () => {
     if (!pendingDel) return;
     const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
+    const key = String(row.id); deleting.add(key);
     const restore = e => {
+      deleting.delete(key);
       if (!queueRows.some(d => String(d.id) === String(row.id))) queueRows.splice(Math.min(i, queueRows.length), 0, row);
       rowErr.set(String(row.id), `Could not remove it: ${(e && e.message) || 'try again in a moment.'}`); renderQueue();
     };
-    sb.from('requests').delete().eq('id', row.id).then(r => { if (r && r.error) restore(r.error); }, restore);
+    sb.from('requests').delete().eq('id', row.id).then(r => { if (r && r.error) restore(r.error); else deleting.delete(key); }, restore);
   };
   $('queue').addEventListener('click', async ev => {
     const r = ev.target.closest('[data-retry]');
@@ -1289,7 +1292,9 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
     }
     if (!backend) { route(); return; }
     if (!sb) {
-      sb = supabase.createClient(backend.url, backend.key, {auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
+      // keepalive on DELETE: a queue removal sent as the page goes away (pagehide) outlives the page.
+      const keepaliveFetch = (input, init) => fetch(input, init && init.method === 'DELETE' ? {...init, keepalive: true} : init);
+      sb = supabase.createClient(backend.url, backend.key, {global: {fetch: keepaliveFetch}, auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
       const client = sb;
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
