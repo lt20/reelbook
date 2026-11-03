@@ -27,11 +27,11 @@ test('B2 — a sheet or session opened on this device joins localStorage rb.seen
   await settle();
   assert.deepEqual(links(page.element('new-cards').innerHTML), ['fresh-sheet', 'session/fresh-session']);
   page.go('#fresh-sheet'); await settle();
-  assert.match(page.storage.get('rb.seen') || '', /fresh-sheet/);
+  assert.match(page.storage.get('rb.seen.u1') || '', /fresh-sheet/);
   page.go('#'); await settle();
   assert.deepEqual(links(page.element('new-cards').innerHTML), ['session/fresh-session']);
   page.go('#session/fresh-session'); await settle();
-  assert.match(page.storage.get('rb.seen') || '', /fresh-session/);
+  assert.match(page.storage.get('rb.seen.u1') || '', /fresh-session/);
   page.go('#'); await settle();
   assert.equal(page.element('new-sec').hidden, true);
 });
