@@ -153,6 +153,25 @@ class PublishSessionV2(Base):
         write(d / "meta.json", meta)
         self.assertRefused(d, "s-missing")
 
+    def test_structured_dose_fields_pass_through_and_null_is_absent(self):
+        fake = self.use(FakeBackend())
+        d = session_folder(self.root)
+        meta = json.loads((d / "meta.json").read_text())
+        meta["items"][0].update({"sets": 3, "reps": 10, "seconds": 0, "rest_s": 60, "per_side": False, "note": "dropped"})
+        meta["items"][1].update({"sets": None, "per_side": True})
+        write(d / "meta.json", meta)
+        self.run_cmd(rb.cmd_publish, [str(d)])
+        self.assertEqual(fake.rest_calls("POST", "sessions")[0][3]["items"], [
+            {"slug": "s-a", "dose": "30 s", "sets": 3, "reps": 10, "seconds": 0, "rest_s": 60, "per_side": False},
+            {"slug": "s-b", "dose": "30 s", "per_side": True}])
+
+    def test_bad_structured_dose_field_is_refused_before_any_write(self):
+        for k, v in (("sets", "3"), ("reps", -1), ("seconds", 1.5), ("rest_s", True), ("per_side", 1)):
+            d = session_folder(self.root / k)
+            meta = json.loads((d / "meta.json").read_text()); meta["items"][0][k] = v
+            write(d / "meta.json", meta)
+            self.assertRefused(d, k + " must be")
+
     def test_sub_folder_not_in_items_is_refused(self):
         self.assertRefused(session_folder(self.root, extra=("s-stray",)), "s-stray")
 

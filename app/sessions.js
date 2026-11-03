@@ -38,13 +38,21 @@
 
   const itemsOf = s => (s && Array.isArray(s.items) ? s.items : []).filter(it => it && typeof it.slug === 'string' && it.slug);
 
-  // The items of a session, in order, whose sheet still exists: [{sheet, dose, n}], n counted from 1.
-  // An item whose sheet was deleted is skipped and does not take a number.
+  // The items of a session, in order, whose sheet still exists: [{sheet, dose, n, sets, reps, seconds, rest_s,
+  // per_side, given}], n counted from 1. An item whose sheet was deleted is skipped and does not take a number.
+  // L9: the numbers the session player needs. A structured field written on the item (`given`, see givenOf) wins;
+  // else it comes from the free-text dose (parseDose), and the rest from the session format (parseRest).
   const resolveItems = (session, bySlug) => {
     const out = [];
+    let rest;
     for (const it of itemsOf(session)) {
       const sheet = bySlug.get(it.slug);
-      if (sheet) out.push({sheet, dose: typeof it.dose === 'string' ? it.dose : '', n: out.length + 1});
+      if (!sheet) continue;
+      const dose = typeof it.dose === 'string' ? it.dose : '', given = givenOf(it), p = parseDose(dose);
+      if (rest === undefined) rest = parseRest(session.format);
+      const pick = (k, v) => k in given ? given[k] : v;
+      out.push({sheet, dose, n: out.length + 1, sets: pick('sets', p.sets), reps: pick('reps', p.reps),
+        seconds: pick('seconds', p.seconds), rest_s: pick('rest_s', rest), per_side: pick('per_side', p.perSide), given});
     }
     return out;
   };
@@ -106,8 +114,105 @@
   // do not enforce the limits): only a text the user edited is trimmed and clipped.
   const keepOrClip = (v, was, n) => (typeof was === 'string' && v === was) ? was : clip(v, n);
 
-  // What Edit saves: {slug, dose} only; `was` (the dose when Edit opened) keeps an untouched dose whole.
-  const cleanItems = items => itemsOf({items}).map(it => ({slug: it.slug, dose: keepOrClip(it.dose, it.was, MAX.dose)}));
+  // What Edit saves: {slug, dose}; `was` (the dose when Edit opened) keeps an untouched dose whole. L9: an untouched
+  // dose also keeps its structured fields (`given`, from resolveItems); an edited dose drops them, so the numbers
+  // then come from the text the user wrote.
+  const cleanItems = items => itemsOf({items}).map(it => {
+    const dose = keepOrClip(it.dose, it.was, MAX.dose), kept = typeof it.was === 'string' && it.dose === it.was;
+    return {slug: it.slug, dose, ...(kept ? givenOf(it.given) : {})};
+  });
+
+  // ---------- structured dose (L9, S2): pure, never throws ----------
+  // The fields /reelbook writes on an item when the video states them (skill/reelbook/SKILL.md): whole numbers ≥ 0
+  // for sets / reps / seconds / rest_s, a boolean for per_side. Any other value is ignored (the parser fills in).
+  const GIVEN = ['sets', 'reps', 'seconds', 'rest_s', 'per_side'];
+  const givenOf = it => {
+    const out = {};
+    if (!it || typeof it !== 'object') return out;
+    for (const k of GIVEN) {
+      const v = it[k];
+      if (k === 'per_side' ? typeof v === 'boolean' : Number.isInteger(v) && v >= 0) out[k] = v;
+    }
+    return out;
+  };
+
+  // Lower case, one kind of dash, one kind of space: « 3 × 8–12 » and « 3 x 8-12 » read alike.
+  const norm = s => s.normalize('NFC').toLowerCase().replace(/[‐-―−]/g, '-').replace(/\s+/g, ' ');
+  const RANGE = '(\\d+)(?:\\s*(?:-|à|to)\\s*(\\d+))?'; // « 8-12 », « 60 à 90 », « 8 to 12 »: the upper bound counts
+  const SEC = '(?:secondes?|seconds?|secs?|s)';
+  const MIN = '(?:minutes?|mins?|mn)';
+  const END = '(?![a-zà-ÿ\\d])';
+  const SIDE = /(?:chaque|par|each|per)\s+(?:côtés?|cotes?|sides?)/;
+  const re = {
+    min: new RegExp(`^${RANGE}\\s*${MIN}${END}(?:\\s*(\\d{1,2})(?:\\s*${SEC})?${END})?`),
+    quote: /^(\d+)\s*['’′](?:\s*(\d{1,2})(?!\d))?/,
+    sec: new RegExp(`^${RANGE}\\s*${SEC}${END}`),
+    times: /^(\d+)\s*[×x*]\s*(?=\d)(.*)$/,
+    range: new RegExp(`^${RANGE}`),
+    rounds: new RegExp(`^(\\d+)\\s*(?:rounds?|tours?|séries?|series|sets?)${END}`),
+    reps: new RegExp(`^${RANGE}\\s*(?:répétitions?|repetitions?|reps?)${END}`),
+    side: new RegExp(`^${RANGE}\\s+(?:de\\s+)?${SIDE.source}`),
+    twoSchemes: /\d\s*[×x*]\s*\d.*\d\s*[×x*]\s*\d/
+  };
+  // A duration at the start of s, in seconds: « 1 min », « 1 min 30 », « 2'30 », « 40 sec », « 30-45 s ».
+  const timeAt = s => {
+    let m = s.match(re.min);
+    if (m) return Number(m[2] || m[1]) * 60 + Number(m[3] || 0);
+    if ((m = s.match(re.quote))) return Number(m[1]) * 60 + Number(m[2] || 0);
+    if ((m = s.match(re.sec))) return Number(m[2] || m[1]);
+    return null;
+  };
+  const repsOf = m => ({reps: Number(m[2] || m[1]), repsMin: m[2] ? Number(m[1]) : null});
+  // What a dose starts with: sets × reps or sets × time, rounds, a time, reps (named, or followed by a side).
+  const coreOf = s => {
+    let m = s.match(re.times);
+    if (m) { const t = timeAt(m[2]); return t !== null ? {sets: Number(m[1]), seconds: t} : {sets: Number(m[1]), ...repsOf(m[2].match(re.range))}; }
+    if ((m = s.match(re.rounds))) return {sets: Number(m[1])};
+    const t = timeAt(s);
+    if (t !== null) return {seconds: t};
+    m = s.match(re.reps) || s.match(re.side);
+    return m ? repsOf(m) : null;
+  };
+
+  // A free-text dose read as numbers: {sets, reps, repsMin, seconds, perSide, raw}, each null when the text does not
+  // say it; raw = the trimmed text. The dose is cut at « · » and « ; » and the first part that starts with a dose
+  // counts (« finition · 30 s par côté », « 3 × 8 · 4 s ↓ »: the tempo is not read); « suggestion : » is skipped.
+  // Two set schemes in one dose (« 3 × 5 pompes, puis 3 × 20 s au mur ») are ambiguous: all null.
+  const parseDose = text => {
+    const raw = typeof text === 'string' ? text.trim() : '';
+    const out = {sets: null, reps: null, repsMin: null, seconds: null, perSide: null, raw};
+    try {
+      const t = norm(raw);
+      if (re.twoSchemes.test(t)) return out;
+      for (const part of t.split(/[·;]/)) {
+        const seg = part.trim().replace(/^suggestion\s*:?\s*/, ''), c = coreOf(seg);
+        if (!c) continue;
+        Object.assign(out, c);
+        if (SIDE.test(seg)) out.perSide = true;
+        break;
+      }
+    } catch { /* a dose the parser cannot read stays text */ }
+    return out;
+  };
+
+  // The rest between sets or rounds stated in a session format, in seconds (upper bound of a range), else null:
+  // « 60 à 90 s de repos » → 90, « repos 1 min » → 60, « 20 s rest » → 20, « no rest » / « sans repos » → 0.
+  // No lookbehind (iOS < 16.4 would not even load this file): a non-capturing « start or other character » instead.
+  const DUR = `${RANGE}\\s*(${MIN}|${SEC})${END}(?:\\s*(\\d{1,2})(?:\\s*${SEC})?${END})?`;
+  const restRe = [
+    new RegExp(`(?:^|\\D)${DUR}\\s*(?:de |of )?(?:repos|rest|récup(?:ération)?|recovery)${END}`),
+    new RegExp(`(?:^|[^a-zà-ÿ])(?:repos|rest)\\s*:?\\s*(?:suggestion\\s*:?\\s*)?${DUR}`)
+  ];
+  const parseRest = text => {
+    try {
+      const t = norm(typeof text === 'string' ? text : '');
+      for (const r of restRe) {
+        const m = t.match(r);
+        if (m) return /^m/.test(m[3]) ? Number(m[2] || m[1]) * 60 + Number(m[4] || 0) : Number(m[2] || m[1]);
+      }
+      return /\b(?:no|without) rest\b|sans repos/.test(t) ? 0 : null;
+    } catch { return null; }
+  };
 
   // L8, « To try »: the sheets added more than `minDays` calendar days before `today` (local YYYY-MM-DD; added_at is
   // read as a local date too) and never practised (`practised`: anything with .has(slug), e.g. the practice Map),
@@ -136,6 +241,6 @@
   };
 
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
-    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry};
+    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

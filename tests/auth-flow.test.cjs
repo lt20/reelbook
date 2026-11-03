@@ -164,7 +164,8 @@ test('v2 sessions show in their notebook, in search and on their own page', asyn
   assert.match(groups, /Sessions <span class="n">1<\/span>/, 'the old one-page session is not counted');
   assert.match(groups, /href="#session\/gsp-shoulders"/);
   assert.doesNotMatch(groups, /old-routine|Old move/, 'no v1 session card, no v1 exercise card');
-  assert.match(page.element('count').textContent, /^2 sheets · 1 session · /);
+  // L12: standalone sheets · sessions (their exercise sheets): gsp-angel belongs to the video session
+  assert.equal(page.element('count').textContent, '1 sheet · 1 session (1 exercise)');
   assert.match(groups, /2 exercises/, 'the deleted sheet is not counted');
   assert.match(groups, /href="#gsp-angel"[\s\S]*?in 1 session/);
   assert.doesNotMatch(groups.match(/href="#curl"[\s\S]*?<\/a>/)[0], /in \d session/);
