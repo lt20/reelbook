@@ -507,7 +507,7 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
-<script src="sessions.js?v=3"></script>
+<script src="sessions.js?v=4"></script>
 <script src="sheet.js?v=1"></script>
 <script>
 (() => {
@@ -1010,13 +1010,13 @@ dialog.ph-dlg::backdrop{background:#000}
   // stored note is read: typing over a note that could not be read would replace it.
   const NOTE_DELAY = 800;
   let notesNow = null;
-  const noteQueues = new Map(); // note key -> its last write (a stuck write of one note never holds up another)
+  const noteQueues = new Map(); // '<user id>|<note key>' -> its last write (a stuck write never holds up another note or account)
   const flushNotes = () => { if (notesNow) notesNow.flush(); };
   const wireNotes = async key => {
     flushNotes();
     const ta = $('n-text'), st = $('n-status'), retry = $('n-retry');
     // the account and client the note belongs to: a save still queued after a sign-out is not sent
-    const owner = {client: sb, uid: user ? user.id : ''}, draftKey = 'rb.draft.' + owner.uid + '.' + key;
+    const owner = {client: sb, uid: user ? user.id : ''}, draftKey = 'rb.draft.' + owner.uid + '.' + key, queueKey = owner.uid + '|' + key;
     const ours = () => sb === owner.client && !!user && user.id === owner.uid;
     let saved = null, sending = null, tick = 0; // saved: the text stored, once read; sending: the text queued
     const me = {};
@@ -1024,7 +1024,7 @@ dialog.ph-dlg::backdrop{background:#000}
     const shownAs = (text, failed) => { if (!live()) return; st.textContent = text; retry.hidden = !failed; };
     const save = body => {
       sending = body;
-      const run = (noteQueues.get(key) || Promise.resolve()).then(async () => {
+      const run = (noteQueues.get(queueKey) || Promise.resolve()).then(async () => {
         if (!ours()) return; // signed out meanwhile: the text stays in rb.draft for its owner
         let ok = body === saved;
         if (!ok) {
@@ -1037,7 +1037,7 @@ dialog.ph-dlg::backdrop{background:#000}
         if (ok && ls.get(draftKey) === body) ls.del(draftKey);
         if (ta.value.trim() === body) shownAs(ok ? 'Saved' : 'Not saved', !ok);
       });
-      noteQueues.set(key, run.catch(() => {}));
+      noteQueues.set(queueKey, run.catch(() => {}));
     };
     const latest = () => sending !== null ? sending : saved;
     me.flush = () => {
@@ -1061,7 +1061,7 @@ dialog.ph-dlg::backdrop{background:#000}
     const read = async again => {
       const r = ++reading, current = () => live() && r === reading;
       // a save of this note still on its way (the page was left and opened again) lands before the read
-      await noteQueues.get(key);
+      await noteQueues.get(queueKey);
       const draft = ls.get(draftKey);
       try {
         const {data, error} = await owner.client.from('notes').select('body,updated_at').eq('slug', key).maybeSingle(); if (error) throw error;
