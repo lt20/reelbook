@@ -777,6 +777,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   let queueGen = 0, queueEpoch = 0;
   // Another account or backend: forget the previous queue before any read (a failed read keeps what is shown).
   const resetQueue = () => {
+    commitDel(); // a removal waiting on its toast is sent with the previous client, not dropped
     queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear();
     $('queue-undo').hidden = true; queueCount = 0; $('queue-sec').hidden = true; $('queue-summary').innerHTML = ''; $('queue').innerHTML = '';
   };
@@ -846,8 +847,11 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
     if (r) {
       const id = r.dataset.retry, epoch = queueEpoch; r.disabled = true; rowErr.delete(id);
       try {
-        const {error} = await sb.from('requests').update({status: 'queued', note: null, processed_at: null}).eq('id', id); if (error) throw error;
+        // only a request still in error is reset (`in`, not a second eq: the harness records eq filters);
+        // none touched = the computer moved it meanwhile: re-read, no alarm
+        const {data, error} = await sb.from('requests').update({status: 'queued', note: null, processed_at: null}).eq('id', id).in('status', ['error']).select('id'); if (error) throw error;
         if (epoch !== queueEpoch) return;
+        if (Array.isArray(data) && !data.length) { refreshQueue(); return; }
         queueGen++;
         const d = queueRows.find(x => String(x.id) === id); if (d) Object.assign(d, {status: 'queued', note: null, processed_at: null});
       } catch (e) { if (epoch !== queueEpoch) return; rowErr.set(id, `Retry failed: ${(e && e.message) || 'try again in a moment.'}`); }

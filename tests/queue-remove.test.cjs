@@ -48,3 +48,28 @@ test('L4: a queue that cannot be read shows no row and does not throw', async ()
   await settle();
   assert.equal(page.element('queue-sec').hidden, true);
 });
+
+// Coordinator's arbitration of Codex pass 4.
+test('L4: Retry on a request the computer already moved (no row in error) re-reads, without an alarm', async () => {
+  const t = tables(); t.requests[0] = {...t.requests[0], status: 'error', note: 'Video unavailable'};
+  // the backend answers the filtered update with no row: the request is no longer in error (e.g. done)
+  const page = await app({...signedIn, tables: t, writes: {requests: {data: [], error: null}}});
+  await settle();
+  await page.fire('queue-toggle');
+  await page.element('queue').listeners.click({target: {closest: s => s === '[data-retry]' ? {dataset: {retry: 'waiting'}, disabled: false} : null}});
+  await settle();
+  const html = page.element('queue').innerHTML;
+  assert.doesNotMatch(html, /Waiting/, 'not shown as queued again');
+  assert.doesNotMatch(html, /Retry failed/);
+  assert.equal(page.clients.at(-1).calls.filter(c => c[0] === 'update').length, 1);
+});
+
+test('L4: a removal waiting on its toast is sent when the account changes', async () => {
+  const page = await app({...signedIn, tables: tables()});
+  await settle();
+  await remove(page);
+  const first = page.clients[0];
+  await page.fire('s-reset');
+  await settle();
+  assert.deepEqual(first.calls.filter(c => c[0] === 'delete').map(c => c[3]), [[['id', 'waiting']]]);
+});
