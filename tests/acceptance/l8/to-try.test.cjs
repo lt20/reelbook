@@ -89,7 +89,8 @@ test('L8 « To try » is hidden when no sheet qualifies', async () => {
     ['all old sheets practised', [sheet('done')], [{slug: 'done', done_on: '2026-10-01'}]],
     ['all old sheets dismissed', [sheet('dismissed')], []]
   ]) {
-    const stored = label === 'all old sheets dismissed' ? {'rb.dismissed.u1': '["dismissed"]'} : {};
+    const stored = label === 'all old sheets dismissed' ? {'rb.dismissed.u1': '["dismissed"]'}
+      : label === 'empty catalogue' ? {'rb.welcome.u1': '1'} : {};
     const page = await open(rows, {tables: tables(rows, practice), stored});
     assert.equal(shelf(page).hidden, true, label);
     assert.equal(page.element('home').hidden, false, label);
