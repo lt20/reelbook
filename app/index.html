@@ -129,18 +129,19 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
 @media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr)}}
 .card{display:block;color:inherit;text-decoration:none;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.card img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;max-width:100%;background:var(--tag)}
+/* L12: one photo format on every card, 4:5, framed on the upper third (burned-in subtitles sit lower) */
+.card img{display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;object-position:50% 30%;max-width:100%;background:var(--tag)}
 .card .b{padding:10px 12px 12px}
 .card h3{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.05;margin:0 0 4px}
-.card p{margin:0;font-size:14px;line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.card .m{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
-.card .m span{background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card p{margin:0;font-size:14px;line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .m{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:6px;flex-wrap:nowrap;min-width:0}
+.card .m span{flex:0 1 auto;display:block;min-width:0;margin:0;background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .m span.note{background:var(--ok-bg);color:var(--ok)}
 .card .m span.session,.card .m span.dose{background:var(--accent);color:var(--accent-ink)}
 .card{position:relative}
 .card>.k{position:absolute;left:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:16px;line-height:1;padding:5px 8px 4px;border-radius:6px}
 .from,.src{font-size:15px;color:var(--muted);margin:0 0 16px}
-.card.big img{aspect-ratio:2/1}
+.card.big img{object-position:50% 30%}
 /* ---- queue ---- */
 .queue{display:grid;gap:8px}
 .q{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;min-width:0}
@@ -243,6 +244,23 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 .report{margin-top:14px}
 .report .link{appearance:none;background:transparent;border:0;padding:10px 0;min-height:44px;color:var(--muted);font:600 14px var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 #report-dlg textarea{min-height:110px}
+/* ---- L12: notebook page — sticky group chips, one row of cards per group, « See all » grid ---- */
+.group-chips{position:sticky;top:0;z-index:5;display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:12px -16px 0;padding:8px 16px;background:var(--bg);-webkit-overflow-scrolling:touch}
+.group-chips::-webkit-scrollbar{display:none}
+.group-chips a{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);text-decoration:none;font:600 14px var(--body);white-space:nowrap}
+.group-chips a.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+#groups section{scroll-margin-top:64px}
+#groups section>h2,#groups .sh2 h2{font-size:24px;margin:22px 0 8px}
+#groups .sh2 .btn{margin-top:14px}
+.group-row{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:2px 16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.group-row::-webkit-scrollbar{display:none}
+.group-row .card{flex:none;width:min(44%,220px);scroll-snap-align:start}
+.group-row .card h3{font-size:19px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .m span:first-child{flex-shrink:0}
+.group-row .from-ses{flex:none;margin:0;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-right:2px solid var(--line);padding-left:6px}
+.grid .from-ses{grid-column:1/-1;margin:6px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.see-all{flex:none;width:min(30%,140px);display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed var(--line-strong);border-radius:12px;color:var(--ink);font-weight:600;font-size:15px;text-decoration:none;scroll-snap-align:end}
+.see-all:active{opacity:.6}
 #report-status:empty{display:none}
 #report-status.err{color:var(--danger)}
 .q .redo{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;margin-bottom:2px;background:var(--accent);color:var(--accent-ink)}
@@ -395,6 +413,8 @@ dialog.ph-dlg::backdrop{background:#000}
     </div>
     <button class="btn" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
   </div>
+  <!-- L12: a notebook page's groups, with their counts; sticks to the top while scrolling -->
+  <nav class="group-chips" id="group-chips" aria-label="Groups" hidden></nav>
 
   <form class="sheet" id="sheet-new" hidden>
     <h2>Add a video</h2>
@@ -755,10 +775,11 @@ dialog.ph-dlg::backdrop{background:#000}
   const thumb = (slug, rel) => rel ? (signed.get(spath(slug, rel)) || {}).url || '' : '';
 
   // ---------- home rendering ----------
+  // L12: at most two meta pills, on one line: callers list them most useful first.
   const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}
       <img src="${esc(thumbUrl)}" alt="" loading="lazy">
       <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>${extra && extra.fmt ? `<p class="fmt">${esc(extra.fmt)}</p>` : ''}
-      <div class="m">${(extra && extra.meta || []).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
+      <div class="m">${(extra && extra.meta || []).slice(0, 2).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   // The « + Add a notebook » card: its examples are the first three library notebooks not added yet; with none
   // left, no count and no examples, only the custom notebook.
@@ -806,10 +827,10 @@ dialog.ph-dlg::backdrop{background:#000}
   const inTag = slug => { const n = (inSessions.get(slug) || []).length; return n ? [{txt: `in ${plural(n, 'session')}`, cls: 'session'}] : []; };
   // L6: « done 28 Oct », the latest practice of a sheet or a session (key as for notes).
   const doneTag = key => practiceOk && lastDone.has(key) ? [{txt: 'done ' + fmtDay(lastDone.get(key)), cls: 'done'}] : [];
-  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...inTag(e.slug), ...doneTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, ...doneTag(e.slug), ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : []), {txt: e.duration}, {txt: (e.source || {}).author || ''}].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
-  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : []), {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
   // ---------- L7: « New » row ----------
   // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen.<user id>
   // holds the keys of the pages opened (a sheet's slug, « session/<slug> » for a session, as RS.noteKey), the last
@@ -864,22 +885,77 @@ dialog.ph-dlg::backdrop{background:#000}
   const shelfNewDay = () => { if (shelfOn && !$('home').hidden && shelfDay !== todayIso()) renderToTry(true); };
   document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'hidden') shelfNewDay(); });
   if (typeof setInterval === 'function') setInterval(shelfNewDay, 60000);
-  const renderGroups = t => {
-    const solo = sheets.filter(e => e.theme === t.id);
-    const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
-    const push = (g, h) => { if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(h); };
-    for (const e of solo) push(e.group, sheetCard(e));
+  // ---------- L12: notebook page ----------
+  // One horizontal row of cards per group (library order, empty groups hidden), standalone sheets first, then the
+  // exercise sheets of a video session after « From sessions ». Sticky chips above jump to a group; « See all N »
+  // opens the group as a grid at #<notebook>~<group> (an old #<slug>~<anchor> link still opens the home page).
+  // `one`: the group shown as a grid, else null (the rows).
+  let currentGroup = null; // the <group> of #<notebook>~<group>
+  let groupIds = new Map(); // group -> id of its section, for the chips and the way back from a grid
+  const fromVideo = slug => (inSessions.get(slug) || []).some(s => s.origin === 'video');
+  const groupHref = (t, g) => `#${esc(t.id)}~${esc(encodeURIComponent(g))}`;
+  const groupOf = t => t && currentGroup && sheets.some(e => e.theme === t.id && e.group === currentGroup) ? currentGroup : null;
+  const renderGroups = (t, one) => {
+    const solo = sheets.filter(e => e.theme === t.id), chips = $('group-chips');
+    const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, {own: [], ses: []});
+    for (const e of solo) { if (!byGroup.has(e.group)) byGroup.set(e.group, {own: [], ses: []}); byGroup.get(e.group)[fromVideo(e.slug) ? 'ses' : 'own'].push(e); }
+    const groups = [...byGroup].filter(([, l]) => l.own.length + l.ses.length);
     const v2 = v2Sessions.filter(s => s.theme === t.id).sort((a, b) => a.title.localeCompare(b.title)), nS = v2.length;
-    // The Sessions section shows as soon as the backend has sessions, for « + New session ».
+    const nEx = solo.filter(e => fromVideo(e.slug)).length;
+    groupIds = new Map(groups.map(([g], i) => [g, 'grp-' + i]));
+    // « 14 sheets · 9 sessions (64 exercises) »: standalone sheets · sessions (their exercise sheets)
+    const counter = `${plural(solo.length - nEx, 'sheet')}${nS ? ` · ${plural(nS, 'session')}${nEx ? ` (${plural(nEx, 'exercise')})` : ''}` : ''}`;
+    if (loadError || (loading && !solo.length)) { chips.hidden = true; chips.innerHTML = ''; $('groups').innerHTML = ''; return loadError ? loadErrorText() : 'Loading…'; }
+    chips.innerHTML = groups.map(([g, l]) => `<a href="${groupHref(t, g)}" data-grp="${groupIds.get(g)}"${g === one ? ' class="on" aria-current="page"' : ''}>${esc(g)} ${l.own.length + l.ses.length}</a>`).join('');
+    chips.hidden = groups.length < 2;
+    const cards = (l, wrap) => l.own.map(e => sheetCard(e)).join('') + (l.ses.length ? `<p class="from-ses">From sessions</p>` + l.ses.map(e => sheetCard(e)).join('') : '') + wrap;
+    if (one) {
+      const l = byGroup.get(one);
+      $('groups').innerHTML = `<section data-group="${esc(one)}" id="${groupIds.get(one)}"><h2>${esc(one)} <span class="n">${l.own.length + l.ses.length}</span></h2><div class="grid">${cards(l, '')}</div></section>`;
+      return counter;
+    }
     let html = '';
-    for (const [g, list] of byGroup) { if (list.length) html += `<section><h2>${esc(g)} <span class="n">${list.length}</span></h2><div class="grid">${list.join('')}</div></section>`; }
+    for (const [g, l] of groups) {
+      const n = l.own.length + l.ses.length;
+      html += `<section data-group="${esc(g)}" id="${groupIds.get(g)}"><h2>${esc(g)} <span class="n">${n}</span></h2><div class="group-row">${cards(l, n > 2 ? `<a class="see-all" href="${groupHref(t, g)}">See all ${n}</a>` : '')}</div></section>`;
+    }
     if (!html) html = '<p class="empty">No sheet in this theme yet. Paste a first link.</p>';
+    // The Sessions section shows as soon as the backend has sessions, for « + New session »; its cards are a row too.
     if (nS || sessionsOk) html = `<section><div class="sh2"><h2>Sessions${nS ? ` <span class="n">${nS}</span>` : ''}</h2>${sessionsOk ? '<button class="btn ghost sm" type="button" id="ns-open">+ New session</button>' : ''}</div>`
-      + (nS ? '<div class="grid">' + v2.map(s => v2Card(s)).join('') + '</div>' : '<p class="hint">No session yet. Make one from the sheets of this notebook.</p>') + '</section>' + html;
+      + (nS ? '<div class="group-row">' + v2.map(s => v2Card(s)).join('') + '</div>' : '<p class="hint">No session yet. Make one from the sheets of this notebook.</p>') + '</section>' + html;
     $('groups').innerHTML = html;
-    const g = [...byGroup].filter(([, l]) => l.length).length;
-    return `${plural(solo.length, 'sheet')}${nS ? ` · ${plural(nS, 'session')}` : ''} · ${plural(g, 'group')}`;
+    return counter;
   };
+  // A chip scrolls to its group (smoothly unless reduced motion) and turns active; on a group grid it follows its link.
+  const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const markChip = id => {
+    const chips = $('group-chips');
+    for (const a of chips.querySelectorAll ? chips.querySelectorAll('a[data-grp]') : []) {
+      const on = a.dataset.grp === id; a.classList.toggle('on', on);
+      if (on) { a.setAttribute('aria-current', 'true'); if (chips.scrollTo) chips.scrollTo({left: a.offsetLeft - 16, behavior: reducedMotion() ? 'auto' : 'smooth'}); } else a.removeAttribute('aria-current');
+    }
+  };
+  $('group-chips').addEventListener('click', ev => {
+    const a = ev.target.closest && ev.target.closest('a[data-grp]'); if (!a || groupOf(themeById.get(currentTheme))) return;
+    const sec = document.getElementById(a.dataset.grp); if (!sec) return;
+    ev.preventDefault(); chipPinned = a.dataset.grp; markChip(chipPinned); sec.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
+  });
+  // While scrolling the rows, the chip of the group under the bar is the active one, page bottom included. A tapped
+  // chip stays active until the user scrolls himself or leaves the page (its group may stay below the bar).
+  let spyQueued = false, chipPinned = '';
+  for (const type of ['wheel', 'touchmove', 'keydown']) window.addEventListener(type, () => { chipPinned = ''; }, {passive: true});
+  const spy = () => {
+    spyQueued = false;
+    const chips = $('group-chips');
+    if ($('home').hidden || chips.hidden || !currentTheme || groupOf(themeById.get(currentTheme))) return;
+    if (chipPinned) { markChip(chipPinned); return; }
+    // at the page bottom, the last groups may never reach the bar: the last one whose top is on screen is active
+    const bottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    const line = bottom ? window.innerHeight : chips.getBoundingClientRect().bottom + 8; let on = '';
+    for (const id of groupIds.values()) { const sec = document.getElementById(id); if (sec && sec.getBoundingClientRect().top <= line) on = id; }
+    markChip(on);
+  };
+  window.addEventListener('scroll', () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(spy); } }, {passive: true});
   // ---------- search ----------
   // Every word must appear, accents and case ignored, in a title, summary, group, notebook or author
   // (a v2 session: its title, format, notebook or author).
@@ -910,21 +986,23 @@ dialog.ph-dlg::backdrop{background:#000}
   // L6: the sheets and sessions practised at least once that still exist.
   const practisedCount = () => [...lastDone.keys()].filter(k => bySlug.has(k) || v2BySlug.has(RS.sessionSlugOf(k))).length;
   const renderHome = () => {
-    const t = currentTheme ? themeById.get(currentTheme) : null;
+    const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
     $('h-crumb').hidden = !t;
+    $('h-crumb').innerHTML = one ? `<a href="#${esc(t.id)}">← ${esc(t.title)}</a>` : '<a href="#">← Reelbook</a>'; // L12: a group grid goes back to its notebook
     $('h-eyebrow').textContent = t ? 'Find it fast, when you need it' : 'Your videos, by notebook';
     $('h-title').textContent = t ? t.title : 'Reelbook';
     $('h-title').classList.toggle('brand-title', !t);
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
-    if (t) $('count').textContent = renderGroups(t);
+    if (t) $('count').textContent = renderGroups(t, one);
     else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${practiceOk ? `${practisedCount()} practised · ${n} saved` : plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
     const terms = sheets.length ? searchTerms() : [];
     $('results').hidden = !terms.length;
     if (terms.length) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t); }
+    if (!t || terms.length) $('group-chips').hidden = true;
     renderNew(!t && !loading && !loadError && !terms.length);
     renderToTry(!t && !loading && !loadError && !terms.length);
-    document.title = t ? `${t.title} · Reelbook` : 'Reelbook';
+    document.title = t ? `${one ? one + ' · ' : ''}${t.title} · Reelbook` : 'Reelbook';
   };
 
   // ---------- queue ----------
@@ -1938,7 +2016,12 @@ dialog.ph-dlg::backdrop{background:#000}
       return;
     }
     const ses = RS.sessionSlugOf(tok); if (ses && v2BySlug.has(ses)) { showSession(ses); return; }
-    shown = null; seat = null; currentTheme = themeById.has(tok) ? tok : null; view.innerHTML = ''; renderHome(); show('home');
+    // L12: #<notebook>~<group> is a group grid; back on the rows from it, the page opens at that group.
+    const cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
+    const from = currentTheme === nb && $('home').hidden === false ? groupOf(themeById.get(nb)) : null;
+    shown = null; seat = null; chipPinned = ''; currentTheme = themeById.has(nb) ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
+    view.innerHTML = ''; renderHome(); show('home');
+    if (from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
   };
   window.addEventListener('hashchange', route);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && user && !$('home').hidden) refreshQueue(); });
