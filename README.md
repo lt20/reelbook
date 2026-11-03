@@ -38,7 +38,7 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    password. Returning users sign in directly; on a new device, **Sign in to my own instance**
    lets self-hosted users enter their Supabase URL and anon key once. Install the app on your
    phone (*Add to Home screen*).
-2. Save a video: **+ Add a video**, paste the link. It shows under *In the queue*.
+2. Save a video: **+ Add a video**, paste the link. It shows under *In the queue* on the home page.
 3. On your computer, paste the install line shown in the app's **Settings** page (it carries your
    backend's URL and key). macOS / Linux:
 
@@ -60,7 +60,10 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    Keep the computer unlocked and the video tab in front: the video does not load in the
    background. Claude asks you to bring the tab forward when needed.
 5. Ten to fifteen minutes later the sheet is in the app, under its theme and group. A video with
-   several exercises becomes one *session* page, each exercise also listed in its group.
+   several exercises becomes a *session*: one exercise sheet per exercise, each filed in its group,
+   plus a session that links them in video order, with a dose for each exercise (« 30 s »,
+   « 3×10 ») and the video's format, why and key points. The session shows in the notebook's
+   Sessions section; each of its sheets carries « in 1 session » and links back to it.
 
 **Overnight (macOS).** `tools/nightly.sh install` processes the queue every night at 02:00 (or
 `install 23:30`) through a LaunchAgent, at most 5 videos per run. It only starts Claude when the
@@ -79,6 +82,26 @@ wingfoil, surfing, running, pilates, barre, pole dance, dance, prenatal, cooking
 description is written for Claude: it is what the skill reads to decide where a video belongs
 and how to group it. Notebooks are per account; remove one from Settings when it is empty.
 
+Claude filed a sheet in the wrong place? Open it and tap **Move**: pick another notebook and a
+group (one it already has, or a new one). A session moves too, to another notebook only: its
+exercise sheets stay where they are.
+
+## Your own sessions
+
+A session is an ordered list of sheets, each with its own dose. Besides the ones Claude builds
+from a video, you can compose your own:
+
+- **+ New session**, in a notebook's Sessions section: a title, then tick the notebook's sheets in
+  the order you want them (grouped, with a filter). The new session opens in Edit mode.
+- **Add to session**, on a sheet page: pick any session (all notebooks), or « New session… » to
+  create one in the sheet's notebook. The sheet goes last; a sheet is never added twice.
+- **Edit**, on a session page: ↑ ↓ to reorder, a dose per exercise (« 30 s », « 3×10 »), the format
+  line (« 5 rounds · 60 s rest »), the title, remove an exercise, or delete the session. Removing or
+  deleting never deletes a sheet. A session from a video is editable too, but processing that
+  video again rewrites it and drops your edits.
+
+Each session page also has its own « My notes ».
+
 ## How a sheet is made
 
 1. `rb.py themes` lists your notebooks, `rb.py queue` your queued links; Claude claims one.
@@ -88,33 +111,37 @@ and how to group it. Notebooks are per account; remove one from Settings when it
 3. It takes one photo per distinct movement (start and end at least for a single exercise), picks each peak frame
    on a 0.1 s grid, captures it full size, crops it so the **whole body** stays
    visible (head, hands, feet), rebuilds vertical frames from two halves, and checks every photo.
-4. It writes the sheet from `templates/sheet.html` (or `templates/session.html`), in your language,
-   decides the theme and group, and publishes with `rb.py publish`.
+4. It writes the sheet from `templates/sheet.html` (for a session: one `templates/exercise.html`
+   sheet per exercise, and the session's order and doses), in your language, decides the theme
+   and group, and publishes with `rb.py publish`.
 5. The request is closed with `rb.py done`. Open the app: the sheet is there, with a notes box
    only you can see.
 
 ## Data model
 
-Three tables and one private storage bucket, all locked to the signed-in user by row level
+Five tables and one private storage bucket, all locked to the signed-in user by row level
 security (`supabase/schema.sql`):
 
 | Table / bucket | Holds |
 | --- | --- |
 | `requests` | pasted links: `url`, `status` (queued → processing → done / error), `theme` hint, `slug` |
-| `sheets` | one row per sheet or session: `slug`, `theme`, `group`, `title`, `summary`, `source`, `exercises`, `html` |
+| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `source`, `html` |
+| `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `items` (ordered `{slug, dose}`, each slug a sheet) |
 | `notes` | your personal note per sheet |
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
 | `sheets/<user_id>/<slug>/img/*` | the photos |
 
-The app renders `sheets.html` inside its own styles and signs image URLs on the fly. Nothing is
-public, nothing is shared between accounts.
+The app renders `sheets.html` inside its own styles, builds session pages from their `sessions`
+row, and signs image URLs on the fly. Nothing is public, nothing is shared between accounts.
+A backend set up before sessions existed has no `sessions` table: re-run `supabase/schema.sql`
+(it only adds what is missing); until then the app hides sessions and says so in Settings.
 
 ## Repository layout
 
 ```
-app/        the web app (index.html, config.js, manifest, service worker, vendored supabase-js)
+app/        the web app (index.html, config.js, sessions.js, manifest, service worker, vendored supabase-js)
 skill/      the Claude Code skill (reelbook/SKILL.md)
-templates/  sheet.html and session.html, the HTML the skill fills in
+templates/  sheet.html and exercise.html (one exercise of a session), the HTML the skill fills in
 tools/      rb.py (backend CLI), crop.py, vstack.py (Pillow), nightly.sh (overnight runs, macOS)
 supabase/   schema.sql
 docs/       setup guides

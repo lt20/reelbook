@@ -8,15 +8,21 @@ const html = fs.readFileSync(path.join(__dirname, '../app/index.html'), 'utf8');
 const script = html.match(/<script>\s*([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script, 'the app script exists');
 new vm.Script(script);
+const sessionsJs = fs.readFileSync(path.join(__dirname, '../app/sessions.js'), 'utf8');
 
 const hostedUrl = 'https://hosted.example.test';
 const ownUrl = 'https://personal.example.test';
 const ownKey = 'a-public-anon-key-long-enough';
 
-async function app({remembered, sessions = {}, stored = {}, tables = null} = {}) {
+// `failing`: table -> {error, status} answered instead of rows (a backend without that table).
+// `writes`: table -> {data, error} answered to an insert / update / delete / upsert (default: one row written).
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = ''} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
+  // location.hash set by the app fires hashchange, as in a browser
+  const winListeners = {};
+  let currentHash = hash;
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
       hidden: true, disabled: false, value: '', textContent: '', innerHTML: '',
@@ -30,7 +36,11 @@ async function app({remembered, sessions = {}, stored = {}, tables = null} = {})
   const context = {
     URL, console,
     setTimeout: fn => { if (tables) queueMicrotask(fn); },
-    location: {href: 'https://app.example.test/', hash: ''},
+    location: {
+      href: 'https://app.example.test/',
+      get hash() { return currentHash; },
+      set hash(v) { currentHash = !v || String(v).startsWith('#') ? String(v || '') : '#' + v; queueMicrotask(() => winListeners.hashchange && winListeners.hashchange()); }
+    },
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
@@ -42,7 +52,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null} = {})
         hosted: {name: 'Reelbook hosted', url: hostedUrl, anonKey: ownKey, blurb: 'Free for now.'},
         repo: 'https://github.com/lt20/reelbook'
       },
-      scrollTo() {}, addEventListener() {}
+      scrollTo() {}, addEventListener(type, listener) { winListeners[type] = listener; }
     },
     document: {
       getElementById: element,
@@ -53,8 +63,26 @@ async function app({remembered, sessions = {}, stored = {}, tables = null} = {})
     navigator: {},
     supabase: {
       createClient(url, key, options) {
-        // with `tables`, every query chain resolves to that table's rows; without, only inserts are recorded
-        const query = table => { const done = Promise.resolve({data: tables[table] || [], error: null}); const q = new Proxy({}, {get: (_, k) => k === 'then' ? done.then.bind(done) : () => q}); return q; };
+        // with `tables`, a read chain resolves to that table's rows (maybeSingle: the first row matching its eq
+        // filters); a write is recorded in client.calls as [method, table, payload, eq filters]. Without
+        // `tables`, only inserts are recorded.
+        const WRITES = ['insert', 'update', 'delete', 'upsert'];
+        const query = table => {
+          const ops = [];
+          const result = () => {
+            if (failing[table]) return {data: null, ...failing[table]};
+            const eqs = ops.filter(o => o[0] === 'eq').map(o => o.slice(1)), w = ops.find(o => WRITES.includes(o[0]));
+            if (w) {
+              client.calls.push([w[0], table, w[1], eqs]);
+              return writes[table] || {data: w[0] === 'insert' ? [].concat(w[1]).map(r => ({format: '', why: '', key_points: [], source: {}, thumbnail: '', ...r})) : [{}], error: null};
+            }
+            const rows = tables[table] || [];
+            if (ops.some(o => o[0] === 'maybeSingle')) return {data: rows.find(r => eqs.every(([c, v]) => r[c] === v)) || null, error: null};
+            return {data: rows, error: null};
+          };
+          const q = new Proxy({}, {get: (_, k) => k === 'then' ? (ok, ko) => Promise.resolve().then(result).then(ok, ko) : (...a) => { ops.push([k, ...a]); return q; }});
+          return q;
+        };
         const client = {url, key, options, calls: [], from: tables ? query : table => ({
           async insert(row) { client.calls.push(['insert', table, row]); return {error: null}; }
         }),
@@ -72,7 +100,9 @@ async function app({remembered, sessions = {}, stored = {}, tables = null} = {})
       }
     }
   };
-  vm.runInNewContext(script, context);
+  vm.createContext(context);
+  vm.runInContext(sessionsJs, context);
+  vm.runInContext(script, context);
   await Promise.resolve();
   return {
     element, clients, storage,
@@ -81,7 +111,8 @@ async function app({remembered, sessions = {}, stored = {}, tables = null} = {})
       assert.ok(listener, `${id} handles ${type}`);
       await listener({preventDefault() {}});
       await Promise.resolve();
-    }
+    },
+    go(h) { context.location.hash = h; }
   };
 }
 
@@ -222,4 +253,240 @@ test('keyword search finds sheets and session exercises, accents and case ignore
   await search('');
   assert.equal(page.element('results').hidden, true);
   assert.equal(page.element('portal').hidden, false);
+});
+
+const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r)); };
+const v2Tables = () => ({
+  user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}, {id: 'mobility', title: 'Mobility', groups: [], builtin: true, position: 1}],
+  sheets: [
+    {slug: 'gsp-angel', kind: 'sheet', theme: 'strength', group: 'Shoulders', title: 'Floor angel', summary: 'Face down.', duration: '', exercises: []},
+    {slug: 'gsp-rot', kind: 'sheet', theme: 'mobility', group: 'Shoulders', title: 'External rotation', summary: 'With a band.', duration: '', exercises: []},
+    {slug: 'curl', kind: 'sheet', theme: 'strength', group: 'Arms', title: 'Hammer curl', summary: 'Dumbbells.', exercises: []},
+    {slug: 'old-routine', kind: 'session', theme: 'strength', title: 'Old routine', summary: 'One page.', exercises: [{anchor: 'a', title: 'Old move', group: 'Arms', summary: ''}]}
+  ],
+  sessions: [{slug: 'gsp-shoulders', theme: 'strength', title: 'GSP shoulders', format: '5 rounds · 60 s rest', why: 'Healthy shoulders.', key_points: ['Slow', 'Breathe'],
+    source: {author: 'Georges', url: 'https://example.test/v'}, origin: 'video', thumbnail: '',
+    items: [{slug: 'gsp-rot', dose: '3×10'}, {slug: 'deleted-sheet', dose: '1 min'}, {slug: 'gsp-angel', dose: '30 s'}]}]
+});
+
+test('v2 sessions show in their notebook, in search and on their own page', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#strength'});
+  await settle();
+  const groups = page.element('groups').innerHTML;
+  assert.match(groups, /Sessions <span class="n">2<\/span>/);
+  assert.match(groups, /href="#session\/gsp-shoulders"/);
+  assert.match(groups, /href="#old-routine~a"/, 'v1 exercise cards stay');
+  assert.match(groups, /2 exercises/, 'the deleted sheet is not counted');
+  assert.match(groups, /href="#gsp-angel"[\s\S]*?in 1 session/);
+  assert.doesNotMatch(groups.match(/href="#curl"[\s\S]*?<\/a>/)[0], /in \d session/);
+  page.element('q').value = 'rounds'; await page.fire('q', 'input');
+  assert.match(page.element('results').innerHTML, /#session\/gsp-shoulders/);
+});
+
+test('a v2 session page lists its sheets in order with their dose, and moves to another notebook', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#session/gsp-shoulders'});
+  await settle();
+  assert.equal(page.element('view').hidden, false);
+  const html = page.element('view').innerHTML;
+  assert.match(html, /<h1>GSP shoulders<\/h1>/);
+  assert.match(html, /5 rounds · 60 s rest/);
+  assert.match(html, /<li>Slow<\/li><li>Breathe<\/li>/);
+  assert.match(html, /href="https:\/\/example.test\/v"/);
+  assert.match(html, /href="#gsp-rot"><span class="k">1<\/span>[\s\S]*?3×10[\s\S]*?href="#gsp-angel"><span class="k">2<\/span>[\s\S]*?30 s/);
+  assert.doesNotMatch(html, /deleted-sheet|1 min/);
+  page.element('view').listeners.click({target: {closest: () => true}});
+  assert.equal(page.element('move-dlg').open, true);
+  assert.equal(page.element('mv-title').textContent, 'Move this session');
+  assert.equal(page.element('mv-group-l').hidden, true);
+  page.element('mv-theme').value = 'mobility';
+  await page.fire('mv-form', 'submit');
+  assert.match(page.element('sheet-top').innerHTML, /Moved to Mobility\./);
+});
+
+test('an exercise sheet links back to its video session', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#gsp-angel'});
+  await settle();
+  assert.match(page.element('view').innerHTML, /From the session <a href="#session\/gsp-shoulders">GSP shoulders<\/a>/);
+});
+
+test('a backend without the sessions table still loads, and Settings says how to enable sessions', async () => {
+  const failing = {sessions: {error: {code: 'PGRST205', message: 'Could not find the table'}, status: 404}};
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#strength', failing});
+  await settle();
+  assert.doesNotMatch(page.element('count').textContent, /Could not load/);
+  assert.match(page.element('groups').innerHTML, /href="#gsp-angel"/);
+  assert.doesNotMatch(page.element('groups').innerHTML, /#session\/|in 1 session/);
+  const settings = await app({...signedIn, tables: v2Tables(), hash: '#settings', failing});
+  await settle();
+  assert.equal(settings.element('settings').hidden, false);
+  assert.equal(settings.element('s-sessions').hidden, false);
+  const ok = await app({...signedIn, tables: v2Tables(), hash: '#settings'});
+  await settle();
+  assert.equal(ok.element('s-sessions').hidden, true);
+});
+
+test('any other sessions error is a load error', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), failing: {sessions: {error: {code: '42501', message: 'permission denied'}, status: 403}}});
+  await settle();
+  assert.match(page.element('count').textContent, /Could not load your sheets: permission denied/);
+});
+
+// ---------- composing sessions (S3) ----------
+// A click inside a container whose handler delegates with ev.target.closest(selector).
+const clickIn = (page, id, selector, dataset = {}) => page.element(id).listeners.click({target: {closest: s => s === selector ? {dataset} : null}});
+const typeIn = (page, target) => page.element('view').listeners.input({target: {dataset: {}, ...target}});
+// The writes of the signed-in client, as plain JSON ([method, table, payload, eq filters]).
+const writesOf = page => JSON.parse(JSON.stringify(page.clients.at(-1).calls.filter(c => ['insert', 'update', 'delete', 'upsert'].includes(c[0]))));
+
+test('« + New session » shows in every notebook, ticks sheets in order and opens the new session in Edit mode', async () => {
+  const empty = await app({...signedIn, tables: v2Tables(), hash: '#mobility'});
+  await settle();
+  assert.match(empty.element('groups').innerHTML, /<h2>Sessions<\/h2><button[^>]*id="ns-open">\+ New session<\/button>[\s\S]*No session yet/);
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#strength'});
+  await settle();
+  clickIn(page, 'groups', '#ns-open');
+  assert.equal(page.element('ns-dlg').open, true);
+  let list = page.element('ns-list').innerHTML;
+  assert.match(list, /<h3>Arms<\/h3>[\s\S]*data-pick="curl"/);
+  assert.match(list, /<h3>Shoulders<\/h3>[\s\S]*data-pick="gsp-angel"/);
+  assert.doesNotMatch(list, /old-routine|gsp-rot/, 'only the simple sheets of this notebook');
+  page.element('ns-q').value = 'hammer'; await page.fire('ns-q', 'input');
+  assert.match(page.element('ns-list').innerHTML, /data-pick="curl"/);
+  assert.doesNotMatch(page.element('ns-list').innerHTML, /gsp-angel/);
+  page.element('ns-q').value = ''; await page.fire('ns-q', 'input');
+  for (const pick of ['gsp-angel', 'curl']) page.element('ns-list').listeners.change({target: {dataset: {pick}}});
+  list = page.element('ns-list').innerHTML;
+  assert.match(list, /data-pick="curl" checked><span class="o">2</);
+  assert.match(list, /data-pick="gsp-angel" checked><span class="o">1</);
+  await page.fire('ns-form', 'submit');
+  assert.equal(page.element('ns-err').textContent, 'Give the session a title.');
+  assert.equal(writesOf(page).length, 0);
+  page.element('ns-title').value = '  GSP shoulders ';
+  await page.fire('ns-form', 'submit');
+  await settle();
+  assert.deepEqual(writesOf(page), [['insert', 'sessions',
+    {slug: 'my-gsp-shoulders', theme: 'strength', title: 'GSP shoulders', origin: 'user', items: [{slug: 'gsp-angel', dose: ''}, {slug: 'curl', dose: ''}]}, []]]);
+  assert.equal(page.element('ns-dlg').open, false);
+  assert.equal(page.element('view').hidden, false);
+  const html = page.element('view').innerHTML;
+  assert.match(html, /Editing the session/);
+  assert.match(html, /<b>Floor angel<\/b>[\s\S]*<b>Hammer curl<\/b>/);
+  assert.doesNotMatch(html, /processed again/, 'no video help on a user session');
+});
+
+test('Edit reorders, sets doses, format and title, and saves the items in full in one update', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#session/gsp-shoulders'});
+  await settle();
+  clickIn(page, 'view', '#ed-open');
+  let html = page.element('view').innerHTML;
+  assert.match(html, /If this video is processed again, the session is rewritten and these edits are lost\./);
+  assert.match(html, /<h2>Why<\/h2>[\s\S]*<li>Slow<\/li>/, 'why and key points stay, read-only');
+  assert.doesNotMatch(html, /id="mv-open"|id="ed-open"|deleted-sheet/);
+  assert.match(html, /data-up="0" aria-label="[^"]*" disabled/);
+  clickIn(page, 'view', '[data-down]', {down: '0'});
+  assert.match(page.element('ed-items').innerHTML, /<b>Floor angel<\/b>[\s\S]*<b>External rotation<\/b>/);
+  typeIn(page, {dataset: {dose: '0'}, value: '45 s'});
+  typeIn(page, {id: 'ed-format', value: ' 3 rounds '});
+  typeIn(page, {id: 'ed-title', value: 'Shoulders, Monday'});
+  clickIn(page, 'view', '#ed-save');
+  await settle();
+  assert.deepEqual(writesOf(page), [['update', 'sessions',
+    {title: 'Shoulders, Monday', format: '3 rounds', items: [{slug: 'gsp-angel', dose: '45 s'}, {slug: 'gsp-rot', dose: '3×10'}]}, [['slug', 'gsp-shoulders']]]]);
+  html = page.element('view').innerHTML;
+  assert.match(html, /Saved\./);
+  assert.match(html, /<h1>Shoulders, Monday<\/h1>/);
+  assert.match(html, /href="#gsp-angel"><span class="k">1<\/span>[\s\S]*?45 s[\s\S]*?href="#gsp-rot"><span class="k">2<\/span>/);
+});
+
+test('Edit: a write that changes no row shows an error and keeps the edits and the saved session as they were', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#session/gsp-shoulders', writes: {sessions: {data: [], error: null}}});
+  await settle();
+  clickIn(page, 'view', '#ed-open');
+  clickIn(page, 'view', '[data-out]', {out: '0'});
+  assert.doesNotMatch(page.element('ed-items').innerHTML, /External rotation/);
+  clickIn(page, 'view', '#ed-save');
+  await settle();
+  assert.equal(page.element('ed-err').hidden, false);
+  assert.match(page.element('ed-err').textContent, /Could not save/);
+  assert.match(page.element('view').innerHTML, /Editing the session/, 'still in Edit mode');
+  clickIn(page, 'view', '#ed-cancel');
+  assert.match(page.element('view').innerHTML, /href="#gsp-rot"><span class="k">1<\/span>/, 'the session is unchanged');
+});
+
+test('Delete session asks in an app dialog, deletes the row only and refreshes the notebook', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#session/gsp-shoulders'});
+  await settle();
+  clickIn(page, 'view', '#ed-open');
+  clickIn(page, 'view', '#ed-delete');
+  assert.equal(page.element('del-dlg').open, true);
+  assert.equal(page.element('del-name').textContent, 'GSP shoulders');
+  await page.fire('del-cancel');
+  assert.equal(page.element('del-dlg').open, false);
+  assert.equal(writesOf(page).length, 0);
+  clickIn(page, 'view', '#ed-delete');
+  await page.fire('del-ok');
+  await settle();
+  assert.deepEqual(writesOf(page), [['delete', 'sessions', null, [['slug', 'gsp-shoulders']]]]);
+  assert.equal(page.element('home').hidden, false);
+  const groups = page.element('groups').innerHTML;
+  assert.doesNotMatch(groups, /#session\/gsp-shoulders|in 1 session/);
+  assert.match(groups, /href="#gsp-angel"/, 'its sheets stay');
+  assert.match(page.element('flash').textContent, /Session deleted/);
+});
+
+test('« Add to session » appends the sheet once, says when it is already there, and can create a session', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#curl'});
+  await settle();
+  assert.match(page.element('view').innerHTML, /id="as-open">Add to session</);
+  clickIn(page, 'view', '#as-open');
+  assert.equal(page.element('as-dlg').open, true);
+  assert.match(page.element('as-session').innerHTML, /<optgroup label="Strength"><option value="gsp-shoulders">GSP shoulders<\/option><\/optgroup><option value="__new_session__">New session…<\/option>/);
+  assert.equal(page.element('as-session').value, 'gsp-shoulders');
+  await page.fire('as-form', 'submit');
+  assert.deepEqual(writesOf(page), [['update', 'sessions',
+    {items: [{slug: 'gsp-rot', dose: '3×10'}, {slug: 'deleted-sheet', dose: '1 min'}, {slug: 'gsp-angel', dose: '30 s'}, {slug: 'curl', dose: ''}]}, [['slug', 'gsp-shoulders']]]]);
+  assert.match(page.element('sheet-top').innerHTML, /Added to <a href="#session\/gsp-shoulders">GSP shoulders<\/a>\./);
+  clickIn(page, 'view', '#as-open');
+  await page.fire('as-form', 'submit');
+  assert.equal(page.element('as-err').textContent, 'This sheet is already in that session.');
+  assert.equal(writesOf(page).length, 1, 'no second write');
+  page.element('as-session').value = '__new_session__'; await page.fire('as-session', 'change');
+  assert.equal(page.element('as-new-l').hidden, false);
+  assert.equal(page.element('as-hint').textContent, 'It is created in Strength.');
+  page.element('as-new').value = 'Arms day';
+  await page.fire('as-form', 'submit');
+  assert.deepEqual(writesOf(page)[1], ['insert', 'sessions', {slug: 'my-arms-day', theme: 'strength', title: 'Arms day', origin: 'user', items: [{slug: 'curl', dose: ''}]}, []]);
+  assert.match(page.element('sheet-top').innerHTML, /Added to <a href="#session\/my-arms-day">Arms day<\/a>/);
+});
+
+test('« From the session » and « in N sessions » follow an added sheet without a reload', async () => {
+  const tables = v2Tables();
+  tables.sessions.push({slug: 'mob', theme: 'mobility', title: 'Mobility flow', format: '', why: '', key_points: [], source: {}, origin: 'video', thumbnail: '', items: [{slug: 'gsp-rot', dose: ''}]});
+  const page = await app({...signedIn, tables, hash: '#curl'});
+  await settle();
+  assert.doesNotMatch(page.element('sheet-top').innerHTML, /From the session/);
+  clickIn(page, 'view', '#as-open');
+  assert.match(page.element('as-session').innerHTML, /<optgroup label="Strength">[\s\S]*<optgroup label="Mobility"><option value="mob">Mobility flow/);
+  page.element('as-session').value = 'mob';
+  await page.fire('as-form', 'submit');
+  assert.match(page.element('sheet-top').innerHTML, /From the session <a href="#session\/mob">Mobility flow<\/a>/);
+  page.go('#strength'); await settle();
+  assert.match(page.element('groups').innerHTML.match(/href="#curl"[\s\S]*?<\/a>/)[0], /in 1 session/);
+});
+
+test('a v2 session page has its own notes, keyed session/<slug>, and its card shows « note »', async () => {
+  const tables = v2Tables();
+  tables.notes = [{slug: 'session/gsp-shoulders', body: 'Felt good', updated_at: '2026-11-01T10:00:00Z'}];
+  const nb = await app({...signedIn, tables, hash: '#strength'});
+  await settle();
+  const groups = nb.element('groups').innerHTML;
+  assert.match(groups.match(/href="#session\/gsp-shoulders"[\s\S]*?<\/a>/)[0], /class="note"/);
+  assert.doesNotMatch(groups.match(/href="#gsp-angel"[\s\S]*?<\/a>/)[0], /class="note"/, 'a session note is not a sheet note');
+  const page = await app({...signedIn, tables, hash: '#session/gsp-shoulders'});
+  await settle();
+  assert.match(page.element('view').innerHTML, /My notes/);
+  assert.equal(page.element('n-text').value, 'Felt good');
+  page.element('n-text').value = 'Felt better';
+  await page.fire('n-save');
+  assert.deepEqual(writesOf(page), [['upsert', 'notes', {slug: 'session/gsp-shoulders', body: 'Felt better'}, []]]);
 });
