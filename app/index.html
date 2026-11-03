@@ -620,7 +620,7 @@ dialog.ph-dlg::backdrop{background:#000}
   let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null, loading = false, loadError = '';
   // L6, practice log: practiceOk true once the user's practice_log rows are read (false: no table, or no answer, so
   // every practice control and count is hidden); lastDone: key (a sheet slug, or session/<slug>) -> latest done_on.
-  let practiceOk = false, lastDone = new Map();
+  let practiceOk = false, lastDone = new Map(), practiceGen = 0; // practiceGen: the last catalogue read, or sign-out
   const signed = new Map(); // storage path -> {url, exp}
   const signAll = async paths => {
     const need = [...new Set(paths)].filter(p => { const s = signed.get(p); return !s || s.exp < Date.now() + 60000; });
@@ -675,16 +675,17 @@ dialog.ph-dlg::backdrop{background:#000}
   const PAGE = 1000;
   const loadPractice = async () => {
     practiceOk = false; lastDone = new Map();
-    const last = new Map();
+    const gen = ++practiceGen, last = new Map(), current = () => gen === practiceGen; // a sign-out or a newer read drops this one
     try {
       for (let from = 0; ; from += PAGE) { // every row: a key practised only long ago keeps its date
         const {data, error, status} = await sb.from('practice_log').select('slug,done_on').order('done_on', {ascending: false}).order('id').range(from, from + PAGE - 1);
+        if (!current()) return;
         if (error) { if (!RS.missingTable(error, status)) console.warn('Practice log not read:', error.message || error); return; }
         for (const r of data || []) if (!last.has(r.slug) || r.done_on > last.get(r.slug)) last.set(r.slug, r.done_on);
         if (!data || data.length < PAGE) break;
       }
     } catch (e) { console.warn('Practice log not read:', (e && e.message) || e); return; }
-    practiceOk = true; lastDone = last;
+    if (current()) { practiceOk = true; lastDone = last; }
   };
   const reload = async () => {
     loading = true; loadError = ''; if (!$('home').hidden) renderHome();
@@ -1199,7 +1200,7 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   // Saved: the row joins the page's entries and the latest date of its key (cards, home counter). Not saved: what is
   // in the field stays there with « Not saved. Try again. »; nothing reads as done.
-  // A try carries its own id: Save again on the same text sends the same row, so a row stored whose answer was lost
+  // A try carries its own id: Save again on the same text, the same day, sends the same row, so a row stored whose answer was lost
   // comes back as a duplicate key (23505) and counts as saved, never as a second entry.
   const newId = () => {
     const c = typeof crypto !== 'undefined' ? crypto : null;
@@ -1211,7 +1212,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const savePractice = async () => {
     const p = pageLog; if (!p || !p.open || p.busy) return;
     const text = String($('practice-text').value || '').trim().slice(0, LOG_MAX);
-    if (!p.attempt || p.attempt.text !== text) p.attempt = {id: newId(), slug: p.key, done_on: todayIso(), text};
+    if (!p.attempt || p.attempt.text !== text || p.attempt.done_on !== todayIso()) p.attempt = {id: newId(), slug: p.key, done_on: todayIso(), text};
     const row = p.attempt, owner = {client: sb, uid: user ? user.id : ''};
     // the field is read-only while the save is on its way: a correction typed then would be dropped once saved
     p.draft = text; p.busy = true; p.err = ''; $('practice-save').disabled = true; $('practice-text').readOnly = true;
@@ -1232,6 +1233,7 @@ dialog.ph-dlg::backdrop{background:#000}
     if (!p.entries.some(r => r.id === entry.id)) p.entries = [entry, ...p.entries].sort(newestFirst).slice(0, 5);
     p.open = false; p.draft = '';
     paintPractice();
+    if (!$('home').hidden) renderHome(); // left for the home page while it was saving: its counter and cards count it
   };
 
   // Why / key points / source of a video session: read-only, in both modes.
@@ -1663,7 +1665,7 @@ dialog.ph-dlg::backdrop{background:#000}
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity;
-      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); pageLog = null; signed.clear(); cache.clear(); loadError = '';
+      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
     if (!sb) {
@@ -1677,7 +1679,7 @@ dialog.ph-dlg::backdrop{background:#000}
         const next = session ? session.user : null;
         const changed = (next && next.id) !== (user && user.id);
         user = next;
-        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });
