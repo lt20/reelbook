@@ -1,6 +1,6 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const {app, hostedUrl, ownUrl, ownKey} = require('./harness.cjs');
+const {app, html, hostedUrl, ownUrl, ownKey} = require('./harness.cjs');
 
 test('a new visitor sees hosted sign-in before any backend choice', async () => {
   const page = await app();
@@ -455,4 +455,145 @@ test('a v2 session page has its own notes, keyed session/<slug>, and its card sh
   page.element('n-text').value = 'Felt better';
   await page.fire('n-save');
   assert.deepEqual(writesOf(page), [['upsert', 'notes', {slug: 'session/gsp-shoulders', body: 'Felt better'}, []]]);
+});
+
+// ---------- L1 (design audit P0) ----------
+test('C1: saving a video session after changing one dose keeps its long format and long doses byte for byte', async () => {
+  const tables = v2Tables();
+  const format = '4 rounds of the circuit, 45 s of work and 15 s of rest per exercise, 2 min of rest between rounds; '
+    + 'start slowly, keep the breathing calm, stop before any shoulder pain and finish with 5 min of easy walking';
+  const longDose = '3 × 12 slow reps, 3 s down, 1 s pause, 20 s of rest';
+  assert.ok(format.length > 200 && format.length <= 240 && longDose.length > 40 && longDose.length <= 60);
+  Object.assign(tables.sessions[0], {format, items: [{slug: 'gsp-rot', dose: longDose}, {slug: 'gsp-angel', dose: '30 s'}]});
+  const page = await app({...signedIn, tables, hash: '#session/gsp-shoulders'});
+  await settle();
+  clickIn(page, 'view', '#ed-open');
+  const html = page.element('view').innerHTML;
+  assert.match(html, /id="ed-format" type="text" maxlength="240"/, 'the format input allows 240 characters');
+  assert.match(html, /id="ed-title" type="text" maxlength="80"/);
+  assert.match(html, /data-dose="0" value="[^"]*" maxlength="60"/, 'a dose input allows 60 characters');
+  typeIn(page, {dataset: {dose: '1'}, value: '40 s'});
+  clickIn(page, 'view', '#ed-save');
+  await settle();
+  const [[method, table, row]] = writesOf(page);
+  assert.equal(`${method} ${table}`, 'update sessions');
+  assert.equal(row.format, format, 'the format is saved whole');
+  assert.deepEqual(row.items, [{slug: 'gsp-rot', dose: longDose}, {slug: 'gsp-angel', dose: '40 s'}]);
+  assert.ok(page.element('view').innerHTML.includes(format), 'the saved page shows the whole format');
+});
+
+test('C2: the add-notebook card counts « N more to pick from » and suggests notebooks not added yet', async () => {
+  const lib = ['strength', 'kitesurf', 'mobility', 'cook', 'pilates', 'golf'].map(id => ({id, title: id === 'kitesurf' ? 'Kitesurf' : id === 'cook' ? 'Cooking' : id === 'mobility' ? 'Mobility & rehab' : id[0].toUpperCase() + id.slice(1), groups: []}));
+  const tables = v2Tables();
+  tables.user_themes.push({id: 'kitesurf', title: 'Kitesurf', groups: [], builtin: true, position: 2});
+  const page = await app({...signedIn, tables, library: lib});
+  await settle();
+  let card = page.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
+  assert.match(card, /<p class="eyebrow">3 more to pick from<\/p>/);
+  assert.match(card, /<p>Cooking, pilates, golf… or one you describe yourself\.<\/p>/, 'Kitesurf is already a notebook');
+  const one = await app({...signedIn, tables, library: lib.slice(0, 4)});
+  await settle();
+  card = one.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
+  assert.match(card, /1 more to pick from<\/p>[\s\S]*<p>Cooking… or one you describe yourself\.<\/p>/);
+  const none = await app({...signedIn, tables, library: lib.slice(0, 3)});
+  await settle();
+  card = none.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
+  assert.doesNotMatch(card, /more to pick|class="eyebrow"/, 'nothing left to pick: no eyebrow at all');
+  assert.match(card, /<h2>\+ Add a notebook<\/h2><p>Describe one yourself\.<\/p>/);
+});
+
+test('C2: a queue row without a notebook shows no notebook label, and its reason sits on its own line', async () => {
+  const tables = v2Tables();
+  tables.requests = [
+    {id: 3, url: 'https://www.tiktok.com/@coach/video/7312', status: 'error', theme: null, note: 'Video unavailable (private account)', created_at: '2026-11-01T08:00:00Z'},
+    {id: 2, url: 'https://www.youtube.com/shorts/aBcD1234', status: 'processing', theme: 'strength', note: '', created_at: '2026-11-02T20:00:00Z'}
+  ];
+  const page = await app({...signedIn, tables});
+  await settle();
+  const rows = page.element('queue').innerHTML.split('<div class="q">').slice(1);
+  assert.match(rows[0], /<small>added 1 Nov<\/small><small class="why">Video unavailable \(private account\)<\/small>/);
+  assert.match(rows[0], /needs a look/);
+  assert.match(rows[1], /<small>added 2 Nov · Strength<\/small><\/div>/);
+});
+
+test('C5: sign-up asks Supabase to send the confirmation link back to the app, not to localhost', async () => {
+  const page = await app();
+  await page.fire('a-toggle');
+  await page.fire('pick-hosted');
+  page.element('a-email').value = 'new@example.test';
+  page.element('a-pass').value = 'example-password';
+  await page.fire('auth-form', 'submit');
+  const [kind, credentials] = page.clients.at(-1).calls[0];
+  assert.equal(kind, 'up');
+  assert.deepEqual(JSON.parse(JSON.stringify(credentials.options)), {emailRedirectTo: 'https://app.example.test/reelbook/'});
+});
+
+test('C5: a load error on a self-hosted backend says the project may be paused; on the hosted one it does not', async () => {
+  const failing = {sessions: {error: {message: 'Failed to fetch'}, status: 0}};
+  const own = await app({...signedIn, tables: v2Tables(), failing});
+  await settle();
+  assert.equal(own.element('count').textContent,
+    'Could not load your sheets: Failed to fetch. Your Supabase project may be paused: open your Supabase dashboard and restore it.');
+  const hosted = await app({remembered: {mode: 'hosted'}, sessions: {[hostedUrl]: {id: 'u1', email: 'user@example.test'}}, tables: v2Tables(), failing});
+  await settle();
+  assert.equal(hosted.clients.at(-1).url, hostedUrl);
+  assert.equal(hosted.element('count').textContent, 'Could not load your sheets: Failed to fetch');
+});
+
+test('C6: a sheet is wrapped in its language: its own <html lang>, else French when it reads French, else none', async () => {
+  const shown = async sheetHtml => {
+    const tables = v2Tables();
+    tables.sheets.find(s => s.slug === 'curl').html = sheetHtml;
+    const page = await app({...signedIn, tables, hash: '#curl', dom: true});
+    await settle();
+    const html = page.element('view').innerHTML;
+    assert.match(html, /<a href="#gsp-angel">Floor angel<\/a>/, 'the sheet is shown');
+    return (html.match(/<div lang="([^"]*)"><a href="#gsp-angel">/) || [])[1] || '';
+  };
+  const link = '<a href="#gsp-angel">Floor angel</a>';
+  assert.equal(await shown(`<!doctype html><html lang="fr-CH"><head><style>p{}</style></head><body><p>Hold it.</p>${link}</body></html>`), 'fr-CH');
+  assert.equal(await shown(`<html><body><h1>Curl marteau</h1><p>Debout, les haltères le long du corps, coudes fixes et dos droit.</p>${link}</body></html>`), 'fr');
+  assert.equal(await shown(`<p>Allongez-vous sur le dos : l'épaule reste au sol.</p>${link}`), 'fr');
+  assert.equal(await shown(`<p>Stand tall, dumbbells by your sides, elbows fixed. Curl up, lower slowly. A la carte: le cardio.</p>${link}`), '');
+  assert.equal(await shown(link), '');
+});
+
+test('C6: accessibility base — focus ring, live regions, input border token, theme colours, notch padding', () => {
+  assert.match(html, /a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,[^{]*\{outline:3px solid var\(--ink\);outline-offset:2px\}/);
+  assert.match(html, /<div class="flash" id="flash" role="status" hidden>/);
+  assert.match(html, /<p class="cnt" id="count" aria-live="polite">/);
+  assert.match(html, /--line-strong:#8f8a80;/);
+  assert.equal((html.match(/--line-strong:#6b7079;/g) || []).length, 2, 'dark tokens: system and forced');
+  assert.match(html, /\ninput,textarea,select\{[^}]*border:1px solid var\(--line-strong\)/);
+  assert.match(html, /<meta name="theme-color" content="#f3f1ec" media="\(prefers-color-scheme: light\)">/);
+  assert.match(html, /<meta name="theme-color" content="#15171a" media="\(prefers-color-scheme: dark\)">/);
+  assert.match(html, /padding-inline:max\(16px,env\(safe-area-inset-left\)\) max\(16px,env\(safe-area-inset-right\)\)/);
+});
+
+test('C1: a text past its limit that the user did not touch is saved as it is; an edited one is clipped', async () => {
+  const tables = v2Tables();
+  const title = 'T'.repeat(85), format = 'F'.repeat(241), longDose = 'D'.repeat(61);
+  Object.assign(tables.sessions[0], {title, format, items: [{slug: 'gsp-rot', dose: longDose}, {slug: 'gsp-angel', dose: '30 s'}]});
+  const page = await app({...signedIn, tables, hash: '#session/gsp-shoulders'});
+  await settle();
+  clickIn(page, 'view', '#ed-open');
+  clickIn(page, 'view', '[data-down]', {down: '0'});
+  typeIn(page, {dataset: {dose: '0'}, value: '40 s'});
+  clickIn(page, 'view', '#ed-save');
+  await settle();
+  let [[, , row]] = writesOf(page);
+  assert.equal(row.title, title, 'untouched title kept whole');
+  assert.equal(row.format, format, 'untouched format kept whole (rb.py publish does not enforce the limit)');
+  assert.deepEqual(row.items, [{slug: 'gsp-angel', dose: '40 s'}, {slug: 'gsp-rot', dose: longDose}], 'untouched dose kept whole, even moved');
+  const edited = await app({...signedIn, tables, hash: '#session/gsp-shoulders'});
+  await settle();
+  clickIn(edited, 'view', '#ed-open');
+  typeIn(edited, {id: 'ed-format', value: format + 'G'});
+  typeIn(edited, {dataset: {dose: '0'}, value: longDose + 'E'});
+  clickIn(edited, 'view', '#ed-save');
+  await settle();
+  [[, , row]] = writesOf(edited);
+  assert.equal(row.format, format.slice(0, 240), 'an edited format is clipped to its limit');
+  assert.equal(row.items[0].dose, longDose.slice(0, 60), 'an edited dose is clipped to its limit');
+  assert.equal(row.title, title);
 });

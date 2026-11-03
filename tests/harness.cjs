@@ -30,7 +30,8 @@ const sheetDocument = {
 // `failing`: table -> {error, status} answered instead of rows (a backend without that table).
 // `writes`: table -> {data, error} answered to an insert / update / delete / upsert (default: one row written).
 // `dom`: a minimal DOMParser for a sheet's html made of `<a href="…">text</a>` links only, so loadSheet renders it.
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false} = {}) {
+// `library`: the built-in notebooks of the app config (window.REELBOOK.library).
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}]} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -51,7 +52,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     URL, console,
     setTimeout: fn => { if (tables) queueMicrotask(fn); },
     location: {
-      href: 'https://app.example.test/',
+      href: 'https://app.example.test/reelbook/', origin: 'https://app.example.test', pathname: '/reelbook/',
       get hash() { return currentHash; },
       set hash(v) { currentHash = !v || String(v).startsWith('#') ? String(v || '') : '#' + v; queueMicrotask(() => winListeners.hashchange && winListeners.hashchange()); }
     },
@@ -62,7 +63,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     },
     window: {
       REELBOOK: {
-        library: [{id: 'strength', title: 'Strength', groups: []}],
+        library,
         hosted: {name: 'Reelbook hosted', url: hostedUrl, anonKey: ownKey, blurb: 'Free for now.'},
         repo: 'https://github.com/lt20/reelbook'
       },

@@ -23,6 +23,11 @@ Dashboard → **Authentication** → **Providers** → **Email**: keep *Email* e
 **Confirm email** off. Otherwise the free built-in mailer sends a confirmation link, limited to a
 few emails per hour, which is fine too: confirm once and sign in.
 
+If you keep **Confirm email** on, tell Supabase where the link may lead back: Dashboard →
+**Authentication** → **URL Configuration**, set **Site URL** to the address you open the app at
+(`https://lt20.github.io/reelbook/`, or your own copy's address) and add the same address under
+**Redirect URLs**. Otherwise the confirmation link opens `localhost:3000` instead of the app.
+
 ## 4. Get the two values the app needs
 
 Dashboard → **Project settings** → **API**:

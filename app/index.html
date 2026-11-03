@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1f4fa3">
+<meta name="theme-color" content="#f3f1ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15171a" media="(prefers-color-scheme: dark)">
 <meta name="description" content="Turn the how-to videos you save into sheets you can read on the mat, at the beach or in the kitchen.">
 <title>Reelbook</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -13,20 +14,21 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
 <style>
 :root{
-  --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd;
+  --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd; --line-strong:#8f8a80;
   --accent:#1f4fa3; --accent-ink:#ffffff; --tag:#e4eaf6; --warn:#8a5a12; --warn-bg:#f6ead3; --ok:#1f6b3a; --ok-bg:#e1f0e6;
   --p0:#1f4fa3; --p1:#3f8f5f; --p2:#b4432f; --p3:#1d7a8c; --p4:#c2651d; --p5:#b23a6e; --p6:#8a6a12; --p7:#6b4fa3;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-inline:16px;padding-block:20px 56px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));padding-block:20px 56px}
 img{max-width:100%}
 a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,.card:focus-visible,.tcard:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .wrap{max-width:640px;margin:0 auto}
 .wide{max-width:980px;margin:0 auto}
 .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 6px;font-weight:600}
@@ -54,7 +56,7 @@ p{margin:0 0 10px}
 .empty{color:var(--muted);font-size:15px;border:1px dashed var(--line);border-radius:10px;padding:14px}
 .loading{color:var(--muted);padding:40px 0;text-align:center}
 label{display:grid;gap:4px;font-size:14px;font-weight:600;color:var(--muted)}
-input,textarea,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
+input,textarea,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
 textarea{line-height:1.5;min-height:120px;resize:vertical}
 .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
@@ -145,6 +147,7 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .q .t{min-width:0}
 .q .t a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 .q .t small{color:var(--muted);font-size:13px}
+.q .t small.why{display:block}
 .q .st{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;background:var(--warn-bg);color:var(--warn);white-space:nowrap}
 .q button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;padding:4px 6px}
 /* ---- sheet page (styles used by templates/sheet.html and templates/exercise.html) ---- */
@@ -258,9 +261,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   <div class="head">
     <div>
       <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
-      <p class="eyebrow" id="h-eyebrow">Three notebooks, one place</p>
+      <p class="eyebrow" id="h-eyebrow">Your videos, by notebook</p>
       <h1 id="h-title" class="brand-title">Reelbook</h1>
-      <p class="cnt" id="count"></p>
+      <p class="cnt" id="count" aria-live="polite"></p>
     </div>
     <button class="btn" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
   </div>
@@ -279,7 +282,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <p class="err" id="pd-err" hidden></p>
     <div class="actions"><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-discard">Discard the link</button><button class="btn ghost" type="button" id="pd-stay">Keep editing</button></div>
   </dialog>
-  <div class="flash" id="flash" hidden></div>
+  <div class="flash" id="flash" role="status" hidden></div>
 
   <section id="queue-sec" hidden>
     <h2>In the queue <span class="n" id="queue-n"></span></h2>
@@ -510,7 +513,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
         const {error} = await client.auth.signInWithPassword({email, password}); if (client !== sb) return; if (error) throw error;
         ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
       } else {
-        const {data, error} = await client.auth.signUp({email, password}); if (client !== sb) return; if (error) throw error;
+        const {data, error} = await client.auth.signUp({email, password, options: {emailRedirectTo: location.origin + location.pathname}}); if (client !== sb) return; if (error) throw error;
         ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
         if (!data.session) { setMode('in'); route(); info.textContent = 'Account created. Check your inbox to confirm your email, then sign in.'; info.hidden = false; }
       }
@@ -586,6 +589,13 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>
       <div class="m">${(extra && extra.meta || []).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  // The « + Add a notebook » card: its examples are the first three library notebooks not added yet; with none
+  // left, no count and no examples, only the custom notebook.
+  const addNotebookCard = rest => {
+    const ex = rest.slice(0, 3).map((t, i) => i ? t.title.charAt(0).toLowerCase() + t.title.slice(1) : t.title);
+    const hint = ex.length ? `${ex.join(', ')}… or one you describe yourself.` : 'Describe one yourself.';
+    return `<button type="button" class="tcard add" id="add-nb">${rest.length ? `<p class="eyebrow">${rest.length} more to pick from</p>` : ''}<h2>+ Add a notebook</h2><p>${esc(hint)}</p></button>`;
+  };
   const renderPortal = () => {
     $('portal').innerHTML = themes.map(t => {
       const list = sheets.filter(e => e.theme === t.id);
@@ -595,7 +605,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       return `<a class="tcard" href="#${esc(t.id)}" style="--t:${colorOf(t)}">
         <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
         ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
-    }).join('') + `<button type="button" class="tcard add" id="add-nb"><p class="eyebrow">${plural(library.filter(t => !themeById.has(t.id)).length, 'more to pick')}</p><h2>+ Add a notebook</h2><p>Kitesurf, cooking, pilates… or one you describe yourself.</p></button>`;
+    }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
     $('add-nb').addEventListener('click', () => { renderPicker(); $('picker').hidden = !$('picker').hidden; if (!$('picker').hidden) $('picker').scrollIntoView({block: 'start'}); });
   };
   const renderPicker = () => {
@@ -667,6 +677,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   };
   $('q').addEventListener('input', () => renderHome());
 
+  // A free Supabase project pauses after a week without use: on a self-hosted backend, say how to wake it.
+  const loadErrorText = () => `Could not load your sheets: ${loadError}` + (backend && backend.mode === 'own'
+    ? `${/[.!?]$/.test(loadError) ? '' : '.'} Your Supabase project may be paused: open your Supabase dashboard and restore it.` : '');
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null;
     $('h-crumb').hidden = !t;
@@ -675,7 +688,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('h-title').classList.toggle('brand-title', !t);
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);
-    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
+    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
     const terms = sheets.length ? searchTerms() : [];
     $('results').hidden = !terms.length;
@@ -731,7 +744,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       const st = d.status === 'processing' ? 'in progress' : d.status === 'error' ? 'needs a look' : 'queued';
       return `<div class="q"><div class="ico">${platformTag(host)}</div>
         <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
-        <small>added ${fmtDate(d.created_at)}${d.theme && themeById.has(d.theme) ? ' · ' + esc(themeById.get(d.theme).title) : ''}${d.note ? ' · ' + esc(d.note) : ''}</small></div>
+        <small>added ${fmtDate(d.created_at)}${d.theme && themeById.has(d.theme) ? ' · ' + esc(themeById.get(d.theme).title) : ''}</small>${d.note ? `<small class="why">${esc(d.note)}</small>` : ''}</div>
         <div style="display:flex;align-items:center;gap:4px"><span class="st">${st}</span><button type="button" data-del="${esc(d.id)}" aria-label="Remove from the queue" title="Remove">×</button></div></div>`;
     }).join('');
   };
@@ -775,7 +788,19 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     const routable = h => { let x = h.slice(1); try { x = decodeURIComponent(x); } catch {} const ses = RS.sessionSlugOf(x); return bySlug.has(x) || !!(ses && v2BySlug.has(ses)); };
     frag.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (h === '../index.html' || h === '../' || h === '#') a.setAttribute('href', '#'); else if (h.startsWith('#') && h.length > 1 && !routable(h)) a.setAttribute('href', `#${slug}`); });
     const wrap = document.createElement('div'); wrap.appendChild(frag);
-    cache.set(slug, wrap.innerHTML); return wrap.innerHTML;
+    const lang = sheetLang(data.html), out = lang ? `<div lang="${esc(lang)}">${wrap.innerHTML}</div>` : wrap.innerHTML;
+    cache.set(slug, out); return out;
+  };
+  // The language of a sheet, for screen readers and hyphenation (the app around it is English): the sheet's own
+  // <html lang> if it has one, else French when its text holds at least three distinct common French words,
+  // else none (the page's « en » applies).
+  const FR_WORDS = new Set(['le', 'la', 'les', 'des', 'du', 'un', 'une', 'et', 'avec', 'pour', 'dans', 'sur', 'est', 'au', 'aux', 'sans', 'puis', 'vers']);
+  const sheetLang = html => {
+    const src = String(html || ''), m = src.match(/<html\b[^>]*?\blang\s*=\s*["']?([A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)/i);
+    if (m) return m[1];
+    const text = src.replace(/<(style|script)\b[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]*>/g, ' ').toLowerCase();
+    const seen = new Set(text.split(/[^a-zàâäçéèêëîïôöùûüœ']+/).map(w => w.replace(/^[a-z]'/, '')).filter(w => FR_WORDS.has(w)));
+    return seen.size >= 3 ? 'fr' : '';
   };
   // A v2 session (v2 true) moves to another notebook on its own.
   const topNav = (e, v2 = false, bare = false) => {
@@ -815,9 +840,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       ${url || src.author ? `<p class="src">Video${src.author ? ` by ${esc(src.author)}` : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">Watch the video</a>` : ''}</p>` : ''}`;
   };
   // Edit mode of the shown v2 session (user and video alike): a draft saved in one update, items in full.
-  // Items whose sheet was deleted are not in the draft, so saving drops them.
+  // Items whose sheet was deleted are not in the draft, so saving drops them. `was` keeps each text as it was
+  // when Edit opened: saving clips only the texts the user changed (RS.keepOrClip).
   let edit = null;
-  const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose}))});
+  const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
+    items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose, was: it.dose}))});
   const editRows = () => edit.items.map((it, i) => {
     const sh = bySlug.get(it.slug), t = esc(sh ? sh.title : it.slug);
     return `<div class="row"><span class="k">${i + 1}</span><b>${t}</b><div class="ctl">
@@ -1025,7 +1052,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   const reorder = (i, d) => { edit.items = RS.moveItem(edit.items, i, d); renderRows(`[data-${d < 0 ? 'up' : 'down'}="${i + d}"]`); };
   const saveEdit = async () => {
     const s = v2BySlug.get(edit.slug), err = $('ed-err'), b = $('ed-save');
-    const row = {title: RS.clip(edit.title, RS.MAX.title), format: RS.clip(edit.format, RS.MAX.format), items: RS.cleanItems(edit.items)};
+    const row = {title: RS.keepOrClip(edit.title, edit.was.title, RS.MAX.title), format: RS.keepOrClip(edit.format, edit.was.format, RS.MAX.format), items: RS.cleanItems(edit.items)};
     if (!row.title) { err.textContent = 'Give the session a title.'; err.hidden = false; $('ed-title').focus(); return; }
     b.disabled = true; err.hidden = true;
     try {

@@ -47,8 +47,10 @@
   };
 
   // ---------- composition (S3): pure, the app saves what they return in one update ----------
-  // Free-text limits of a session: its title and format line, and an item's dose.
-  const MAX = {title: 80, format: 80, dose: 40};
+  // Free-text limits of a session: its title and format line, and an item's dose. Video sessions carry formats
+  // of up to ~210 characters and doses of up to ~55: the limits stay above them, so saving an edit never cuts
+  // a text the user did not touch. The Edit inputs carry the same `maxlength`.
+  const MAX = {title: 80, format: 240, dose: 60};
   const clip = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
 
   // The notes of a v2 session live in `notes` under « session/<slug> »: a sheet slug never holds a « / ».
@@ -86,10 +88,14 @@
   };
   const removeItem = (items, i) => items.filter((_, k) => k !== i);
 
-  // What Edit saves: {slug, dose} only, dose trimmed to its limit.
-  const cleanItems = items => itemsOf({items}).map(it => ({slug: it.slug, dose: clip(it.dose, MAX.dose)}));
+  // A text the user did not change in Edit is saved as it was, even past its limit (rb.py publish and the schema
+  // do not enforce the limits): only a text the user edited is trimmed and clipped.
+  const keepOrClip = (v, was, n) => (typeof was === 'string' && v === was) ? was : clip(v, n);
+
+  // What Edit saves: {slug, dose} only; `was` (the dose when Edit opened) keeps an untouched dose whole.
+  const cleanItems = items => itemsOf({items}).map(it => ({slug: it.slug, dose: keepOrClip(it.dose, it.was, MAX.dose)}));
 
   const api = {ROUTE, sessionHref, sessionSlugOf, missingTable, splitV1, resolveItems, sessionsBySheet,
-    MAX, clip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems};
+    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);
