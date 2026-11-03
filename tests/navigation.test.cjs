@@ -69,6 +69,20 @@ test('L17: an exercise opened from a session goes back to it; a group grid goes 
   assert.equal(page.element('nav-bar').hidden, true);
 });
 
+test('L17: Back with a link still in « Add a video » asks first, and the queued link keeps its notebook', async () => {
+  const page = await open('#strength');
+  await page.fire('add-video-fab');
+  page.element('f-url').value = url;
+  await page.fire('nav-back');
+  assert.equal(page.element('pending-dlg').open, true);
+  assert.equal(page.element('home').hidden, false);
+  assert.equal(page.element('nav-title').textContent, 'Strength', 'still on the notebook while it asks');
+  await page.fire('pd-queue'); await settle();
+  const insert = page.clients.at(-1).calls.find(call => call[0] === 'insert' && call[1] === 'requests');
+  assert.equal(insert[2].theme, 'strength');
+  assert.equal(page.element('nav-bar').hidden, true, 'then Back goes on, to home');
+});
+
 test('L17: « + Add a video » says which notebook the link goes to', async () => {
   const page = await open('#strength');
   await page.fire('add-video-fab');

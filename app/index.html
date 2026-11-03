@@ -1382,7 +1382,7 @@ dialog.nav-menu .actions{margin-top:12px}
   $('f-cancel').addEventListener('click', () => { discardDraft(); openForm(false); });
   document.addEventListener('click', ev => {
     const a = ev.target.closest && ev.target.closest('a[href^="#"]');
-    if (!a || !pendingUrl() || a.closest('dialog')) return;
+    if (!a || !pendingUrl() || a.closest('dialog') || a.id === 'nav-back') return; // L17: Back asks on its own
     ev.preventDefault();
     askPending(() => { location.hash = a.hash; });
   }, true);
@@ -2646,8 +2646,7 @@ dialog.nav-menu .actions{margin-top:12px}
     if (y == null) return false;
     window.scrollTo(0, y); return true;
   }
-  navBack.addEventListener('click', ev => {
-    ev.preventDefault();
+  const goUp = () => {
     const p = navPage(); if (!p) return;
     if (edit && editDirty() && !discardOk()) return;
     edit = null;
@@ -2655,6 +2654,11 @@ dialog.nav-menu .actions{margin-top:12px}
     if (H && st && st.prev === up && H.length > 1) { H.back(); return; }
     replacing = {i: navIndex == null ? 0 : navIndex, prev: st ? st.prev : null};
     if (typeof location.replace === 'function') location.replace('#' + up); else location.hash = up;
+  };
+  // A link still in « Add a video » (a notebook page): asked first, as for any link; Back waits for the answer.
+  navBack.addEventListener('click', ev => {
+    ev.preventDefault();
+    if (pendingUrl()) askPending(goUp); else goUp();
   });
   navMore.addEventListener('click', () => { paintMenu(); if (!navMenu.open) openSheet(navMenu); });
   const MENU = ['#ed-open', '#mv-open', '#as-open', '#wake', '#nav-report', '#sd-open', '#ses-delete', '#nav-close'];
