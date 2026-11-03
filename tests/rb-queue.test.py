@@ -137,12 +137,42 @@ class RequeueStuck(Base):
 
 
 class Queue(Base):
-    def test_queue_lines_carry_the_note(self):
-        fake = self.use([{"id": "r", "url": "https://ig/r", "status": "queued", "theme": "strength",
-                          "note": "Redo: correct the angle", "created_at": iso(1)}])
+    def use_queue(self, requests, sessions_table=True):
+        calls = []
+        def rest(cfg, method, path, data=None, prefer=None, params=None, tolerate=()):
+            calls.append((method, path, data, params or {}))
+            if path == "requests": return [dict(r) for r in requests]
+            if path == "sessions" and not sessions_table: raise rb.RbHTTPError(404, "no table")
+            hit = (params or {}).get("source->>url") == "eq.https://ig/r"
+            return ([{"slug": "gsp-angel"}, {"slug": "gsp-press"}] if path == "sheets" else [{"slug": "gsp"}]) if hit else []
+        rb.session, rb.rest = (lambda: CFG), rest
+        return calls
+
+    def test_queue_lines_carry_the_note_and_what_a_redo_republishes(self):
+        calls = self.use_queue([{"id": "r", "url": "https://ig/r", "theme": "strength", "note": "Redo: correct the angle", "created_at": iso(1)},
+                                {"id": "s", "url": "https://ig/s", "theme": None, "note": None, "created_at": iso(1)}])
         out, _ = self.run_cmd(rb.cmd_queue, [])
-        self.assertIn("note", fake.calls[0][3]["select"].split(","))
-        self.assertEqual(json.loads(out.strip())["note"], "Redo: correct the angle")
+        self.assertIn("note", calls[0][3]["select"].split(","))
+        redo, plain = [json.loads(line) for line in out.strip().split("\n")]
+        self.assertEqual(redo["note"], "Redo: correct the angle")
+        self.assertEqual(redo["redo_of"], {"sheets": ["gsp-angel", "gsp-press"], "sessions": ["gsp"]})
+        self.assertNotIn("redo_of", plain)
+        self.assertEqual(len(calls), 3, "only a Redo request looks up its published pages")
+
+    def test_redo_on_a_backend_without_sessions(self):
+        self.use_queue([{"id": "r", "url": "https://ig/r", "note": "Redo: x", "created_at": iso(1)}], sessions_table=False)
+        out, _ = self.run_cmd(rb.cmd_queue, [])
+        self.assertEqual(json.loads(out)["redo_of"]["sessions"], [])
+
+    def test_error_keeps_the_redo_line_first(self):
+        fake = self.use([{"id": "r", "status": "processing", "note": "Redo: correct the angle"},
+                         {"id": "p", "status": "processing", "note": None}])
+        self.run_cmd(rb.cmd_error, ["r", "--note", "Video", "unavailable"])
+        self.run_cmd(rb.cmd_error, ["p", "--note", "Video unavailable"])
+        by_id = {r["id"]: r for r in fake.requests}
+        self.assertEqual(by_id["r"]["note"], "Redo: correct the angle\nVideo unavailable")
+        self.assertEqual(by_id["p"]["note"], "Video unavailable")
+        self.assertEqual(by_id["r"]["status"], "error")
 
 
 class ListSince(Base):

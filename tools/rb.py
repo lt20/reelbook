@@ -5,12 +5,15 @@
     rb.py whoami                show the signed-in account and backend
     rb.py themes                list the account's notebooks (id, title, description, groups), JSON lines
     rb.py queue                 list queued requests (JSON lines: id, url, theme, note, created_at); a note that
-                                starts with « Redo: » is a correction asked from the app (« Something wrong? »)
+                                starts with « Redo: » is a correction asked from the app (« Something wrong? »):
+                                its line also has redo_of, {"sheets": [slugs], "sessions": [slugs]} published
+                                from that URL (source.url), the slugs to publish over
     rb.py claim <id>            mark a request as processing (processed_at = claim time until done/error)
     rb.py publish <dir>         sheet folder: upload <dir>/img/* and upsert the sheet (<dir>/meta.json + <dir>/index.html)
                                 session folder: publish each exercise sheet sub-folder, then upsert the session
     rb.py done <id> --slug S    close a request once its sheet or session is published
-    rb.py error <id> --note T   flag a request that could not be processed
+    rb.py error <id> --note T   flag a request that could not be processed (a « Redo: » note keeps its first
+                                line, T goes after it: Retry in the app queues the correction again)
     rb.py list [--since ISO]    list published sheets and sessions; --since: only those added at or after ISO
                                 (UTC, e.g. 2026-11-03T02:00:00Z), oldest first, without the exercise sheets of a
                                 session listed too (used by nightly.sh for its « 2 new sheets: … » notice)
@@ -147,9 +150,21 @@ def cmd_queue(args):
     cfg = session()
     rows = rest(cfg, "GET", "requests", params={"status": "eq.queued", "order": "created_at.asc", "select": "id,url,theme,note,created_at"})
     for r in rows or []:
+        if (r.get("note") or "").startswith("Redo:"):
+            r["redo_of"] = _published_from(cfg, r["url"])
         print(json.dumps(r, ensure_ascii=False))
     if not rows:
         print("queue is empty", file=sys.stderr)
+
+def _published_from(cfg, url):
+    """The sheets and sessions whose source.url is `url`: what a « Redo: » request republishes (same slugs)."""
+    q = {"select": "slug", "source->>url": f"eq.{url}"}
+    out = {"sheets": [r["slug"] for r in rest(cfg, "GET", "sheets", params=dict(q)) or []], "sessions": []}
+    try:
+        out["sessions"] = [r["slug"] for r in rest(cfg, "GET", "sessions", params=dict(q), tolerate=(404,)) or []]
+    except RbHTTPError:
+        pass
+    return out
 
 def _patch_request(cfg, rid, patch, expect=None):
     params = {"id": f"eq.{rid}"}
@@ -169,7 +184,12 @@ def cmd_done(args):
 
 def cmd_error(args):
     if len(args) < 3 or args[1] != "--note": die("usage: rb.py error <id> --note <text>")
-    _patch_request(session(), args[0], {"status": "error", "note": " ".join(args[2:]), "processed_at": now()})
+    cfg, note = session(), " ".join(args[2:])
+    # a correction keeps its « Redo: … » line first: the app shows the error, and Retry queues the instruction again
+    was = rest(cfg, "GET", "requests", params={"id": f"eq.{args[0]}", "select": "note"}) or []
+    redo = str((was[0].get("note") if was else "") or "").split("\n")[0]
+    if redo.startswith("Redo:"): note = f"{redo}\n{note}"
+    _patch_request(cfg, args[0], {"status": "error", "note": note, "processed_at": now()})
 
 def now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -409,7 +429,7 @@ def cmd_requeue_stuck(args):
         n += 1
         if not dry:
             # a correction keeps its « Redo: … » note: it is the instruction the next run applies
-            note = r.get("note") or ""
+            note = str(r.get("note") or "").split("\n")[0]
             if not note.startswith("Redo:"): note = f"requeued after a run stopped mid-way ({str(stamp)[:16]})"
             # status=eq.processing in the filter: a request closed meanwhile is left alone
             rest(cfg, "PATCH", "requests", {"status": "queued", "processed_at": None, "note": note},

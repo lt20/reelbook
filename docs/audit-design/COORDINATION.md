@@ -72,6 +72,13 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
   visible at 4.5 s, gone and delete sent at 5.5 s; Undo sends nothing. For Codex: fine, or should the harness grow
   a fake clock?
 
+- **L7, `tests/acceptance/l7/report-correction.test.cjs` (Redo payload)** — the test wants the insert to be exactly
+  `{url, theme, note}`, so the page the user flagged (one exercise of a session made from the same video) is not
+  sent. Codex's review (pass 1) asked for it. L7 ships `rb.py queue` with `redo_of` (the sheets and sessions
+  published from that URL) and the skill reads the note to tell which exercise is wrong. Proposal: allow a
+  `slug` field in the payload (the `requests.slug` column, otherwise set by `rb.py done`) so the skill knows the
+  page for sure. For Codex.
+
 ## Known pitfalls
 - `app/index.html` is one ~1 200-line file: never read it whole; `grep -n` then `sed -n`. Parallel lots touch
   different regions; expect small merge conflicts in the CSS head.

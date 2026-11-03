@@ -34,9 +34,12 @@ titles follow the template, translated.
 - **A `note` that starts with « Redo: » is a correction** the user asked from the app (« Something
   wrong? » under a sheet or session): that video is already published. Apply the instruction after
   « Redo: », and keep the **same slug** so that publishing overwrites the old sheet (a session: the
-  same session slug and the same exercise slugs). Find it in `python3 tools/rb.py list`; the request's
-  `theme` is then the notebook the sheet is in now: keep it, and keep its group. Start from
-  `work/<slug>/` when the earlier run left it, and change only what the note asks. In the
+  same session slug and the same exercise slugs). Its queue line has `redo_of`: the sheets and
+  sessions published from that video (`source.url`), the slugs to publish over; when the video made a
+  session, the note says which exercise is wrong, and the others stay as they are. The request's
+  `theme` is the notebook the page is in now: keep it, and keep the group (`rb.py list`). Start from
+  `work/<slug>/` when the earlier run left it, and change only what the note asks. `rb.py error`
+  keeps the « Redo: » line, so the user can retry it from the app. In the
   end-of-run report, list the sheets redone and what changed in each.
 - `python3 tools/rb.py claim <id>` before starting.
 
