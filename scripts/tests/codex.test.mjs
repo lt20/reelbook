@@ -159,7 +159,7 @@ test('planAcceptanceFiles : seulement des tests, seulement sous le dossier cible
   const ok = planAcceptanceFiles(
     JSON.stringify({
       fichiers: [
-        { chemin: 'liste.test.tsx', contenu: 'test()' },
+        { chemin: 'liste.test.cjs', contenu: 'test()' },
         { chemin: 'flows/smoke.yaml', contenu: 'appId: x' },
         { chemin: 'README.md', contenu: '# x' },
       ],
@@ -171,7 +171,7 @@ test('planAcceptanceFiles : seulement des tests, seulement sous le dossier cible
   assert.equal(ok.ok, true, ok.erreurs.join('\n'));
   assert.deepEqual(
     ok.fichiers.map((f) => f.rel),
-    ['liste.test.tsx', 'flows/smoke.yaml', 'README.md'],
+    ['liste.test.cjs', 'flows/smoke.yaml', 'README.md'],
   );
 
   const bad = planAcceptanceFiles(
@@ -180,7 +180,7 @@ test('planAcceptanceFiles : seulement des tests, seulement sous le dossier cible
         { chemin: '../../src/screens/Home.tsx', contenu: 'x' },
         { chemin: '/etc/passwd', contenu: 'x' },
         { chemin: 'helpers.ts', contenu: 'x' },
-        { chemin: 'a/../../b.test.ts', contenu: 'x' },
+        { chemin: 'a/../../b.test.cjs', contenu: 'x' },
       ],
       notes: '',
     }),
@@ -188,14 +188,19 @@ test('planAcceptanceFiles : seulement des tests, seulement sous le dossier cible
     { exists: never },
   );
   assert.equal(bad.ok, false);
-  assert.equal(bad.erreurs.length, 4);
+  // 4 chemins refusés + « aucun test node:test » (rien d'exécutable ne reste)
+  assert.equal(bad.erreurs.length, 5);
+  // Reelbook : un README seul (ou un YAML seul) n'est pas un jeu de tests d'acceptation
+  const docOnly = planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'README.md', contenu: 'x' }], notes: '' }), out, { exists: never });
+  assert.equal(docOnly.ok, false);
+  assert.match(docOnly.erreurs.join('\n'), /aucun test node:test/);
 
-  const exists = planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'x.test.ts', contenu: '' }], notes: '' }), out, {
+  const exists = planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'x.test.cjs', contenu: '' }], notes: '' }), out, {
     exists: () => true,
   });
   assert.equal(exists.ok, false);
   assert.match(exists.erreurs[0], /--force/);
-  const forced = planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'x.test.ts', contenu: '' }], notes: '' }), out, {
+  const forced = planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'x.test.cjs', contenu: '' }], notes: '' }), out, {
     exists: () => true,
     force: true,
   });
@@ -205,15 +210,15 @@ test('planAcceptanceFiles : seulement des tests, seulement sous le dossier cible
   const real = mkdtempSync(join(tmpdir(), 'acc-real-'));
   const ailleurs = mkdtempSync(join(tmpdir(), 'acc-ailleurs-'));
   symlinkSync(ailleurs, join(real, 'lien'));
-  const sym = planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'lien/x.test.ts', contenu: '' }], notes: '' }), real);
+  const sym = planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'lien/x.test.cjs', contenu: '' }], notes: '' }), real);
   assert.equal(sym.ok, false);
   assert.match(sym.erreurs[0], /lien symbolique/);
   mkdirSync(join(real, 'vrai'));
-  assert.equal(planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'vrai/x.test.ts', contenu: '' }], notes: '' }), real).ok, true);
+  assert.equal(planAcceptanceFiles(JSON.stringify({ fichiers: [{ chemin: 'vrai/x.test.cjs', contenu: '' }], notes: '' }), real).ok, true);
 
   // un saut de ligne dans un chemin fabriquerait un second chemin pour --commit
   const nl = planAcceptanceFiles(
-    JSON.stringify({ fichiers: [{ chemin: 'a.test.ts\n../../src/Home.tsx', contenu: '' }], notes: '' }),
+    JSON.stringify({ fichiers: [{ chemin: 'a.test.cjs\n../../src/Home.tsx', contenu: '' }], notes: '' }),
     out,
     { exists: never },
   );
@@ -244,20 +249,20 @@ test('CLI : parse rend le code de sortie, acceptance-files écrit sous la cible'
   assert.equal(r.stdout.trim(), 'protegee');
 
   const target = join(dir, 'acc');
-  writeFileSync(f, JSON.stringify({ fichiers: [{ chemin: 'a/b.test.ts', contenu: 'x' }], notes: '' }));
+  writeFileSync(f, JSON.stringify({ fichiers: [{ chemin: 'a/b.test.cjs', contenu: 'x' }], notes: '' }));
   r = spawnSync(process.execPath, [CLI, 'acceptance-files', f, target], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.equal(readFileSync(join(target, 'a/b.test.ts'), 'utf8'), 'x\n');
+  assert.equal(readFileSync(join(target, 'a/b.test.cjs'), 'utf8'), 'x\n');
   // deuxième passage sans --force : refusé, rien écrasé
-  writeFileSync(f, JSON.stringify({ fichiers: [{ chemin: 'a/b.test.ts', contenu: 'y' }], notes: '' }));
+  writeFileSync(f, JSON.stringify({ fichiers: [{ chemin: 'a/b.test.cjs', contenu: 'y' }], notes: '' }));
   r = spawnSync(process.execPath, [CLI, 'acceptance-files', f, target], { encoding: 'utf8' });
   assert.equal(r.status, 1);
-  assert.equal(readFileSync(join(target, 'a/b.test.ts'), 'utf8'), 'x\n');
+  assert.equal(readFileSync(join(target, 'a/b.test.cjs'), 'utf8'), 'x\n');
   // un chemin hors cible ne crée rien
-  writeFileSync(f, JSON.stringify({ fichiers: [{ chemin: '../evil.test.ts', contenu: 'z' }], notes: '' }));
+  writeFileSync(f, JSON.stringify({ fichiers: [{ chemin: '../evil.test.cjs', contenu: 'z' }], notes: '' }));
   r = spawnSync(process.execPath, [CLI, 'acceptance-files', f, target], { encoding: 'utf8' });
   assert.equal(r.status, 1);
-  assert.equal(existsSync(join(dir, 'evil.test.ts')), false);
+  assert.equal(existsSync(join(dir, 'evil.test.cjs')), false);
 });
 
 test('pr-verdict en CLI lit le JSON de gh sur stdin', () => {

@@ -213,8 +213,15 @@ export function diffFiles(text) {
   };
   const unquote = (p) => (p.startsWith('"') && p.endsWith('"') ? p.slice(1, -1) : p);
   let cur = null;
+  // A rename (or a move with edits) lists both paths: the source path decides the zone too
+  // (renaming supabase/schema.sql away must still be a protected-zone review).
   const flush = () => {
-    if (cur) add(cur.plus || cur.renameTo || cur.minus || cur.header);
+    if (cur) {
+      const to = cur.plus || cur.renameTo || cur.minus || cur.header;
+      add(to);
+      const from = cur.renameFrom || cur.minus;
+      if (from && from !== to) add(from);
+    }
     cur = null;
   };
   for (const line of String(text || '').split('\n')) {
@@ -229,13 +236,15 @@ export function diffFiles(text) {
         const right = rest.slice(n + 1);
         if (left.startsWith('a/') && right.startsWith('b/') && left.slice(2) === right.slice(2)) header = right.slice(2);
       }
-      cur = { header, plus: '', minus: '', renameTo: '' };
+      cur = { header, plus: '', minus: '', renameTo: '', renameFrom: '' };
     } else if (cur && line.startsWith('+++ ')) {
       const p = unquote(line.slice(4));
       if (p.startsWith('b/')) cur.plus = p.slice(2);
     } else if (cur && line.startsWith('--- ')) {
       const p = unquote(line.slice(4));
       if (p.startsWith('a/')) cur.minus = p.slice(2);
+    } else if (cur && line.startsWith('rename from ')) {
+      cur.renameFrom = line.slice('rename from '.length);
     } else if (cur && line.startsWith('rename to ')) {
       cur.renameTo = line.slice('rename to '.length);
     }
@@ -316,6 +325,11 @@ export function planAcceptanceFiles(output, outDir, { force = false, exists = ex
       continue;
     }
     fichiers.push({ rel, target, contenu: String(f?.contenu ?? '') });
+  }
+  // Reelbook : le contrat d'un lot, ce sont des tests `node:test` exécutables (*.test.cjs|mjs|js) ;
+  // une proposition faite seulement d'un README ou d'un YAML ne vaut pas tests d'acceptation.
+  if (files.length > 0 && !fichiers.some((f) => /\.test\.[cm]?js$/.test(f.rel))) {
+    erreurs.push('aucun test node:test (*.test.cjs) dans la proposition');
   }
   return { ok: erreurs.length === 0, erreurs, fichiers, notes: typeof data?.notes === 'string' ? data.notes : '' };
 }

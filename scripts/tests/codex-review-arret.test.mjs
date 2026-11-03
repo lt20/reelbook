@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { countReviewPasses, diffFiles, renderComment, MAX_PASSES } from '../lib/codex.mjs';
+import { countReviewPasses, diffFiles, renderComment, zoneOf, MAX_PASSES } from '../lib/codex.mjs';
 
 const SCRIPTS = fileURLToPath(new URL('..', import.meta.url));
 const temps = [];
@@ -246,7 +246,12 @@ test('diffFiles : modifié, supprimé, renommé, binaire, espaces', () => {
     'diff --git a/img/x y.png b/img/x y.png',
     'Binary files a/img/x y.png and b/img/x y.png differ',
   ].join('\n');
-  assert.deepEqual(diffFiles(diff), ['a.ts', 'gone.sql', 'new.md', 'img/x y.png']);
+  assert.deepEqual(diffFiles(diff), ['a.ts', 'gone.sql', 'new.md', 'old.md', 'img/x y.png']);
+  // renaming a protected file away keeps the review in the protected zone
+  const away = ['diff --git a/supabase/schema.sql b/docs/schema.sql', 'similarity index 100%',
+    'rename from supabase/schema.sql', 'rename to docs/schema.sql'].join('\n');
+  assert.deepEqual(diffFiles(away), ['docs/schema.sql', 'supabase/schema.sql']);
+  assert.equal(zoneOf(diffFiles(away)), 'protegee');
   assert.deepEqual(diffFiles(''), []);
 });
 

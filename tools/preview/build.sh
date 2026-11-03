@@ -25,6 +25,16 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$out" ] || { echo "usage: build.sh <out-dir> [--work <dir>]" >&2; exit 2; }
 
+# The output never lives in the repository: a --work build holds Laurent's sheets (fake-data.js,
+# links to their photos), which must not be committed by accident. Checked on the physical path
+# of the nearest existing ancestor, before anything is created or deleted.
+anc="$out"
+while [ ! -d "$anc" ]; do anc="$(dirname "$anc")"; done
+anc_abs="$(cd "$anc" && pwd -P)"
+case "$anc_abs/" in
+  "$root/"*) echo "refusing to build inside the repository ($root): use a folder outside it (the scratchpad)" >&2; exit 2 ;;
+esac
+
 if [ -e "$out" ]; then
   [ -d "$out" ] || { echo "not a folder: $out" >&2; exit 2; }
   if [ -n "$(ls -A "$out")" ] && [ ! -f "$out/.reelbook-preview" ]; then

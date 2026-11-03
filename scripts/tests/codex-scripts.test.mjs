@@ -168,7 +168,7 @@ test('codex-acceptance.sh : écrit sous la cible (espaces compris), maquette joi
 
   fake.reply({
     fichiers: [
-      { chemin: 'liste.test.tsx', contenu: "test('critère 1', () => {});" },
+      { chemin: 'liste.test.cjs', contenu: "test('critère 1', () => {});" },
       { chemin: 'flows/smoke.yaml', contenu: 'appId: guide.paul' },
     ],
     notes: '',
@@ -180,7 +180,7 @@ test('codex-acceptance.sh : écrit sous la cible (espaces compris), maquette joi
     encoding: 'utf8',
   });
   assert.equal(res.status, 0, res.stderr);
-  assert.equal(readFileSync(join(r.dir, out, 'liste.test.tsx'), 'utf8'), "test('critère 1', () => {});\n");
+  assert.equal(readFileSync(join(r.dir, out, 'liste.test.cjs'), 'utf8'), "test('critère 1', () => {});\n");
   assert.ok(existsSync(join(r.dir, out, 'flows/smoke.yaml')));
   assert.equal(readFileSync(join(r.dir, 'apps/mobile/src/Home.tsx'), 'utf8'), 'prod\n');
 
@@ -190,7 +190,7 @@ test('codex-acceptance.sh : écrit sous la cible (espaces compris), maquette joi
   // séparé ne contient que les tests :
   const log = r.git('log', '-1', '--name-only', '--format=%s');
   assert.match(log, /^test\(acceptance\): S1-A/);
-  assert.match(log, /__acceptance__\/s1 a\/liste\.test\.tsx/);
+  assert.match(log, /__acceptance__\/s1 a\/liste\.test\.cjs/);
   assert.doesNotMatch(log, /Home\.tsx/);
 
   // une proposition hors cible ne touche pas au code de prod
@@ -209,7 +209,7 @@ test('codex-acceptance.sh : une maquette PNG citée est jointe en image', () => 
   const r = repo();
   r.write('design/s1/liste.png', 'png');
   r.write('docs/s1/S1-B.md', '# S1-B\nMaquette : design/s1/liste.png et design/s1/absente.png\n');
-  fake.reply({ fichiers: [{ chemin: 'b.test.ts', contenu: 'x' }], notes: '' });
+  fake.reply({ fichiers: [{ chemin: 'b.test.cjs', contenu: 'x' }], notes: '' });
   const res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/s1/S1-B.md', '--out', 'acc'], {
     cwd: r.dir,
     env: fake.env(),
@@ -231,7 +231,7 @@ test('codex-acceptance.sh : un --out lien symbolique vers l’extérieur du dép
   r.write('docs/spec.md', '# Spec\n');
   const dehors = tmp('dehors-');
   symlinkSync(dehors, join(r.dir, 'lien'));
-  fake.reply({ fichiers: [{ chemin: 'x.test.ts', contenu: 'x' }], notes: '' });
+  fake.reply({ fichiers: [{ chemin: 'x.test.cjs', contenu: 'x' }], notes: '' });
   const res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/spec.md', '--out', 'lien/acc'], {
     cwd: r.dir,
     env: fake.env(),
@@ -246,7 +246,7 @@ test('codex-acceptance.sh : un --out avec « .. » est refusé avant toute créa
   const fake = fakeCodex();
   const r = repo();
   r.write('docs/spec.md', '# Spec\n');
-  fake.reply({ fichiers: [{ chemin: 'x.test.ts', contenu: 'x' }], notes: '' });
+  fake.reply({ fichiers: [{ chemin: 'x.test.cjs', contenu: 'x' }], notes: '' });
   const nom = `hors-depot-${Date.now()}`;
   const res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/spec.md', '--out', `nouveau/../../${nom}`], {
     cwd: r.dir,
@@ -263,7 +263,7 @@ test('codex-acceptance.sh : un --out avec un caractère de contrôle est refusé
   const fake = fakeCodex();
   const r = repo();
   r.write('docs/spec.md', '# Spec\n');
-  fake.reply({ fichiers: [{ chemin: 'x.test.ts', contenu: 'x' }], notes: '' });
+  fake.reply({ fichiers: [{ chemin: 'x.test.cjs', contenu: 'x' }], notes: '' });
   for (const out of ['foo\n', 'foo\nbar', 'foo\tbar', 'foo\rbar', 'foo\x7fbar']) {
     const res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/spec.md', '--out', out, '--commit'], {
       cwd: r.dir,
