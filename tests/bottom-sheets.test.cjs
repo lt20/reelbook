@@ -82,6 +82,29 @@ test('« Something wrong? » opens without focusing the text field; once sent, t
   assert.equal(dlg.open, false);
 });
 
+test('a sheet stays open while its write runs (no backdrop, no Escape), so its error shows in it', async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const hold = (table, ops) => table === 'sessions' && ops.some(o => o[0] === 'delete') ? gate.then(() => ({data: null, error: {message: 'offline'}})) : null;
+  const page = await app({...signedIn, tables: tables(), hash: '#session/backroll', hold}); await settle();
+  const dlg = page.element('del-dlg');
+  clickView(page, '#ed-open');
+  clickView(page, '#ed-delete');
+  assert.equal(dlg.open, true);
+  const running = page.element('del-ok').listeners.click();
+  await settle();
+  dlg.listeners.click({target: dlg});
+  assert.equal(dlg.open, true, 'a tap outside waits for the delete');
+  let prevented = false;
+  dlg.listeners.cancel({preventDefault: () => { prevented = true; }});
+  assert.equal(prevented, true, 'Escape waits too');
+  release(); await running; await settle();
+  assert.equal(dlg.open, true);
+  assert.equal(page.element('del-err').hidden, false);
+  dlg.listeners.click({target: dlg});
+  assert.equal(dlg.open, false, 'once it failed, the backdrop closes it again');
+});
+
 test('« New session » opens without focusing the title field', async () => {
   const page = await app({...signedIn, tables: tables(), hash: '#strength'}); await settle();
   let focused = false;

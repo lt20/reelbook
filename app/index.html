@@ -726,9 +726,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   // Every dialog.dlg opens with openSheet and closes with closeSheet (the photo viewer stays a full-screen dialog of
   // its own). Under 600 px wide the CSS anchors it at the bottom of the screen; wider, it stays a centred dialog.
   // A tap on the backdrop closes it, unless something was typed, ticked or picked in it since it opened
-  // (sheetSaved clears that once it is sent). --vvh and --kb follow the visual viewport, so a sheet stays above
+  // (sheetSaved clears that once it is sent), or one of its writes is still running (whileBusy: no backdrop, no
+  // Escape, so its result or its error is shown in the sheet). --vvh and --kb follow the visual viewport, so a sheet stays above
   // the on-screen keyboard. Guarded for the test harness: no showModal / close, no visualViewport, no layout.
-  const sheetWired = new WeakSet(), sheetDirty = new WeakSet();
+  const sheetWired = new WeakSet(), sheetDirty = new WeakSet(), sheetBusy = new WeakSet();
   const fitViewport = () => {
     const vv = window.visualViewport, st = document.documentElement && document.documentElement.style; if (!vv || !st) return;
     st.setProperty('--vvh', Math.round(vv.height) + 'px');
@@ -752,13 +753,16 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     if (!sheetWired.has(dlg) && dlg.addEventListener) {
       sheetWired.add(dlg);
       dlg.addEventListener('input', () => sheetDirty.add(dlg));
-      dlg.addEventListener('click', ev => { if (!sheetDirty.has(dlg) && onBackdrop(dlg, ev)) closeSheet(dlg); });
+      dlg.addEventListener('click', ev => { if (!sheetDirty.has(dlg) && !sheetBusy.has(dlg) && onBackdrop(dlg, ev)) closeSheet(dlg); });
+      dlg.addEventListener('cancel', ev => { if (sheetBusy.has(dlg) && ev.preventDefault) ev.preventDefault(); });
     }
     fitViewport();
     if (typeof dlg.showModal === 'function') dlg.showModal();
     else { dlg.open = true; if (dlg.setAttribute) dlg.setAttribute('open', ''); }
   };
   const sheetSaved = dlg => { sheetDirty.delete(dlg); };
+  // A dialog's write handler: the sheet stays open until it ends (called synchronously, so preventDefault works).
+  const whileBusy = (dlg, fn) => async (...a) => { sheetBusy.add(dlg); try { return await fn(...a); } finally { sheetBusy.delete(dlg); } };
 
   // ---------- backend selection ----------
   const hostedOk = !!(CFG.hosted && CFG.hosted.url && CFG.hosted.anonKey);
@@ -1312,11 +1316,11 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const closePending = () => closeSheet(dlg);
   $('pd-stay').addEventListener('click', () => { closePending(); $('f-url').focus(); });
   $('pd-discard').addEventListener('click', () => { closePending(); discardDraft(); afterPending(); });
-  $('pd-queue').addEventListener('click', async () => {
+  $('pd-queue').addEventListener('click', whileBusy(dlg, async () => {
     $('pd-queue').disabled = true;
     try { if (await queueLink()) { closePending(); afterPending(); } else { $('pd-err').textContent = $('f-err').textContent; $('pd-err').hidden = false; } }
     finally { $('pd-queue').disabled = false; }
-  });
+  }));
   // « + Add a video » with a link still in the field would drop it: ask first, then open a fresh form.
   btn.addEventListener('click', () => {
     if (pendingUrl()) askPending(() => openForm(true), 'Queue it, then add another');
@@ -1844,7 +1848,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const ta = $('report-note'), send = $('report-send'), st = $('report-status');
     ta.addEventListener('input', () => { send.disabled = !ta.value.trim(); });
     $('report-cancel').addEventListener('click', () => closeSheet(rdlg));
-    send.addEventListener('click', async () => {
+    send.addEventListener('click', whileBusy(rdlg, async () => {
       const text = ta.value.replace(/\s+/g, ' ').trim(); if (!text) return; // one line: see redoLine
       send.disabled = true; st.className = 'status'; st.textContent = 'Sending…';
       try {
@@ -1852,7 +1856,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
         ta.value = ''; sheetSaved(rdlg); st.textContent = 'Sent. Claude will redo this sheet on the next run.'; $('report-cancel').textContent = 'Close';
         refreshQueue();
       } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
-    });
+    }));
     openSheet(rdlg);
   };
 
@@ -2251,7 +2255,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
   };
-  $('mv-form').addEventListener('submit', async ev => {
+  $('mv-form').addEventListener('submit', whileBusy(mdlg, async ev => {
     ev.preventDefault();
     const s = shownSession(); if (s) { await moveSession(s); return; }
     const e = bySlug.get(shown); if (!e) { closeSheet(mdlg); return; }
@@ -2269,7 +2273,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
       if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
-  });
+  }));
 
   // ---------- compose sessions: « + New session », « Add to session », Edit mode, delete ----------
   // Every write checks it changed a row: RLS answers an empty result, not an error, for a row it hides.
@@ -2309,7 +2313,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   $('ns-title').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); $('ns-q').focus(); } });
   $('ns-q').addEventListener('keydown', ev => { if (ev.key === 'Enter') ev.preventDefault(); });
   $('ns-cancel').addEventListener('click', () => closeSheet(ndlg));
-  $('ns-form').addEventListener('submit', async ev => {
+  $('ns-form').addEventListener('submit', whileBusy(ndlg, async ev => {
     ev.preventDefault();
     const title = RS.clip($('ns-title').value, RS.MAX.title), err = $('ns-err');
     const fail = (m, el) => { err.textContent = m; err.hidden = false; if (el) el.focus(); };
@@ -2321,7 +2325,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
       closeSheet(ndlg); edit = draftOf(s); location.hash = RS.sessionHref(s.slug);
     } catch { fail('Could not create it right now. Try again in a moment.'); }
     finally { $('ns-submit').disabled = false; }
-  });
+  }));
 
   // « Add to session » (simple sheet page): any session, grouped by notebook, or a new one in the sheet's notebook.
   const NEW_SESSION = '__new_session__';
@@ -2340,7 +2344,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   };
   $('as-session').addEventListener('change', () => { syncNewSession(); if ($('as-session').value === NEW_SESSION) $('as-new').focus(); });
   $('as-cancel').addEventListener('click', () => closeSheet(adlg));
-  $('as-form').addEventListener('submit', async ev => {
+  $('as-form').addEventListener('submit', whileBusy(adlg, async ev => {
     ev.preventDefault();
     const e = bySlug.get(shown), v = $('as-session').value, err = $('as-err'); if (!e) { closeSheet(adlg); return; }
     const fail = (m, el) => { err.textContent = m; err.hidden = false; if (el) el.focus(); };
@@ -2358,7 +2362,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
       if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Added to <a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>.</p>`;
     } catch { fail('Could not add it right now. Try again in a moment.'); }
     finally { $('as-submit').disabled = false; }
-  });
+  }));
 
   // Edit mode: reorder, dose, format, title, remove an item; one update with the items in full.
   const reorder = (i, d) => { edit.items = RS.moveItem(edit.items, i, d); renderRows(`[data-${d < 0 ? 'up' : 'down'}="${i + d}"]`); };
@@ -2383,7 +2387,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const ddlg = $('del-dlg');
   const openDelete = () => { const s = shownSession(); if (!s) return; $('del-name').textContent = s.title; $('del-err').hidden = true; openSheet(ddlg); };
   $('del-cancel').addEventListener('click', () => closeSheet(ddlg));
-  $('del-ok').addEventListener('click', async () => {
+  $('del-ok').addEventListener('click', whileBusy(ddlg, async () => {
     const s = shownSession(), err = $('del-err'), b = $('del-ok'); if (!s) { closeSheet(ddlg); return; }
     b.disabled = true; err.hidden = true;
     try {
@@ -2393,7 +2397,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
       location.hash = s.theme;
     } catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; }
     finally { b.disabled = false; }
-  });
+  }));
   // Delete a sheet: the row, then its images and its note. A session that lists it
   // keeps the item, which resolveItems skips: republishing the same video brings the sheet back in it.
   const sdlg = $('sd-dlg');
@@ -2407,7 +2411,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('sd-err').hidden = true; openSheet(sdlg);
   };
   $('sd-cancel').addEventListener('click', () => closeSheet(sdlg));
-  $('sd-ok').addEventListener('click', async () => {
+  $('sd-ok').addEventListener('click', whileBusy(sdlg, async () => {
     const e = shownSheet(), err = $('sd-err'), b = $('sd-ok'); if (!e) { closeSheet(sdlg); return; }
     // Signed out or another account after an await: nothing is removed from the catalogue shown, nothing saved.
     const client = sb, uid = user.id, gone = () => sb !== client || !user || user.id !== uid;
@@ -2429,7 +2433,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     b.disabled = false; closeSheet(sdlg);
     flashHome('Sheet deleted.');
     location.hash = e.theme;
-  });
+  }));
   view.addEventListener('click', ev => {
     const at = sel => ev.target.closest(sel);
     let b;
