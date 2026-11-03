@@ -18,8 +18,8 @@ fight, kitesurf, cooking, pilates…) and **custom ones** the user described the
 needs a `theme` from that list and a `group`: use the notebook's groups when it has some, else
 create a short, reusable group name (custom notebooks start with none). If no notebook fits at
 all, do not invent one: publish in the closest and tell the user, who can add a notebook in the
-app. Routes in the app: `#` portal, `#<theme>`, `#<slug>` (`#<slug>~<anchor>` only for the old
-one-page sessions, which section 3 bis no longer writes).
+app. Routes in the app: `#` portal, `#<theme>`, `#<slug>` for a sheet, `#session/<slug>` for a
+session (`#<slug>~<anchor>` only for the old one-page sessions, which section 3 bis no longer writes).
 
 **Language**: write the sheet in the user's language (the one they talk to you in). Section
 titles follow the template, translated.
@@ -199,7 +199,8 @@ titles follow the template, translated.
   `supabase/schema.sql` on their project (`docs/own-supabase.md`); say so and flag the request
   with `rb.py error`. Reprocessing a video rewrites its session: changes made to it in the app
   (order, doses, removed items) are lost.
-- Check in the app (Chrome): open `<app url>#<slug>` (for a session, each exercise sheet).
+- Check in the app (Chrome): open `<app url>#<slug>` (for a session, `<app url>#session/<slug>`, then
+  each exercise sheet from it).
 - `python3 tools/rb.py done <id> --slug <slug>` (a session: its slug). On failure:
   `rb.py error <id> --note "<why>"`.
 - Give the user the sheet link (a session: the links of its exercise sheets). Then take the next
