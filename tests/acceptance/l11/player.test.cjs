@@ -42,7 +42,6 @@ const writes = page => page.clients.at(-1).calls.filter(c => c[0] === 'insert' &
   assert.doesNotMatch(boxes(screen(page))[0], /\bchecked\b/);
   const stored = Object.fromEntries(page.storage);
   const sameUser = await open(items, {stored});
-  await click(sameUser, 'play-next');
   sameUser.go('#session/routine/play/1'); await settle();
   assert.match(boxes(screen(sameUser))[0], /\bchecked\b/);
   const otherUser = await open(items, {...user('bob'), stored});
