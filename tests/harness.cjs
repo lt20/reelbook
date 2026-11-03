@@ -33,7 +33,7 @@ const sheetDocument = {
 // `library`: the built-in notebooks of the app config (window.REELBOOK.library).
 // `nav`: the navigator (none of its APIs by default, e.g. no wakeLock).
 // `idb`: a Map standing for IndexedDB's key-value store (none by default: the app reads the network only).
-// `hold`: (table, ops) -> a promise a read waits for before answering (a read still on its way), or null; a
+// `hold`: (table, ops) -> a promise a read or write waits for before answering (still on its way), or null; a
 // promise resolving to {data, error} answers that instead of the table's rows at that time (a read made earlier).
 // IndexedDB as the app uses it (open, one 'kv' store, get / put; a ranged delete is not supported and fails).
 const fakeIndexedDB = store => ({
@@ -116,7 +116,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
             if (ops.some(o => o[0] === 'maybeSingle' || o[0] === 'single')) return {data: rows.find(r => eqs.every(([c, v]) => r[c] === v)) || null, error: null};
             return {data: rows, error: null};
           };
-          const wait = () => ops.some(o => WRITES.includes(o[0])) ? null : hold(table, ops);
+          const wait = () => hold(table, ops);
           const q = new Proxy({}, {get: (_, k) => k === 'then' ? (ok, ko) => Promise.resolve().then(wait).then(v => v || result()).then(ok, ko) : (...a) => { ops.push([k, ...a]); return q; }});
           return q;
         };
@@ -128,6 +128,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
             async list(dir) { client.calls.push(['list', dir]); return {data: [{name: 'thumb.jpg'}], error: null}; },
             async remove(paths) { client.calls.push(['remove', paths]); return {data: [], error: null}; }})}, auth: {
           onAuthStateChange(listener) {
+            client.authListener = listener; // a test can fire a later auth event (another account signed in)
             queueMicrotask(() => listener('INITIAL_SESSION', sessions[url] ? {user: sessions[url]} : null));
             return {data: {subscription: {unsubscribe() {}}}};
           },

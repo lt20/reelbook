@@ -626,3 +626,23 @@ test('a sheet deleted while the catalogue is being read does not come back, and 
   assert.match(page.element('groups').innerHTML, /href="#curl"/);
   assert.deepEqual(idb.get(key).sheets.map(s => s.slug).sort(), ['curl', 'gsp-rot']);
 });
+
+test('pass 5: a sheet delete that resumes after a switch to another account leaves that account alone', async () => {
+  const RS = require('../app/sessions.js');
+  const idb = new Map(), keyB = RS.catalogueCacheKey(ownUrl, 'user-b');
+  let release;
+  const gate = new Promise(r => { release = r; });
+  const hold = (t, ops) => t === 'notes' && ops.some(o => o[0] === 'delete') ? gate : null;
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#gsp-angel', idb, hold});
+  await settle();
+  clickIn(page, 'view', '#sd-open');
+  const deleting = page.fire('sd-ok'); // waits on the note delete
+  await settle();
+  page.clients.at(-1).authListener('SIGNED_IN', {user: {id: 'user-b', email: 'b@example.test'}});
+  await settle();
+  assert.ok(idb.get(keyB).sheets.some(s => s.slug === 'gsp-angel'), "B's own gsp-angel is read");
+  release();
+  await deleting; await settle();
+  assert.ok(idb.get(keyB).sheets.some(s => s.slug === 'gsp-angel'), "B's catalogue is not touched");
+  assert.notEqual(page.element('flash').textContent, 'Sheet deleted.');
+});

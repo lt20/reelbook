@@ -75,3 +75,16 @@ test('pass 4: the request to Storage never carries rbv (the token stays), in the
   const g = f.dispatch('fetch', get(photo + '?token=b&rbv=2')); await g.answer;
   assert.deepEqual(f.calls, [photo + '?token=b', photo + '?token=b']);
 });
+
+test('pass 5: a photo still downloading when its sheet is deleted stays out of the cache', async () => {
+  let finish;
+  const w = worker(() => new Promise(resolve => { finish = resolve; }));
+  const e = w.dispatch('fetch', get(photo + '?token=a'));
+  await new Promise(resolve => setImmediate(resolve));
+  const drop = w.dispatch('message', {data: {type: 'DROP_PHOTOS', path: 'u/a/'}});
+  await Promise.all(drop.waits);
+  finish(response('bytes'));
+  assert.equal((await e.answer).body, 'bytes');
+  await Promise.all(e.waits);
+  assert.deepEqual(w.photos(), []);
+});

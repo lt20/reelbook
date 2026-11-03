@@ -6,7 +6,7 @@
 //   signed at each start; the app's rbv parameter, the sheet's updated_at, stays in the key so a republished
 //   photo is fetched again; the request to Storage goes without it), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE), a deleted sheet's dropped (DROP_PHOTOS).
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
-const VERSION = 'rb-shell-29';
+const VERSION = 'rb-shell-30';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300;
 const SHELL = ['./', './index.html', './config.js?v=5', './sessions.js?v=8', './sheet.js?v=2', './vendor/supabase.js?v=2', './manifest.webmanifest',
   './fonts/barlow-condensed-600-latin.woff2', './fonts/barlow-condensed-700-latin.woff2', './fonts/source-sans-3-latin.woff2',
@@ -17,13 +17,14 @@ self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c 
 // Old shells go; the photo cache stays across versions (only a sign-out empties it).
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== PHOTOS).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 
-// epoch: bumped at each sign-out, so a photo still downloading then is not put back in the emptied cache.
+// epoch: bumped at each sign-out and each deleted sheet, so a photo still downloading then is not put back in the
+// emptied cache (another sheet's photo in flight is only left uncached).
 let epoch = 0;
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'CLEAR_USER_CACHE') { epoch++; e.waitUntil(caches.delete(PHOTOS)); }
   // A deleted sheet: its photos (path '<user id>/<slug>/') go too.
   if (e.data && e.data.type === 'DROP_PHOTOS' && typeof e.data.path === 'string' && /^[^/]+\/[^/]+\/$/.test(e.data.path)) {
-    const part = '/storage/v1/object/sign/sheets/' + e.data.path;
+    const part = '/storage/v1/object/sign/sheets/' + e.data.path; epoch++;
     e.waitUntil(caches.open(PHOTOS).then(async c => Promise.all((await c.keys()).filter(k => k.url.includes(part)).map(k => c.delete(k)))).catch(() => {}));
   }
 });

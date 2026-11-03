@@ -2032,16 +2032,21 @@ dialog.ph-dlg::backdrop{background:#000}
   $('sd-cancel').addEventListener('click', () => sdlg.close());
   $('sd-ok').addEventListener('click', async () => {
     const e = shownSheet(), err = $('sd-err'), b = $('sd-ok'); if (!e) { sdlg.close(); return; }
+    // Signed out or another account after an await: nothing is removed from the catalogue shown, nothing saved.
+    const client = sb, uid = user.id, gone = () => sb !== client || !user || user.id !== uid;
     b.disabled = true; err.hidden = true;
-    try { touched(); oneRow(await sb.from('sheets').delete().eq('slug', e.slug).select('slug')); }
-    catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; return; }
+    try { touched(); oneRow(await client.from('sheets').delete().eq('slug', e.slug).select('slug')); }
+    catch { if (gone()) return; err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; return; }
+    if (gone()) return;
     // The sheet is gone: images and note are best effort (`rb.py delete <slug>` clears what is left).
     try {
-      const dir = spath(e.slug, 'img'), st = sb.storage.from('sheets');
+      const dir = spath(e.slug, 'img'), st = client.storage.from('sheets');
       const {data} = await st.list(dir, {limit: 1000});
-      if (data && data.length) await st.remove(data.map(o => `${dir}/${o.name}`));
+      if (data && data.length && !gone()) await st.remove(data.map(o => `${dir}/${o.name}`));
     } catch {}
-    try { await sb.from('notes').delete().eq('slug', e.slug); notesIndex.delete(e.slug); } catch {}
+    if (gone()) return;
+    try { await client.from('notes').delete().eq('slug', e.slug); if (!gone()) notesIndex.delete(e.slug); } catch {}
+    if (gone()) return;
     sheets = sheets.filter(x => x.slug !== e.slug); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
     idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue(); toWorker({type: 'DROP_PHOTOS', path: `${user.id}/${e.slug}/`});
     b.disabled = false; sdlg.close();
