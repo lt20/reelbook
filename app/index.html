@@ -1816,7 +1816,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const stepPlay = d => {
     if (!play || play.kind !== 'session' || play.prompt) return;
     const n = play.n + d; if (n < 1 || n > play.items.length) return;
-    play.n = n; keepPlace(play.s.slug, n); playAddress(); renderPlay();
+    play.n = n; keepPlace(play.s.slug, n, play.checks); playAddress(); renderPlay();
   };
   const enterPlayer = () => { shown = null; seat = null; show('player'); playerEl.scrollTop = 0; };
   // false when there is nothing to play (no exercise left, n out of range): the caller shows the session page.
@@ -1843,7 +1843,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
         + `<button type="button" class="btn" id="play-resume">Resume at ${p.prompt}/${p.items.length}</button>`
         + '<button type="button" class="btn ghost" id="play-restart">Start over</button></div></div>';
       onClick('play-close', leavePlayer);
-      onClick('play-resume', () => { if (!play || !play.prompt) return; play.n = play.prompt; play.prompt = 0; keepPlace(play.s.slug, play.n); playAddress(); renderPlay(); });
+      onClick('play-resume', () => { if (!play || !play.prompt) return; play.n = play.prompt; play.prompt = 0; keepPlace(play.s.slug, play.n, play.checks); playAddress(); renderPlay(); }); // keeps the checks as fitted to the session now
       onClick('play-restart', () => { if (!play || !play.prompt) return; play.n = 1; play.prompt = 0; play.checks = {}; keepPlace(play.s.slug, 1, null); playAddress(); renderPlay(); });
       $('play-title').focus();
       return;

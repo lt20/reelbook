@@ -132,3 +132,20 @@ test('sets: a session reordered after a set was checked does not show it on the 
   again.go('#session/legs/play/2'); await settle();
   assert.doesNotMatch(player(again), /id="play-set-1"[^>]*checked/); // its place changed: the check is dropped
 });
+
+test('sets: Resume after a reorder stores the fitted checks, so restoring the order does not bring a dropped one back', async () => {
+  const order = tables([{slug: 'a', dose: '3 × 10'}, {slug: 'b', dose: '3 × 10'}]);
+  const page = await app({...signedIn, tables: order, hash: '#session/legs/play', dom: true});
+  await settle();
+  await page.fire('play-set-1', 'change'); await settle();
+  await page.fire('play-rest-skip'); await settle();
+  await page.fire('play-next'); await settle();
+  const swapped = tables([{slug: 'b', dose: '3 × 10'}, {slug: 'a', dose: '3 × 10'}]);
+  const resumed = await app({...signedIn, tables: swapped, hash: '#session/legs/play', dom: true, stored: Object.fromEntries(page.storage)});
+  await settle();
+  await resumed.fire('play-resume'); await settle();
+  assert.equal(stored(resumed).legs, 2);
+  const back = await app({...signedIn, tables: order, hash: '#session/legs/play/1', dom: true, stored: Object.fromEntries(resumed.storage)});
+  await settle();
+  assert.doesNotMatch(player(back), /id="play-set-1"[^>]*checked/);
+});
