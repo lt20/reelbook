@@ -1180,6 +1180,8 @@ dialog.ph-dlg::backdrop{background:#000}
   // Nothing shows until the page's entries are read: without the table, or offline, the page is as before L6.
   // pageLog: the shown page's {key, entries (newest first, at most 5; null until read), open, draft, err, busy}.
   let pageLog = null, logReads = 0;
+  // A text whose save failed, kept in memory until it is saved ('<user id>|<key>' -> text): it prefills the field again.
+  const unsavedLog = new Map(), unsavedKey = key => (user ? user.id : '') + '|' + key;
   const LOG_MAX = 200; // characters of one entry
   const newestFirst = (a, b) => String(b.done_on).localeCompare(String(a.done_on)) || String(b.created_at || '').localeCompare(String(a.created_at || '')) || String(b.id || '').localeCompare(String(a.id || ''));
   // A region of the page repainted on its own (the sheet, its photos and the note around it stay as they are).
@@ -1243,7 +1245,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const openPractice = () => {
     const p = pageLog; if (!p || !p.entries || p.busy) return;
     p.open = !p.open; p.err = '';
-    if (p.open) p.draft = p.entries[0] ? p.entries[0].text : '';
+    if (p.open) { const kept = unsavedLog.get(unsavedKey(p.key)); p.draft = kept !== undefined ? kept : p.entries[0] ? p.entries[0].text : ''; }
     paintPractice();
     const input = p.open ? $('practice-text') : null; if (input) input.focus();
   };
@@ -1273,12 +1275,13 @@ dialog.ph-dlg::backdrop{background:#000}
     if (!stored) {
       // keep what is in the field now (typed while the save was on its way), not the text that was sent
       const input = $('practice-text'); if (input && pageLog === p && p.open) p.draft = String(input.value || '');
+      unsavedLog.set(unsavedKey(p.key), p.draft);
       p.err = 'Not saved. Try again.'; paintPractice(); return;
     }
     const got = (!res.error && (Array.isArray(res.data) ? res.data[0] : res.data)) || {};
     const entry = {id: got.id || row.id, slug: row.slug, done_on: got.done_on || row.done_on, text: typeof got.text === 'string' ? got.text : row.text, created_at: got.created_at || new Date().toISOString()};
     if (!lastDone.has(row.slug) || entry.done_on > lastDone.get(row.slug)) lastDone.set(row.slug, entry.done_on);
-    p.attempt = null;
+    p.attempt = null; unsavedLog.delete(unsavedKey(row.slug));
     if (!p.entries.some(r => r.id === entry.id)) p.entries = [entry, ...p.entries].sort(newestFirst).slice(0, 5);
     p.open = false; p.draft = '';
     paintPractice();

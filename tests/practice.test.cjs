@@ -60,6 +60,25 @@ test('L6 — a day is read as a local date: 2026-10-28 shows « 28 Oct » whatev
   assert.match(page.element('view').innerHTML, /Last time: 28 Oct</, 'no « — » after the date when the entry has no text');
 });
 
+test('L6 — after a failed Save, closing and reopening the field prefills the text not saved, until it is saved', async () => {
+  const writes = {practice_log: {data: null, error: {message: 'offline'}}};
+  const log = [{id: 'a', slug: 'curl', done_on: '2026-10-28', text: 'old entry', created_at: '2026-10-28T08:00:00Z'}];
+  const page = await app({...signedIn, tables: tables(log), dom: true, hash: '#curl', writes});
+  await settle();
+  await click(page, 'practice-done');
+  page.element('practice-text').value = 'typed, not saved';
+  await click(page, 'practice-save');
+  await click(page, 'practice-done'); // close
+  await click(page, 'practice-done'); // open again
+  assert.match(page.element('view').innerHTML, /<input[^>]*id="practice-text"[^>]*value="typed, not saved"/);
+  writes.practice_log = undefined;
+  page.element('practice-text').value = 'typed, not saved';
+  await click(page, 'practice-save');
+  await click(page, 'practice-done');
+  assert.match(page.element('view').innerHTML, /<input[^>]*id="practice-text"[^>]*value="typed, not saved"/, 'saved: now the last entry');
+  assert.match(page.element('view').innerHTML, /Last time: [^<]*— typed, not saved/);
+});
+
 test('L6 — the field is read-only while its save is on its way', async () => {
   const page = await app({...signedIn, tables: tables(), dom: true, hash: '#curl'});
   await settle();
