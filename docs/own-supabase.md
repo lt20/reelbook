@@ -57,6 +57,6 @@ Then, in any Claude Code session: `/reelbook`. See the README for what happens n
 
 - 500 MB database, 1 GB storage. A sheet weighs about 2 MB of images: room for roughly 400 sheets.
 - A free project with no activity for 7 days is paused, and opening the app does not wake it up.
-  Restore it by hand: open the project in the [Supabase dashboard](https://supabase.com/dashboard)
-  and click **Restore project**; it takes a few minutes and your data is kept. While the project is
-  paused, the app cannot load your sheets and says your Supabase project may be paused.
+  Restore it by hand from the [Supabase dashboard](https://supabase.com/dashboard) (Project →
+  **Restore**); it takes a few minutes and your data is kept. While the project is paused, the app
+  cannot load your sheets and says your Supabase project may be paused.
