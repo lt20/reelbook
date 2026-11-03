@@ -133,7 +133,8 @@ test('L6 — My notes shows a Log of the last five entries, newest first, on she
     const page = await open(hash, {tables: tables(log)});
     const html = page.element('view').innerHTML;
     assert.match(html, /My notes[\s\S]*?<h[1-6][^>]*>Log<\/h[1-6]>/);
-    const entries = [...html.matchAll(/entry-[0-5]/g)].map(match => match[0]);
+    // coordinator decision: the Log includes the latest entry, also shown as « Last time » under the title
+    const entries = [...html.slice(html.search(/<h[1-6][^>]*>Log<\/h[1-6]>/)).matchAll(/entry-[0-5]/g)].map(match => match[0]);
     assert.deepEqual(entries, ['entry-5', 'entry-4', 'entry-3', 'entry-2', 'entry-1']);
     assert.match(html, /25 Oct[\s\S]*?entry-5/);
     assert.doesNotMatch(html, /entry-0/);

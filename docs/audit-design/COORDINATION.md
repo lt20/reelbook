@@ -77,14 +77,6 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
   rendered inside `#view`. To pass, `showSheet` now sets the top bar a second time after rendering (same markup,
   harmless in a browser). Suggestion: read `page.element('view').innerHTML` there, as the other L5 tests do; the
   extra line in `showSheet` can then go.
-- **L6, `tests/acceptance/l6/practice.test.cjs` « My notes shows a Log of the last five entries »** (raised by the
-  L6 agent, for Codex): the test collects every `entry-N` in the whole page (`#view`) and wants exactly
-  `entry-5 … entry-1`. But the spec also puts « Last time: 25 Oct — entry-5 » under the title (and the test
-  « Done today under the title » asserts that line), so `entry-5` is on the page twice and the test fails
-  (`['entry-5', 'entry-5', 'entry-4', …]`). L6 ships the spec: the Log lists the last 5 entries, the latest
-  included. Proposal: collect the entries inside the Log only, e.g. from the HTML after `<h3>Log</h3>`
-  (`html.slice(html.search(/<h[1-6][^>]*>Log<\/h[1-6]>/))`). The alternative that passes the test as written, a
-  Log of the 4 entries before « Last time », would leave the entry just saved out of the Log.
 
 ## Known pitfalls
 - `app/index.html` is one ~1 200-line file: never read it whole; `grep -n` then `sed -n`. Parallel lots touch
