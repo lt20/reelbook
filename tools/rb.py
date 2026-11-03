@@ -561,7 +561,8 @@ def cmd_backfill_search(args):
             print(f"{r['slug']}: {len(text)} characters" + (" (dry run)" if dry else ""))
             if not dry:
                 rest(cfg, "PATCH", "sheets", {"search_text": text}, prefer="return=minimal",
-                     params={"slug": f"eq.{r['slug']}", "user_id": f"eq.{cfg['user_id']}"})
+                     # search_text=eq.: a sheet republished since the read keeps the text publish wrote
+                     params={"slug": f"eq.{r['slug']}", "user_id": f"eq.{cfg['user_id']}", "search_text": "eq."})
         if len(rows) < PAGE: break
         last = rows[-1]["slug"]
     print(f"{seen} sheet(s) without search text, {n} {'to fill (dry run, nothing written)' if dry else 'filled'}")

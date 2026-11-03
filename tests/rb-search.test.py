@@ -101,7 +101,8 @@ class Backfill(unittest.TestCase):
         patches = [c for c in calls if c[0] == "PATCH"]
         self.assertEqual([g[1].get("slug") for g in gets], [None, "gt.s049", "gt.s099"])
         self.assertEqual(len(patches), 120)
-        self.assertEqual(patches[0][1], {"slug": "eq.s000", "user_id": "eq.u1"})
+        self.assertEqual(patches[0][1], {"slug": "eq.s000", "user_id": "eq.u1", "search_text": "eq."},
+                         "a sheet republished since the read keeps its new text")
         self.assertEqual(patches[0][2], {"search_text": "sheet 0"})
         self.assertIn("121 sheet(s) without search text, 120 filled", out)
 
