@@ -1155,18 +1155,25 @@ dialog.ph-dlg::backdrop{background:#000}
     if (!p.entries) return '';
     const last = p.entries[0], today = !!last && last.done_on === todayIso();
     return `<p class="actions"><button type="button" class="btn sm${today ? ' done' : ''}" id="practice-done" aria-expanded="${p.open}">Done today${today ? ' ✓' : ''}</button></p>`
-      + (p.open ? `<div class="pr-row"><input id="practice-text" type="text" value="${esc(p.draft)}" maxlength="${LOG_MAX}" autocomplete="off" enterkeyhint="done" placeholder="12 kg, 3x10…" aria-label="What you did today"><button type="button" class="btn sm" id="practice-save"${p.busy ? ' disabled' : ''}>Save</button></div>`
+      + (p.open ? `<div class="pr-row"><input id="practice-text" type="text" value="${esc(p.draft)}" maxlength="${LOG_MAX}" autocomplete="off" enterkeyhint="done" placeholder="12 kg, 3x10…" aria-label="What you did today"${p.busy ? ' readonly' : ''}><button type="button" class="btn sm" id="practice-save"${p.busy ? ' disabled' : ''}>Save</button></div>`
         + (p.err ? `<p class="err" role="alert">${esc(p.err)}</p>` : '') : '')
       + (last ? `<p class="pr-last">Last time: ${esc(fmtDay(last.done_on))}${last.text ? ' — ' + esc(last.text) : ''}</p>` : '');
   };
   const logInner = p => p.entries && p.entries.length
     ? `<h3>Log</h3><ol>${p.entries.map(r => `<li><time datetime="${esc(r.done_on)}">${esc(fmtDay(r.done_on))}</time>${esc(r.text)}</li>`).join('')}</ol>` : '';
+  let paintedOn = ''; // the day of the last paint: « Done today ✓ » is about that day
   const paintPractice = () => {
     const p = pageLog; if (!p || shown !== p.key || view.hidden) return;
+    paintedOn = todayIso();
     repaint('practice', practiceInner(p)); repaint('practice-log', logInner(p));
     const input = p.open ? $('practice-text') : null;
     if (input) input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); savePractice(); } });
   };
+  // A page left open past midnight (an installed app on the screen, or back to the front the next day) paints its
+  // block again, so yesterday's ✓ goes. Not while the field is open: that would drop what is being typed.
+  const newDay = () => { const p = pageLog; if (p && p.entries && !p.open && !p.busy && paintedOn && paintedOn !== todayIso()) paintPractice(); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'hidden') newDay(); });
+  if (typeof setInterval === 'function') setInterval(newDay, 60000);
   // The page's last 5 entries; an older read (a page left and opened again) is dropped.
   const readPractice = async key => {
     const r = ++logReads, owner = sb;
@@ -1206,7 +1213,8 @@ dialog.ph-dlg::backdrop{background:#000}
     const text = String($('practice-text').value || '').trim().slice(0, LOG_MAX);
     if (!p.attempt || p.attempt.text !== text) p.attempt = {id: newId(), slug: p.key, done_on: todayIso(), text};
     const row = p.attempt, owner = {client: sb, uid: user ? user.id : ''};
-    p.draft = text; p.busy = true; p.err = ''; $('practice-save').disabled = true;
+    // the field is read-only while the save is on its way: a correction typed then would be dropped once saved
+    p.draft = text; p.busy = true; p.err = ''; $('practice-save').disabled = true; $('practice-text').readOnly = true;
     let res;
     try { res = await owner.client.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
     p.busy = false;

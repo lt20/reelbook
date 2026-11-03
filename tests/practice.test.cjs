@@ -60,6 +60,18 @@ test('L6 — a day is read as a local date: 2026-10-28 shows « 28 Oct » whatev
   assert.match(page.element('view').innerHTML, /Last time: 28 Oct</, 'no « — » after the date when the entry has no text');
 });
 
+test('L6 — the field is read-only while its save is on its way', async () => {
+  const page = await app({...signedIn, tables: tables(), dom: true, hash: '#curl'});
+  await settle();
+  await click(page, 'practice-done');
+  page.element('practice-text').value = '3x10';
+  page.element('practice-text').readOnly = false;
+  const pending = page.element('view').listeners.click({target: {closest: sel => sel === '#practice-save' ? {} : null}});
+  assert.equal(page.element('practice-text').readOnly, true);
+  assert.equal(page.element('practice-save').disabled, true);
+  await pending; await settle();
+});
+
 test('L6 — Save again after a lost answer sends the same row; a duplicate key (23505) counts as saved, once', async () => {
   const writes = {practice_log: {data: null, error: {message: 'Failed to fetch'}}};
   const page = await app({...signedIn, tables: tables(), dom: true, hash: '#curl', writes});
