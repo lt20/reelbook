@@ -2,8 +2,9 @@
 // - App shell: stale-while-revalidate. The cached copy answers at once and the network refreshes it in the
 //   background, so a new version shows on the next start, without any prompt. Uncached: the network, as with no
 //   worker. Every change to a module bumps its ?v= here and in index.html, and VERSION (COORDINATION, pitfalls).
-// - Signed photos from Supabase Storage: cache-first, keyed by their path without the token (a new token is
-//   signed at each start), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE).
+// - Signed photos from Supabase Storage: cache-first, keyed by their URL without the token (a new token is
+//   signed at each start; the app's rbv parameter, the sheet's updated_at, stays in the key so a republished
+//   photo is fetched again), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE).
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
 const VERSION = 'rb-shell-27';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300;
@@ -16,8 +17,10 @@ self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c 
 // Old shells go; the photo cache stays across versions (only a sign-out empties it).
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== PHOTOS).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 
+// epoch: bumped at each sign-out, so a photo still downloading then is not put back in the emptied cache.
+let epoch = 0;
 self.addEventListener('message', e => {
-  if (e.data && e.data.type === 'CLEAR_USER_CACHE') e.waitUntil(caches.delete(PHOTOS));
+  if (e.data && e.data.type === 'CLEAR_USER_CACHE') { epoch++; e.waitUntil(caches.delete(PHOTOS)); }
 });
 
 // A redirected response cannot answer a navigation (Safari), an error page must not replace a good copy.
@@ -44,15 +47,17 @@ const trim = async c => {
   await Promise.all(keys.slice(0, Math.max(0, keys.length - PHOTO_MAX)).map(k => c.delete(k)));
 };
 const photo = async e => {
-  const url = new URL(e.request.url), key = url.origin + url.pathname;
+  const href = e.request.url, url = new URL(href), at = epoch;
+  url.searchParams.delete('token');
+  const key = url.origin + url.pathname + url.search;
   try { const hit = await (await caches.open(PHOTOS)).match(key); if (hit) return hit; } catch {}
   // CORS, so the copy is readable (an opaque one would weigh megabytes in the quota); a storage without CORS
   // headers still gets its photo, uncached.
   let r;
-  try { r = await fetch(url.href, {mode: 'cors', credentials: 'omit'}); } catch { return fetch(e.request); }
+  try { r = await fetch(href, {mode: 'cors', credentials: 'omit'}); } catch { return fetch(e.request); }
   if (keep(r)) {
     const copy = r.clone();
-    e.waitUntil(caches.open(PHOTOS).then(async c => { await c.put(key, copy); await trim(c); }).catch(() => {}));
+    e.waitUntil(caches.open(PHOTOS).then(async c => { if (at !== epoch) return; await c.put(key, copy); await trim(c); }).catch(() => {}));
   }
   return r;
 };

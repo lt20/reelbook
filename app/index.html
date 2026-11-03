@@ -676,7 +676,7 @@ dialog.ph-dlg::backdrop{background:#000}
     }
     return data || [];
   };
-  const loadThemes = async () => { setThemes(await readThemes()); };
+  const loadThemes = async () => { themeRows = await readThemes(); setThemes(themeRows); saveCatalogue(); };
   const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
   const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
@@ -703,6 +703,15 @@ dialog.ph-dlg::backdrop{background:#000}
     };
   })();
   const catKey = () => RS.catalogueCacheKey(backend.url, user.id);
+  // The cached catalogue after a change made in the app (a sheet or session deleted, a notebook added...), so a
+  // start without network does not bring it back. themeRows: the user_themes rows last read.
+  let themeRows = [];
+  const cardPaths = () => [...sheets.filter(s => s.thumbnail).map(s => spath(s.slug, s.thumbnail)), ...v2Sessions.filter(s => s.thumbnail).map(s => s.thumbnail)];
+  const saveCatalogue = () => {
+    if (!user || !sb || loading) return;
+    idb.set(catKey(), RS.catalogueSnapshot({themes: themeRows, sheets, v1: v1Hidden, sessions: v2Sessions, sessionsOk, notesIndex, lastDone, practiceOk,
+      signed: cardPaths().filter(p => signed.has(p)).map(p => [p, signed.get(p).url])}));
+  };
   // Sign-out: the user's cached catalogue and sheets, and the photos the service worker kept.
   const clearUserCache = uid => {
     idb.drop(RS.catalogueCacheKey('', uid)); // the key prefix of every backend for this user
@@ -712,7 +721,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const fetchCatalogue = async () => {
     const [themeRows, sh, r, notes, last] = await Promise.all([
       readThemes(),
-      sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at').order('title'),
+      sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at,updated_at').order('title'),
       // v2 sessions; a backend without the table only loses them (sessionsOk false, one line in Settings).
       sb.from('sessions').select(SESSION_COLS).order('title'),
       sb.from('notes').select('slug').neq('body', '').then(x => x, () => null),
@@ -722,16 +731,14 @@ dialog.ph-dlg::backdrop{background:#000}
     if (r.error && !RS.missingTable(r.error, r.status)) throw r.error;
     // Old one-page sessions (kind 'session') are not shown any more; Settings counts them (RS.splitV1).
     const {sheets: list, v1} = RS.splitV1(sh.data), rows = r.error ? [] : r.data || [];
-    const paths = [];
-    for (const s of list) if (s.thumbnail) paths.push(spath(s.slug, s.thumbnail));
-    for (const s of rows) if (s.thumbnail) paths.push(s.thumbnail);
+    const paths = [...list.filter(s => s.thumbnail).map(s => spath(s.slug, s.thumbnail)), ...rows.filter(s => s.thumbnail).map(s => s.thumbnail)];
     await signAll(paths);
     return {themes: themeRows, sheets: list, v1, sessions: rows, sessionsOk: !r.error,
       notesIndex: new Set(((notes && notes.data) || []).map(n => n.slug)), lastDone: last || new Map(), practiceOk: !!last,
       signed: paths.filter(p => signed.has(p)).map(p => [p, signed.get(p).url])};
   };
   const applyCatalogue = c => {
-    setThemes(c.themes);
+    themeRows = c.themes; setThemes(c.themes);
     sheets = c.sheets; v1Hidden = c.v1 || 0; bySlug = new Map(sheets.map(s => [s.slug, s]));
     sessionsOk = c.sessionsOk; setSessions(c.sessions);
     for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
@@ -760,12 +767,13 @@ dialog.ph-dlg::backdrop{background:#000}
     loadError = ''; if (!shown) { loading = true; if (!$('home').hidden) renderHome(); }
     const gen = ++practiceGen, client = sb, uid = user.id, key = catKey(); // practiceGen: a sign-out or a newer read drops this one
     let fromCache = shown;
+    const current = () => gen === practiceGen && client === sb && !!user && user.id === uid;
     const res = await RS.refreshCatalogue({
       read: async () => shown ? null : RS.restoreCatalogueSnapshot(await idb.get(key)),
       fetch: fetchCatalogue,
       apply: (c, from) => { applyCatalogue(c); if (from === 'cache') { fromCache = true; loading = false; route(); } },
-      write: c => idb.set(key, RS.catalogueSnapshot(c)),
-      current: () => gen === practiceGen && client === sb && !!user && user.id === uid
+      write: c => current() ? idb.set(key, RS.catalogueSnapshot(c)) : null,
+      current
     });
     if (res.source === 'stale') return;
     loading = false;
@@ -781,7 +789,11 @@ dialog.ph-dlg::backdrop{background:#000}
     } else if (!loadError && !sheets.length && !ls.get(welcomeKey()) && !location.hash) { location.hash = 'welcome'; } else route();
     refreshQueue();
   };
-  const thumb = (slug, rel) => rel ? (signed.get(spath(slug, rel)) || {}).url || '' : '';
+  // L19: a photo URL carries its sheet's updated_at (rbv), part of the service worker's cache key: a sheet
+  // republished with new photos under the same paths gets them, not the cached ones. Paths are <user>/<slug>/...
+  const vurl = (url, v) => url && v ? `${url}${url.includes('?') ? '&' : '?'}rbv=${encodeURIComponent(v)}` : url;
+  const purl = p => vurl((signed.get(p) || {}).url || '', (bySlug.get(String(p).split('/')[1]) || {}).updated_at);
+  const thumb = (slug, rel) => rel ? purl(spath(slug, rel)) : '';
 
   // ---------- home rendering ----------
   const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}
@@ -837,7 +849,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const doneTag = key => practiceOk && lastDone.has(key) ? [{txt: 'done ' + fmtDay(lastDone.get(key)), cls: 'done'}] : [];
   const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...inTag(e.slug), ...doneTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
-  const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
+  const v2Thumb = s => { if (s.thumbnail) return purl(s.thumbnail); const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
   const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // ---------- L7: « New » row ----------
   // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen.<user id>
@@ -1129,9 +1141,9 @@ dialog.ph-dlg::backdrop{background:#000}
     if (cache.has(slug)) return cache.get(slug);
     // L19: a sheet opened once is kept (IndexedDB, as rendered: its photos by signed URL, which the service worker
     // answers by path), for a start without network. Only a read that never reached the backend (status 0) uses it.
-    const key = catKey() + '|sheet|' + slug;
+    const key = catKey() + '|sheet|' + slug, uid = user.id;
     let data, error, status;
-    try { ({data, error, status} = await sb.from('sheets').select('html').eq('slug', slug).single()); } catch (e) { error = e; }
+    try { ({data, error, status} = await sb.from('sheets').select('html,updated_at').eq('slug', slug).single()); } catch (e) { error = e; }
     if ((error || !data) && !status) { const kept = await idb.get(key); if (typeof kept === 'string') { cache.set(slug, kept); return kept; } }
     if (error || !data) throw new Error('not found');
     const doc = new DOMParser().parseFromString(data.html, 'text/html');
@@ -1139,7 +1151,7 @@ dialog.ph-dlg::backdrop{background:#000}
     // an <img> fetched its raw src (img/thumb.jpg next to index.html, a 404) before being rewritten.
     const imgs = doc.querySelectorAll ? [...doc.querySelectorAll('img')] : [];
     const get = await signAll(imgs.map(i => spath(slug, (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'))));
-    imgs.forEach(i => { const rel = (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'); i.setAttribute('src', get(spath(slug, rel))); i.removeAttribute('loading'); });
+    imgs.forEach(i => { const rel = (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'); i.setAttribute('src', vurl(get(spath(slug, rel)), data.updated_at)); i.removeAttribute('loading'); });
     // L3: gesture first (sheet.js), never at the cost of the sheet: on any error it shows as written.
     if (SH && doc.querySelectorAll) { const keep = doc.body.cloneNode(true); try { SH.arrange(doc); SH.markPhotos(doc); } catch { doc.documentElement.replaceChild(keep, doc.body); } }
     const frag = document.createDocumentFragment();
@@ -1151,7 +1163,7 @@ dialog.ph-dlg::backdrop{background:#000}
     frag.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (h === '../index.html' || h === '../' || h === '#') a.setAttribute('href', '#'); else if (h.startsWith('#') && h.length > 1 && !routable(h)) a.setAttribute('href', `#${slug}`); });
     const wrap = document.createElement('div'); wrap.appendChild(frag);
     const lang = sheetLang(data.html), out = lang ? `<div lang="${esc(lang)}">${wrap.innerHTML}</div>` : wrap.innerHTML;
-    cache.set(slug, out); idb.set(key, out); return out;
+    cache.set(slug, out); if (user && user.id === uid) idb.set(key, out); return out; // not after a sign-out
   };
   // The language of a sheet, for screen readers and hyphenation (the app around it is English): the sheet's own
   // <html lang> if it has one, else French when its text holds at least three distinct common French words,
@@ -1623,7 +1635,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const createSession = async (theme, title, slugs) => {
     const row = {slug: RS.uniqueSlug(title, takenSlugs()), theme, title, origin: 'user', items: slugs.map(slug => ({slug, dose: ''}))};
     const s = oneRow(await sb.from('sessions').insert(row).select(SESSION_COLS));
-    setSessions([...v2Sessions, s]);
+    setSessions([...v2Sessions, s]); saveCatalogue();
     return s;
   };
   const flashHome = msg => { const f = $('flash'); f.textContent = msg; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000); };
@@ -1695,7 +1707,7 @@ dialog.ph-dlg::backdrop{background:#000}
     else { add = RS.addItem(s.items, e.slug); if (!add.added) return fail('This sheet is already in that session.'); }
     $('as-submit').disabled = true; err.hidden = true;
     try {
-      if (s) { oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); }
+      if (s) { oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
       else s = await createSession(e.theme, title, [e.slug]);
       adlg.close();
       const top = $('sheet-top');
@@ -1713,7 +1725,7 @@ dialog.ph-dlg::backdrop{background:#000}
     b.disabled = true; err.hidden = true;
     try {
       oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
-      Object.assign(s, row); setSessions(v2Sessions); edit = null;
+      Object.assign(s, row); setSessions(v2Sessions); saveCatalogue(); edit = null;
       showSession(s.slug, 'Saved.');
     } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; }
   };
@@ -1732,7 +1744,7 @@ dialog.ph-dlg::backdrop{background:#000}
     b.disabled = true; err.hidden = true;
     try {
       oneRow(await sb.from('sessions').delete().eq('slug', s.slug).select('slug'));
-      setSessions(v2Sessions.filter(x => x !== s)); edit = null; ddlg.close();
+      setSessions(v2Sessions.filter(x => x !== s)); saveCatalogue(); edit = null; ddlg.close();
       flashHome('Session deleted. Its exercise sheets stay in your notebooks.');
       location.hash = s.theme;
     } catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; }
@@ -1764,6 +1776,7 @@ dialog.ph-dlg::backdrop{background:#000}
     } catch {}
     try { await sb.from('notes').delete().eq('slug', e.slug); notesIndex.delete(e.slug); } catch {}
     sheets = sheets.filter(x => x !== e); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
+    idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue();
     b.disabled = false; sdlg.close();
     flashHome('Sheet deleted.');
     location.hash = e.theme;
