@@ -98,7 +98,7 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
   the test matches `3 in the queue · 1 failed` as one run of text in `#queue-summary`'s HTML, so `1 failed` cannot
   sit in its own coloured `<span>`. L4 ships the label in ink with a danger-coloured dot before it. Proposal: accept
   the dot, or relax the regex to allow a tag around `1 failed` (L4 then colours the count). For Codex.
-- **L11, `tests/acceptance/l11/player.test.cjs` « Sets — checks persist… », line 45** (raised by the L11 agent, for
+- **L11, `tests/acceptance/l11/player.test.cjs` « Sets — checks persist… », line 45** — **settled** (3 Nov, coordinator decision after Codex pass 2 « Supprimer ce clic »: line 45 dropped in a separate commit, #43). Raised by the L11 agent, for
   Codex): `sameUser` opens `#session/routine/play` with the stored progress of `page`, which stopped at 2/2; L10's
   acceptance test (« reopening #session/<slug>/play offers Resume at 3/5 or Start over ») requires the resume prompt
   there, so the screen holds `play-resume` / `play-restart` and `await click(sameUser, 'play-next')` fails with
