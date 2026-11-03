@@ -32,9 +32,24 @@ def step(n, img, title, text, alt):
             f'<span class="k">{n}</span></figure><h3>{esc(title)}</h3><p>{esc(text)}</p></div>')
 
 
-def footer(src):
+def footer(src, note=''):
     return (f'<footer>Photos : images de démonstration générées pour l\'aperçu. '
-            f'<a href="{esc(src["url"])}">Voir la vidéo</a>.</footer>')
+            f'<a href="{esc(src["url"])}">Voir la vidéo</a>.{" " + esc(note) if note else ""}</footer>')
+
+
+# Section titles. Sheets written before L15 keep the older ones (existing sheets are not reprocessed); a sheet with
+# l15=True follows the L15 templates: one label per function, « Erreurs fréquentes » (.step.bad) after the steps.
+OLD = {'steps': 'L\'enchaînement', 'move': 'Le mouvement', 'cues': 'Repères', 'easier': 'Version plus facile'}
+L15 = {'steps': 'Étapes', 'move': 'Étapes', 'cues': 'Points clés', 'easier': 'Plus facile / plus dur'}
+
+
+def mistakes(s):
+    """« Erreurs fréquentes »: the wrong movement, out of the numbered steps (no number, class step bad)."""
+    if not s.get('mistakes'):
+        return ''
+    rows = '\n'.join(f'  <div class="step bad"><figure><img src="img/x{i + 1}.jpg" alt="Erreur : {esc(a)}" loading="lazy">'
+                     f'</figure><h3>{esc(t)}</h3><p>{esc(p)}</p></div>' for i, (t, p, a) in enumerate(s['mistakes']))
+    return f'\n<h2>Erreurs fréquentes</h2>\n<div class="steps">\n{rows}\n</div>'
 
 
 def sheet_html(s):
@@ -43,6 +58,7 @@ def sheet_html(s):
     keys = ''.join(f'  <li><b>{esc(b)}</b> {esc(t)}</li>\n' for b, t in s['keys'])
     kit = ''.join(f'<span>{esc(k)}</span>' for k in s['kit'])
     steps = '\n'.join(step(i + 1, f'0{i + 1}.jpg', t, p, a) for i, (t, p, a) in enumerate(s['steps']))
+    h = L15 if s.get('l15') else OLD
     return f'''<div class="wrap fiche">
 <header>
   <div>
@@ -67,15 +83,15 @@ def sheet_html(s):
 </div>
 
 <div class="wide">
-<h2>L'enchaînement</h2>
+<h2>{esc(h['steps'])}</h2>
 <div class="steps">
 {steps}
 </div>
-<p class="loop"><span class="arrow">↻</span> {esc(s['loop'])}</p>
+<p class="loop"><span class="arrow">↻</span> {esc(s['loop'])}</p>{mistakes(s)}
 </div>
 
 <div class="wrap">
-{footer(s['source'])}
+{footer(s['source'], s.get('note', ''))}
 </div>
 '''
 
@@ -85,6 +101,7 @@ def exercise_html(s):
     keys = ''.join(f'  <li><b>{esc(b)}</b> {esc(t)}</li>\n' for b, t in s['keys'])
     kit = ''.join(f'<span>{esc(k)}</span>' for k in s['kit'])
     steps = '\n'.join(step(i + 1, f'0{i + 1}.jpg', t, p, a) for i, (t, p, a) in enumerate(s['steps']))
+    h = L15 if s.get('l15') else OLD
     return f'''<div class="wrap fiche">
 <header>
   <div>
@@ -98,18 +115,18 @@ def exercise_html(s):
 </div>
 
 <div class="wide">
-<h2>Le mouvement</h2>
+<h2>{esc(h['move'])}</h2>
 <div class="steps">
 {steps}
-</div>
+</div>{mistakes(s)}
 </div>
 
 <div class="wrap">
-<h2>Repères</h2>
+<h2>{esc(h['cues'])}</h2>
 <ol class="keys">
 {keys}</ol>
 
-<h2>Version plus facile</h2>
+<h2>{esc(h['easier'])}</h2>
 <p>{esc(s['easier'])}</p>
 
 {footer(s['source'])}
@@ -125,8 +142,11 @@ def src(n, platform='Instagram', author='Coach Démo'):
 
 
 SHEETS = [
-    dict(slug='pompes-inclinees', theme='strength', group='Chest', title='Pompes inclinées',
-         eyebrow='Pectoraux · triceps · 5 minutes', duration='5 min', source=src(1),
+    dict(slug='pompes-inclinees', theme='strength', group='Chest', title='Pompes inclinées', l15=True,
+         eyebrow='Pectoraux · triceps · 5 min', duration='5 min', source=src(1),
+         note='Dose lue dans les commentaires.',
+         mistakes=[('Bassin qui tombe', 'Le ventre s\'affaisse vers le support : serre les fessiers, épaules, hanches et talons alignés.',
+                    'bassin affaissé, dos creusé')],
          summary='Mains sur un banc ou une table, corps gainé : la pompe pour débuter ou finir une séance.',
          lead='Des pompes les mains en appui sur un support surélevé : plus le support est haut, plus c\'est facile.',
          kit=['un banc ou une table stable', 'un tapis'],
@@ -183,7 +203,9 @@ SESSIONS = [
          key_points=['Le dos reste neutre : pas de creux dans les lombaires.',
                      'Respire pendant la tenue, ne bloque pas.'],
          items=[
-             dict(slug='session-gainage-planche', title='Planche', group='Core', dose='3 × 30 s',
+             dict(slug='session-gainage-planche', title='Planche', group='Core', dose='3 × 30 s', l15=True,
+                  mistakes=[('Fesses en l\'air', 'Le bassin monte au-dessus de la ligne : rentre le nombril, descends les hanches.',
+                             'bassin trop haut, corps en V')],
                   eyebrow='Abdominaux · épaules', lead='Sur les avant-bras et la pointe des pieds, le corps droit comme une planche.',
                   kit=['un tapis'], keys=[('Fesses serrées.', 'Le bassin ne tombe pas.'), ('Coudes sous les épaules.', 'Pousse le sol.')],
                   easier='Genoux au sol, la ligne épaules-genoux reste droite.',
@@ -366,8 +388,10 @@ def main():
     # « now-<N>h »: resolved when the preview is built (fake-data.py), for the home « New » row (L7, 72 h)
     RECENT = {'jab-cross': 'now-5h', 'chien-tete-en-bas': 'now-30h', 'session-shadow-boxing': 'now-20h'}
 
-    def images(slug, theme, title, steps):
+    def images(slug, theme, title, steps, bad=()):
         c = COLOURS[theme]
+        for i, st in enumerate(bad):
+            label_image(os.path.join(OUT, 'files', slug, 'img', f'x{i + 1}.jpg'), (360, 450), c, f'Erreur : {st[0]}\n{title}')
         label_image(os.path.join(OUT, 'files', slug, 'img', 'thumb.jpg'), (270, 480) if slug in PORTRAIT else (224, 224), c,
                     f'{textwrap.fill(title, 16) if slug in PORTRAIT else title}\n(preview)')
         for i, st in enumerate(steps):
@@ -375,7 +399,7 @@ def main():
 
     for s in SHEETS:
         n += 1
-        images(s['slug'], s['theme'], s['title'], s['steps'])
+        images(s['slug'], s['theme'], s['title'], s['steps'], s.get('mistakes', ()))
         sheets.append({'slug': s['slug'], 'kind': 'sheet', 'theme': s['theme'], 'group': s['group'], 'title': s['title'],
                        'summary': s['summary'], 'duration': s['duration'], 'thumbnail': 'img/thumb.jpg',
                        'source': s['source'], 'added_at': RECENT.get(s['slug']) or stamp(), 'html': sheet_html(s)})
@@ -383,7 +407,7 @@ def main():
         for it in ses['items']:
             n += 1
             it = dict(it, source=ses['source'])
-            images(it['slug'], ses['theme'], it['title'], it['steps'])
+            images(it['slug'], ses['theme'], it['title'], it['steps'], it.get('mistakes', ()))
             sheets.append({'slug': it['slug'], 'kind': 'sheet', 'theme': ses['theme'], 'group': it['group'], 'title': it['title'],
                            'summary': it['lead'], 'duration': '', 'thumbnail': 'img/thumb.jpg',
                            'source': ses['source'], 'added_at': stamp(), 'html': exercise_html(it)})
