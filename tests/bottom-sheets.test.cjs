@@ -122,6 +122,8 @@ test('destructive confirmations are action sheets: the danger action first, the 
     assert.ok(m, `${id} is an action sheet`);
     assert.match(m[0], new RegExp(`<div class="actions"><button class="btn danger" type="button" id="${ok}">[^<]+</button><button class="btn ghost" type="button" id="${no}" autofocus>`));
   }
+  // « Not queued yet »: dropping the link is the danger action, on top; queuing it next; keeping on editing apart.
+  assert.match(html, /<dialog class="dlg act" id="pending-dlg"[\s\S]*?<div class="actions"><button class="btn danger" type="button" id="pd-discard">Discard the link<\/button><button class="btn" type="button" id="pd-queue">[^<]+<\/button><button class="btn ghost" type="button" id="pd-stay" autofocus>Keep editing<\/button><\/div>/);
   const page = await sheetPage();
   clickView(page, '#sd-open');
   assert.equal(page.element('sd-dlg').open, true);
@@ -145,6 +147,10 @@ test('the sheet CSS: under 600 px, bottom-anchored, bounded by the visual viewpo
   assert.match(block, /border-radius:14px 14px 0 0/);
   assert.match(block, /env\(safe-area-inset-bottom,0px\)/);
   assert.match(block, /dialog\.pick-dlg \.picklist\{max-height:none;overflow:visible\}/, 'one scroll container per sheet');
+  // the sticky header sits flush at the top edge: no top padding on a sheet with a header, top:0, no negative margin
+  assert.match(block, /border-radius:14px 14px 0 0;padding:0 /);
+  assert.match(block, /dialog\.dlg\.act\{padding-top:20px\}/);
+  assert.match(block, /\.sh-h\{display:grid;[^}]*position:sticky;top:0;z-index:1;margin:0 -16px;/);
   assert.match(block, /@media \(max-width:599\.98px\) and \(prefers-reduced-motion:no-preference\)\{\s*dialog\.dlg\[open\]\{animation:sheet-up/);
   assert.doesNotMatch(html.replace(block, ''), /animation:sheet-up/, 'the slide-up runs nowhere else');
   // every dialog.dlg goes through the helper; the full-screen photo viewer keeps its own showModal
