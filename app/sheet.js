@@ -40,8 +40,10 @@
 
   // Gesture first (templates/sheet.html and templates/exercise.html): header (title, lead, kit) → sequence →
   // dose → first 3 key points, the others in « +N more » → why, collapsed under its own heading → the rest in its
-  // original order (variation, source, credits). A part that is not found stays where it is; nothing is dropped.
-  // Returns true when the sheet was rearranged.
+  // original order (variation, source, credits). A technique sheet (templates/technique.html, L16), told by its
+  // .gonogo box: header → go / no-go → sequence → the rest in its original order (prerequisites, conditions,
+  // mistakes, key points with « +N more », try plan, safety…). A part that is not found stays where it is;
+  // nothing is dropped. Returns true when the sheet was rearranged.
   const arrange = doc => {
     const body = doc && doc.body;
     if (!body || !body.childNodes) return false;
@@ -52,10 +54,11 @@
     const seq = h2s.find(u => holds(u, '.steps') && holds(u, 'img'));
     const dose = h2s.find(u => u !== seq && holds(u, '.dose'));
     const keys = h2s.find(u => u !== seq && u !== dose && holds(u, 'ol.keys'));
+    const gonogo = h2s.find(u => u !== seq && holds(u, '.gonogo'));
     const at = u => u ? units.indexOf(u) : Infinity;
-    const why = h2s.find(u => u.box === head.box && ![seq, dose, keys].includes(u)
+    const why = !gonogo && h2s.find(u => u.box === head.box && ![seq, dose, keys].includes(u)
       && at(u) < Math.min(at(dose), at(keys), at(seq)) && isWhy(u.h2));
-    if (!seq && !dose && !keys && !why) return false;
+    if (!seq && !dose && !keys && !why && !gonogo) return false;
 
     if (keys) {
       const ol = keys.nodes.map(n => tag(n) === 'OL' && n.matches('ol.keys') ? n : isEl(n) && n.querySelector('ol.keys')).find(Boolean);
@@ -81,7 +84,7 @@
       why.nodes = [det];
     }
 
-    const lead = [head, seq, dose, keys, why].filter(Boolean);
+    const lead = (gonogo ? [head, gonogo, seq] : [head, seq, dose, keys, why]).filter(Boolean);
     const order = [...lead, ...units.filter(u => !lead.includes(u))];
     // Consecutive units of the same container share one box: the container itself the first time it is used,
     // a shallow copy (same classes, no id, no « fiche ») after that.
