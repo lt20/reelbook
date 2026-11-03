@@ -33,9 +33,9 @@ const arranged = html => { const doc = parse(html), before = content(doc); const
 test('a sheet (templates/sheet.html) shows the gesture first: sequence, dose, key points, then why, then the rest', () => {
   const {doc, before, changed} = arranged(sixKeys);
   assert.equal(changed, true);
-  assert.deepEqual(landmarks(doc), ['header', 'h2:The sequence', 'h2:Dose suggestion, not in the reel',
+  assert.deepEqual(landmarks(doc), ['header', 'h2:Steps', 'h2:Dose suggestion, not in the reel',
     'h2:Key points', 'key:Short bold cue.', 'key:Second cue.', 'key:Third cue.', 'summary:+3 more',
-    'more:Fourth cue.', 'more:Fifth cue.', 'more:Sixth cue.', 'why:Why', 'h2:Variation', 'footer']);
+    'more:Fourth cue.', 'more:Fifth cue.', 'more:Sixth cue.', 'why:Why', 'h2:Common mistakes', 'h2:Easier / harder', 'footer']);
   assert.deepEqual(content(doc), before, 'every block kept');
   // header, lead and kit stay together in the first box, the first photo of the movement right after
   const [first, second] = doc.body.children;
@@ -66,12 +66,51 @@ test('three key points or fewer: no « more »', () => {
   assert.deepEqual(content(doc), before);
 });
 
-test('an exercise sheet (templates/exercise.html) keeps its order: header, movement, cues, easier version, source', () => {
+test('an exercise sheet (templates/exercise.html): header, steps, key points, common mistakes, easier / harder, source', () => {
   const {doc, before} = arranged(exerciseHtml);
-  assert.deepEqual(landmarks(doc), ['header', 'h2:The movement', 'h2:Cues', 'key:Short bold cue.', 'key:Second cue.', 'h2:Easier version', 'footer']);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:Steps', 'h2:Key points', 'key:Short bold cue.', 'key:Second cue.',
+    'h2:Common mistakes', 'h2:Easier / harder', 'footer']);
   assert.deepEqual(content(doc), before);
   assert.equal(doc.querySelector('details'), null);
-  assert.deepEqual(doc.body.children.map(b => b.getAttribute('class')), ['wrap fiche', 'wide', 'wrap']);
+  assert.deepEqual(doc.body.children.map(b => b.getAttribute('class')), ['wrap fiche', 'wide', 'wrap', 'wide', 'wrap']);
+});
+
+// L15 (skill writing rules): one label per function, the wrong movement in « Common mistakes » (.step.bad) after the
+// numbered steps, never in them. A French sheet built from the template, with 8 key points (the maximum).
+test('a sheet written with the L15 template in French: steps first, mistakes after, never in the sequence', () => {
+  const fr = sheetHtml.replace('<h2>Why</h2>', '<h2>Pourquoi</h2>').replace('<h2>Dose <small>suggestion, not in the reel</small></h2>', '<h2>Dose <small>suggestion</small></h2>')
+    .replace('<h2>Key points</h2>', '<h2>Points clés</h2>').replace('<h2>Steps</h2>', '<h2>Étapes</h2>')
+    .replace('<h2>Common mistakes</h2>', '<h2>Erreurs fréquentes</h2>').replace('<h2>Easier / harder</h2>', '<h2>Plus facile / plus dur</h2>')
+    .replace('<li><b>Third cue.</b> One sentence.</li>', ['Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth'].map(w => `<li><b>${w} cue.</b> x</li>`).join(''));
+  const {doc, before, changed} = arranged(fr);
+  assert.equal(changed, true);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:Étapes', 'h2:Dose suggestion', 'h2:Points clés',
+    'key:Short bold cue.', 'key:Second cue.', 'key:Third cue.', 'summary:+5 more',
+    'more:Fourth cue.', 'more:Fifth cue.', 'more:Sixth cue.', 'more:Seventh cue.', 'more:Eighth cue.',
+    'why:Pourquoi', 'h2:Erreurs fréquentes', 'h2:Plus facile / plus dur', 'footer']);
+  assert.deepEqual(content(doc), before, 'every block kept');
+  // the numbered steps right after the header hold no mistake; the mistake keeps its class, without a number
+  const seq = doc.body.children[1];
+  assert.equal(seq.querySelector('h2').textContent, 'Étapes');
+  assert.equal(seq.querySelectorAll('.step').length, 3);
+  assert.equal(seq.querySelector('.step.bad'), null);
+  const bad = doc.querySelectorAll('.step.bad');
+  assert.equal(bad.length, 1);
+  assert.equal(bad[0].querySelector('.k'), null);
+  const h2s = doc.querySelectorAll('h2').map(h => h.textContent.trim());
+  assert.ok(h2s.indexOf('Erreurs fréquentes') > h2s.indexOf('Étapes'));
+  // the production note sits in the footer, not under the why
+  assert.equal(doc.querySelector('details.rb-why').textContent.includes('Production notes'), false);
+  assert.match(doc.querySelector('footer').textContent, /Production notes/);
+});
+
+test('a sheet without « Common mistakes » (an older sheet) is arranged as before', () => {
+  const old = sheetHtml.replace(/<h2>Common mistakes<\/h2>\s*<div class="steps">[\s\S]*?<\/div>\s*<\/div>\s*/, '');
+  assert.equal(old.includes('step bad'), false);
+  const {doc, before} = arranged(old);
+  assert.deepEqual(landmarks(doc).filter(l => l.startsWith('h2:') || l.startsWith('why:')),
+    ['h2:Steps', 'h2:Dose suggestion, not in the reel', 'h2:Key points', 'why:Why', 'h2:Easier / harder']);
+  assert.deepEqual(content(doc), before);
 });
 
 test('a part that is not found stays where it is, nothing is dropped', () => {
@@ -93,8 +132,8 @@ test('a section before the dose that is not « Why » stays open where it is', (
   const html = sheetHtml.replace('<h2>Why</h2>', '<h2>Safety</h2>');
   const {doc, before} = arranged(html);
   assert.equal(doc.querySelector('details.rb-why'), null);
-  assert.deepEqual(landmarks(doc), ['header', 'h2:The sequence', 'h2:Dose suggestion, not in the reel', 'h2:Key points',
-    'key:Short bold cue.', 'key:Second cue.', 'key:Third cue.', 'h2:Safety', 'h2:Variation', 'footer']);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:Steps', 'h2:Dose suggestion, not in the reel', 'h2:Key points',
+    'key:Short bold cue.', 'key:Second cue.', 'key:Third cue.', 'h2:Safety', 'h2:Common mistakes', 'h2:Easier / harder', 'footer']);
   assert.deepEqual(content(doc), before);
   // the why is told by its heading in the sheet's language, a small note next to it included
   for (const h of ['Pourquoi', 'Pourquoi ?', 'WHY', 'Warum', 'Por qué <small>en bref</small>']) {
@@ -114,13 +153,14 @@ test('a page that is not built from the templates is left as is', () => {
 test('step photos become buttons of the viewer, with their step caption', () => {
   const doc = parse(sheetHtml);
   SH.arrange(doc);
-  assert.equal(SH.markPhotos(doc), 4);
+  assert.equal(SH.markPhotos(doc), 5);
   const header = doc.querySelector('header img');
   assert.equal(header.hasAttribute('data-ph'), false, 'the header photo is not a step');
   const photos = SH.photosOf(doc);
   assert.deepEqual(photos.map(p => [p.src, p.title, p.caption]), [['img/01-start.jpg', 'Start', 'What to set up before moving.'],
     ['img/02-middle.jpg', 'Middle', 'The move itself.'], ['img/03-end.jpg', 'End', 'Where it finishes and how to come back.'],
-    ['img/04-variation.jpg', 'Easier / harder', 'One variation shown or named in the reel.']]);
+    ['img/04-mistake.jpg', 'Lower back arched', 'What goes wrong, and the fix.'],
+    ['img/05-variation.jpg', 'Easier', 'One variation shown or named in the reel.']]);
   for (const p of photos) { assert.equal(p.img.getAttribute('role'), 'button'); assert.equal(p.img.getAttribute('tabindex'), '0'); }
 });
 

@@ -185,6 +185,10 @@ ol.keys b{font-weight:600}
 .step .palm{position:absolute;right:8px;bottom:8px;background:var(--paper);color:var(--ink);font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
 .step h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.05;margin:8px 0 3px}
 .step p{font-size:15px;line-height:1.35;color:var(--ink);margin:0}
+/* L15: a common mistake (« Common mistakes » after the steps, .step.bad): danger border and a ✕ badge instead of a number */
+.step.bad figure{border:2px solid var(--danger)}
+.step.bad figure::after{content:"✕";position:absolute;left:8px;top:8px;background:var(--danger);color:var(--paper);font-weight:700;font-size:15px;line-height:1;padding:5px 7px;border-radius:6px}
+.step.bad>h3:first-child::before{content:"✕ ";color:var(--danger)}
 .arrow{color:var(--accent);font-weight:700}
 .loop{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:15px}
 footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}

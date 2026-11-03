@@ -16,13 +16,25 @@ project, reached through `rb.py` (sign-in done once with `rb.py login`).
 fight, kitesurf, cooking, pilates…) and **custom ones** the user described themselves
 (`id` starts with `custom-`, the `description` says what belongs in it: follow it). A sheet
 needs a `theme` from that list and a `group`: use the notebook's groups when it has some, else
-create a short, reusable group name (custom notebooks start with none). If no notebook fits at
-all, do not invent one: publish in the closest and tell the user, who can add a notebook in the
-app. Routes in the app: `#` portal, `#<theme>`, `#<slug>` for a sheet, `#session/<slug>` for a
-session.
+create a short, reusable group name (custom notebooks start with none). **No notebook fits →
+do not publish**: never a « closest » notebook (a pizza was filed in Strength › Cooking), never an
+invented one. Flag the request with a notebook to add, e.g.
+`python3 tools/rb.py error <id> --note "No notebook fits: add Cooking?"`, say so in the end-of-run
+report, and take the next request. Routes in the app: `#` portal, `#<theme>`, `#<slug>` for a
+sheet, `#session/<slug>` for a session.
 
 **Language**: write the sheet in the user's language (the one they talk to you in). Section
-titles follow the template, translated.
+titles: one label per function, the same on both templates, translated from this table (other
+languages: translate the English column).
+
+| Function | English (templates) | French |
+|---|---|---|
+| Why | Why | Pourquoi |
+| Dose | Dose | Dose |
+| Key points | Key points | Points clés |
+| Numbered steps | Steps | Étapes |
+| Wrong movement | Common mistakes | Erreurs fréquentes |
+| Variation | Easier / harder | Plus facile / plus dur |
 
 ## 1. Take the queue
 - `python3 tools/rb.py requeue-stuck` first: it puts back in the queue a request left « processing » for
@@ -96,7 +108,7 @@ titles follow the template, translated.
     (hand down, knee closest, hips highest). 0.1 s finds no new movement, it finds the best image.
 - Burned-in subtitles sit in the 60–75 % band of the height: read them (full-frame grid) to
   reconstruct what is said. **No text, no subtitles, no useful comments**: the timeline is the only
-  source; the sheet says, in a `note`, that the names are read from the images.
+  source; the sheet says, in its footer, that the names are read from the images.
 - Final frames: full-viewport canvas (`drawImage(v, 0, sy, sw, sh, 0, 0, cw, ch)`), mouse parked
   in a corner (`hover` 1195,858), `screenshot` with `save_to_disk: true` and **scale 1** (the file
   is saved at the requested scale; 0.25 gives a 300 px file, useless). Note the rendered size.
@@ -160,12 +172,29 @@ titles follow the template, translated.
   referenced as `img/<file>.jpg`; thumbnail `img/thumb.jpg` cropped **3:2** (960×640 or 684×456,
   whole body) because cards use `object-fit: cover`.
 - Section order is fixed: Why → Dose (marked "suggestion" when the reel gives none) → Key points →
-  Sequence (numbered photos, palm/direction badge when useful) → Variation → Source.
-- Second person, short sentences, author credit + video link in the footer. No `<script>`, no
+  Steps (numbered photos, palm/direction badge when useful) → Common mistakes → Easier / harder →
+  Source. Titles from the table above; drop an optional section (Common mistakes, Easier / harder)
+  rather than leave it empty.
+- **Eyebrow** (`<p class="eyebrow">`): the fine target and the duration, nothing else; the app
+  already shows the notebook and the group. `Biceps · 5 min`, not `Strength · Arms · biceps · 5 minutes`.
+- **Key points** (on a sheet, and a session's `key_points`): the 3 most important first (a sheet
+  shows 3, the others under « +N more »), 8 at most.
+- **The wrong movement never goes into Steps.** When the video shows or names a mistake, put it in
+  « Common mistakes » after Steps: a `.steps` block of `<div class="step bad">`, no number badge,
+  photo `alt` starting with « Mistake: » (« Erreur : »), the fix in the text. The app draws a red
+  border and a « ✕ ». Example:
+  `<div class="step bad"><figure><img src="img/05-mistake.jpg" alt="Mistake: hips sagging" loading="lazy"></figure><h3>Hips sagging</h3><p>Squeeze the glutes: shoulders, hips and heels in one line.</p></div>`
+- Second person, short sentences, author credit + video link in the footer. **Production notes go
+  in the footer too, never under Why** (« The caption is empty: the names are read from the
+  images. », « Dose from the comments. »). No `<script>`, no
   `<style>`: the app provides the styles (class names in `templates/`). To point to another of
   the user's sheets, link `#<its slug>` (`rb.py list` gives the slugs).
 - `meta.json`: `slug`, `kind: "sheet"`, `theme`, `group`, `title`, `summary` (one line for the
   card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok`, `youtube` or `facebook`).
+- **`duration`** = practice time, the time the dose takes (`"5 min"`), `""` when you cannot tell.
+  Never the video length (`"0:45"`), never a step count (`"5 étapes"`): `rb.py publish` refuses both.
+  A progression or a technique taught in stages adds **`steps`**, a whole number (`"steps": 5`);
+  the app shows `duration` only.
 
 ## 3 bis. One video = a session (several exercises)
 - **First decide: one movement taught in stages, or a workout?** Several named moves do not make
@@ -175,9 +204,10 @@ titles follow the template, translated.
   5 steps », « progression to X », « how to X », « X from beginner to full », drills or lead-ups
   that end in the full movement. Signs: the title or caption names one movement; the last stage
   is that movement; each stage adds a piece to the previous one, or only exists to reach the last.
-  Then the stages are the **Sequence**, one numbered step per stage (« Stage 1 · plank »…) with
+  Then the stages are the **Steps**, one numbered step per stage (« Stage 1 · plank »…) with
   its photos and the sign that it is clean enough to move on, the full movement as the last step;
-  Dose says how to work the stages (« each stage 3×5 until clean, then the next »). Precedent:
+  Dose says how to work the stages (« each stage 3×5 until clean, then the next »); `meta.json`
+  gets `"steps"` = the number of stages, `duration` stays a practice time or `""`. Precedent:
   `side-kick-progression` (one sheet, right). Counter-example: « Front kick through en 5 étapes »
   was split into a session of 5 sheets (`session-front-kick-through`, wrong: plank, front sit
   through… are stages of the front kick through). In doubt, one sheet, and say so to the user.
@@ -191,9 +221,11 @@ titles follow the template, translated.
   (anchor: lowercase ascii with dashes, from the exercise name, e.g. `session-gsp-floor-angel`).
   Reprocessing the same video must give the same slugs, so the publish rewrites the sheets
   instead of adding duplicates. The same exercise twice in the circuit = one sheet, two items.
-- **Exercise sheet**: copy `templates/exercise.html` (light sheet): description, numbered photos,
-  2–3 cues, an easier version, footer with author credit + video link (YouTube: with the
-  `&t=…s` of the passage). **No** Why, Dose or Key points on it: they go on the session. Its
+- **Exercise sheet**: copy `templates/exercise.html` (light sheet): description, Steps (numbered
+  photos), Common mistakes when the video shows one, Key points (2–3 cues of this movement),
+  Easier / harder, footer with author credit + video link (YouTube: with the `&t=…s` of the
+  passage). Same section titles as a sheet (table above). **No** Why or Dose on it: they go on the
+  session, with the whole-session key points. Eyebrow: the fine target only (`Triceps · chest`). Its
   `meta.json`: `kind: "sheet"`, `theme` = the session's notebook, `group` = the exercise's own
   group (Shoulders, Legs…, never "Sessions"), `title`, `summary` (one line for the card),
   `duration: ""` (the dose lives on the session), `thumbnail` (`img/thumb.jpg`, 3:2, whole body),
