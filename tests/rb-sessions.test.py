@@ -202,6 +202,31 @@ class PublishSessionV2(Base):
         self.assertEqual([c[3]["slug"] for c in fake.rest_calls("POST", "sheets")], ["floor-angel"])
         self.assertEqual(fake.rest_calls("POST", "sessions"), [])
 
+    def sheet(self, name, **meta):
+        d = self.root / name
+        write(d / "meta.json", dict({"slug": name, "kind": "sheet", "theme": "strength", "group": "Arms", "title": "T"}, **meta))
+        write(d / "index.html", text="<p>x</p>")
+        return d
+
+    def test_duration_is_a_practice_time_and_steps_a_whole_number(self):
+        # L15: « 5 min » or "" passes, with an optional step count; the video length or a step count in duration is refused
+        for i, (dur, steps) in enumerate((("5 min", None), ("", 5), ("10–15 min", 3), ("30 s", None))):
+            fake = self.use(FakeBackend())
+            self.run_cmd(rb.cmd_publish, [str(self.sheet(f"ok-{i}", duration=dur, **({} if steps is None else {"steps": steps})))])
+            row = fake.rest_calls("POST", "sheets")[0][3]
+            self.assertEqual(row["duration"], dur)
+            self.assertNotIn("steps", row, "no column for it yet")
+        for i, dur in enumerate(("0:45", "5 étapes", "5 steps", "3 exercises", "4 exercices", 5)):
+            self.assertRefused(self.sheet(f"bad-dur-{i}", duration=dur), "practice time")
+        for i, steps in enumerate((0, "5", 2.5, True)):
+            self.assertRefused(self.sheet(f"bad-steps-{i}", steps=steps), "steps must be")
+
+    def test_a_session_exercise_with_a_step_count_as_duration_is_refused(self):
+        d = session_folder(self.root)
+        meta = json.loads((d / "s-a" / "meta.json").read_text()); meta["duration"] = "4 étapes"
+        write(d / "s-a" / "meta.json", meta)
+        self.assertRefused(d, "practice time")
+
 
 class RequeueSessions(Base):
     V1 = [

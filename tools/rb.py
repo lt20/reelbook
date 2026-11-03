@@ -33,6 +33,8 @@ meta.json of a sheet folder (meta.json + index.html + img/):
     {"slug": "floor-angel", "kind": "sheet", "theme": "strength", "group": "Shoulders",
      "title": "Floor angel", "summary": "…", "duration": "3 min", "thumbnail": "img/thumb.jpg",
      "source": {"author": "Georges St-Pierre", "url": "https://…", "platform": "instagram | tiktok | youtube | facebook"}}
+    `duration` is the practice time or "" (refused when it looks like a video length or a step count). Optional
+    `steps` (whole number >= 1): checked, kept in meta.json only (no column yet; the app shows `duration`).
 
 meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no index.html):
     {"slug": "session-gsp-shoulders", "kind": "session", "theme": "strength", "title": "…",
@@ -46,7 +48,7 @@ meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no
     `kind` and `exercises` only serve this migration now; `publish` writes kind "sheet" and leaves
     `exercises` to its default.
 """
-import json, os, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error
+import json, os, re, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error
 
 CFG_PATH = pathlib.Path(os.environ.get("REELBOOK_CONFIG") or "~/.config/reelbook/config.json").expanduser()
 
@@ -204,6 +206,8 @@ SESSION_REQUIRED = ("slug", "theme", "title")
 # free-text dose): whole numbers >= 0, and per_side a boolean; null counts as absent.
 ITEM_FIELDS = ("sets", "reps", "seconds", "rest_s", "per_side")
 IMG_EXT = (".jpg", ".jpeg", ".png", ".webp")
+# A sheet's duration is its practice time (« 5 min ») or "": never the video length (« 0:45 ») nor a step count (L15)
+NOT_A_DURATION = re.compile(r"^\s*\d+\s*:\s*\d\d\s*$|\b(steps?|stages?|exercises?|étapes?|exercices?)\b", re.I)
 NO_SESSIONS = "this backend has no sessions table: re-run supabase/schema.sql (see docs/own-supabase.md)"
 
 def _known_themes(cfg):
@@ -225,6 +229,12 @@ def _read_sheet(d):
     for k in REQUIRED:
         if not meta.get(k): die(f"{meta_p}: missing {k}")
     if meta.get("kind", "sheet") != "sheet": die(f"{meta_p}: kind must be \"sheet\" here")
+    dur, steps = meta.get("duration", ""), meta.get("steps")
+    if not isinstance(dur, str) or NOT_A_DURATION.search(dur):
+        die(f"{meta_p}: duration {json.dumps(dur, ensure_ascii=False)} must be the practice time (\"5 min\") or \"\", "
+            "never the video length nor a step count (put a count in \"steps\")")
+    if steps is not None and (not isinstance(steps, int) or isinstance(steps, bool) or steps < 1):
+        die(f"{meta_p}: steps must be a whole number >= 1")
     return meta
 
 def _publish_sheet(cfg, d, meta):
