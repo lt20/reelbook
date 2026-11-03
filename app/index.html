@@ -1855,7 +1855,8 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
       send.disabled = true; st.className = 'status'; st.textContent = 'Sending…';
       try {
         const {error} = await sb.from('requests').insert({url, theme: x.theme, note: 'Redo: ' + text, slug: ses ? RS.noteKey(ses) : x.slug}); if (error) throw error;
-        ta.value = ''; sheetSaved(rdlg); st.textContent = 'Sent. Claude will redo this sheet on the next run.'; $('report-cancel').textContent = 'Close';
+        // The dialog may hold a newer report by now (Cancel, reopened): only this one's own sheet is marked sent.
+        ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; if ($('report-note') === ta) { sheetSaved(rdlg); $('report-cancel').textContent = 'Close'; }
         refreshQueue();
       } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
     }));
