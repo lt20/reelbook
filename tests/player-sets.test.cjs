@@ -20,6 +20,9 @@ test('set count: the sets of the dose, else one box', () => {
   assert.equal(RS.setCount({sets: 4}), 4);
   for (const it of [{sets: null}, {sets: 0}, {sets: 2.5}, {}, null]) assert.equal(RS.setCount(it), 1);
   assert.equal(RS.setCount({sets: 21}), 21); // every set of the dose gets its box
+  assert.equal(RS.setCount({sets: 50}), 50);
+  assert.equal(RS.setCount({sets: 51}), 1); // past 50 (a typo): one « Done » box, never millions
+  assert.equal(RS.setCount({sets: 4294967296}), 1);
 });
 
 test('rest timer: rounded up, from the timestamps only, never below zero', () => {
@@ -148,4 +151,20 @@ test('sets: Resume after a reorder stores the fitted checks, so restoring the or
   const back = await app({...signedIn, tables: order, hash: '#session/legs/play/1', dom: true, stored: Object.fromEntries(resumed.storage)});
   await settle();
   assert.doesNotMatch(player(back), /id="play-set-1"[^>]*checked/);
+});
+
+test('end of session: Close works while Save to log is still on its way', async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const hold = (table, ops) => table === 'practice_log' && ops.some(o => o[0] === 'insert') ? pending : null;
+  const page = await app({...signedIn, tables: tables([{slug: 'a', dose: '40 s'}]), hash: '#session/legs/play', dom: true, hold});
+  await settle();
+  await page.fire('play-set-1', 'change'); await settle();
+  await page.fire('play-finish'); await settle();
+  page.fire('end-save'); await settle(); // its answer does not come
+  await page.fire('end-close'); await settle();
+  assert.doesNotMatch(page.element('view').innerHTML, /Session done/);
+  assert.match(page.element('view').innerHTML, /<h1>Legs<\/h1>/);
+  release(null); await settle(); // the late answer does not bring the end screen back
+  assert.doesNotMatch(page.element('view').innerHTML, /Session done/);
 });

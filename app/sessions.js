@@ -322,8 +322,10 @@
   };
 
   // ---------- player: sets and rest timer (L11) ----------
-  // The check boxes of a resolved item: one per set when its dose has sets (all of them), else one (« Done »).
-  const setCount = it => it && Number.isInteger(it.sets) && it.sets > 0 ? it.sets : 1;
+  // The check boxes of a resolved item: one per set when its dose has sets (all of them, up to MAX_SETS), else one
+  // (« Done »). More sets than that (a typo such as « 4294967296 × 10 ») get the single « Done » box too.
+  const MAX_SETS = 50;
+  const setCount = it => it && Number.isInteger(it.sets) && it.sets > 0 && it.sets <= MAX_SETS ? it.sets : 1;
   // Seconds left of a rest started at `startMs` (Date.now() then) for `seconds`, read on `clock` (Date.now): from
   // the timestamps, never from a count of timer callbacks, so a hidden page or a locked screen shows the right time
   // on return. Rounded up (a fresh 60 s rest reads 60, not 59), never below 0.

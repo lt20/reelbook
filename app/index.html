@@ -1990,7 +1990,8 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('end-done').focus();
   };
   const endShown = e => ended === e && shown === RS.ROUTE + e.slug && !view.hidden;
-  const closeEnd = () => { const e = ended; if (!e || e.busy) return; ended = null; if (shown === RS.ROUTE + e.slug && !view.hidden) showSession(e.slug); };
+  // Close works while a save is on its way too: that save still counts (lastDone), its answer no longer repaints.
+  const closeEnd = () => { const e = ended; if (!e) return; ended = null; if (shown === RS.ROUTE + e.slug && !view.hidden) showSession(e.slug); };
   // Saved: the session page (its « Done today ✓ »). Not saved: the end screen stays, with what is in the field and
   // « Not saved. Try again. ».
   const saveEnd = async () => {
