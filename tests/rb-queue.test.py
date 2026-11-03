@@ -195,6 +195,7 @@ class ListSince(Base):
         params = {path: p for _, path, p in calls}
         self.assertEqual(params["sheets"]["added_at"], "gte.2026-11-03T02:00:00Z")
         self.assertEqual(params["sessions"]["created_at"], "gte.2026-11-03T02:00:00Z")
+        self.assertEqual(params["sessions"]["origin"], "eq.video", "a session made in the app meanwhile is not « new »")
         self.assertIn("Curl marteau en 5 étapes", out)
         self.assertIn("GSP shoulders", out)
         self.assertNotIn("Floor angel", out, "the session stands for its exercise sheets")

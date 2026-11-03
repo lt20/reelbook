@@ -15,8 +15,8 @@
     rb.py error <id> --note T   flag a request that could not be processed (a « Redo: » note keeps its first
                                 line, T goes after it: Retry in the app queues the correction again)
     rb.py list [--since ISO]    list published sheets and sessions; --since: only those added at or after ISO
-                                (UTC, e.g. 2026-11-03T02:00:00Z), oldest first, without the exercise sheets of a
-                                session listed too (used by nightly.sh for its « 2 new sheets: … » notice)
+                                (UTC, e.g. 2026-11-03T02:00:00Z), oldest first, video sessions only, without the
+                                exercise sheets of a session listed too (nightly.sh: its « 2 new sheets: … » notice)
     rb.py delete <slug>         remove a sheet and its images
     rb.py requeue-sessions [--dry-run]
                                 queue again the video of every old (v1, one HTML page) session, so the skill
@@ -348,6 +348,7 @@ def cmd_list(args):
     if since:
         sp["added_at"] = f"gte.{since}"
         pp["created_at"] = f"gte.{since}"
+        pp["origin"] = "eq.video"   # published by a run, not a session made in the app meanwhile
     rows = rest(cfg, "GET", "sheets", params=sp) or []
     try:
         ses = rest(cfg, "GET", "sessions", params=pp, tolerate=(404,)) or []
