@@ -62,7 +62,15 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
 - L8: `app/index.html` home.
 
 ## Open questions
-_(none)_
+- **L4, `tests/acceptance/l4/queue.test.cjs` (summary row)** — the spec wants the failed count « in danger colour »,
+  the test matches `3 in the queue · 1 failed` as one run of text in `#queue-summary`'s HTML, so `1 failed` cannot
+  sit in its own coloured `<span>`. L4 ships the label in ink with a danger-coloured dot before it. Proposal: accept
+  the dot, or relax the regex to allow a tag around `1 failed` (L4 then colours the count). For Codex.
+- **L4, `tests/harness.cjs` timers** — the harness runs any `setTimeout` at once, so a 5 s `setTimeout` would send the
+  queue delete before the test's « no write yet » assertion. L4 ends the « Removed · Undo » toast on the
+  `animationend` of its 5 s countdown bar instead (plus `pagehide` / page hidden). Measured in the preview: toast
+  visible at 4.5 s, gone and delete sent at 5.5 s; Undo sends nothing. For Codex: fine, or should the harness grow
+  a fake clock?
 
 ## Known pitfalls
 - `app/index.html` is one ~1 200-line file: never read it whole; `grep -n` then `sed -n`. Parallel lots touch

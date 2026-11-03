@@ -6,7 +6,7 @@
 The preview (tools/preview/build.sh) shows the app on a fake backend. Its default data is this
 synthetic set, committed: 3 notebooks, 9 sheets built like templates/sheet.html and
 templates/exercise.html (French content written for the preview), 2 video sessions with doses,
-one note and 3 requests (queued, processing, error). Images are plain colour + label JPEGs made
+one note and 4 requests (queued, processing, error, done). Images are plain colour + label JPEGs made
 here: never a frame from a real video (the repository is public).
 
 Storage layout, as in the real bucket: files/<sheet slug>/img/<file>.jpg (the fake client maps
@@ -177,7 +177,7 @@ SHEETS = [
 
 SESSIONS = [
     dict(slug='session-gainage-10-min', theme='strength', title='Gainage en 10 minutes',
-         format='3 exercices en circuit · 3 tours · 30 s de repos entre les tours', source=src(5),
+         format='3 exercices en circuit, 40 s de travail et 20 s de transition · 3 tours · 30 s de repos entre les tours ; le dernier tour au tempo lent, 3 s par répétition', source=src(5),
          why='Une routine courte pour la sangle abdominale, sans matériel, à placer en fin de séance.',
          key_points=['Le dos reste neutre : pas de creux dans les lombaires.',
                      'Respire pendant la tenue, ne bloque pas.'],
@@ -282,9 +282,12 @@ def main():
             {'id': 'req-1', 'url': 'https://www.instagram.com/reel/PREVIEW0101/', 'status': 'queued', 'theme': 'strength',
              'note': None, 'created_at': '2026-11-02T08:15:00Z'},
             {'id': 'req-2', 'url': 'https://www.tiktok.com/@coach.demo/video/7400000000000000102', 'status': 'processing',
-             'theme': 'yoga', 'note': None, 'created_at': '2026-11-02T07:40:00Z'},
+             'theme': 'yoga', 'note': None, 'created_at': '2026-11-02T07:40:00Z', 'processed_at': '2026-11-03T09:20:00Z'},
             {'id': 'req-3', 'url': 'https://www.youtube.com/shorts/PREVIEW0103', 'status': 'error', 'theme': None,
              'note': 'Video unavailable: the post is private or was deleted.', 'created_at': '2026-11-01T21:05:00Z'},
+            # done: the computer's last run, shown in the expanded queue (« Last run: … »)
+            {'id': 'req-4', 'url': 'https://www.instagram.com/reel/PREVIEW0104/', 'status': 'done', 'theme': 'strength',
+             'note': None, 'created_at': '2026-10-31T18:00:00Z', 'processed_at': '2026-11-01T22:10:00Z'},
         ],
     }
     os.makedirs(OUT, exist_ok=True)
