@@ -5,6 +5,8 @@ photos taken from the video, why it matters, how much to do, the key points, the
 order, the source. A kitesurf transition, a yoga flow, a knife technique, a pole spin, a judo
 throw: one video, one sheet, filed in the notebook of your choice.
 
+**Open the app:** https://lt20.github.io/reelbook/
+
 Notebooks are yours to pick: 29 built-in ones (strength, yoga, running, surfing, pilates,
 cooking, beauty, crafts…) plus any notebook you describe yourself.
 
@@ -27,7 +29,8 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 - **Claude Opus 5.5.** The skill and the overnight run ask for it (`model: claude-opus-5-5`). It is
   the only model Reelbook is tested with: picking the peak frame and cropping the whole body lean
   on vision, and lighter models are not guaranteed to get them right.
-- **Python 3.10+** with Pillow (`pip install pillow`) for the image tools.
+- **Python 3.9+** with Pillow (`pip install pillow`) for the image tools. The
+  `python3` macOS installs with its Command Line Tools (3.9) is enough.
 - A backend for your data. Two options:
   - **Your own Supabase project**, free tier. Ten minutes: [docs/own-supabase.md](docs/own-supabase.md).
   - **The hosted backend** run by the maintainers, when enabled in `app/config.js`. Free for now;
@@ -35,10 +38,10 @@ extension and the way Instagram renders videos today. Read *What can break* befo
 
 ## Quick start
 
-1. Open the app and choose **Create an account**. Pick a backend, then enter your email and
-   password. Returning users sign in directly; on a new device, **Sign in to my own instance**
-   lets self-hosted users enter their Supabase URL and anon key once. Install the app on your
-   phone (*Add to Home screen*).
+1. Open the app at https://lt20.github.io/reelbook/ and choose **Create an account**. Pick a
+   backend, then enter your email and password. Returning users sign in directly; on a new
+   device, **Sign in to my own instance** lets self-hosted users enter their Supabase URL and anon
+   key once. Install the app on your phone (*Add to Home screen*).
 2. Save a video: **+ Add a video**, paste the link. It shows under *In the queue* on the home page.
 3. On your computer, paste the install line shown in the app's **Settings** page (it carries your
    backend's URL and key). macOS / Linux:
@@ -202,7 +205,7 @@ Run them locally:
 
 ```
 node --test tests/auth-flow.test.cjs tests/sessions.test.cjs     # app (Node.js 22 or newer)
-python3 -I tests/rb-sessions.test.py && python3 -I tests/rb-queue.test.py   # rb.py (Python 3.10+)
+python3 -I tests/rb-sessions.test.py && python3 -I tests/rb-queue.test.py   # rb.py (Python 3.9+)
 bash -n tools/nightly.sh
 ```
 

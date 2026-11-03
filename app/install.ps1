@@ -11,9 +11,9 @@ function Need($cmd, $hint) { if (-not (Get-Command $cmd -ErrorAction SilentlyCon
 
 Say "1/5 Checking the basics"
 Need git "Install it from https://git-scm.com."
-Need python "Install Python 3.10 or newer from https://python.org (tick 'Add to PATH')."
-$v = & python -c "import sys; print(1 if sys.version_info >= (3, 10) else 0)"
-if ($v -ne "1") { throw "Python 3.10 or newer is needed." }
+Need python "Install Python 3.9 or newer from https://python.org (tick 'Add to PATH')."
+$v = & python -c "import sys; print(1 if sys.version_info >= (3, 9) else 0)"
+if ($v -ne "1") { throw "Python 3.9 or newer is needed." }
 if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { Write-Host "note: Claude Code ('claude') is not on your PATH yet. Install it from https://claude.com/claude-code before running /reelbook." }
 
 Say "2/5 Getting the code into $Dir"

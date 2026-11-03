@@ -20,9 +20,9 @@ need() { command -v "$1" >/dev/null 2>&1 || { echo "missing: $1. $2" >&2; exit 1
 
 say "1/5 Checking the basics"
 need git "Install it from https://git-scm.com (macOS: run 'xcode-select --install')."
-need python3 "Install Python 3.10 or newer from https://python.org."
-python3 - <<'EOF' || { echo "Python 3.10 or newer is needed." >&2; exit 1; }
-import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)
+need python3 "Install Python 3.9 or newer from https://python.org."
+python3 - <<'EOF' || { echo "Python 3.9 or newer is needed." >&2; exit 1; }
+import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)
 EOF
 if ! command -v claude >/dev/null 2>&1; then
   echo "note: Claude Code ('claude') is not on your PATH yet. Install it from https://claude.com/claude-code before running /reelbook."
