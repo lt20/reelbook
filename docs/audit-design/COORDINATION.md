@@ -110,7 +110,8 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
   harmless in a browser). Suggestion: read `page.element('view').innerHTML` there, as the other L5 tests do; the
   extra line in `showSheet` can then go.
 
-- **L9, three acceptance tests that cannot pass as written** (raised by the L9 agent, for Codex; the code they aim at
+- **L9, three acceptance tests that cannot pass as written** — **settled** (3 Nov, coordinator decision after Codex
+  pass 2 flagged them too: the one-line fix of each applied in a separate commit, #36). Raised by the L9 agent; the code they aim at
   is in place and covered by `tests/dose.test.cjs` and `tests/rb-sessions.test.py`):
   1. `l9/dose-parser.test.cjs` « every fixture and Laurent session format… »: every `parseRest` value in the list
      passes; the last line counts the non-null expectations as 6, but the list holds 7 (30, 60, 90, 60, 90, 30, 90).
@@ -136,6 +137,8 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
 - `scripts/codex-acceptance.sh --out` accepts any folder of the repo; should be limited to `tests/` (L0).
 - Screenshots run in Chromium, not WebKit (L0).
 - Queue delete on page close may not leave a real iPhone (supabase-js fetches the token first) (#28).
+- Structured dose: a tab opened before the L9 deploy that saves Edit on a session writes items as `{slug, dose}` and
+  erases its structured fields; the free-text dose stays and the parser takes over (#36, Codex pass 2).
 
 ## Known pitfalls
 - **Every change to `app/sessions.js` or `app/sheet.js` bumps its `?v=` in `index.html` and in `SHELL` of `app/sw.js`,
