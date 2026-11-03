@@ -804,10 +804,13 @@ dialog.ph-dlg::backdrop{background:#000}
   // Up to 3 sheets added more than 3 days ago and never practised (RS.toTry, seeded by today's local date: a new
   // choice each day). Needs the practice log read (practiceOk): no table, or no answer, hides the shelf. « Not for
   // me » drops a sheet for good on this device, per account like « New »: rb.dismissed.<user id>, a JSON array of
-  // slugs, trimmed to the sheets that still exist. No streak, no reminder.
+  // slugs, trimmed to the sheets that still exist. No streak, no reminder. A home page left open past midnight (or
+  // back to the front the next day) gets the new day's choice, as L6's practice block does.
   const dismissedKey = () => user && user.id ? 'rb.dismissed.' + user.id : '';
   const dismissSheet = slug => { const k = dismissedKey(); if (!k) return; ls.set(k, JSON.stringify([...readList(k).filter(x => x !== slug && bySlug.has(x)), slug])); };
+  let shelfOn = false, shelfDay = ''; // shelfOn: the last render could show the shelf; shelfDay: the day it used
   const renderToTry = show => {
+    shelfOn = show; shelfDay = todayIso();
     const list = show && practiceOk ? RS.toTry(sheets, {today: todayIso(), practised: lastDone, dismissed: readList(dismissedKey())}) : [];
     $('to-try').hidden = !list.length;
     $('to-try').innerHTML = list.length ? '<h2 class="eyebrow" id="totry-h">To try</h2><div class="newrow">'
@@ -818,6 +821,9 @@ dialog.ph-dlg::backdrop{background:#000}
     if (!b) return;
     dismissSheet(b.dataset.dismiss); renderToTry(true);
   });
+  const shelfNewDay = () => { if (shelfOn && !$('home').hidden && shelfDay !== todayIso()) renderToTry(true); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'hidden') shelfNewDay(); });
+  if (typeof setInterval === 'function') setInterval(shelfNewDay, 60000);
   const renderGroups = t => {
     const solo = sheets.filter(e => e.theme === t.id);
     const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
