@@ -19,16 +19,26 @@ test('a new video session stands for its exercise sheets; a user session is not 
   assert.deepEqual(links(page.element('new-cards').innerHTML), ['session/gsp', 'solo']);
 });
 
-test('rb.seen keeps the last 500 keys and a broken value is ignored', async () => {
+test('rb.seen.<user id> keeps the last 500 keys and a broken value is ignored', async () => {
   const many = JSON.stringify(Array.from({length: 600}, (_, i) => `old-${i}`));
-  for (const stored of [{'rb.seen': many}, {'rb.seen': '{not json'}]) {
+  for (const stored of [{'rb.seen.u1': many}, {'rb.seen.u1': '{not json'}]) {
     const page = await app({...signedIn, stored, tables: tables([sheet('fresh', 1)]), dom: true}); await settle();
     assert.deepEqual(links(page.element('new-cards').innerHTML), ['fresh']);
     page.go('#fresh'); await settle();
-    const seen = JSON.parse(page.storage.get('rb.seen'));
+    const seen = JSON.parse(page.storage.get('rb.seen.u1'));
     assert.ok(seen.length <= 500);
     assert.equal(seen.at(-1), 'fresh');
   }
+});
+
+test('a page opened by account A stays « New » for account B on the same device (Codex pass 4)', async () => {
+  // A opened its own « curl » (rb.seen.uA), and the old shared key rb.seen is ignored; B (u1) signs in.
+  const stored = {'rb.seen.uA': JSON.stringify(['curl']), 'rb.seen': JSON.stringify(['curl'])};
+  const page = await app({...signedIn, stored, tables: tables([sheet('curl', 1)]), dom: true}); await settle();
+  assert.deepEqual(links(page.element('new-cards').innerHTML), ['curl']);
+  page.go('#curl'); await settle();
+  assert.deepEqual(JSON.parse(page.storage.get('rb.seen.u1')), ['curl']);
+  assert.deepEqual(JSON.parse(page.storage.get('rb.seen.uA')), ['curl'], 'A\'s list is left alone');
 });
 
 test('no « New » row on a notebook page', async () => {

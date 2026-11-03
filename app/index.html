@@ -732,12 +732,15 @@ dialog.ph-dlg::backdrop{background:#000}
   const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
   const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // ---------- L7: « New » row ----------
-  // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen holds the
-  // keys of the pages opened (a sheet's slug, « session/<slug> » for a session, as RS.noteKey), the last 500.
-  // A new session's exercise sheets are left to the session's card. Home page only, 6 cards, newest first.
-  const SEEN = 'rb.seen', NEW_MS = 72 * 3600 * 1000, NEW_MAX = 6;
-  const seenKeys = () => { try { const a = JSON.parse(ls.get(SEEN) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
-  const markSeen = key => { const a = seenKeys().filter(k => k !== key); a.push(key); ls.set(SEEN, JSON.stringify(a.slice(-500))); };
+  // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen.<user id>
+  // holds the keys of the pages opened (a sheet's slug, « session/<slug> » for a session, as RS.noteKey), the last
+  // 500. One list per account (the id is unique across backends), so a page opened by A does not leave B's « New »;
+  // the old shared key rb.seen is ignored. A new session's exercise sheets are left to the session's card.
+  // Home page only, 6 cards, newest first.
+  const NEW_MS = 72 * 3600 * 1000, NEW_MAX = 6;
+  const seenKey = () => user && user.id ? 'rb.seen.' + user.id : '';
+  const seenKeys = () => { const k = seenKey(); if (!k) return []; try { const a = JSON.parse(ls.get(k) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+  const markSeen = key => { const k = seenKey(); if (!k) return; const a = seenKeys().filter(x => x !== key); a.push(key); ls.set(k, JSON.stringify(a.slice(-500))); };
   const isRecent = v => { const t = Date.parse(v || ''); return t > Date.now() - NEW_MS; };
   const renderNew = show => {
     const seen = new Set(seenKeys());

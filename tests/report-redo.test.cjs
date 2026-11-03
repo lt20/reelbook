@@ -37,7 +37,7 @@ test('a sheet that fails to load stays « New »', async () => {
   const page = await app({...signedIn, tables: {user_themes: themes, sheets: [fresh], sessions: []}}); await settle();
   page.go('#fresh'); await settle();
   assert.match(page.element('view').innerHTML, /could not be loaded/);
-  assert.equal(page.storage.get('rb.seen'), undefined);
+  assert.equal(page.storage.get('rb.seen.u1'), undefined);
   page.go('#'); await settle();
   assert.equal(page.element('new-sec').hidden, false);
 });
