@@ -1,0 +1,15 @@
+[
+  {"name": "l3-01-sheet-first-screen", "hash": "pompes-inclinees",
+   "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"wait": "#view .steps img[data-ph]"}],
+   "why": "first screen (no full page): the first step photo must be visible above the fold"},
+  {"name": "l3-02-sheet-details-open", "hash": "pompes-inclinees", "full": true,
+   "actions": [{"wait": "#view details.rb-why"}, {"click": "#view details.rb-why > summary"}, {"wait": "#view details.rb-why[open]"}]},
+  {"name": "l3-03-viewer-open", "hash": "pompes-inclinees",
+   "actions": [{"wait": "#view .steps img[data-ph]"}, {"click": "#view .steps .step:nth-child(2) img[data-ph]"}, {"wait": "#ph-dlg[open] figure img"}, {"wait": 400}]},
+  {"name": "l3-04-viewer-closed-by-escape", "hash": "pompes-inclinees",
+   "actions": [{"click": "#view .steps .step:nth-child(2) img[data-ph]"}, {"wait": "#ph-dlg[open]"}, {"press": "Escape"}, {"wait": "#view .steps .step:nth-child(2) img[data-ph]:focus"}]},
+  {"name": "l3-05-wake-on", "hash": "pompes-inclinees",
+   "actions": [{"wait": "#wake"}, {"click": "#wake"}, {"wait": "#wake[aria-pressed=\"true\"]"}]},
+  {"name": "l3-06-session-top-bar", "hash": "session/session-gainage-10-min",
+   "actions": [{"wait": "#view h1 >> text=Gainage en 10 minutes"}, {"wait": "#wake"}]}
+]
