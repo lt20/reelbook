@@ -755,12 +755,13 @@ dialog.ph-dlg::backdrop{background:#000}
     return last;
   };
   // The last catalogue shows at once (IndexedDB), the fresh read replaces it; a failed read keeps the cached one.
-  const reload = async () => {
-    loading = true; loadError = ''; if (!$('home').hidden) renderHome();
+  // shown: the cached catalogue is already on screen (shown before the session was confirmed, see boot).
+  const reload = async ({shown = false} = {}) => {
+    loadError = ''; if (!shown) { loading = true; if (!$('home').hidden) renderHome(); }
     const gen = ++practiceGen, client = sb, uid = user.id, key = catKey(); // practiceGen: a sign-out or a newer read drops this one
-    let fromCache = false;
+    let fromCache = shown;
     const res = await RS.refreshCatalogue({
-      read: async () => RS.restoreCatalogueSnapshot(await idb.get(key)),
+      read: async () => shown ? null : RS.restoreCatalogueSnapshot(await idb.get(key)),
       fetch: fetchCatalogue,
       apply: (c, from) => { applyCatalogue(c); if (from === 'cache') { fromCache = true; loading = false; route(); } },
       write: c => idb.set(key, RS.catalogueSnapshot(c)),
@@ -1846,12 +1847,19 @@ dialog.ph-dlg::backdrop{background:#000}
 
   // ---------- boot ----------
   let booted = null, authSubscription = null;
+  // L19: the user of the session supabase-js keeps for this backend, read before supabase-js answers (an expired
+  // token is refreshed over the network first: seconds on a slow network, and offline no session at all).
+  // peeked: the home page shows that user's cached catalogue and supabase-js has not confirmed the session yet.
+  let peeked = false;
+  const storedUser = () => {
+    try { const v = JSON.parse(ls.get('rb.auth.' + backend.url.replace(/\W/g, '')) || 'null'); return v && v.user && v.user.id ? v.user : null; } catch { return null; }
+  };
   const boot = () => {
     const identity = backend ? backend.url + '|' + backend.key : null;
     if (booted !== identity) {
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
-      booted = identity;
+      booted = identity; peeked = false;
       resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
@@ -1860,10 +1868,26 @@ dialog.ph-dlg::backdrop{background:#000}
       const keepaliveFetch = (input, init) => fetch(input, init && init.method === 'DELETE' ? {...init, keepalive: true} : init);
       sb = supabase.createClient(backend.url, backend.key, {global: {fetch: keepaliveFetch}, auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
       const client = sb;
+      // L19: a stored session and a cached catalogue: the home page shows now, the network read waits for
+      // supabase-js to confirm the user (an unconfirmed read would go out without the user's token).
+      const peek = storedUser();
+      if (peek) idb.get(RS.catalogueCacheKey(backend.url, peek.id)).then(snap => {
+        const c = RS.restoreCatalogueSnapshot(snap), still = storedUser();
+        if (!c || client !== sb || user || !still || still.id !== peek.id) return;
+        user = peek; peeked = true; applyCatalogue(c); loading = false; route();
+      });
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
         if (client !== sb) return;
         const next = session ? session.user : null;
+        if (peeked && user) {
+          const kept = storedUser();
+          // No session but still stored: the auth server is out of reach (offline). The cached view stays; a later
+          // TOKEN_REFRESHED or SIGNED_IN of the same user loads the fresh catalogue.
+          if (!next && kept && kept.id === user.id) return;
+          if (next && next.id === user.id) { peeked = false; user = next; setTimeout(() => { if (client === sb && user) reload({shown: true}); }, 0); return; }
+          peeked = false; // another user, or a session removed (revoked): handled as a change below
+        }
         const changed = (next && next.id) !== (user && user.id);
         if (changed && user && !next) clearUserCache(user.id); // signed out (button, reset, or a revoked session)
         user = next;
