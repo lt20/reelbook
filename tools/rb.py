@@ -26,6 +26,10 @@
     rb.py requeue-stuck [--hours N] [--dry-run]
                                 put back in the queue every request left « processing » for more than N hours
                                 (default 6) by a run that died (Mac asleep, crash); run first by nightly.sh and the skill
+    rb.py backfill-search [--dry-run]
+                                fill search_text (the text the app searches) of every sheet of the account that has
+                                none yet, from its html; once, after supabase/schema.sql added the column.
+                                `publish` writes it for every new sheet
 
 Session file: ~/.config/reelbook/config.json (chmod 600). Override with REELBOOK_CONFIG.
 
@@ -46,7 +50,8 @@ meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no
     `kind` and `exercises` only serve this migration now; `publish` writes kind "sheet" and leaves
     `exercises` to its default.
 """
-import json, os, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error
+import json, os, re, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error
+from html.parser import HTMLParser
 
 CFG_PATH = pathlib.Path(os.environ.get("REELBOOK_CONFIG") or "~/.config/reelbook/config.json").expanduser()
 
@@ -227,6 +232,49 @@ def _read_sheet(d):
     if meta.get("kind", "sheet") != "sheet": die(f"{meta_p}: kind must be \"sheet\" here")
     return meta
 
+# Full-text search (sheets.search_text): what a reader sees on the sheet, kit pills first, whitespace collapsed,
+# at most SEARCH_MAX characters (cut at a word). Not read: scripts, styles, the <title>, image alt texts.
+SEARCH_MAX = 4000
+_SKIP_TAGS = {"script", "style", "template", "noscript", "title", "svg"}
+_INLINE_TAGS = {"a", "b", "i", "em", "strong", "u", "s", "small", "sub", "sup", "mark", "abbr", "code", "q", "cite", "time"}
+_VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
+class _VisibleText(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.body, self.kit, self.stack = [], [], []   # stack: (tag, skipped, in a .kit element)
+    def _top(self, i):
+        return bool(self.stack) and self.stack[-1][i]
+    def _gap(self, tag):   # a block boundary separates words; inline tags do not
+        if tag not in _INLINE_TAGS: (self.kit if self._top(2) else self.body).append(" ")
+    def handle_starttag(self, tag, attrs):
+        self._gap(tag)
+        if tag in _VOID_TAGS: return
+        kit = "kit" in (dict(attrs).get("class") or "").split()
+        self.stack.append((tag, tag in _SKIP_TAGS or self._top(1), kit or self._top(2)))
+    def handle_endtag(self, tag):
+        for i in range(len(self.stack) - 1, -1, -1):   # tolerant of unclosed tags
+            if self.stack[i][0] == tag: del self.stack[i:]; break
+        self._gap(tag)
+    def handle_data(self, data):
+        if not self._top(1): (self.kit if self._top(2) else self.body).append(data)
+
+def search_text(html):
+    p = _VisibleText()
+    p.feed(html or ""); p.close()
+    ws = lambda parts: re.sub(r"\s+", " ", "".join(parts)).strip()
+    text = " ".join(t for t in (ws(p.kit), ws(p.body)) if t)
+    if len(text) > SEARCH_MAX:
+        cut = text[:SEARCH_MAX]
+        if not text[SEARCH_MAX].isspace() and " " in cut: cut = cut.rsplit(" ", 1)[0]
+        text = cut.rstrip()
+    return text
+
+NO_SEARCH_TEXT = "this backend has no sheets.search_text column: re-run supabase/schema.sql (see docs/own-supabase.md)"
+
+def _no_search_column(err):
+    return err.code == 400 and "search_text" in (err.body or "")
+
 def _publish_sheet(cfg, d, meta):
     slug = meta["slug"]
     n, img_d = 0, d / "img"
@@ -240,8 +288,19 @@ def _publish_sheet(cfg, d, meta):
     row = {"slug": slug, "kind": "sheet", "theme": meta["theme"], "group": meta["group"], "title": meta["title"],
            "summary": meta.get("summary", ""), "duration": meta.get("duration", ""), "thumbnail": meta.get("thumbnail", "img/thumb.jpg"),
            "source": meta.get("source", {}), "html": (d / "index.html").read_text()}
-    out = rest(cfg, "POST", "sheets", row, prefer="resolution=merge-duplicates,return=representation", params={"on_conflict": "user_id,slug"})
-    print(f"published {slug}: {n} image(s), row {out[0]['id']}")
+    row["search_text"] = search_text(row["html"])
+    post = lambda r, tolerate=(): rest(cfg, "POST", "sheets", r, prefer="resolution=merge-duplicates,return=representation",
+                                       params={"on_conflict": "user_id,slug"}, tolerate=tolerate)
+    try:
+        out = post(row, (400,))
+    except RbHTTPError as e:
+        # a backend not migrated yet (PostgREST PGRST204, unknown column): the sheet still goes out, unindexed
+        if not _no_search_column(e): die(f"POST sheets → {e}")
+        print(f"rb: {NO_SEARCH_TEXT}; {slug} published without it", file=sys.stderr)
+        row.pop("search_text")
+        out = post(row)
+    # stderr: a progress line (L14 acceptance test reads the stub's last stdout line); the run still shows it
+    print(f"published {slug}: {n} image(s), {len(row.get('search_text') or '')} characters of search text, row {out[0]['id']}", file=sys.stderr)
 
 def _read_session(d, meta):
     """Check a v2 session folder without touching the network; return [(item slug, sub-folder, sheet meta)] in item order."""
@@ -448,9 +507,42 @@ def cmd_requeue_stuck(args):
                  prefer="return=minimal", params={"id": f"eq.{r['id']}", "status": "eq.processing"})
     print(f"{len(rows)} processing, {n} {'to requeue (dry run, nothing written)' if dry else 'requeued'}")
 
+# ---------------------------------------------------------------------------
+# full-text search backfill (once, after the search_text column is added)
+# ---------------------------------------------------------------------------
+
+def cmd_backfill_search(args):
+    if any(a != "--dry-run" for a in args): die("usage: rb.py backfill-search [--dry-run]")
+    dry = "--dry-run" in args
+    cfg = session()
+    PAGE, last, seen, n = 50, None, 0, 0   # html is heavy: 50 rows a read, keyset on slug (writes do not shift it)
+    while True:
+        params = {"select": "slug,html,search_text", "user_id": f"eq.{cfg['user_id']}", "search_text": "eq.",
+                  "order": "slug", "limit": str(PAGE)}
+        if last is not None: params["slug"] = f"gt.{last}"
+        try:
+            rows = rest(cfg, "GET", "sheets", params=params, tolerate=(400,)) or []
+        except RbHTTPError as e:
+            if _no_search_column(e): die(NO_SEARCH_TEXT + ", then run this again")
+            die(f"GET sheets → {e}")
+        for r in rows:
+            if (r.get("search_text") or "").strip(): continue   # filled meanwhile, or a server ignoring the filter
+            seen += 1
+            text = search_text(r.get("html") or "")
+            if not text: continue
+            n += 1
+            print(f"{r['slug']}: {len(text)} characters" + (" (dry run)" if dry else ""))
+            if not dry:
+                rest(cfg, "PATCH", "sheets", {"search_text": text}, prefer="return=minimal",
+                     params={"slug": f"eq.{r['slug']}", "user_id": f"eq.{cfg['user_id']}"})
+        if len(rows) < PAGE: break
+        last = rows[-1]["slug"]
+    print(f"{seen} sheet(s) without search text, {n} {'to fill (dry run, nothing written)' if dry else 'filled'}")
+
 COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "themes": cmd_themes, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
             "done": cmd_done, "error": cmd_error, "list": cmd_list, "delete": cmd_delete,
-            "requeue-sessions": cmd_requeue_sessions, "requeue-stuck": cmd_requeue_stuck}
+            "requeue-sessions": cmd_requeue_sessions, "requeue-stuck": cmd_requeue_stuck,
+            "backfill-search": cmd_backfill_search}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
