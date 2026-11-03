@@ -13,8 +13,9 @@ Two parts:
 - **The app** (`app/`): a small installable web app. You paste video links from your phone and
   read your sheets there. No store, no build step: a static page talking to a Supabase backend.
 - **The skill** (`skill/reelbook/`): instructions for [Claude Code](https://claude.com/claude-code).
-  Every few days you run it on your computer. It opens each queued video in Chrome, watches it,
-  extracts the key frames, writes the sheet and publishes it to your backend.
+  Every few days you run it on your computer, or a Mac runs it every night. It opens each queued
+  video in Chrome, watches it, extracts the key frames, writes the sheet and publishes it to your
+  backend.
 
 This is a tinkerer's tool. It works, we use it daily, but it leans on Claude Code, a Chrome
 extension and the way Instagram renders videos today. Read *What can break* before you start.
@@ -66,13 +67,18 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    Sessions section; each of its sheets carries « in 1 session » and links back to it.
 
 **Overnight (macOS).** `tools/nightly.sh install` processes the queue every night at 02:00 (or
-`install 23:30`) through a LaunchAgent, at most 5 videos per run. It only starts Claude when the
-queue holds something and the Mac is **plugged in** (on battery macOS sleeps anyway and the run
-dies mid-way), with Chrome open. A locked screen is fine: the video still plays. A video left
-« in progress » by a run that died goes back to the queue after 6 hours (`rb.py requeue-stuck`). `tools/nightly.sh check` shows what a run would do, `run --max 1` tries one video now,
-`uninstall` removes it. On install, macOS notifies a new background item, « Reelbook night run »: that is this
-run, keep it allowed (System Settings → General → Login Items). Log in `~/Library/Logs/reelbook-nightly.log`; set `REELBOOK_NOTIFY_URL`
-to an [ntfy](https://ntfy.sh) topic before installing to get a phone notice after each run.
+`install 23:30`) through a LaunchAgent, at most 5 videos per run. Leave Chrome open with the
+extension. Claude only starts when the queue holds something and the Mac is **plugged in**: on
+battery, macOS sleeps anyway and the run dies mid-way. A locked screen is fine, the video still
+plays. A video left « in progress » by a run that died goes back to the queue after 6 hours
+(`rb.py requeue-stuck`).
+
+- `tools/nightly.sh check` shows what a run would do, `run --max 1` tries one video now,
+  `uninstall` removes it.
+- On install, macOS notifies a new background item, « Reelbook night run »: that is this run, keep
+  it allowed (System Settings → General → Login Items).
+- Log in `~/Library/Logs/reelbook-nightly.log`. Set `REELBOOK_NOTIFY_URL` to an
+  [ntfy](https://ntfy.sh) topic before installing to get a phone notice after each run.
 
 ## Notebooks
 
@@ -86,6 +92,10 @@ and how to group it. Notebooks are per account; remove one from Settings when it
 Claude filed a sheet in the wrong place? Open it and tap **Move**: pick another notebook and a
 group (one it already has, or a new one). A session moves too, to another notebook only: its
 exercise sheets stay where they are.
+
+Don't want a sheet any more? **Delete sheet**, at the bottom of its page, removes it with its photos
+and your note. A session that listed it simply skips it; processing the same video again brings it
+back.
 
 ## Your own sessions
 
@@ -105,7 +115,8 @@ Each session page also has its own « My notes ».
 
 ## How a sheet is made
 
-1. `rb.py themes` lists your notebooks, `rb.py queue` your queued links; Claude claims one.
+1. `rb.py requeue-stuck` frees the links a dead run left « in progress », `rb.py themes` lists your
+   notebooks, `rb.py queue` your queued links; Claude claims one.
 2. Chrome opens the video. Claude reads caption and comments, draws a grid of the whole video
    (a frame every 0.2 s, so short reps are not missed; on a long video, only the useful passages), reads the burned-in subtitles and writes
    a second-by-second timeline of the movements.
@@ -126,9 +137,9 @@ security (`supabase/schema.sql`):
 | Table / bucket | Holds |
 | --- | --- |
 | `requests` | pasted links: `url`, `status` (queued → processing → done / error), `theme` hint, `slug` |
-| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `source`, `html` |
-| `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `items` (ordered `{slug, dose}`, each slug a sheet) |
-| `notes` | your personal note per sheet |
+| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html` (`kind` and `exercises` only serve the old one-page sessions, to be removed) |
+| `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `origin` (`video` or `user`), `thumbnail`, `items` (ordered `{slug, dose}`, each slug a sheet) |
+| `notes` | your personal note per sheet (key: its slug) and per session (key: `session/<slug>`) |
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
 | `sheets/<user_id>/<slug>/img/*` | the photos |
 
@@ -142,10 +153,13 @@ A backend set up before sessions existed has no `sessions` table: re-run `supaba
 ```
 app/        the web app (index.html, config.js, sessions.js, manifest, service worker, vendored supabase-js)
 skill/      the Claude Code skill (reelbook/SKILL.md)
-templates/  sheet.html and exercise.html (one exercise of a session), the HTML the skill fills in
-tools/      rb.py (backend CLI), crop.py, vstack.py (Pillow), nightly.sh (overnight runs, macOS)
+templates/  sheet.html and exercise.html (one exercise of a session), the HTML the skill fills in;
+            session.html is the old one-page session, no longer written
+tools/      rb.py (backend CLI), crop.py, vstack.py (Pillow), nightly.sh (overnight runs, macOS),
+            import-legacy.py (one-off import of the author's first notebook)
 supabase/   schema.sql
-docs/       setup guides
+tests/      app tests (Node) and rb.py tests (Python), run by GitHub Actions
+docs/       setup guides, sessions-v2.md (design notes of the sessions rework)
 work/       local work folders of the skill (git-ignored)
 ```
 
@@ -177,12 +191,17 @@ extension exist there, the tools are plain Python + Pillow) but have not been tr
 ## Contributing
 
 Issues and pull requests welcome, in particular for: TikTok, YouTube and Facebook page quirks, a Windows or Linux
-run of the skill, better templates for yoga and fight sheets. Keep the app a single file and
-the tools standard-library plus Pillow.
+run of the skill, better templates for yoga and fight sheets. Keep the app static with no build
+step (one page plus a few plain scripts), and the tools standard-library plus Pillow.
 
-Pull requests run authentication flow checks in GitHub Actions. Run them locally with
-`node --test tests/auth-flow.test.cjs` (Node.js 22 or newer). The required check must pass before
-merging to `main`.
+Pull requests run two jobs in GitHub Actions; `auth-flow` is required before merging to `main`.
+Run them locally:
+
+```
+node --test tests/auth-flow.test.cjs tests/sessions.test.cjs     # app (Node.js 22 or newer)
+python3 -I tests/rb-sessions.test.py && python3 -I tests/rb-queue.test.py   # rb.py (Python 3.10+)
+bash -n tools/nightly.sh
+```
 
 ## License
 

@@ -46,15 +46,10 @@ Install it on your phone from the browser menu: *Add to Home screen* (Android, C
 
 ## 6. Connect Claude Code
 
-On the computer where Claude Code and Chrome run:
-
-```
-git clone https://github.com/lt20/reelbook
-cd reelbook
-python3 -m pip install pillow
-python3 tools/rb.py login --url … --key …   # copy the exact command from the app's Settings page
-ln -s "$PWD/skill/reelbook" ~/.claude/skills/reelbook
-```
+On the computer where Claude Code and Chrome run, paste the install line shown in the app's
+**Settings** page (it carries your project's URL and anon key): it clones the repository, installs
+Pillow, links the skill and signs you in. Prefer typing each command? See
+[manual-install.md](manual-install.md).
 
 Then, in any Claude Code session: `/reelbook`. See the README for what happens next.
 

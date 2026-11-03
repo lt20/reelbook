@@ -79,12 +79,12 @@ Exercises are not sheets: their content and photos live only in the session page
 
 ## Lots
 
-| Lot | Content | Files | Depends on |
-|-----|---------|-------|------------|
-| S1 | Schema + `rb.py` (publish v2, legacy delete, `requeue-sessions`) + skill and templates | `supabase/`, `tools/rb.py`, `skill/`, `templates/`, `docs/own-supabase.md` | nothing |
-| S2 | App, read side: session page from structure, Sessions section, « in N sessions », « From the session », Move for sessions, legacy fallback, missing-table tolerance | `app/` | #12 merged, S1 schema |
-| S3 | App, composition: « + New session », « Add to session », Edit mode | `app/` | S2 |
-| S4 | Cleanup once Laurent has run `requeue-sessions` and the queue is empty: drop v1 rendering, `exercises` column use, `templates/session.html` | `app/`, `templates/`, `skill/` | S1–S3 + migration done |
+| Lot | Content | Files | Depends on | Status |
+|-----|---------|-------|------------|--------|
+| S1 | Schema + `rb.py` (publish v2, legacy delete, `requeue-sessions`) + skill and templates | `supabase/`, `tools/rb.py`, `skill/`, `templates/`, `docs/own-supabase.md` | nothing | merged (#14) |
+| S2 | App, read side: session page from structure, Sessions section, « in N sessions », « From the session », Move for sessions, legacy fallback, missing-table tolerance | `app/` | #12 merged, S1 schema | merged (#15) |
+| S3 | App, composition: « + New session », « Add to session », Edit mode | `app/` | S2 | merged (#16) |
+| S4 | Cleanup once Laurent has run `requeue-sessions` and the queue is empty: drop v1 rendering, `exercises` column use, `templates/session.html` | `app/`, `templates/`, `skill/` | S1–S3 + migration done | to do: unblocked on 2026-11-03 (no v1 session left in prod) |
 
 S2 and S3 touch `app/index.html`: one after the other, never stacked.
 
