@@ -333,6 +333,7 @@ dialog.ph-dlg::backdrop{background:#000}
 /* 4:5 at full width, narrower on a short screen so the dose stays in view */
 .pl-car img{display:block;width:auto;max-width:100%;height:min(calc(min(100vw,560px) * 1.25),46vh);height:min(calc(min(100vw,560px) * 1.25),46dvh);aspect-ratio:4/5;object-fit:cover;background:var(--paper);cursor:zoom-in}
 .pl-dots{display:flex;justify-content:center;gap:8px;margin:10px 0 0}
+.pl-media .empty{margin:0 16px}
 .pl-dots span{width:8px;height:8px;border-radius:50%;background:var(--line-strong)}
 .pl-dots span.on{background:var(--ink)}
 .pl-body{flex:1;padding:14px 16px 20px;touch-action:pan-y}
@@ -1678,10 +1679,12 @@ dialog.ph-dlg::backdrop{background:#000}
     playMedia(e.slug, load);
   };
   // The step photos (carousel, dots) and the first key points, read from the sheet once it is loaded; a sheet
-  // that fails to load only leaves them out.
+  // that fails to load says so in their place (as its sheet page does), the dose and the buttons stay.
   const playMedia = async (slug, load) => {
-    let html; try { html = await loadSheet(slug); } catch { return; }
-    if (load !== playLoad || playerEl.hidden || !SH || typeof DOMParser === 'undefined') return;
+    let html; try { html = await loadSheet(slug); } catch { html = null; }
+    if (load !== playLoad || playerEl.hidden) return;
+    if (html === null) { const m = $('play-media'); if (m) m.innerHTML = '<p class="empty" role="status">This sheet could not be loaded: no photos or key points.</p>'; return; }
+    if (!SH || typeof DOMParser === 'undefined') return;
     let page; try { page = new DOMParser().parseFromString(html, 'text/html').body; } catch { return; }
     if (!page || !page.querySelectorAll) return;
     const photos = SH.photosOf(page), keys = SH.keyPoints(page), media = $('play-media'), list = $('play-keys');

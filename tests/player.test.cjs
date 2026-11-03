@@ -7,6 +7,7 @@ const path = require('node:path');
 const RS = require('../app/sessions.js');
 const SH = require('../app/sheet.js');
 const {parse} = require('./mini-dom.cjs');
+const {app, ownUrl, ownKey} = require('./harness.cjs');
 
 const template = name => fs.readFileSync(path.join(__dirname, '../templates', name), 'utf8');
 
@@ -55,4 +56,18 @@ test('key points: the first three of the sheet, bold cue and the rest, also once
     [{cue: '', text: 'Plain cue'}]);
   assert.deepEqual(SH.keyPoints(parse('<p>No list</p>')), []);
   assert.deepEqual(SH.keyPoints(null), []);
+});
+
+test('player: a sheet that fails to load says so in place of its photos and key points', async () => {
+  const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(resolve => setImmediate(resolve)); };
+  const tables = {user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}],
+    sheets: [{slug: 'squat', kind: 'sheet', theme: 'strength', title: 'Squat', html: '<a href="#">Home</a>'}], sessions: [], notes: [], requests: []};
+  const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'u1', email: 'u1@example.test'}}};
+  // without a DOMParser (dom: false) loadSheet throws, as on a network or backend error
+  const failed = await app({...signedIn, tables, hash: '#squat/play'}); await settle();
+  assert.equal(failed.element('player').hidden, false);
+  assert.match(failed.element('player').innerHTML, /Squat[\s\S]*id="play-finish"/);
+  assert.match(failed.element('play-media').innerHTML, /This sheet could not be loaded/);
+  const loaded = await app({...signedIn, tables, hash: '#squat/play', dom: true}); await settle();
+  assert.doesNotMatch(loaded.element('play-media').innerHTML, /could not be loaded/);
 });
