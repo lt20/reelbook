@@ -76,8 +76,8 @@ test('L8 each card has « Not for me »: dismissal lasts on this device', async 
     ? {dataset: {dismiss: dismissed}} : null}});
   await settle();
   assert.ok(!hrefs(page).includes(dismissed), 'the card leaves immediately');
-  assert.ok(page.storage.has('rb.dismissed'));
-  const reopened = await open(rows, {stored: {'rb.dismissed': page.storage.get('rb.dismissed')}});
+  assert.ok(page.storage.has('rb.dismissed.u1'));
+  const reopened = await open(rows, {stored: {'rb.dismissed.u1': page.storage.get('rb.dismissed.u1')}});
   assert.ok(!hrefs(reopened).includes(dismissed), 'the card stays dismissed after reload');
   assert.equal(reopened.element('home').hidden, false);
 });
@@ -89,7 +89,7 @@ test('L8 « To try » is hidden when no sheet qualifies', async () => {
     ['all old sheets practised', [sheet('done')], [{slug: 'done', done_on: '2026-10-01'}]],
     ['all old sheets dismissed', [sheet('dismissed')], []]
   ]) {
-    const stored = label === 'all old sheets dismissed' ? {'rb.dismissed': '["dismissed"]'} : {};
+    const stored = label === 'all old sheets dismissed' ? {'rb.dismissed.u1': '["dismissed"]'} : {};
     const page = await open(rows, {tables: tables(rows, practice), stored});
     assert.equal(shelf(page).hidden, true, label);
     assert.equal(page.element('home').hidden, false, label);
