@@ -7,11 +7,15 @@
 #   tools/nightly.sh uninstall           remove the LaunchAgent
 #
 # A video only plays in a visible Chrome tab: the run needs Chrome with the Claude in Chrome
-# extension and an unlocked screen. Empty queue or locked screen = Claude is not started.
+# extension and an unlocked screen. Empty queue, locked screen or Mac on battery = Claude is not
+# started (on battery, macOS sleeps despite caffeinate and the run dies mid-way, 2026-11-01).
+# Every run first puts back in the queue the requests a dead run left « processing » (rb.py requeue-stuck).
 # A Mac asleep at the scheduled time catches up on wake, but only within 3 hours: later, the
 # night is skipped rather than opening tabs in front of you.
 # Optional phone notice: REELBOOK_NOTIFY_URL (an ntfy topic URL), stored at install time.
 set -u
+# launchd starts jobs with a bare PATH: ioreg and pmset live in /usr/sbin.
+export PATH="$PATH:/usr/sbin:/usr/bin:/bin"
 
 LABEL="com.reelbook.nightly"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
@@ -31,13 +35,16 @@ notify() {
   [ -n "${REELBOOK_NOTIFY_URL:-}" ] && curl -fsS -m 10 -H "Title: Reelbook" -d "$1" "$REELBOOK_NOTIFY_URL" >/dev/null 2>&1
   return 0
 }
+on_battery() {
+  pmset -g batt 2>/dev/null | head -1 | grep -q "Battery Power"
+}
 screen_locked() {
   [ "$(ioreg -n Root -d1 -a | plutil -extract IOConsoleUsers.0.CGSSessionScreenIsLocked raw - 2>/dev/null)" = true ]
 }
 queued() {  # number of queued requests, fails when rb.py does
   local out
   out="$(cd "$REPO" && python3 tools/rb.py queue 2>/dev/null)" || return 1
-  printf '%s\n' "$out" | grep -c '^{'
+  printf '%s\n' "$out" | grep -c '^{' || true  # grep -c exits 1 on a count of 0: an empty queue is not a failure
 }
 
 cmd_check() {
@@ -45,6 +52,7 @@ cmd_check() {
   echo "claude:  ${CLAUDE:-not found}"
   echo "queued:  $(queued || echo 'rb.py failed: run rb.py login')"
   echo "screen:  $(screen_locked && echo locked || echo unlocked)"
+  echo "power:   $(on_battery && echo "battery (a run would be skipped)" || echo "AC")"
   echo "notify:  $([ -n "${REELBOOK_NOTIFY_URL:-${RALPH_NOTIFY_URL:-}}" ] && echo on || echo off)"
   if launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1; then echo "nightly: installed ($PLIST)"; else echo "nightly: not installed"; fi
 }
@@ -62,12 +70,17 @@ cmd_run() {
     local now=$((10#$(date +%H) * 60 + 10#$(date +%M))) sched=$((10#${at%%:*} * 60 + 10#${at##*:}))
     if [ $(((now - sched + 1440) % 1440)) -gt 180 ]; then log "more than 3 h after $at: skipped"; exit 0; fi
   fi
+  # a run that died (sleep, crash) leaves its request « processing », out of the queue for good
+  (cd "$REPO" && python3 tools/rb.py requeue-stuck 2>&1) | sed "s/^/$(date '+%F %T') /"
   if ! n="$(queued)"; then
     log "rb.py queue failed"; notify "Night run: rb.py queue failed (signed out?)"; exit 1
   fi
   if [ "$n" -eq 0 ]; then log "queue empty"; exit 0; fi
   if screen_locked; then
     log "$n queued, screen locked: skipped"; notify "$n video(s) waiting, screen was locked: skipped"; exit 0
+  fi
+  if on_battery; then
+    log "$n queued, Mac on battery: skipped"; notify "$n video(s) waiting, Mac was on battery: skipped (plug it in)"; exit 0
   fi
   open -a "Google Chrome"
   log "$n queued, processing up to $max"

@@ -5,7 +5,7 @@
     rb.py whoami                show the signed-in account and backend
     rb.py themes                list the account's notebooks (id, title, description, groups), JSON lines
     rb.py queue                 list queued requests (JSON lines)
-    rb.py claim <id>            mark a request as processing
+    rb.py claim <id>            mark a request as processing (processed_at = claim time until done/error)
     rb.py publish <dir>         sheet folder: upload <dir>/img/* and upsert the sheet (<dir>/meta.json + <dir>/index.html)
                                 session folder: publish each exercise sheet sub-folder, then upsert the session
     rb.py done <id> --slug S    close a request once its sheet or session is published
@@ -15,6 +15,9 @@
     rb.py requeue-sessions [--dry-run]
                                 queue again the video of every old (v1, one HTML page) session, so the skill
                                 rebuilds it as exercise sheets + a session; skips a URL already queued or processing
+    rb.py requeue-stuck [--hours N] [--dry-run]
+                                put back in the queue every request left « processing » for more than N hours
+                                (default 6) by a run that died (Mac asleep, crash); run first by nightly.sh and the skill
 
 Session file: ~/.config/reelbook/config.json (chmod 600). Override with REELBOOK_CONFIG.
 
@@ -151,7 +154,7 @@ def _patch_request(cfg, rid, patch, expect=None):
 
 def cmd_claim(args):
     if not args: die("usage: rb.py claim <id>")
-    _patch_request(session(), args[0], {"status": "processing"}, expect="queued")
+    _patch_request(session(), args[0], {"status": "processing", "processed_at": now()}, expect="queued")
 
 def cmd_done(args):
     if len(args) < 3 or args[1] != "--slug": die("usage: rb.py done <id> --slug <slug>")
@@ -349,9 +352,46 @@ def cmd_requeue_sessions(args):
         rest(cfg, "POST", "requests", todo, prefer="return=minimal")
     print(f"{len(v1)} v1 session(s), {len(todo)} request(s) {'to insert (dry run, nothing written)' if dry else 'inserted'}")
 
+def _ts(v):
+    """A PostgREST timestamp (« …+00:00 » or « …Z ») as epoch seconds; None when absent or unreadable."""
+    if not v: return None
+    import datetime
+    try:
+        return datetime.datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+def cmd_requeue_stuck(args):
+    usage = "usage: rb.py requeue-stuck [--hours N] [--dry-run]"
+    hours, dry, rest_args = 6.0, False, list(args)
+    while rest_args:
+        a = rest_args.pop(0)
+        if a == "--dry-run": dry = True
+        elif a == "--hours" and rest_args:
+            try: hours = float(rest_args.pop(0))
+            except ValueError: die(usage)
+            if hours <= 0: die(usage)
+        else: die(usage)
+    cfg = session()
+    rows = rest(cfg, "GET", "requests", params={"status": "eq.processing", "select": "id,url,processed_at,created_at", "order": "created_at.asc"}) or []
+    limit, n = time.time() - hours * 3600, 0
+    for r in rows:
+        since = _ts(r.get("processed_at")) or _ts(r.get("created_at"))
+        if since is not None and since > limit:
+            print(f"keep {r['id']}: processing for less than {hours:g} h", file=sys.stderr); continue
+        stamp = r.get("processed_at") or r.get("created_at") or "?"
+        print(f"{'would requeue' if dry else 'requeue'} {r['id']}: {r['url']} (processing since {stamp})")
+        n += 1
+        if not dry:
+            # status=eq.processing in the filter: a request closed meanwhile is left alone
+            rest(cfg, "PATCH", "requests", {"status": "queued", "processed_at": None,
+                                            "note": f"requeued after a run stopped mid-way ({str(stamp)[:16]})"},
+                 prefer="return=minimal", params={"id": f"eq.{r['id']}", "status": "eq.processing"})
+    print(f"{len(rows)} processing, {n} {'to requeue (dry run, nothing written)' if dry else 'requeued'}")
+
 COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "themes": cmd_themes, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
             "done": cmd_done, "error": cmd_error, "list": cmd_list, "delete": cmd_delete,
-            "requeue-sessions": cmd_requeue_sessions}
+            "requeue-sessions": cmd_requeue_sessions, "requeue-stuck": cmd_requeue_stuck}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:

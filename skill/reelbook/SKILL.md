@@ -25,6 +25,8 @@ session (`#<slug>~<anchor>` only for the old one-page sessions, which section 3 
 titles follow the template, translated.
 
 ## 1. Take the queue
+- `python3 tools/rb.py requeue-stuck` first: it puts back in the queue a request left « processing » for
+  more than 6 h by a run that died (Mac asleep, crash). Never pass a shorter `--hours`: another run may be at work.
 - `python3 tools/rb.py themes` then `python3 tools/rb.py queue` lists queued requests (`id`, `url`, `theme` hint, `created_at`), or
   use the link given as argument. A request carries only a URL: **you decide theme and group**
   after watching the video. The `theme` field is the page the link was pasted from: a hint, not
