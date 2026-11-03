@@ -188,6 +188,30 @@ ol.keys b{font-weight:600}
 .step.bad figure{border:2px solid var(--danger)}
 .step.bad figure::after{content:"✕";position:absolute;left:8px;top:8px;background:var(--danger);color:var(--paper);font-weight:700;font-size:15px;line-height:1;padding:5px 7px;border-radius:6px}
 .step.bad>h3:first-child::before{content:"✕ ";color:var(--danger)}
+/* L16: technique sheets (templates/technique.html): prerequisites, conditions grid, roles, go / no-go box, safety box */
+ul.prereq{margin:0;padding-left:22px}
+ul.prereq li{margin-bottom:6px}
+.cond{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 8px}
+@media (max-width:460px){.cond{grid-template-columns:1fr 1fr}.cond .c:last-child:nth-child(odd){grid-column:1/-1}}
+.cond .c{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.cond b{font-family:var(--display);font-size:28px;line-height:1;display:block;color:var(--ink);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.cond span{font-size:14px;color:var(--muted)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.roles .r{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.roles h3,.gonogo h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.05;margin:0 0 6px;text-transform:uppercase;letter-spacing:.02em}
+.roles p{font-size:15px;line-height:1.35;margin:0}
+.gonogo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:460px){.gonogo{grid-template-columns:1fr}}
+.gonogo>div{border-radius:10px;padding:12px 14px;min-width:0;border:2px solid}
+.gonogo .go{background:var(--ok-bg);border-color:var(--ok)}
+.gonogo .nogo{background:var(--danger-bg);border-color:var(--danger)}
+.gonogo .go h3{color:var(--ok)}
+.gonogo .nogo h3{color:var(--danger)}
+.gonogo .go h3::before{content:"✓ "}
+.gonogo .nogo h3::before{content:"✕ "}
+.gonogo ul,.safety ul{margin:0;padding-left:20px}
+.gonogo li,.safety li{font-size:15px;line-height:1.35;margin-bottom:4px;color:var(--ink)}
+.safety{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 14px}
 .arrow{color:var(--accent);font-weight:700}
 .loop{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:15px}
 footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
@@ -651,9 +675,9 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 </dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
-<script src="config.js?v=5"></script>
+<script src="config.js?v=6"></script>
 <script src="sessions.js?v=9"></script>
-<script src="sheet.js?v=3"></script>
+<script src="sheet.js?v=4"></script>
 <script>
 (() => {
   'use strict';
@@ -772,8 +796,9 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   };
   const spath = (slug, rel) => `${user.id}/${slug}/${rel.replace(/^\.?\/?/, '')}`;
 
+  // profile (L16): the template family of a notebook, read from the library by id ('gym' for a custom notebook).
   const setThemes = rows => {
-    themes = rows.map(r => { const lib = libById.get(r.id); return {id: r.id, title: r.title || (lib && lib.title) || r.id, sub: r.description || (lib && lib.sub) || '', description: r.description || '', groups: (r.groups && r.groups.length) ? r.groups : (lib ? lib.groups : []), color: lib ? lib.color : null, builtin: r.builtin, position: r.position}; });
+    themes = rows.map(r => { const lib = libById.get(r.id); return {id: r.id, title: r.title || (lib && lib.title) || r.id, sub: r.description || (lib && lib.sub) || '', description: r.description || '', groups: (r.groups && r.groups.length) ? r.groups : (lib ? lib.groups : []), color: lib ? lib.color : null, profile: (lib && lib.profile) || 'gym', builtin: r.builtin, position: r.position}; });
     themes.sort((a, b) => a.position - b.position || a.title.localeCompare(b.title));
     themeById = new Map(themes.map(t => [t.id, t]));
   };
@@ -886,7 +911,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     themeRows = c.themes; setThemes(c.themes);
     sheets = c.sheets; v1Hidden = c.v1 || 0; bySlug = new Map(sheets.map(s => [s.slug, s]));
     if (c.sessionsKept) { c.sessionsOk = sessionsOk; c.sessions = v2Sessions; } else { sessionsOk = c.sessionsOk; setSessions(c.sessions); }
-    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
+    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, profile: (lib && lib.profile) || 'gym', builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
     // A notes or practice log read that failed keeps what was known (cached or earlier); a backend without the
     // practice_log table hides the practice log (readLastDone false).
     if (c.notesIndex) {

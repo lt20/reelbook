@@ -23,6 +23,14 @@
    "groups": null,
    "builtin": true,
    "position": 2
+  },
+  {
+   "id": "kitesurf",
+   "title": null,
+   "description": "",
+   "groups": null,
+   "builtin": true,
+   "position": 3
   }
  ],
  "sheets": [
@@ -331,6 +339,23 @@
    },
    "added_at": "2026-10-28T09:00:00Z",
    "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Haut du dos · 3 minutes</p>\n    <h1>Rotations thoraciques à quatre pattes</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rotations thoraciques à quatre pattes\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Une main derrière la tête, le coude part vers le plafond puis revient sous le buste.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À quatre pattes\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À quatre pattes</h3><p>Main derrière la tête.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Ouverture\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Ouverture</h3><p>Le coude monte, le regard suit.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0023\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "backroll",
+   "kind": "sheet",
+   "theme": "kitesurf",
+   "group": "Jumps & tricks",
+   "title": "Backroll",
+   "summary": "La première rotation en kite : une vrille arrière, la voile reste haute.",
+   "duration": "20 min",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Rider Démo",
+    "url": "https://www.youtube.com/shorts/PREVIEW0040",
+    "platform": "YouTube"
+   },
+   "added_at": "2026-10-28T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Rotation · 20 min</p>\n    <h1>Backroll</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Backroll\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Une rotation arrière sur l'axe du corps, en sautant depuis la carre : la première figure après le saut simple.</p>\n<div class=\"kit\"><span>twin-tip</span><span>aile 9–12 m</span><span>harnais et leash</span><span>casque</span></div>\n\n<h2>Prérequis</h2>\n<ul class=\"prereq\"><li>Sauts simples posés des deux côtés, sans perdre la voile.</li><li>Remontée au vent sur les deux bords.</li></ul>\n\n<h2>Conditions</h2>\n<div class=\"cond\">\n  <div class=\"c\"><b>15–25 nds</b><span>vent établi</span></div>\n  <div class=\"c\"><b>9–12 m</b><span>aile</span></div>\n  <div class=\"c\"><b>Plat</b><span>eau à la taille ou plus</span></div>\n</div>\n\n<h2>Go / no-go</h2>\n<div class=\"gonogo\">\n  <div class=\"go\"><h3>Go</h3><ul><li>Vent régulier, rafales de moins de 8 nds d'écart.</li><li>Au moins 50 m libres sous le vent.</li><li>Tu poses tes sauts simples à chaque essai.</li></ul></div>\n  <div class=\"nogo\"><h3>No-go</h3><ul><li>Vent de terre ou rafaleux.</li><li>Eau trop peu profonde ou du monde sous le vent.</li><li>Fatigue : tes réceptions deviennent approximatives.</li></ul></div>\n</div>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Rider en carre, voile haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Approche</h3><p>Vitesse moyenne, carre franche, voile à 11 h.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Rider qui décolle en tournant les épaules\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Appel</h3><p>Pop sur la carre, la tête et les épaules tournent vers l'arrière.</p></div>\n  <div class=\"step\"><figure><img src=\"img/03.jpg\" alt=\"Rider en rotation, genoux groupés\" loading=\"lazy\"><span class=\"k\">3</span></figure><h3>Rotation</h3><p>Genoux groupés, la barre près des hanches, le regard cherche la voile.</p></div>\n  <div class=\"step\"><figure><img src=\"img/04.jpg\" alt=\"Rider qui atterrit planche à plat\" loading=\"lazy\"><span class=\"k\">4</span></figure><h3>Réception</h3><p>Planche sous le vent, voile qui descend, tu repars en carre.</p></div>\n</div>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : barre tirée, rider soulevé trop haut\" loading=\"lazy\"></figure><h3>Barre tirée en tournant</h3><p>La voile remonte et te soulève trop : garde la barre au même endroit pendant la rotation.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>La tête d'abord.</b> Les épaules suivent le regard, le reste du corps suit les épaules.</li>\n  <li><b>Barre immobile.</b> Elle ne bouge pas pendant la rotation.</li>\n  <li><b>Repère la voile.</b> Dès que tu la revois, ouvre et prépare la réception.</li>\n</ol>\n\n<h2>Plan d'essais <small>suggestion, absente de la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3–5</b><span>essais par côté</span></div>\n  <div class=\"d\"><b>1</b><span>réception propre, puis l'autre côté</span></div>\n  <div class=\"d\"><b>20 min</b><span>puis navigue sans essayer</span></div>\n</div>\n<p class=\"note\">La vidéo ne donne ni nombre d'essais ni durée : plan suggéré.</p>\n\n<h2>Sécurité <small>conseil général, absent de la vidéo</small></h2>\n<div class=\"safety\"><ul><li>Casque et gilet d'impact tant que tu l'apprends.</li><li>Personne sous le vent, jamais près du bord.</li></ul></div>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0040\">Voir la vidéo</a>.</footer>\n</div>\n"
   },
   {
    "slug": "session-gainage-planche",

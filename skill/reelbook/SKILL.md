@@ -12,7 +12,7 @@ Reelbook repository: the folder that contains this skill's parent `skill/` direc
 project, reached through `rb.py` (sign-in done once with `rb.py login`).
 
 **Notebooks (themes)**: each account has its own set. `python3 tools/rb.py themes` lists them
-(`id`, `title`, `description`, `groups`): built-in ones from `app/config.js` (strength, yoga,
+(`id`, `title`, `description`, `groups`, `profile`; one JSON object per line): built-in ones from `app/config.js` (strength, yoga,
 fight, kitesurf, cooking, pilates…) and **custom ones** the user described themselves
 (`id` starts with `custom-`, the `description` says what belongs in it: follow it). A sheet
 needs a `theme` from that list and a `group`: use the notebook's groups when it has some, else
@@ -35,6 +35,13 @@ languages: translate the English column).
 | Numbered steps | Steps | Étapes |
 | Wrong movement | Common mistakes | Erreurs fréquentes |
 | Variation | Easier / harder | Plus facile / plus dur |
+| Before trying (technique) | Prerequisites | Prérequis |
+| Wind, water, gear (technique) | Conditions | Conditions |
+| Try or not (technique) | Go / no-go | Go / no-go |
+| Dose of a technique | Try plan | Plan d'essais |
+| Safety box (technique) | Safety | Sécurité |
+| Who does what (partner) | Roles | Rôles |
+| Tapping out (partner) | Control / tap | Contrôle / abandon |
 
 ## 1. Take the queue
 - `python3 tools/rb.py requeue-stuck` first: it puts back in the queue a request left « processing » for
@@ -167,11 +174,27 @@ languages: translate the English column).
 - `meta.json`: `source.platform` = `"facebook"`.
 
 ## 3. Write the sheet
+- **Template = the notebook's `profile`** (`rb.py themes`):
+  - `gym`: `templates/sheet.html` (a session: `templates/exercise.html`, section 3 bis).
+  - `technique` (kitesurf, foil, surf, snow…): `templates/technique.html`, without Roles and Control / tap.
+  - `partner` (fight, grappling): `templates/technique.html` **with** Roles and Control / tap.
+  - Custom notebook: `profile` is `gym`. Use `technique` or `partner` when its `description` names a board
+    sport or a discipline done with a partner.
+  - A conditioning exercise in a technique notebook (core work for kitesurf) stays on `sheet.html`.
+- **Technique sheet** (`templates/technique.html`, section 3 for the rest: photos, eyebrow, footer, `meta.json`):
+  - Order: Prerequisites → Conditions → (Roles) → Go / no-go → Steps → Common mistakes → Key points → Try plan →
+    Safety → (Control / tap) → footer. Drop Common mistakes or Key points when the video shows none, never the others.
+  - **No sets × reps grid, no rest, no tempo.** The Try plan counts tries: `3–5 tries per side`, a stage to land
+    before the next, a time cap. Mark it `<small>suggestion, not in the video</small>` when the video gives none.
+  - **Go / no-go**: 2 to 4 concrete, checkable signs per side. Example: Go `Steady 15–25 kn, side-onshore`;
+    No-go `Gusts over 10 kn apart, or less than 50 m free downwind`.
+  - **Safety**: always there. `<small>general advice, not in the video</small>` when it does not come from the video.
+  - `duration`: the practice time of the Try plan (`"20 min"`) or `""`.
 - Work folder: `work/<slug>/` in the repository (git-ignored) with `index.html`, `meta.json`,
-  `img/`. Copy `templates/sheet.html` → `work/<slug>/index.html`; images in `work/<slug>/img/`,
+  `img/`. Copy the template (`templates/sheet.html` or `templates/technique.html`) → `work/<slug>/index.html`; images in `work/<slug>/img/`,
   referenced as `img/<file>.jpg`; thumbnail `img/thumb.jpg` cropped **3:2** (960×640 or 684×456,
   whole body) because cards use `object-fit: cover`.
-- Section order is fixed: Why → Dose (marked "suggestion" when the reel gives none) → Key points →
+- `sheet.html` section order is fixed: Why → Dose (marked "suggestion" when the reel gives none) → Key points →
   Steps (numbered photos, palm/direction badge when useful) → Common mistakes → Easier / harder →
   Source. Titles from the table above; drop an optional section (Common mistakes, Easier / harder)
   rather than leave it empty.
