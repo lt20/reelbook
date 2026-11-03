@@ -318,6 +318,8 @@ dialog.ph-dlg::backdrop{background:#000}
 #brand-wordmark h1{font:inherit;letter-spacing:inherit;color:inherit;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #brand-bar .set{text-decoration:none;font-size:14px;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
 #brand-bar .set:active{opacity:.6}
+/* 320 px wide (iPhone SE 1st gen, zoomed display): tighter gaps keep the bar on one line */
+@media (max-width:359px){#brand-bar{column-gap:6px}#brand-wordmark{gap:6px}#brand-bar #btn-new{padding:7px 10px}#brand-bar .set{padding:0 2px}}
 #count{font-size:13px;color:var(--muted);margin:0 0 14px}
 /* a notebook page: the title on its own line, large; « + Add a video » and Settings under it */
 #home.nb #brand-wordmark{flex-basis:100%;color:var(--ink);font-family:var(--display);font-size:clamp(44px,12vw,64px);font-weight:700;letter-spacing:-.01em;text-transform:none;line-height:.95}
