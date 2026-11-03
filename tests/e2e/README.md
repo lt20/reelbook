@@ -42,6 +42,3 @@ page error, a console error, a failed request (a missing photo included) or an a
   third-party videos.
 - **Screenshots stay in the scratchpad.** Attach the ones that matter to the PR description; do not commit
   them.
-
-Known app bug tolerated by the smoke steps (`allow` in `smoke.json`): opening a sheet requests
-`img/thumb.jpg` next to `index.html` once (404) before the photo's signed URL is set.
