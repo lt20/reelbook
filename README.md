@@ -144,12 +144,15 @@ security (`supabase/schema.sql`):
 | `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `origin` (`video` or `user`), `thumbnail`, `items` (ordered `{slug, dose}`, each slug a sheet) |
 | `notes` | your personal note per sheet (key: its slug) and per session (key: `session/<slug>`) |
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
+| `practice_log` | one row each time you tap « Done today » on a sheet or a session: `slug` (as for notes), `done_on`, `text` (« 12 kg, 3x10 ») |
 | `sheets/<user_id>/<slug>/img/*` | the photos |
 
 The app renders `sheets.html` inside its own styles, builds session pages from their `sessions`
 row, and signs image URLs on the fly. Nothing is public, nothing is shared between accounts.
 A backend set up before sessions existed has no `sessions` table: re-run `supabase/schema.sql`
 (it only adds what is missing); until then the app hides sessions and says so in Settings.
+The practice log came later still: on your own Supabase, re-run `supabase/schema.sql` to create the
+`practice_log` table; until then the app shows no « Done today » and no practice count.
 A backend that still holds old one-page sessions (`sheets` rows with `kind = 'session'`, before
 sessions were made of sheets): the app hides them and Settings counts them. Run
 `python3 tools/rb.py requeue-sessions` (add `--dry-run` first to see the list), then `/reelbook`:
