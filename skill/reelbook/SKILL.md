@@ -209,7 +209,10 @@ titles follow the template, translated.
   `format`: one free-text line, the post's format (rounds, time per exercise, rest); when the
   video gives none, a suggestion marked as such (« suggestion: 3 rounds »). `items`: every
   exercise sub-folder, in video order, each with its own free-text `dose` (`""` when none is
-  given). `why` and `key_points` are written in the user's language, like the sheets. Optional
+  given). When the `format` states one dose for every exercise (« 40 s per exercise, 20 s
+  rest »), copy that dose into each `items[].dose` (« 40 s ») instead of leaving it empty: the
+  app shows `items[].dose` on top of each exercise, and the user can still edit every dose in
+  the app (Edit on the session). `why` and `key_points` are written in the user's language, like the sheets. Optional
   `"thumbnail": "<exercise slug>/img/thumb.jpg"`; leave it out and the app uses the first
   item's.
 - **Requeued old sessions**: a backend set up before sessions v2 may still hold old one-page
@@ -227,7 +230,7 @@ titles follow the template, translated.
   with `rb.py error`. Reprocessing a video rewrites its session: changes made to it in the app
   (order, doses, removed items) are lost.
 - Check in the app (Chrome): open `<app url>#<slug>` (for a session, `<app url>#session/<slug>`, then
-  each exercise sheet from it).
+  each exercise sheet from it: `#session/<slug>/1`, then « Next »).
 - `python3 tools/rb.py done <id> --slug <slug>` (a session: its slug). On failure:
   `rb.py error <id> --note "<why>"`.
 - Give the user the sheet link (a session: the links of its exercise sheets). Then take the next
