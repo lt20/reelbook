@@ -1,0 +1,14 @@
+[
+  {"name": "l13-01-home-first-screen",
+   "actions": [{"wait": "#brand-bar"}, {"wait": "#new-sec .card"}, {"wait": "#to-try .card"}, {"wait": "#portal .thumbs img"}]},
+  {"name": "l13-02-home-full", "full": true,
+   "actions": [{"wait": "#new-sec .card"}, {"wait": "#to-try .card"}, {"wait": "#queue-summary button[aria-expanded=false]"}, {"wait": "#portal .thumbs img"}]},
+  {"name": "l13-03-empty-account", "query": "empty=all", "full": true,
+   "actions": [{"click": "#w-done"}, {"wait": "#portal >> text=Strength"}, {"wait": "#howto >> text=How it works"}]},
+  {"name": "l13-04-failed-request",
+   "actions": [{"wait": "#queue-summary >> text=1 failed"}, {"scroll": "#queue-sec"}]},
+  {"name": "l13-05-failed-request-open",
+   "actions": [{"click": "#queue-summary button"}, {"wait": "#queue .q"}, {"scroll": "#queue-sec"}]},
+  {"name": "l13-06-notebook-page", "hash": "strength",
+   "actions": [{"wait": "#groups .group-row .card"}, {"wait": "#h-crumb >> text=← Reelbook"}]}
+]
