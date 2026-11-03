@@ -111,23 +111,28 @@
 
   // L8, « To try »: the sheets added more than `minDays` calendar days before `today` (local YYYY-MM-DD; added_at is
   // read as a local date too) and never practised (`practised`: anything with .has(slug), e.g. the practice Map),
-  // minus the `dismissed` slugs; at most `n`. The sheets that qualify are put in a fixed order (a hash of the slug,
-  // not the catalogue's order) and the shelf is a window of `n` that moves by `n` each day: stable within the day,
-  // never the same three two days running when more than `n` qualify, and every sheet comes round in turn.
+  // minus the `dismissed` slugs; at most `n`, ranked by a hash of today and the slug (not the catalogue's order).
+  // `last` ({day, slugs}: the shelf last shown on this device) keeps the choice for the day: the same day, its sheets
+  // stay, in their order, and only a sheet that left (dismissed, practised) is replaced by the next in rank; another
+  // day, they go to the back, so the shelf never shows the same sheets twice running when more than `n` qualify.
   const DAY_MS = 86400000;
   const isoDay = s => { const [y, m, d] = String(s || '').split('-').map(Number); return y && m && d ? Date.UTC(y, m - 1, d) : NaN; };
   const localDay = v => { const d = new Date(v || ''); return isNaN(d) ? NaN : Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
   const seedHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0; return h; };
-  const toTry = (sheets, {today, practised = new Set(), dismissed = [], n = 3, minDays = 3} = {}) => {
+  const toTry = (sheets, {today, practised = new Set(), dismissed = [], last = null, n = 3, minDays = 3} = {}) => {
     const t = isoDay(today);
     if (isNaN(t)) return [];
     const gone = new Set(dismissed);
-    const list = (sheets || []).filter(s => s && s.slug && !practised.has(s.slug) && !gone.has(s.slug) && (t - localDay(s.added_at)) / DAY_MS > minDays)
-      .map(s => ({s, h: seedHash(s.slug)}))
+    const ranked = (sheets || []).filter(s => s && s.slug && !practised.has(s.slug) && !gone.has(s.slug) && (t - localDay(s.added_at)) / DAY_MS > minDays)
+      .map(s => ({s, h: seedHash(today + '|' + s.slug)}))
       .sort((a, b) => a.h - b.h || (a.s.slug < b.s.slug ? -1 : a.s.slug > b.s.slug ? 1 : 0)).map(x => x.s);
-    if (list.length <= n) return list;
-    const from = ((t / DAY_MS) * n) % list.length;
-    return Array.from({length: n}, (_, i) => list[(from + i) % list.length]);
+    const before = last && Array.isArray(last.slugs) ? last.slugs : [], was = new Set(before);
+    const fresh = ranked.filter(s => !was.has(s.slug));
+    if (last && last.day === today) {
+      const bySlug = new Map(ranked.map(s => [s.slug, s]));
+      return [...before.map(slug => bySlug.get(slug)).filter(Boolean), ...fresh].slice(0, n);
+    }
+    return [...fresh, ...ranked.filter(s => was.has(s.slug))].slice(0, n);
   };
 
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,

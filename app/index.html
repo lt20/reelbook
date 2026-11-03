@@ -805,13 +805,19 @@ dialog.ph-dlg::backdrop{background:#000}
   // choice each day). Needs the practice log read (practiceOk): no table, or no answer, hides the shelf. « Not for
   // me » drops a sheet for good on this device, per account like « New »: rb.dismissed.<user id>, a JSON array of
   // slugs, trimmed to the sheets that still exist. No streak, no reminder. A home page left open past midnight (or
-  // back to the front the next day) gets the new day's choice, as L6's practice block does.
+  // back to the front the next day) gets the new day's choice, as L6's practice block does. rb.totry.<user id>
+  // ({day, slugs}) is the shelf last shown: the day's choice survives a reload and a « Not for me », and the next
+  // day shows other sheets (RS.toTry `last`).
   const dismissedKey = () => user && user.id ? 'rb.dismissed.' + user.id : '';
   const dismissSheet = slug => { const k = dismissedKey(); if (!k) return; ls.set(k, JSON.stringify([...readList(k).filter(x => x !== slug && bySlug.has(x)), slug])); };
   let shelfOn = false, shelfDay = ''; // shelfOn: the last render could show the shelf; shelfDay: the day it used
   const renderToTry = show => {
     shelfOn = show; shelfDay = todayIso();
-    const list = show && practiceOk ? RS.toTry(sheets, {today: todayIso(), practised: lastDone, dismissed: readList(dismissedKey())}) : [];
+    const k = user && user.id ? 'rb.totry.' + user.id : '', today = shelfDay;
+    let last = null; try { last = k ? JSON.parse(ls.get(k) || 'null') : null; } catch {}
+    const list = show && practiceOk ? RS.toTry(sheets, {today, practised: lastDone, dismissed: readList(dismissedKey()), last}) : [];
+    const day = {day: today, slugs: list.map(e => e.slug)};
+    if (k && list.length && JSON.stringify(day) !== JSON.stringify(last)) ls.set(k, JSON.stringify(day));
     $('to-try').hidden = !list.length;
     $('to-try').innerHTML = list.length ? '<h2 class="eyebrow" id="totry-h">To try</h2><div class="newrow">'
       + list.map(e => `<div class="tt">${sheetCard(e)}<button type="button" class="btn ghost sm" data-dismiss="${esc(e.slug)}" aria-label="Not for me: ${esc(e.title)}">Not for me</button></div>`).join('') + '</div>' : '';

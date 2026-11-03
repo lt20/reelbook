@@ -28,28 +28,34 @@ test('L8 toTry: at most 3, the same on the same day whatever the catalogue order
   assert.notDeepEqual(slugs(b), slugs(a));
 });
 
-test('L8 toTry: never the same three two days running when more qualify, and every sheet comes round', () => {
-  const day = k => { const d = new Date(Date.UTC(2026, 10, 20 + k)); return d.toISOString().slice(0, 10); };
+test('L8 toTry: with the last shelf shown, never the same sheets two days running when more qualify', () => {
+  const day = k => new Date(Date.UTC(2026, 10, 20 + k)).toISOString().slice(0, 10);
   for (let m = 4; m <= 12; m++) {
     const rows = many.slice(0, m);
-    const seen = new Set();
-    let prev = null;
+    let last = null;
     for (let k = 0; k < 40; k++) {
-      const got = slugs(RS.toTry(rows, {today: day(k)})).sort().join(',');
-      assert.notEqual(got, prev, `${m} sheets, ${day(k)}`);
-      prev = got;
-      if (k < Math.ceil(m / 3)) for (const s of got.split(',')) seen.add(s);
+      const got = slugs(RS.toTry(rows, {today: day(k), last}));
+      assert.equal(got.length, 3);
+      if (last) assert.notDeepEqual([...got].sort(), [...last.slugs].sort(), `${m} sheets, ${day(k)}`);
+      last = {day: day(k), slugs: got};
+      // the same day, the choice stays
+      assert.deepEqual(slugs(RS.toTry([...rows].reverse(), {today: day(k), last})), got);
     }
-    assert.equal(seen.size, m, `${m} sheets: all shown within ${Math.ceil(m / 3)} days`);
   }
   // three or fewer: all of them, every day
-  assert.deepEqual(slugs(RS.toTry(many.slice(0, 2), {today: '2026-11-20'})).sort(), ['s00', 's01']);
+  assert.deepEqual(slugs(RS.toTry(many.slice(0, 2), {today: '2026-11-20', last: {day: '2026-11-19', slugs: ['s00']}})).sort(), ['s00', 's01']);
 });
 
-test('L8 toTry: a dismissed sheet is never chosen', () => {
-  const day = {today: '2026-11-20'};
-  const first = slugs(RS.toTry(many, day))[0];
-  for (let k = 20; k < 30; k++) assert.ok(!slugs(RS.toTry(many, {today: `2026-11-${k}`, dismissed: [first]})).includes(first));
+test('L8 toTry: « Not for me » (or a practice) replaces that sheet only, the others stay in place', () => {
+  const today = '2026-11-03';
+  const shown = slugs(RS.toTry(many, {today}));
+  const last = {day: today, slugs: shown};
+  const after = slugs(RS.toTry(many, {today, last, dismissed: [shown[0]]}));
+  assert.deepEqual(after.slice(0, 2), shown.slice(1));
+  assert.ok(!shown.includes(after[2]));
+  const practised = slugs(RS.toTry(many, {today, last, practised: new Map([[shown[1], today]])}));
+  assert.deepEqual([practised[0], practised[1]], [shown[0], shown[2]]);
+  for (let k = 20; k < 30; k++) assert.ok(!slugs(RS.toTry(many, {today: `2026-11-${k}`, dismissed: [shown[0]]})).includes(shown[0]));
 });
 
 test('L8 toTry: no valid date, nothing to show', () => {
