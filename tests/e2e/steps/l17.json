@@ -1,0 +1,12 @@
+[
+  {"name": "l17-01-sheet-bar", "hash": "pompes-inclinees", "actions": [{"wait": "#view h1"}, {"wait": "#nav-back >> text=‹ Strength"}], "allow": ["^http 404: .*/img/thumb\\.jpg$"], "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"},
+  {"name": "l17-02-sheet-compact-title", "hash": "pompes-inclinees", "actions": [{"wait": "#view h1"}, {"scroll": 600}, {"wait": "#nav-bar.titled"}], "allow": ["^http 404: .*/img/thumb\\.jpg$"], "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"},
+  {"name": "l17-03-sheet-menu", "hash": "pompes-inclinees", "actions": [{"wait": "#view h1"}, {"click": "#nav-more"}, {"wait": "#nav-actions[open]"}, {"wait": "#nav-actions #sd-open"}], "allow": ["^http 404: .*/img/thumb\\.jpg$"], "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"},
+  {"name": "l17-04-home-fab", "hash": "", "actions": [{"wait": "#portal .tcard"}, {"scroll": 500}, {"wait": "#add-video-fab"}]},
+  {"name": "l17-05-notebook-bar-chips-fab", "hash": "strength", "actions": [{"wait": "#groups .group-row .card"}, {"scroll": "#groups section >> nth=2"}, {"wait": 400}, {"wait": "#nav-bar.titled"}]},
+  {"name": "l17-06-session-menu", "hash": "session/session-gainage-10-min", "actions": [{"wait": "#view h1"}, {"click": "#nav-more"}, {"wait": "#nav-actions #ed-open"}]},
+  {"name": "l17-07-session-exercise-bottom", "hash": "session/session-gainage-10-min/1", "actions": [{"wait": "#nav-back >> text=‹ Gainage en 10 minutes"}, {"scroll": "bottom"}, {"wait": ".seq .next"}], "allow": ["^http 404: .*/img/thumb\\.jpg$"], "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"},
+  {"name": "l17-08-settings-bar", "hash": "settings", "actions": [{"wait": "#nav-back >> text=‹ Reelbook"}]},
+  {"name": "l17-09-notebook-add-video", "hash": "strength", "actions": [{"wait": "#groups .group-row .card"}, {"scroll": 900}, {"click": "#add-video-fab"}, {"wait": "#f-hint >> text=It goes to Strength"}]},
+  {"name": "l17-10-menu-800", "hash": "session/session-gainage-10-min", "viewport": {"width": 800, "height": 900}, "actions": [{"wait": "#view h1"}, {"click": "#nav-more"}, {"wait": "#nav-actions[open]"}]}
+]

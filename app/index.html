@@ -267,7 +267,7 @@ button:not(:disabled):active,.btn:not(:disabled):active,.topbar a:active,.top a:
 .btn.danger:not(:disabled):hover{background:var(--danger-bg)}
 dialog.dlg .btn.danger{border:1px solid var(--danger)}
 #del-dlg .err,#sd-dlg .err{color:var(--danger)}
-#sd-open,#ed-delete{color:var(--danger);border-color:transparent}
+#ed-delete{color:var(--danger);border-color:transparent}
 .card .fmt{font-size:13px;line-height:1.35;color:var(--muted);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* L14: a search result found in the sheet's text or in the note says where, under its title */
 .card .where{font-size:13px;font-weight:600;color:var(--accent);margin:0 0 4px;-webkit-line-clamp:1}
@@ -383,7 +383,7 @@ dialog.ph-dlg::backdrop{background:#000}
 #brand-bar .set{text-decoration:none;font-size:14px;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
 #brand-bar .set:active{opacity:.6}
 /* 320 px wide (iPhone SE 1st gen, zoomed display): tighter gaps keep the bar on one line */
-@media (max-width:359px){#brand-bar{column-gap:6px}#brand-wordmark{gap:6px}#brand-bar #btn-new{padding:7px 10px}#brand-bar .set{padding:0 2px}}
+@media (max-width:359px){#brand-bar{column-gap:6px}#brand-wordmark{gap:6px}#brand-bar .set{padding:0 2px}}
 #count{font-size:13px;color:var(--muted);margin:0 0 14px}
 /* a notebook page: the title on its own line, large; « + Add a video » and Settings under it */
 #home.nb #brand-wordmark{flex-basis:100%;color:var(--ink);font-family:var(--display);font-size:clamp(44px,12vw,64px);font-weight:700;letter-spacing:-.01em;text-transform:none;line-height:.95}
@@ -456,9 +456,47 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 .pl-end .err{color:var(--danger);margin:0 0 8px}
 .pl-end .actions{margin-top:12px}
 .pl-end .actions .btn{min-height:52px;padding:12px 28px;font-size:17px}
+/* ---- L17: native navigation — sticky bar (back, compact title, « ⋯ » menu), floating « + Add a video » ----
+   The bar is 44 px under the status bar (its own safe-area padding), flush with the top and sides of the screen over
+   the page's padding; it gets a hairline once the page title has gone under it. A notebook's group chips stick
+   right under it. The floating button sits above the home indicator; the page leaves room for it at the bottom. */
+#nav-bar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:2px;height:calc(44px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) max(4px,env(safe-area-inset-right)) 0 max(4px,env(safe-area-inset-left));margin:calc(-20px - env(safe-area-inset-top,0px)) calc(-1 * max(16px,env(safe-area-inset-right))) 14px calc(-1 * max(16px,env(safe-area-inset-left)));background:var(--bg);border-bottom:1px solid transparent;transition:border-color .2s}
+#nav-back{min-height:44px;min-width:44px;flex:0 1 auto;padding:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--accent);font:600 16px/44px var(--body);text-decoration:none}
+#nav-title{flex:1 1 0;min-width:0;text-align:center;font:700 16px/44px var(--body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .15s}
+#nav-more{min-width:44px;min-height:44px;flex:none;margin-left:auto;padding:0 6px;appearance:none;background:none;border:0;border-radius:999px;color:var(--accent);font:700 22px/1 var(--body);cursor:pointer}
+#nav-bar.titled{border-bottom-color:var(--line)}
+#nav-bar.titled #nav-title{opacity:1}
+#nav-bar.titled #nav-back{max-width:38%}
+#nav-back:active,#nav-more:active{opacity:.6}
+.group-chips{top:calc(44px + env(safe-area-inset-top,0px))}
+#groups section{scroll-margin-top:calc(108px + env(safe-area-inset-top,0px))}
+#add-video-fab{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:7;display:grid;place-items:center;width:56px;height:56px;padding:0;border:0;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:0;box-shadow:0 6px 16px rgba(0,0,0,.28);cursor:pointer}
+#add-video-fab::before{content:"+";font:300 36px/1 var(--body);margin-top:-3px}
+#add-video-fab:active{transform:scale(.94)}
+body.fab{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+/* the « ⋯ » menu: the page's title, then one row per action (a greyed one says why), Close apart at the bottom */
+dialog.nav-menu{padding-top:16px}
+dialog.nav-menu h2{font:600 15px var(--body);text-transform:none;letter-spacing:normal;color:var(--muted);text-align:center;margin:0 0 10px;overflow-wrap:anywhere}
+.nav-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+.nav-it{appearance:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0 12px;min-height:50px;padding:10px 16px;border:0;border-top:1px solid var(--line);background:none;color:var(--accent);font:600 17px var(--body);text-align:left;cursor:pointer}
+.nav-it:first-child{border-top:0}
+.nav-it small{flex-basis:100%;font-size:13px;font-weight:400;color:var(--muted)}
+.nav-it:disabled{color:var(--muted);cursor:default}
+.nav-it.danger{color:var(--danger)}
+.nav-it.wake::after{content:"Off";font-weight:400;color:var(--muted)}
+.nav-it.wake[aria-pressed="true"]::after{content:"On";font-weight:700;color:var(--ok)}
+.nav-it:not(:disabled):active{background:var(--tag)}
+dialog.nav-menu .actions{margin-top:12px}
 </style>
 </head>
 <body>
+
+<!-- ===== L17: sticky navigation bar (every signed-in page but home and the player) ===== -->
+<header id="nav-bar" hidden>
+  <a id="nav-back" href="#">‹ Reelbook</a>
+  <span id="nav-title" aria-hidden="true"></span>
+  <button type="button" id="nav-more" aria-label="Page actions" aria-haspopup="dialog" aria-controls="nav-actions">⋯</button>
+</header>
 
 <!-- ===== Sign-up: pick a backend ===== -->
 <div id="setup" class="wrap" hidden>
@@ -511,12 +549,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 
 <!-- ===== Home: portal / theme ===== -->
 <div id="home" class="wide" hidden>
-  <!-- L13: a notebook page keeps its crumb and eyebrow above the bar; the home page shows neither -->
-  <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
+  <!-- L13: a notebook page keeps its eyebrow above the bar; the home page does not (L17: the way back is in #nav-bar) -->
   <p class="eyebrow" id="h-eyebrow" hidden>Find it fast, when you need it</p>
   <header id="brand-bar">
     <div id="brand-wordmark"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><h1 id="h-title">Reelbook</h1></div>
-    <button class="btn sm" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
     <a class="set" href="#settings">Settings</a>
   </header>
   <p class="cnt" id="count" aria-live="polite"></p>
@@ -578,6 +614,9 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   <footer>Sheets are built from videos for personal use. Every sheet credits its author.</footer>
 </div>
 
+<!-- L17: « + Add a video », floating, on the home and notebook pages (on a notebook, the link is filed there) -->
+<button type="button" id="add-video-fab" aria-label="Add a video" aria-expanded="false" aria-controls="sheet-new" hidden>+ Add a video</button>
+
 <!-- ===== Welcome (after sign-up, and from "Setup guide") ===== -->
 <div id="welcome" class="wrap" hidden>
   <p class="eyebrow">Welcome to Reelbook</p>
@@ -614,7 +653,6 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 
 <!-- ===== Settings ===== -->
 <div id="settings" class="wrap" hidden>
-  <p class="crumb"><a href="#">← Reelbook</a></p>
   <h1>Settings</h1>
   <div class="panel">
     <h2>Account</h2>
@@ -691,6 +729,8 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   <p class="err" id="sd-err" hidden></p>
   <div class="actions"><button class="btn danger" type="button" id="sd-ok">Delete sheet</button><button class="btn ghost" type="button" id="sd-cancel" autofocus>Keep it</button></div>
 </dialog>
+<!-- L17: the page's actions, from « ⋯ » in #nav-bar (its content is written by paintMenu, for the page shown) -->
+<dialog class="dlg nav-menu" id="nav-actions" aria-labelledby="nav-actions-h"></dialog>
 <!-- L7: « Something wrong? » queues the video again with a « Redo: » note for the next run -->
 <!-- (its content is written by openReport, fresh for each sheet or session) -->
 <dialog class="dlg" id="report-dlg" aria-labelledby="report-h"></dialog>
@@ -722,7 +762,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
   const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player'];
-  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); };
+  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); syncNav(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
   // ---------- L18: bottom sheets ----------
   // Every dialog.dlg opens with openSheet and closes with closeSheet (the photo viewer stays a full-screen dialog of
@@ -749,15 +789,19 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const r = dlg.getBoundingClientRect ? dlg.getBoundingClientRect() : null;
     return !r || ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
   };
+  // Wired once, at its first opening; a sheet with click handlers of its own can be wired before them (L17: the
+  // harness keeps one listener per event type, the last one added).
+  const wireSheet = dlg => {
+    if (sheetWired.has(dlg) || !dlg.addEventListener) return;
+    sheetWired.add(dlg);
+    dlg.addEventListener('input', () => sheetDirty.add(dlg));
+    dlg.addEventListener('click', ev => { if (!sheetDirty.has(dlg) && !sheetBusy.has(dlg) && onBackdrop(dlg, ev)) closeSheet(dlg); });
+    dlg.addEventListener('cancel', ev => { if (sheetBusy.has(dlg) && ev.preventDefault) ev.preventDefault(); });
+  };
   const openSheet = dlg => {
     if (!dlg) return;
     sheetDirty.delete(dlg);
-    if (!sheetWired.has(dlg) && dlg.addEventListener) {
-      sheetWired.add(dlg);
-      dlg.addEventListener('input', () => sheetDirty.add(dlg));
-      dlg.addEventListener('click', ev => { if (!sheetDirty.has(dlg) && !sheetBusy.has(dlg) && onBackdrop(dlg, ev)) closeSheet(dlg); });
-      dlg.addEventListener('cancel', ev => { if (sheetBusy.has(dlg) && ev.preventDefault) ev.preventDefault(); });
-    }
+    wireSheet(dlg);
     fitViewport();
     if (typeof dlg.showModal === 'function') dlg.showModal();
     else { dlg.open = true; if (dlg.setAttribute) dlg.setAttribute('open', ''); }
@@ -1280,8 +1324,6 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const practisedCount = () => [...lastDone.keys()].filter(k => bySlug.has(k) || v2BySlug.has(RS.sessionSlugOf(k))).length;
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
-    $('h-crumb').hidden = !t;
-    $('h-crumb').innerHTML = one ? `<a href="#${esc(t.id)}">← ${esc(t.title)}</a>` : '<a href="#">← Reelbook</a>'; // L12: a group grid goes back to its notebook
     $('h-eyebrow').hidden = !t;
     $('h-title').textContent = t ? t.title : 'Reelbook';
     $('home').classList.toggle('nb', !!t); // L13: a notebook page shows its title large, without the mark
@@ -1297,11 +1339,25 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     renderNew(!t && !loading && !loadError && !terms.length);
     renderToTry(!t && !loading && !loadError && !terms.length);
     document.title = t ? `${one ? one + ' · ' : ''}${t.title} · Reelbook` : 'Reelbook';
+    syncNav();
   };
 
   // ---------- queue ----------
-  const sheetForm = $('sheet-new'), btn = $('btn-new');
-  const openForm = v => { sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (v) $('f-url').focus(); };
+  // L17: « + Add a video » is the floating button (#add-video-fab); from a notebook page the link is filed there.
+  const sheetForm = $('sheet-new'), btn = $('add-video-fab');
+  // The hint names the notebook queueLink files the link in (the page shown when it is sent): painted again on
+  // every page (syncNav), as the form stays open from one page to the next.
+  const HINT = 'The sheet is built on your next Claude Code run: <code>/reelbook</code>.';
+  const paintHint = () => {
+    const t = currentTheme && themeById.get(currentTheme);
+    $('f-hint').innerHTML = (t ? `It goes to ${esc(t.title)}; the group is decided when the video is analysed. ` : 'Notebook and group are decided when the video is analysed. ') + HINT;
+  };
+  const openForm = v => {
+    sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (!v) return;
+    paintHint();
+    if (sheetForm.scrollIntoView) sheetForm.scrollIntoView({block: 'center'});
+    $('f-url').focus();
+  };
   // A pasted link survives a closed tab or a killed PWA: it is kept until queued or discarded.
   const DRAFT = 'rb.draft';
   const pendingUrl = () => !$('home').hidden && !sheetForm.hidden ? $('f-url').value.trim() : '';
@@ -1331,7 +1387,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   $('f-cancel').addEventListener('click', () => { discardDraft(); openForm(false); });
   document.addEventListener('click', ev => {
     const a = ev.target.closest && ev.target.closest('a[href^="#"]');
-    if (!a || !pendingUrl() || a.closest('dialog')) return;
+    if (!a || !pendingUrl() || a.closest('dialog') || a.id === 'nav-back') return; // L17: Back asks on its own
     ev.preventDefault();
     askPending(() => { location.hash = a.hash; });
   }, true);
@@ -1512,23 +1568,21 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const seen = new Set(text.split(/[^a-zàâäçéèêëîïôöùûüœ']+/).map(w => w.replace(/^[a-z]'/, '')).filter(w => FR_WORDS.has(w)));
     return seen.size >= 3 ? 'fr' : '';
   };
-  // A v2 session (v2 true) moves to another notebook on its own. A sheet's group reads « Group · Back » (L5): in
-  // capitals it looked like a back button. `seat` set: the sheet is opened from a session, its back link goes there.
-  const topNav = (e, v2 = false, bare = false) => {
-    const th = themeById.get(e.theme), at = !v2 && seat;
-    const btns = bare ? '' : wakeBtn() + (v2 ? '<button type="button" class="mv" id="ed-open">Edit</button>' : '') + '<button type="button" class="mv" id="mv-open">Move</button>';
-    const back = at ? `<a href="${RS.sessionHref(esc(at.s.slug))}">← ${esc(at.s.title)}</a>` : `<a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a>`;
-    const label = v2 ? '<span>Session</span>' : e.group ? `<span class="grp">Group · ${esc(e.group)}</span>` : '';
-    return `<nav class="top">${back}<span class="r">${label}${btns}</span></nav>`;
+  // A sheet's group reads « Group · Back » (L5): in capitals it looked like a back button. L17: the way back is in
+  // #nav-bar and the page's actions (Move, Add to session, Edit, Keep screen on…) in its « ⋯ » menu; a sheet opened
+  // from a session keeps its link to the session here too (L5).
+  const topNav = e => {
+    const back = seat ? `<a href="${RS.sessionHref(esc(seat.s.slug))}">← ${esc(seat.s.title)}</a>` : '';
+    const label = e.group ? `<span class="grp">Group · ${esc(e.group)}</span>` : '';
+    return back || label ? `<p class="top">${back}${label}</p>` : '';
   };
   // « From the session … » on an exercise sheet: the video sessions that list it (but the one it is opened from).
-  // A simple sheet can be added to a session. Opened from a session: « 2/4 · <dose> » on top (no dose, no « · »).
+  // Opened from a session: « 2/4 · <dose> » on top (no dose, no « · »).
   const sheetTop = e => {
     const from = (inSessions.get(e.slug) || []).filter(s => s.origin === 'video' && !(seat && seat.s === s));
     const dose = seat ? seat.items[seat.n - 1].dose : '';
     return topNav(e) + (seat ? `<p class="seat">${seat.n}/${seat.items.length}${dose ? ' · ' + esc(dose) : ''}</p>` : '')
-      + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '')
-      + (sessionsOk ? '<p class="acts"><button type="button" class="mv" id="as-open">Add to session</button></p>' : '');
+      + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '');
   };
   // Previous / next at the bottom of a sheet opened from a session; the last exercise leads back to the session.
   const seatNav = () => {
@@ -1786,7 +1840,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     if (edit && edit.slug !== slug) edit = null;
     shown = RS.ROUTE + slug; seat = null; show('view'); document.title = s.title; markSeen(RS.noteKey(slug));
     if (edit) {
-      view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true, true)}</div>
+      view.innerHTML = `<div class="wrap" id="sheet-top"></div>
         <div class="wrap fiche"><div class="edit"><p class="eyebrow">Editing the session</p>
         <label>Title <input id="ed-title" type="text" maxlength="${RS.MAX.title}" value="${esc(edit.title)}" autocomplete="off"></label>
         <label>Format <input id="ed-format" type="text" maxlength="${RS.MAX.format}" value="${esc(edit.format)}" autocomplete="off" placeholder="5 rounds · 60 s rest"></label>
@@ -1800,14 +1854,15 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     }
     if (ended && ended.slug === slug) { showEnd(s); return; }
     const items = RS.resolveItems(s, bySlug), img = v2Thumb(s);
-    view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
+    view.innerHTML = `<div class="wrap" id="sheet-top">${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
       ${items.length ? startBtn() : ''}${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap ⋯ then Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
     if (items.length) wireStart(RS.playHref(esc(slug)));
     wireNotes(RS.noteKey(slug));
     readPractice(RS.noteKey(slug));
+    settleScroll();
   };
   // `at`: {s, n, items} when the sheet is opened from a session (#session/<slug>/<n>), else null.
   // sheetLoad: the last sheet asked for; an older load that ends later (A, B, then A again) is dropped.
@@ -1820,18 +1875,18 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const load = ++sheetLoad;
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
     const back = `<div class="wrap" id="sheet-top">${sheetTop(e)}</div>`;
-    // Delete sheet: also under a sheet that fails to load.
-    const del = '<div class="wrap"><div class="actions" style="margin-top:36px"><button class="btn ghost" type="button" id="sd-open">Delete sheet</button></div></div>';
+    // Delete sheet (L17: in the « ⋯ » menu) stays there under a sheet that fails to load.
     let html; try { html = await loadSheet(slug); } catch { html = null; }
     if (load !== sheetLoad || shown !== slug) return; // left (Next tapped twice, another page) while it loaded
-    if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav() + del; return; }
-    view.innerHTML = back + underTitle(html, startBtn() + practiceBox(), e.title) + notesHtml() + reportHtml(e) + seatNav() + del;
+    if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav(); return; }
+    view.innerHTML = back + underTitle(html, startBtn() + practiceBox(), e.title) + notesHtml() + reportHtml(e) + seatNav();
     markSeen(slug); // only once shown: a sheet that fails to load stays « New »
     // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)
     $('sheet-top').innerHTML = sheetTop(e);
     wireStart(seat ? RS.playHref(esc(seat.s.slug), seat.n) : RS.sheetPlayHref(esc(slug)));
     wireNotes(slug);
     readPractice(slug);
+    watchTitle(); settleScroll();
   };
 
   // ---------- L7: « Something wrong? » ----------
@@ -2254,7 +2309,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
       s.theme = theme; saveCatalogue();
       closeSheet(mdlg);
       const top = $('sheet-top');
-      if (top && shownSession() === s) top.innerHTML = topNav(s, true) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`;
+      if (top && shownSession() === s) top.innerHTML = `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`; syncNav();
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
   };
@@ -2273,7 +2328,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
       e.theme = theme; e.group = group; saveCatalogue();
       closeSheet(mdlg);
       const top = $('sheet-top');
-      if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
+      if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`; syncNav();
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
   }));
@@ -2437,7 +2492,9 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     flashHome('Sheet deleted.');
     location.hash = e.theme;
   }));
-  view.addEventListener('click', ev => {
+  // The page's buttons, and those of its « ⋯ » menu (L17: Move, Add to session, Edit, Keep screen on, Something
+  // wrong?, Delete moved there, ids unchanged).
+  const pageAction = ev => {
     const at = sel => ev.target.closest(sel);
     let b;
     if (at('#mv-open')) openMove();
@@ -2446,9 +2503,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     else if (at('#as-open')) openAdd();
     else if (at('#ed-open')) { const s = shownSession(); if (s) { edit = draftOf(s); showSession(s.slug); } }
     else if (at('#sd-open')) openSheetDelete();
+    else if (at('#ses-delete')) openDelete();
     else if (at('#practice-done')) openPractice();
     else if (at('#practice-save')) savePractice();
-    else if (at('#report-open')) openReport();
+    else if (at('#report-open') || at('#nav-report')) openReport();
     else if (!edit) return;
     else if ((b = at('[data-up]'))) reorder(+b.dataset.up, -1);
     else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);
@@ -2456,7 +2514,8 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     else if (at('#ed-save')) saveEdit();
     else if (at('#ed-cancel')) { const slug = edit.slug; edit = null; showSession(slug); }
     else if (at('#ed-delete')) openDelete();
-  });
+  };
+  view.addEventListener('click', pageAction);
 
   // ---------- settings ----------
   const cliCmd = () => backend ? `python3 tools/rb.py login --url ${backend.url} --key ${backend.key}` : '';
@@ -2483,6 +2542,138 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   $('nblist').addEventListener('click', async ev => { const b = ev.target.closest('[data-rm]'); if (!b) return; b.disabled = true; try { await removeTheme(b.dataset.rm); renderSettings(); } catch { b.disabled = false; } });
   $('settings').addEventListener('click', copyHandler($('settings')));
 
+  // ---------- L17: native navigation ----------
+  // #nav-bar sticks on top of every signed-in page but home and the player: « ‹ <parent> » on the left, the page
+  // title in the middle once its <h1> has scrolled under the bar, « ⋯ » (the page's actions, a bottom sheet) on the
+  // right. Back goes up to the parent: history.back() when the entry before this one is the parent (an installed
+  // PWA's edge swipe then does the same), else location.replace(parent). Each history entry carries {rb, i, prev}
+  // (its index, and the route of the entry before it). The scroll position of each route is kept (scrollAt) and
+  // put back when its page is shown again from history or by Back, or drawn again in place. Guarded for the test
+  // harness: no history, no IntersectionObserver, no confirm.
+  const navBar = $('nav-bar'), navBack = $('nav-back'), navTitle = $('nav-title'), navMore = $('nav-more'), navMenu = $('nav-actions');
+  navMore.textContent = '⋯'; btn.textContent = '+ Add a video'; // as in the markup (the harness does not read it)
+  const hist = () => typeof history !== 'undefined' && history && history.replaceState ? history : null;
+  const entry = () => { const H = hist(); return H && H.state && H.state.rb ? H.state : null; };
+  try { if (hist() && 'scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch {}
+  const scrollAt = new Map();
+  let navHere = null, navIndex = null, replacing = null, navRestore = null, bounce = null;
+  // The page shown: its title, the route and name of its parent, whether it has a « ⋯ » menu; null: no bar.
+  const navPage = () => {
+    if (!user || !$('player').hidden) return null;
+    const nbUp = id => { const th = themeById.get(id); return th ? [th.id, th.title] : ['', 'Reelbook']; };
+    if (!$('settings').hidden) return {title: 'Settings', up: ['', 'Reelbook']};
+    if (!$('welcome').hidden) return {title: 'How it works', up: ['', 'Reelbook']};
+    if (!view.hidden && shown) {
+      const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown);
+      if (s) return {title: s.title, up: nbUp(s.theme), menu: !edit};
+      if (!e) return null;
+      return {title: e.title, up: seat ? [RS.ROUTE + seat.s.slug, seat.s.title] : nbUp(e.theme), menu: true};
+    }
+    if ($('home').hidden) return null;
+    // A notebook page; while the catalogue loads or cannot be read, any route but home's is taken for one.
+    const tok = navHere || '', cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
+    const t = themeById.get(nb) || (nb && (loading || loadError || !themes.length) ? libById.get(nb) || {id: nb, title: nb} : null);
+    if (!t) return null;
+    const one = currentTheme === t.id ? groupOf(t) : null;
+    return one ? {title: one, up: [t.id, t.title]} : {title: t.title, up: ['', 'Reelbook']};
+  };
+  // The « ⋯ » menu of a sheet or session page. An action this page cannot do stays listed, greyed, with the reason.
+  const menuHtml = () => {
+    if (view.hidden || !shown || edit) return '';
+    const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown), x = s || e;
+    if (!x) return '';
+    const it = (id, label, cls = '', why = '') => `<button type="button" class="nav-it${cls}" id="${id}"${why ? ' disabled' : ''}>${label}${why ? `<small>${why}</small>` : ''}</button>`;
+    const wake = wakeApi() ? `<button type="button" class="nav-it wake" id="wake" aria-pressed="${wakeWanted()}">Keep screen on</button>` : it('wake', 'Keep screen on', '', 'Not available in this browser');
+    return `<h2 id="nav-actions-h">${esc(x.title)}</h2><div class="nav-list">`
+      + (s ? it('ed-open', 'Edit') : '') + it('mv-open', 'Move') + (e && sessionsOk ? it('as-open', 'Add to session') : '') + wake
+      + it('nav-report', 'Something wrong?', '', httpUrl((x.source || {}).url) ? '' : 'No source video')
+      + it(s ? 'ses-delete' : 'sd-open', s ? 'Delete session' : 'Delete sheet', ' danger') + '</div>'
+      + '<div class="actions"><button class="btn ghost" type="button" id="nav-close">Close</button></div>';
+  };
+  const paintMenu = () => { navMenu.innerHTML = menuHtml(); };
+  // The compact title shows once the page's <h1> is under the bar (without IntersectionObserver: always).
+  let titleSeen = null;
+  const watchTitle = () => {
+    if (titleSeen) { titleSeen.disconnect(); titleSeen = null; }
+    const page = views.map($).find(v => !v.hidden), h1 = !navBar.hidden && page && page.querySelector ? page.querySelector('h1') : null;
+    if (typeof IntersectionObserver !== 'function') { navBar.classList.toggle('titled', !!h1); return; }
+    navBar.classList.toggle('titled', false);
+    if (!h1) return;
+    titleSeen = new IntersectionObserver(([en]) => navBar.classList.toggle('titled', !en.isIntersecting && en.boundingClientRect.top < 1),
+      {rootMargin: `-${navBar.offsetHeight || 44}px 0px 0px 0px`});
+    titleSeen.observe(h1);
+  };
+  const syncNav = () => {
+    const p = navPage();
+    navBar.hidden = !p;
+    btn.hidden = !(user && !$('home').hidden); // home and notebook pages
+    if (document.body.classList) document.body.classList.toggle('fab', !btn.hidden);
+    if (p) {
+      navBack.textContent = '‹ ' + p.up[1]; navBack.setAttribute('href', '#' + p.up[0]); navBack.setAttribute('aria-label', 'Back to ' + p.up[1]);
+      navTitle.textContent = p.title; navMore.hidden = !p.menu;
+    }
+    paintMenu(); paintHint();
+    Promise.resolve().then(watchTitle);
+  };
+  // Leaving a session edit with unsaved changes asks first (window.confirm: synchronous, so a swipe can be undone).
+  const editDirty = () => {
+    const s = edit && v2BySlug.get(edit.slug); if (!s) return false;
+    const o = draftOf(s), pairs = d => JSON.stringify(d.items.map(it => [it.slug, it.dose]));
+    return edit.title !== o.title || edit.format !== o.format || pairs(edit) !== pairs(o);
+  };
+  const discardOk = () => typeof window.confirm !== 'function' || window.confirm('Discard your changes?');
+  // A swipe or a link away from a session edit, kept: back to the edit page without drawing it again.
+  const undoLeave = () => {
+    const H = hist(), st = entry(); bounce = navHere;
+    if (H && st && st.i < navIndex) H.forward();
+    else if (H && (!st || st.i > navIndex)) H.back();
+    else { bounce = null; location.hash = navHere; }
+  };
+  // Called by route() for every page: the route left keeps its scroll; a new history entry gets its marks.
+  const navArrive = tok => {
+    const H = hist(), st = entry();
+    if (navHere !== null) scrollAt.set(navHere, window.scrollY || 0);
+    if (navHere !== tok && navMenu.open) closeSheet(navMenu);
+    let back = navHere === tok;
+    if (st) { back = true; navIndex = st.i; }
+    else if (H) {
+      const r = replacing; replacing = null;
+      navIndex = r ? r.i : navIndex == null ? 0 : navIndex + 1;
+      try { H.replaceState({...(H.state || {}), rb: 1, i: navIndex, prev: r ? r.prev : navHere}, ''); } catch {}
+      if (r) back = true;
+    }
+    navRestore = back && scrollAt.has(tok) ? scrollAt.get(tok) : null;
+    navHere = tok;
+  };
+  // After a page is drawn: back where it was, if it is shown again. True when a position was put back.
+  function settleScroll() {
+    const y = navRestore; navRestore = null;
+    if (y == null) return false;
+    window.scrollTo(0, y); return true;
+  }
+  const goUp = () => {
+    const p = navPage(); if (!p) return;
+    if (edit && editDirty() && !discardOk()) return;
+    edit = null;
+    const H = hist(), st = entry(), up = p.up[0];
+    if (H && st && st.prev === up && H.length > 1) { H.back(); return; }
+    replacing = {i: navIndex == null ? 0 : navIndex, prev: st ? st.prev : null};
+    if (typeof location.replace === 'function') location.replace('#' + up); else location.hash = up;
+  };
+  // A link still in « Add a video » (a notebook page): asked first, as for any link; Back waits for the answer.
+  navBack.addEventListener('click', ev => {
+    ev.preventDefault();
+    if (pendingUrl()) askPending(goUp); else goUp();
+  });
+  navMore.addEventListener('click', () => { paintMenu(); if (!navMenu.open) openSheet(navMenu); });
+  const MENU = ['#ed-open', '#mv-open', '#as-open', '#wake', '#nav-report', '#sd-open', '#ses-delete', '#nav-close'];
+  wireSheet(navMenu);
+  navMenu.addEventListener('click', ev => {
+    const hit = ev.target.closest ? MENU.find(sel => ev.target.closest(sel)) : null; if (!hit) return;
+    if (hit !== '#wake') closeSheet(navMenu); // Keep screen on switches in place
+    if (hit !== '#nav-close') pageAction(ev);
+  });
+
   // ---------- routing ----------
   const route = () => {
     if (!user) {
@@ -2498,7 +2689,12 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const tok = decodeURIComponent(location.hash.slice(1));
     flushNotes(); // notes typed on the page being left are saved now
     const at = RS.sessionItemOf(tok);
-    if (edit && (at || RS.sessionSlugOf(tok) !== edit.slug)) edit = null; // leaving a session page drops its unsaved edits
+    if (bounce !== null) { const b = bounce; bounce = null; if (tok === b) return; } // L17: back on the kept edit
+    if (edit && (at || RS.sessionSlugOf(tok) !== edit.slug)) { // leaving a session page drops its unsaved edits
+      if (editDirty() && !discardOk()) { undoLeave(); return; }
+      edit = null;
+    }
+    navArrive(tok);
     if (ended && tok !== RS.ROUTE + ended.slug) ended = null; // L11: another page drops the end screen
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
@@ -2519,7 +2715,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const from = currentTheme === nb && $('home').hidden === false ? groupOf(themeById.get(nb)) : null;
     shown = null; seat = null; chipPinned = ''; currentTheme = themeById.has(nb) ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
     view.innerHTML = ''; renderHome(); show('home');
-    if (from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
+    if (!settleScroll() && from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
   };
   window.addEventListener('hashchange', route);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && user && !$('home').hidden) refreshQueue(); });

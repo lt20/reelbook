@@ -37,7 +37,7 @@ test('L12 — #<notebook>~<group> shows that group as a grid; an unknown group f
     user_themes: [{id: 'strength', title: 'Strength', groups: library[0].groups, builtin: true, position: 0}], sheets, sessions}});
   await settle();
   assert.match(page.element('groups').innerHTML, /class="grid"/);
-  assert.match(page.element('h-crumb').innerHTML, /href="#strength">← Strength/);
+  assert.equal(page.element('nav-back').textContent, '‹ Strength'); // L17: a group grid goes back to its notebook
   page.go('#strength~Nope');
   await settle();
   assert.match(page.element('groups').innerHTML, /class="group-row"/);

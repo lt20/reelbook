@@ -6,7 +6,7 @@
    "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"wait": "#view >> text=Points clés"}]},
   {"name": "05-session", "hash": "session/session-gainage-10-min", "full": true, "actions": [{"wait": "#view h1 >> text=Gainage en 10 minutes"}, {"wait": "#view >> text=Dead bug"}]},
   {"name": "06-settings", "hash": "settings", "full": true, "actions": [{"wait": "#settings"}]},
-  {"name": "07-add-video", "actions": [{"click": "#btn-new"}, {"wait": "#sheet-new"}]},
+  {"name": "07-add-video", "actions": [{"click": "#add-video-fab"}, {"wait": "#sheet-new"}]},
   {"name": "08-settings-no-sessions-table", "query": "missing=sessions", "hash": "settings", "full": true,
    "actions": [{"wait": "#s-sessions"}]}
 ]
