@@ -10,5 +10,5 @@
   {"name": "l13-05-failed-request-open",
    "actions": [{"click": "#queue-summary button"}, {"wait": "#queue .q"}, {"scroll": "#queue-sec"}]},
   {"name": "l13-06-notebook-page", "hash": "strength",
-   "actions": [{"wait": "#groups .group-row .card"}, {"wait": "#h-crumb >> text=← Reelbook"}]}
+   "actions": [{"wait": "#groups .group-row .card"}, {"wait": "#nav-back >> text=‹ Reelbook"}]}
 ]
