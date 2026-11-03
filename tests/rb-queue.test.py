@@ -107,6 +107,21 @@ class RequeueStuck(Base):
         self.assertEqual(fake.patches(), [])
         self.assertIn("0 processing, 0 requeued", out)
 
+    def test_postgres_timestamps_with_trimmed_fraction(self):
+        # Postgres drops trailing zeros (« .12345 »): Python 3.9 / 3.10 fromisoformat refuses them,
+        # and an unreadable stamp must not requeue a request claimed a minute ago
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() - 60))
+        for frac in (".1", ".12", ".1234", ".12345", ".123456", ".1234567", ""):
+            for tz in ("+00:00", "Z"):
+                self.assertIsNotNone(rb._ts(stamp + frac + tz), frac + tz)
+        self.assertAlmostEqual(rb._ts("2026-11-03T10:00:00.5+00:00") - rb._ts("2026-11-03T10:00:00+00:00"), 0.5)
+        self.assertIsNone(rb._ts("not a date"))
+        fake = self.use([{"id": "fresh", "url": "https://ig/fresh", "status": "processing",
+                          "processed_at": stamp + ".12345+00:00", "created_at": stamp + ".1+00:00"}])
+        out, err = self.run_cmd(rb.cmd_requeue_stuck, [])
+        self.assertEqual(fake.patches(), [])
+        self.assertIn("keep fresh", err)
+
     def test_bad_arguments(self):
         self.use([])
         for args in (["--hours"], ["--hours", "x"], ["--hours", "0"], ["--yes"]):
