@@ -255,7 +255,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 .group-row{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:2px 16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .group-row::-webkit-scrollbar{display:none}
 .group-row .card{flex:none;width:min(44%,220px);scroll-snap-align:start}
-.group-row .card h3{font-size:19px}
+.group-row .card h3{font-size:19px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card .m span:first-child{flex-shrink:0}
 .group-row .from-ses{flex:none;margin:0;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-right:2px solid var(--line);padding-left:6px}
 .grid .from-ses{grid-column:1/-1;margin:6px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -904,16 +904,17 @@ dialog.ph-dlg::backdrop{background:#000}
   $('group-chips').addEventListener('click', ev => {
     const a = ev.target.closest && ev.target.closest('a[data-grp]'); if (!a || groupOf(themeById.get(currentTheme))) return;
     const sec = document.getElementById(a.dataset.grp); if (!sec) return;
-    ev.preventDefault(); markChip(a.dataset.grp); sec.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
+    ev.preventDefault(); chipPinned = a.dataset.grp; markChip(chipPinned); sec.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
   });
-  // While scrolling the rows, the chip of the group under the bar is the active one (kept at the page bottom,
-  // where the last groups cannot reach the top).
-  let spyQueued = false;
+  // While scrolling the rows, the chip of the group under the bar is the active one, page bottom included. A tapped
+  // chip stays active until the user scrolls himself (its group may be one the page bottom keeps below the bar).
+  let spyQueued = false, chipPinned = '';
+  for (const type of ['wheel', 'touchmove', 'keydown']) window.addEventListener(type, () => { chipPinned = ''; }, {passive: true});
   const spy = () => {
     spyQueued = false;
     const chips = $('group-chips');
     if ($('home').hidden || chips.hidden || !currentTheme || groupOf(themeById.get(currentTheme))) return;
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) return;
+    if (chipPinned) { markChip(chipPinned); return; }
     const line = chips.getBoundingClientRect().bottom + 8; let on = '';
     for (const id of groupIds.values()) { const sec = document.getElementById(id); if (sec && sec.getBoundingClientRect().top <= line) on = id; }
     markChip(on);
