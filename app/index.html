@@ -11,8 +11,12 @@
 <link rel="icon" href="icons/reelbook-app.svg" type="image/svg+xml">
 <link rel="icon" href="icons/reelbook-icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/reelbook-icon-180.png" sizes="180x180">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="preload" href="fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+/* Self-hosted fonts (L19): Google Fonts latin subset (French accents, « » and œ included), SIL OFL 1.1, licences in fonts/. */
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-condensed-600-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/barlow-condensed-700-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Source Sans 3";font-style:normal;font-weight:400 600;font-display:swap;src:url(fonts/source-sans-3-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{
   --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd; --line-strong:#8f8a80;
   --accent:#1f4fa3; --accent-ink:#ffffff; --tag:#e4eaf6; --warn:#8a5a12; --warn-bg:#f6ead3; --ok:#1f6b3a; --ok-bg:#e1f0e6;
@@ -544,7 +548,7 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
-<script src="sessions.js?v=5"></script>
+<script src="sessions.js?v=6"></script>
 <script src="sheet.js?v=1"></script>
 <script>
 (() => {
@@ -663,59 +667,117 @@ dialog.ph-dlg::backdrop{background:#000}
     themes.sort((a, b) => a.position - b.position || a.title.localeCompare(b.title));
     themeById = new Map(themes.map(t => [t.id, t]));
   };
-  const loadThemes = async () => {
+  const readThemes = async () => {
     let {data, error} = await sb.from('user_themes').select('id,title,description,groups,builtin,position');
     if (error) throw error;
     if (!data || !data.length) {
       const seed = (CFG.defaults || []).map((id, i) => libById.get(id)).filter(Boolean).map((t, i) => ({id: t.id, title: t.title, groups: t.groups, builtin: true, position: i}));
       if (seed.length) { const r = await sb.from('user_themes').insert(seed).select('id,title,description,groups,builtin,position'); if (r.error) throw r.error; data = r.data; }
     }
-    setThemes(data || []);
+    return data || [];
   };
+  const loadThemes = async () => { setThemes(await readThemes()); };
   const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
   const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
-  const loadCatalogue = async () => {
-    await loadThemes();
-    const {data, error} = await sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at').order('title');
-    if (error) throw error;
-    // Old one-page sessions (kind 'session') are not shown any more; Settings counts them (RS.splitV1).
-    ({sheets, v1: v1Hidden} = RS.splitV1(data)); bySlug = new Map(sheets.map(s => [s.slug, s]));
-    // v2 sessions; a backend without the table only loses them (sessionsOk false, one line in Settings).
-    const r = await sb.from('sessions').select(SESSION_COLS).order('title');
-    if (r.error && !RS.missingTable(r.error, r.status)) throw r.error;
-    sessionsOk = !r.error; setSessions(r.error ? [] : r.data || []);
-    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
-    const paths = [];
-    for (const s of sheets) if (s.thumbnail) paths.push(spath(s.slug, s.thumbnail));
-    for (const s of v2Sessions) if (s.thumbnail) paths.push(s.thumbnail);
-    await signAll(paths);
-    try { const {data: n} = await sb.from('notes').select('slug').neq('body', ''); notesIndex = new Set((n || []).map(r => r.slug)); } catch {}
-    await loadPractice();
+  // L19, instant start. A key-value store in IndexedDB for the last catalogue and the sheets opened, per backend
+  // and user (RS.catalogueCacheKey). None (private mode, an old browser, the test harness): reads give null and
+  // writes do nothing, the app reads the network as before.
+  const idb = (() => {
+    let db = null;
+    const has = (() => { try { return !!window.indexedDB; } catch { return false; } })();
+    const open = () => db || (db = new Promise((ok, ko) => {
+      const r = window.indexedDB.open('reelbook', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+    }));
+    const run = (mode, fn) => open().then(d => new Promise((ok, ko) => {
+      const t = d.transaction('kv', mode), q = fn(t.objectStore('kv'));
+      t.oncomplete = () => ok(q && q.result); t.onerror = t.onabort = () => ko(t.error);
+    }));
+    return {
+      get: k => has ? run('readonly', st => st.get(k)).catch(() => null) : Promise.resolve(null),
+      set: (k, v) => has ? run('readwrite', st => st.put(v, k)).catch(() => {}) : Promise.resolve(),
+      drop: prefix => has ? run('readwrite', st => st.delete(IDBKeyRange.bound(prefix, prefix + '￿'))).catch(() => {}) : Promise.resolve()
+    };
+  })();
+  const catKey = () => RS.catalogueCacheKey(backend.url, user.id);
+  // Sign-out: the user's cached catalogue and sheets, and the photos the service worker kept.
+  const clearUserCache = uid => {
+    idb.drop(RS.catalogueCacheKey('', uid)); // the key prefix of every backend for this user
+    try { if (navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage({type: 'CLEAR_USER_CACHE'})).catch(() => {}); } catch {}
   };
-  // The latest date per key, read 1 000 rows at a time (PostgREST's cap). Never fails the catalogue: a backend
-  // without the table (not pushed yet), or a read that fails, only hides the practice log.
+  // Every read at once (L19), then the photos of the cards; nothing is applied here (RS.refreshCatalogue).
+  const fetchCatalogue = async () => {
+    const [themeRows, sh, r, notes, last] = await Promise.all([
+      readThemes(),
+      sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at').order('title'),
+      // v2 sessions; a backend without the table only loses them (sessionsOk false, one line in Settings).
+      sb.from('sessions').select(SESSION_COLS).order('title'),
+      sb.from('notes').select('slug').neq('body', '').then(x => x, () => null),
+      readLastDone()
+    ]);
+    if (sh.error) throw sh.error;
+    if (r.error && !RS.missingTable(r.error, r.status)) throw r.error;
+    // Old one-page sessions (kind 'session') are not shown any more; Settings counts them (RS.splitV1).
+    const {sheets: list, v1} = RS.splitV1(sh.data), rows = r.error ? [] : r.data || [];
+    const paths = [];
+    for (const s of list) if (s.thumbnail) paths.push(spath(s.slug, s.thumbnail));
+    for (const s of rows) if (s.thumbnail) paths.push(s.thumbnail);
+    await signAll(paths);
+    return {themes: themeRows, sheets: list, v1, sessions: rows, sessionsOk: !r.error,
+      notesIndex: new Set(((notes && notes.data) || []).map(n => n.slug)), lastDone: last || new Map(), practiceOk: !!last,
+      signed: paths.filter(p => signed.has(p)).map(p => [p, signed.get(p).url])};
+  };
+  const applyCatalogue = c => {
+    setThemes(c.themes);
+    sheets = c.sheets; v1Hidden = c.v1 || 0; bySlug = new Map(sheets.map(s => [s.slug, s]));
+    sessionsOk = c.sessionsOk; setSessions(c.sessions);
+    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
+    notesIndex = c.notesIndex; practiceOk = c.practiceOk; lastDone = c.lastDone;
+    // cached URLs (expired or not) until new ones are signed: the service worker answers a photo by its path
+    for (const [p, url] of c.signed || []) if (!signed.has(p)) signed.set(p, {url, exp: 0});
+  };
+  // L6: the latest date per key, read 1 000 rows at a time (PostgREST's cap); null when not read. Never fails the
+  // catalogue: a backend without the table (not pushed yet), or a read that fails, only hides the practice log.
   const PAGE = 1000;
-  const loadPractice = async () => {
-    practiceOk = false; lastDone = new Map();
-    const gen = ++practiceGen, last = new Map(), current = () => gen === practiceGen; // a sign-out or a newer read drops this one
+  const readLastDone = async () => {
+    const last = new Map();
     try {
       for (let from = 0; ; from += PAGE) { // every row: a key practised only long ago keeps its date
         const {data, error, status} = await sb.from('practice_log').select('slug,done_on').order('done_on', {ascending: false}).order('id').range(from, from + PAGE - 1);
-        if (!current()) return;
-        if (error) { if (!RS.missingTable(error, status)) console.warn('Practice log not read:', error.message || error); return; }
+        if (error) { if (!RS.missingTable(error, status)) console.warn('Practice log not read:', error.message || error); return null; }
         for (const r of data || []) if (!last.has(r.slug) || r.done_on > last.get(r.slug)) last.set(r.slug, r.done_on);
         if (!data || data.length < PAGE) break;
       }
-    } catch (e) { console.warn('Practice log not read:', (e && e.message) || e); return; }
-    if (current()) { practiceOk = true; lastDone = last; }
+    } catch (e) { console.warn('Practice log not read:', (e && e.message) || e); return null; }
+    return last;
   };
+  // The last catalogue shows at once (IndexedDB), the fresh read replaces it; a failed read keeps the cached one.
   const reload = async () => {
     loading = true; loadError = ''; if (!$('home').hidden) renderHome();
-    try { await loadCatalogue(); } catch (e) { loadError = (e && e.message) || 'unknown error'; console.error(e); }
+    const gen = ++practiceGen, client = sb, uid = user.id, key = catKey(); // practiceGen: a sign-out or a newer read drops this one
+    let fromCache = false;
+    const res = await RS.refreshCatalogue({
+      read: async () => RS.restoreCatalogueSnapshot(await idb.get(key)),
+      fetch: fetchCatalogue,
+      apply: (c, from) => { applyCatalogue(c); if (from === 'cache') { fromCache = true; loading = false; route(); } },
+      write: c => idb.set(key, RS.catalogueSnapshot(c)),
+      current: () => gen === practiceGen && client === sb && !!user && user.id === uid
+    });
+    if (res.source === 'stale') return;
     loading = false;
-    if (!loadError && !sheets.length && !ls.get(welcomeKey()) && !location.hash) { location.hash = 'welcome'; } else route();
+    if (res.error) {
+      if (fromCache) console.warn('Catalogue not refreshed, the last one stays:', (res.error && res.error.message) || res.error);
+      else { loadError = (res.error && res.error.message) || 'unknown error'; console.error(res.error); }
+    }
+    if (fromCache) {
+      // Already on screen: the home page is redrawn in place (no scroll jump); a sheet being read is left alone.
+      // A link to a sheet the cached catalogue did not hold opens now.
+      const tok = decodeURIComponent(location.hash.slice(1)), ses = RS.sessionSlugOf(tok);
+      if (!$('home').hidden) { if (bySlug.has(tok) || (ses && v2BySlug.has(ses))) route(); else renderHome(); }
+    } else if (!loadError && !sheets.length && !ls.get(welcomeKey()) && !location.hash) { location.hash = 'welcome'; } else route();
     refreshQueue();
   };
   const thumb = (slug, rel) => rel ? (signed.get(spath(slug, rel)) || {}).url || '' : '';
@@ -1064,7 +1126,12 @@ dialog.ph-dlg::backdrop{background:#000}
   const view = $('view'), cache = new Map();
   const loadSheet = async slug => {
     if (cache.has(slug)) return cache.get(slug);
-    const {data, error} = await sb.from('sheets').select('html').eq('slug', slug).single();
+    // L19: a sheet opened once is kept (IndexedDB, as rendered: its photos by signed URL, which the service worker
+    // answers by path), for a start without network. Only a read that never reached the backend (status 0) uses it.
+    const key = catKey() + '|sheet|' + slug;
+    let data, error, status;
+    try { ({data, error, status} = await sb.from('sheets').select('html').eq('slug', slug).single()); } catch (e) { error = e; }
+    if ((error || !data) && !status) { const kept = await idb.get(key); if (typeof kept === 'string') { cache.set(slug, kept); return kept; } }
     if (error || !data) throw new Error('not found');
     const doc = new DOMParser().parseFromString(data.html, 'text/html');
     // Photos get their signed URL in the parsed document, which loads nothing: imported into the page first,
@@ -1083,7 +1150,7 @@ dialog.ph-dlg::backdrop{background:#000}
     frag.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (h === '../index.html' || h === '../' || h === '#') a.setAttribute('href', '#'); else if (h.startsWith('#') && h.length > 1 && !routable(h)) a.setAttribute('href', `#${slug}`); });
     const wrap = document.createElement('div'); wrap.appendChild(frag);
     const lang = sheetLang(data.html), out = lang ? `<div lang="${esc(lang)}">${wrap.innerHTML}</div>` : wrap.innerHTML;
-    cache.set(slug, out); return out;
+    cache.set(slug, out); idb.set(key, out); return out;
   };
   // The language of a sheet, for screen readers and hyphenation (the app around it is English): the sheet's own
   // <html lang> if it has one, else French when its text holds at least three distinct common French words,
@@ -1798,6 +1865,7 @@ dialog.ph-dlg::backdrop{background:#000}
         if (client !== sb) return;
         const next = session ? session.user : null;
         const changed = (next && next.id) !== (user && user.id);
+        if (changed && user && !next) clearUserCache(user.id); // signed out (button, reset, or a revoked session)
         user = next;
         if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();

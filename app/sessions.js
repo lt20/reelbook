@@ -135,7 +135,50 @@
     return [...fresh, ...ranked.filter(s => was.has(s.slug))].slice(0, n);
   };
 
+  // L19, instant start: the last catalogue read, saved per backend and user (IndexedDB in the app), shown at the
+  // next start before the fresh read replaces it. A snapshot is plain JSON: Sets and Maps become arrays. A
+  // backend without `sessions` or `practice_log` keeps them empty (sessionsOk / practiceOk false). `signed`:
+  // [storage path, signed URL] pairs, so cached photos show before any new URL is signed (the service worker
+  // answers a signed photo by its path, whatever the token).
+  const SNAPSHOT = 1;
+  const catalogueSnapshot = c => ({
+    v: SNAPSHOT,
+    themes: c.themes || [], sheets: c.sheets || [], sessions: c.sessionsOk ? c.sessions || [] : [],
+    notesIndex: [...(c.notesIndex || [])], lastDone: c.practiceOk ? [...(c.lastDone || [])] : [],
+    sessionsOk: !!c.sessionsOk, practiceOk: !!c.practiceOk, v1: c.v1 || 0, signed: [...(c.signed || [])]
+  });
+  // null when the saved value is not a snapshot of this version (older app, damaged entry): no cached display.
+  const restoreCatalogueSnapshot = s => {
+    if (!s || s.v !== SNAPSHOT || !Array.isArray(s.themes) || !Array.isArray(s.sheets)) return null;
+    const list = x => Array.isArray(x) ? x : [];
+    return {
+      themes: s.themes, sheets: s.sheets, sessions: s.sessionsOk ? list(s.sessions) : [],
+      notesIndex: new Set(list(s.notesIndex)), lastDone: new Map(s.practiceOk ? list(s.lastDone) : []),
+      sessionsOk: !!s.sessionsOk, practiceOk: !!s.practiceOk, v1: s.v1 || 0, signed: new Map(list(s.signed))
+    };
+  };
+  // Decision 8 (state per user), and per backend: two projects can hold the same user id.
+  const catalogueCacheKey = (url, userId) => `rb.catalogue.${userId}.${url}`;
+  // The cached catalogue first, then the fresh one. The network read starts at once; the cached copy is applied
+  // only when it arrives before the fresh read ends. A failed read keeps what is shown and is returned as
+  // {source: 'cache' | 'none', error}. current(): false once the user or the backend changed (nothing applied).
+  // read() resolves a restored snapshot or null; write(data) saves the fresh one in the background (`saved`).
+  const refreshCatalogue = async ({read, fetch, apply, write, current = () => true}) => {
+    let ended = false, shown = false;
+    const fresh = Promise.resolve().then(fetch);
+    fresh.then(() => { ended = true; }, () => {});
+    const cached = Promise.resolve().then(read).then(snap => {
+      if (snap && !ended && current()) { apply(snap, 'cache'); shown = true; }
+    }, () => {});
+    let data;
+    try { data = await fresh; } catch (error) { await cached; return {source: shown ? 'cache' : 'none', error}; }
+    if (!current()) return {source: 'stale'};
+    apply(data, 'network');
+    return {source: 'network', saved: Promise.resolve().then(() => write(data)).catch(() => {})}; // not awaited by the app
+  };
+
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
-    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry};
+    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry,
+    catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);
