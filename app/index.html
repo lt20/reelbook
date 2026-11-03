@@ -233,6 +233,19 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 @keyframes qhold{to{opacity:.6}}
 @media (prefers-reduced-motion:reduce){.toast .qbar{animation-name:qhold}}
 @media (prefers-reduced-motion:no-preference){.card img,.step img{transition:transform .25s}.card:hover img,.step figure:hover img{transform:scale(1.02)}}
+/* ---- L7: « New » row on the home page, « Something wrong? », Redo in the queue ---- */
+.newsec{margin:20px 0 4px}
+.newsec h2{margin:0 0 8px}
+.newrow{display:grid;grid-auto-flow:column;grid-auto-columns:min(72%,260px);gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 2px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch}
+.newrow .card{scroll-snap-align:start}
+.newrow .card h3{font-size:19px}
+.newrow .card p{-webkit-line-clamp:2}
+.report{margin-top:14px}
+.report .link{appearance:none;background:transparent;border:0;padding:10px 0;min-height:44px;color:var(--muted);font:600 14px var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#report-dlg textarea{min-height:110px}
+#report-status:empty{display:none}
+#report-status.err{color:var(--danger)}
+.q .redo{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;margin-bottom:2px;background:var(--accent);color:var(--accent-ink)}
 /* ---- L3: sheet in use (keep screen on, gesture first, full-screen photos) ---- */
 .top{flex-wrap:wrap;gap:8px 10px}
 .top>a{white-space:nowrap}
@@ -346,6 +359,9 @@ dialog.ph-dlg::backdrop{background:#000}
     <div class="qsum" id="queue-summary"></div>
     <div class="queue" id="queue" hidden></div>
   </section>
+
+  <!-- L7: sheets and video sessions delivered in the last 72 h, not opened yet on this device -->
+  <section class="newsec" id="new-sec" aria-labelledby="new-h" hidden></section>
 
   <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
   <div id="results" hidden></div>
@@ -621,7 +637,7 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
-  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items';
+  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
   const loadCatalogue = async () => {
     await loadThemes();
@@ -703,6 +719,26 @@ dialog.ph-dlg::backdrop{background:#000}
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
   const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  // ---------- L7: « New » row ----------
+  // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen holds the
+  // keys of the pages opened (a sheet's slug, « session/<slug> » for a session, as RS.noteKey), the last 500.
+  // A new session's exercise sheets are left to the session's card. Home page only, 6 cards, newest first.
+  const SEEN = 'rb.seen', NEW_MS = 72 * 3600 * 1000, NEW_MAX = 6;
+  const seenKeys = () => { try { const a = JSON.parse(ls.get(SEEN) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+  const markSeen = key => { const a = seenKeys().filter(k => k !== key); a.push(key); ls.set(SEEN, JSON.stringify(a.slice(-500))); };
+  const isRecent = v => { const t = Date.parse(v || ''); return t > Date.now() - NEW_MS; };
+  const renderNew = show => {
+    const seen = new Set(seenKeys());
+    const ses = show ? v2Sessions.filter(s => s.origin === 'video' && isRecent(s.created_at)) : [];
+    const inNew = new Set(ses.flatMap(s => (s.items || []).map(i => i && i.slug)));
+    const list = [
+      ...ses.filter(s => !seen.has(RS.noteKey(s.slug))).map(s => ({at: s.created_at, html: v2Card(s, [], false)})),
+      ...(show ? sheets : []).filter(e => isRecent(e.added_at) && !inNew.has(e.slug) && !seen.has(e.slug)).map(e => ({at: e.added_at, html: sheetCard(e)}))
+    ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, NEW_MAX);
+    $('new-sec').hidden = !list.length;
+    $('new-sec').innerHTML = list.length ? '<h2 class="eyebrow" id="new-h">New</h2><div class="newrow" id="new-cards"></div>' : '';
+    if (list.length) $('new-cards').innerHTML = list.map(x => x.html).join('');
+  };
   const renderGroups = t => {
     const solo = sheets.filter(e => e.theme === t.id);
     const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
@@ -759,6 +795,7 @@ dialog.ph-dlg::backdrop{background:#000}
     const terms = sheets.length ? searchTerms() : [];
     $('results').hidden = !terms.length;
     if (terms.length) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t); }
+    renderNew(!t && !loading && !loadError && !terms.length);
     document.title = t ? `${t.title} · Reelbook` : 'Reelbook';
   };
 
@@ -1016,7 +1053,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const showSession = (slug, flash = '') => {
     const s = v2BySlug.get(slug);
     if (edit && edit.slug !== slug) edit = null;
-    shown = RS.ROUTE + slug; show('view'); document.title = s.title;
+    shown = RS.ROUTE + slug; show('view'); document.title = s.title; markSeen(RS.noteKey(slug));
     if (edit) {
       view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true, true)}</div>
         <div class="wrap fiche"><div class="edit"><p class="eyebrow">Editing the session</p>
@@ -1041,7 +1078,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const showSheet = async slug => {
     const e = bySlug.get(slug);
     if (shown === slug && !view.hidden) return;
-    shown = slug; show('view');
+    shown = slug; show('view'); markSeen(slug);
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
     const back = `<div class="wrap" id="sheet-top">${sheetTop(e)}</div>`;
     // Delete sheet: also under a sheet that fails to load.
