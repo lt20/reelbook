@@ -1,0 +1,13 @@
+[
+  {"name": "01-sign-in", "query": "noauth", "actions": [{"wait": "#auth"}]},
+  {"name": "02-home", "full": true},
+  {"name": "03-notebook", "hash": "strength", "full": true},
+  {"name": "04-sheet", "hash": "pompes-inclinees", "full": true,
+   "allow": ["^http 404: .*/img/thumb\\.jpg$"],
+   "why": "app bug, not the preview: loadSheet imports the sheet's <img> into the page before rewriting src, so the header photo is first requested as img/thumb.jpg next to index.html (404, in production too)"},
+  {"name": "05-session", "hash": "session/session-gainage-10-min", "full": true},
+  {"name": "06-settings", "hash": "settings", "full": true},
+  {"name": "07-add-video", "actions": [{"click": "#btn-new"}, {"wait": "#sheet-new"}]},
+  {"name": "08-settings-no-sessions-table", "query": "missing=sessions", "hash": "settings", "full": true,
+   "actions": [{"wait": "#s-sessions"}]}
+]
