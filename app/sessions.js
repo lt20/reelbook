@@ -240,7 +240,37 @@
     return [...fresh, ...ranked.filter(s => was.has(s.slug))].slice(0, n);
   };
 
+  // ---------- session player (L10) ----------
+  // #session/<slug>/play (exercise 1, or the resume prompt), #session/<slug>/play/<n>, #<sheet slug>/play (one
+  // exercise). {session, n} (n null: no number given) or {sheet}; null for any other token.
+  const PLAY = 'play';
+  const playHref = (slug, n) => '#' + ROUTE + slug + '/' + PLAY + (n ? '/' + n : '');
+  const sheetPlayHref = slug => '#' + slug + '/' + PLAY;
+  const playRoute = tok => {
+    if (typeof tok !== 'string') return null;
+    const parts = tok.split('/');
+    if (tok.startsWith(ROUTE)) {
+      parts.shift();
+      if (!parts[0] || parts[1] !== PLAY || parts.length > 3) return null;
+      if (parts.length === 2) return {session: parts[0], n: null};
+      return /^[1-9][0-9]*$/.test(parts[2]) ? {session: parts[0], n: Number(parts[2])} : null;
+    }
+    return parts.length === 2 && parts[0] && parts[1] === PLAY ? {sheet: parts[0]} : null;
+  };
+  // The dose of a resolved item as the player shows it, big: from its numbers (« 3 × 10 », « 3 × 40 s »,
+  // « 10 / side », « 1 min », « 2:30 »), '' when it has none (the player then shows the free text). A range read
+  // from the text keeps its lower bound (« 3 × 8-12 »).
+  const secondsLabel = s => s >= 60 && !(s % 60) ? s / 60 + ' min' : s <= 90 ? s + ' s' : Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  const doseLabel = it => {
+    if (!it) return '';
+    const min = 'reps' in (it.given || {}) ? null : parseDose(it.dose).repsMin;
+    const count = it.reps ? (min ? min + '-' : '') + it.reps : it.seconds ? secondsLabel(it.seconds) : '';
+    if (!count) return '';
+    return (it.sets ? it.sets + ' × ' : '') + count + (it.per_side ? ' / side' : '');
+  };
+
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
-    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest};
+    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
+    playHref, sheetPlayHref, playRoute, doseLabel};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);
