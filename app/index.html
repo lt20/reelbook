@@ -907,7 +907,7 @@ dialog.ph-dlg::backdrop{background:#000}
     ev.preventDefault(); chipPinned = a.dataset.grp; markChip(chipPinned); sec.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
   });
   // While scrolling the rows, the chip of the group under the bar is the active one, page bottom included. A tapped
-  // chip stays active until the user scrolls himself (its group may be one the page bottom keeps below the bar).
+  // chip stays active until the user scrolls himself or leaves the page (its group may stay below the bar).
   let spyQueued = false, chipPinned = '';
   for (const type of ['wheel', 'touchmove', 'keydown']) window.addEventListener(type, () => { chipPinned = ''; }, {passive: true});
   const spy = () => {
@@ -915,7 +915,9 @@ dialog.ph-dlg::backdrop{background:#000}
     const chips = $('group-chips');
     if ($('home').hidden || chips.hidden || !currentTheme || groupOf(themeById.get(currentTheme))) return;
     if (chipPinned) { markChip(chipPinned); return; }
-    const line = chips.getBoundingClientRect().bottom + 8; let on = '';
+    // at the page bottom, the last groups may never reach the bar: the last one whose top is on screen is active
+    const bottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    const line = bottom ? window.innerHeight : chips.getBoundingClientRect().bottom + 8; let on = '';
     for (const id of groupIds.values()) { const sec = document.getElementById(id); if (sec && sec.getBoundingClientRect().top <= line) on = id; }
     markChip(on);
   };
@@ -1851,7 +1853,7 @@ dialog.ph-dlg::backdrop{background:#000}
     // L12: #<notebook>~<group> is a group grid; back on the rows from it, the page opens at that group.
     const cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
     const from = currentTheme === nb && $('home').hidden === false ? groupOf(themeById.get(nb)) : null;
-    shown = null; seat = null; currentTheme = themeById.has(nb) ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
+    shown = null; seat = null; chipPinned = ''; currentTheme = themeById.has(nb) ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
     view.innerHTML = ''; renderHome(); show('home');
     if (from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
   };
