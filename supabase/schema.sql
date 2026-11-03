@@ -162,3 +162,25 @@ create policy "own sessions" on public.sessions
 drop trigger if exists sessions_touch on public.sessions;
 create trigger sessions_touch before update on public.sessions
   for each row execute function public.touch_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Practice log: one row each time a sheet or a session is done (« Done today »).
+-- Added after sessions: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- A backend without it keeps working: the app hides every practice control and count.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.practice_log (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  slug       text not null,                       -- a sheet slug, or session/<slug> (same key as notes)
+  done_on    date not null default current_date,
+  text       text not null default '',            -- free text: « 12 kg, 3x10 »
+  created_at timestamptz not null default now()
+);
+
+create index if not exists practice_log_user_slug_idx on public.practice_log (user_id, slug, done_on desc);
+
+alter table public.practice_log enable row level security;
+drop policy if exists "own practice log" on public.practice_log;
+create policy "own practice log" on public.practice_log
+  for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());

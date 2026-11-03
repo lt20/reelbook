@@ -255,6 +255,50 @@
    "updated_at": "2026-10-28T19:30:00Z"
   }
  ],
+ "practice_log": [
+  {
+   "id": "log-1",
+   "slug": "pompes-inclinees",
+   "done_on": "2026-10-21",
+   "text": "2 × 8 sur la table",
+   "created_at": "2026-10-21T18:10:00Z"
+  },
+  {
+   "id": "log-2",
+   "slug": "pompes-inclinees",
+   "done_on": "2026-10-24",
+   "text": "3 × 8",
+   "created_at": "2026-10-24T18:11:00Z"
+  },
+  {
+   "id": "log-3",
+   "slug": "pompes-inclinees",
+   "done_on": "2026-10-28",
+   "text": "3 × 10, banc bas",
+   "created_at": "2026-10-28T18:12:00Z"
+  },
+  {
+   "id": "log-4",
+   "slug": "chien-tete-en-bas",
+   "done_on": "2026-10-29",
+   "text": "",
+   "created_at": "2026-10-29T18:13:00Z"
+  },
+  {
+   "id": "log-5",
+   "slug": "session/session-gainage-10-min",
+   "done_on": "2026-10-30",
+   "text": "2 tours, planche à 40 s",
+   "created_at": "2026-10-30T18:14:00Z"
+  },
+  {
+   "id": "log-6",
+   "slug": "ancienne-fiche",
+   "done_on": "2026-10-01",
+   "text": "fiche supprimée depuis",
+   "created_at": "2026-10-01T18:15:00Z"
+  }
+ ],
  "requests": [
   {
    "id": "req-1",

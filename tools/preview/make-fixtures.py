@@ -238,6 +238,18 @@ def label_image(path, size, colour, text):
     img.save(path, 'JPEG', quality=70, optimize=True)
 
 
+PRACTICE_LOG = [
+    {'id': f'log-{i + 1}', 'slug': slug, 'done_on': day, 'text': text, 'created_at': f'{day}T18:{10 + i:02d}:00Z'}
+    for i, (slug, day, text) in enumerate([
+        ('pompes-inclinees', '2026-10-21', '2 × 8 sur la table'),
+        ('pompes-inclinees', '2026-10-24', '3 × 8'),
+        ('pompes-inclinees', '2026-10-28', '3 × 10, banc bas'),
+        ('chien-tete-en-bas', '2026-10-29', ''),
+        ('session/session-gainage-10-min', '2026-10-30', '2 tours, planche à 40 s'),
+        ('ancienne-fiche', '2026-10-01', 'fiche supprimée depuis'),
+    ])
+]
+
 def main():
     try:
         import PIL  # noqa: F401
@@ -280,6 +292,8 @@ def main():
         'sessions': sessions,
         'notes': [{'slug': 'pompes-inclinees', 'body': 'Mardi : 3 × 10 sur la table de la cuisine. Prochaine fois, le banc plus bas.',
                    'updated_at': '2026-10-28T19:30:00Z'}],
+        # L6: the practice log; « ancienne-fiche » is a sheet deleted since (not counted on the home page)
+        'practice_log': PRACTICE_LOG,
         'requests': [
             {'id': 'req-1', 'url': 'https://www.instagram.com/reel/PREVIEW0101/', 'status': 'queued', 'theme': 'strength',
              'note': None, 'created_at': '2026-11-02T08:15:00Z'},
