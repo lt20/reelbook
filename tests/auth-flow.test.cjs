@@ -587,3 +587,28 @@ test('a v2 session page has its own notes, keyed session/<slug>, and its card sh
   await page.fire('n-save');
   assert.deepEqual(writesOf(page), [['upsert', 'notes', {slug: 'session/gsp-shoulders', body: 'Felt better'}, []]]);
 });
+
+// ---------- L1 (design audit P0) ----------
+test('C1: saving a video session after changing one dose keeps its long format and long doses byte for byte', async () => {
+  const tables = v2Tables();
+  const format = '4 rounds of the circuit, 45 s of work and 15 s of rest per exercise, 2 min of rest between rounds; '
+    + 'start slowly, keep the breathing calm, stop before any shoulder pain and finish with 5 min of easy walking';
+  const longDose = '3 × 12 slow reps, 3 s down, 1 s pause, 20 s of rest';
+  assert.ok(format.length > 200 && format.length <= 240 && longDose.length > 40 && longDose.length <= 60);
+  Object.assign(tables.sessions[0], {format, items: [{slug: 'gsp-rot', dose: longDose}, {slug: 'gsp-angel', dose: '30 s'}]});
+  const page = await app({...signedIn, tables, hash: '#session/gsp-shoulders'});
+  await settle();
+  clickIn(page, 'view', '#ed-open');
+  const html = page.element('view').innerHTML;
+  assert.match(html, /id="ed-format" type="text" maxlength="240"/, 'the format input allows 240 characters');
+  assert.match(html, /id="ed-title" type="text" maxlength="80"/);
+  assert.match(html, /data-dose="0" value="[^"]*" maxlength="60"/, 'a dose input allows 60 characters');
+  typeIn(page, {dataset: {dose: '1'}, value: '40 s'});
+  clickIn(page, 'view', '#ed-save');
+  await settle();
+  const [[method, table, row]] = writesOf(page);
+  assert.equal(`${method} ${table}`, 'update sessions');
+  assert.equal(row.format, format, 'the format is saved whole');
+  assert.deepEqual(row.items, [{slug: 'gsp-rot', dose: longDose}, {slug: 'gsp-angel', dose: '40 s'}]);
+  assert.ok(page.element('view').innerHTML.includes(format), 'the saved page shows the whole format');
+});

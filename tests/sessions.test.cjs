@@ -92,9 +92,16 @@ test('↑ ↓ swap with the neighbour, out of range changes nothing, remove drop
 });
 
 test('what Edit saves: slug and a trimmed dose within its limit', () => {
-  const out = RS.cleanItems([{slug: 'a', dose: '  3×10  ', extra: 1}, {slug: 'b'}, {dose: 'x'}, {slug: 'c', dose: 'x'.repeat(60)}]);
+  const out = RS.cleanItems([{slug: 'a', dose: '  3×10  ', extra: 1}, {slug: 'b'}, {dose: 'x'}, {slug: 'c', dose: 'x'.repeat(90)}]);
   assert.deepEqual(out.slice(0, 2), [{slug: 'a', dose: '3×10'}, {slug: 'b', dose: ''}]);
   assert.equal(out[2].slug, 'c');
   assert.equal(out[2].dose.length, RS.MAX.dose);
   assert.equal(RS.clip('  ' + 'y'.repeat(100), RS.MAX.title).length, 80);
+});
+
+test('C1: the limits leave room for video sessions (formats up to 240, doses up to 60, titles 80)', () => {
+  assert.deepEqual({...RS.MAX}, {title: 80, format: 240, dose: 60});
+  const format = 'f'.repeat(206), dose = 'd'.repeat(55);
+  assert.equal(RS.clip(format, RS.MAX.format), format);
+  assert.deepEqual(RS.cleanItems([{slug: 'a', dose}]), [{slug: 'a', dose}]);
 });

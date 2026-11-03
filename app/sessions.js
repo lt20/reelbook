@@ -47,8 +47,10 @@
   };
 
   // ---------- composition (S3): pure, the app saves what they return in one update ----------
-  // Free-text limits of a session: its title and format line, and an item's dose.
-  const MAX = {title: 80, format: 80, dose: 40};
+  // Free-text limits of a session: its title and format line, and an item's dose. Video sessions carry formats
+  // of up to ~210 characters and doses of up to ~55: the limits stay above them, so saving an edit never cuts
+  // a text the user did not touch. The Edit inputs carry the same `maxlength`.
+  const MAX = {title: 80, format: 240, dose: 60};
   const clip = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
 
   // The notes of a v2 session live in `notes` under « session/<slug> »: a sheet slug never holds a « / ».
