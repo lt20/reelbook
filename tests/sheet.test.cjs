@@ -217,6 +217,18 @@ test('a technique sheet (profile technique, French, 5 key points): same order, �
   assert.deepEqual(SH.keyPoints(doc).map(k => k.cue), ['Short bold cue.', 'Second cue.', 'Third cue.']);
 });
 
+test('the synthetic technique sheet of the preview (Kitesurf, backroll) is arranged the same way', () => {
+  const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/preview/data.json'), 'utf8'));
+  const sheet = data.sheets.find(s => s.slug === 'backroll');
+  assert.equal(sheet.theme, 'kitesurf');
+  assert.ok(data.user_themes.some(t => t.id === 'kitesurf'));
+  const {doc, before} = arranged(sheet.html);
+  assert.deepEqual(landmarks(doc).filter(l => l.startsWith('h2:') || l === 'header' || l === 'footer'), ['header', 'h2:Go / no-go', 'h2:Étapes',
+    'h2:Prérequis', 'h2:Conditions', 'h2:Erreurs fréquentes', 'h2:Points clés', 'h2:Plan d\'essais suggestion, absente de la vidéo',
+    'h2:Sécurité conseil général, absent de la vidéo', 'footer']);
+  assert.deepEqual(content(doc), before);
+});
+
 test('a technique sheet without go / no-go box is arranged like a sheet; the go / no-go box alone is enough to move', () => {
   // no .gonogo: the gym order, the try plan (.dose) pulled after the steps
   const noBox = soloHtml.replace(/\n<h2>Go \/ no-go<\/h2>\n<div class="gonogo">[\s\S]*?\n<\/div>\n/, '\n');
