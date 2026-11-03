@@ -564,7 +564,7 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
-<script src="sessions.js?v=5"></script>
+<script src="sessions.js?v=6"></script>
 <script src="sheet.js?v=1"></script>
 <script>
 (() => {
@@ -1418,7 +1418,7 @@ dialog.ph-dlg::backdrop{background:#000}
   // L5: the session the shown sheet is opened from, {s, n, items} (n counted from 1 over `items`), else null.
   let seat = null;
   const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
-    items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose, was: it.dose}))});
+    items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose, was: it.dose, given: it.given}))});
   const editRows = () => edit.items.map((it, i) => {
     const sh = bySlug.get(it.slug), t = esc(sh ? sh.title : it.slug);
     return `<div class="row"><span class="k">${i + 1}</span><b>${t}</b><div class="ctl">
