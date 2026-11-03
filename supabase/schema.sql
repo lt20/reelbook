@@ -184,3 +184,12 @@ alter table public.practice_log enable row level security;
 drop policy if exists "own practice log" on public.practice_log;
 create policy "own practice log" on public.practice_log
   for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- Full-text search: the visible text of each sheet (kit pills first, at most 4 000 characters), written by
+-- `rb.py publish`. Sheets published before it hold '' until `rb.py backfill-search` fills them.
+-- Added after the practice log: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- A backend without it keeps working: the app searches titles, summaries, groups, notebooks, authors and notes.
+-- ---------------------------------------------------------------------------
+
+alter table public.sheets add column if not exists search_text text not null default '';

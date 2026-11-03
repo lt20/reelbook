@@ -240,6 +240,9 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 #del-dlg .err,#sd-dlg .err{color:var(--danger)}
 #sd-open,#ed-delete{color:var(--danger);border-color:transparent}
 .card .fmt{font-size:13px;line-height:1.35;color:var(--muted);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* L14: a search result found in the sheet's text or in the note says where, under its title */
+.card .where{font-size:13px;font-weight:600;color:var(--accent);margin:0 0 4px;-webkit-line-clamp:1}
+/* end L14 */
 .qsum{margin:24px 0 10px}
 .qsum button{appearance:none;width:100%;min-height:44px;display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink);font:600 15px var(--body);text-align:left;cursor:pointer}
 .qsum .lbl{flex:1;min-width:0}
@@ -744,6 +747,12 @@ dialog.ph-dlg::backdrop{background:#000}
   // v2Sessions: rows of the `sessions` table; inSessions: sheet slug -> those sessions; sessionsOk: false when the backend has no such table.
   let v2Sessions = [], v2BySlug = new Map(), inSessions = new Map(), sessionsOk = true, v1Hidden = 0;
   let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null, loading = false, loadError = '';
+  // L14: noteBodies, key -> the text of the user's note (searched); noSearchCol: the client whose backend has no
+  // sheets.search_text column yet (read once, then the sheets are read without it until the next start).
+  let noteBodies = new Map(), noSearchCol = null;
+  // noteEdits: key -> {body, seq}, the note texts saved here, laid over a catalogue read that began before their
+  // save (seq > the read's noteSeq); dropped once a read that began after them is applied.
+  let noteSeq = 0; const noteEdits = new Map();
   // L6, practice log: practiceOk true once the user's practice_log rows are read (false: no table, or no answer, so
   // every practice control and count is hidden); lastDone: key (a sheet slug, or session/<slug>) -> latest done_on.
   let practiceOk = false, lastDone = new Map(), practiceGen = 0; // practiceGen: the last catalogue read, or sign-out
@@ -810,11 +819,34 @@ dialog.ph-dlg::backdrop{background:#000}
   // applied (saveCatalogue): a catalogue read it overtook is dropped and read again (RS.refreshCatalogue gen).
   let localGen = 0;
   const touched = () => { localGen++; };
-  const saveCatalogue = () => {
-    touched();
+  const saveCatalogue = () => { touched(); writeCatalogue(); };
+  // L14: the same write without counting a local change, for a note whose text changed (typing must not drop a
+  // catalogue read on its way: noteEdits lays the new text over it).
+  const writeCatalogue = () => {
     if (!user || !sb || loading) return;
-    idb.set(catKey(), RS.catalogueSnapshot({themes: themeRows, sheets, v1: v1Hidden, sessions: v2Sessions, sessionsOk, notesIndex, lastDone, practiceOk,
+    idb.set(catKey(), snapshot({themes: themeRows, sheets, v1: v1Hidden, sessions: v2Sessions, sessionsOk, notesIndex, noteBodies, lastDone, practiceOk,
       signed: cardPaths().filter(p => signed.has(p)).map(p => [p, signed.get(p).url])}));
+  };
+  // L14: the cached catalogue also keeps the note bodies (searched offline); a snapshot saved before has none.
+  // Its sheets keep search_text when the backend has the column, and are searched by metadata when not.
+  const snapshot = c => ({...RS.catalogueSnapshot(c), noteBodies: [...(c.noteBodies || [])]});
+  const unsnapshot = s => {
+    const c = RS.restoreCatalogueSnapshot(s);
+    if (c) c.noteBodies = new Map(Array.isArray(s.noteBodies) ? s.noteBodies.filter(Array.isArray) : []);
+    return c;
+  };
+  // L14: the sheets with their search text; a backend without the column (schema not pushed yet) answers 42703,
+  // and the sheets are read as before, without an error.
+  const SHEET_COLS = 'slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at,updated_at';
+  const noColumn = (e, col) => !!e && (e.code === '42703' || e.code === 'PGRST204') && String(e.message || '').includes(col);
+  const readSheets = async () => {
+    const client = sb;
+    if (noSearchCol !== client) {
+      const r = await client.from('sheets').select(SHEET_COLS + ',search_text').order('title');
+      if (!noColumn(r.error, 'search_text')) return r;
+      noSearchCol = client;
+    }
+    return client.from('sheets').select(SHEET_COLS).order('title');
   };
   // Sign-out: the user's cached catalogue and sheets, and the photos the service worker kept.
   const toWorker = msg => { try { if (navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage(msg)).catch(() => {}); } catch {} };
@@ -824,12 +856,14 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   // Every read at once (L19), then the photos of the cards; nothing is applied here (RS.refreshCatalogue).
   const fetchCatalogue = async () => {
+    const seq0 = noteSeq;
     const [themeRows, sh, r, notes, last] = await Promise.all([
       readThemes(),
-      sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at,updated_at').order('title'),
+      readSheets(),
       // v2 sessions; a backend without the table only loses them (sessionsOk false, one line in Settings).
       sb.from('sessions').select(SESSION_COLS).order('title'),
-      sb.from('notes').select('slug').neq('body', '').then(x => x, () => null), // null or {error}: kept as known
+      // L14: with their bodies (a few lines each), searched; null or {error}: kept as known
+      sb.from('notes').select('slug,body').neq('body', '').then(x => x, () => null),
       readLastDone()
     ]);
     if (sh.error) throw sh.error;
@@ -842,6 +876,7 @@ dialog.ph-dlg::backdrop{background:#000}
     await signAll(paths);
     return {themes: themeRows, sheets: list, v1, sessions: rows, sessionsOk: !r.error, sessionsKept: !!sessionsError, sessionsError,
       notesIndex: notes && !notes.error ? new Set((notes.data || []).map(n => n.slug)) : null,
+      noteBodies: notes && !notes.error ? new Map((notes.data || []).map(n => [n.slug, String(n.body || '')])) : null, noteSeq: seq0,
       lastDone: last || new Map(), practiceOk: !!last, practiceKept: last === null,
       signed: paths.filter(p => signed.has(p)).map(p => [p, signed.get(p).url])};
   };
@@ -852,7 +887,11 @@ dialog.ph-dlg::backdrop{background:#000}
     for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, profile: (lib && lib.profile) || 'gym', builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
     // A notes or practice log read that failed keeps what was known (cached or earlier); a backend without the
     // practice_log table hides the practice log (readLastDone false).
-    if (c.notesIndex) notesIndex = c.notesIndex; else c.notesIndex = notesIndex;
+    if (c.notesIndex) {
+      const nb = c.noteBodies || new Map(); // a cached catalogue (no noteSeq) gets every edit laid over it
+      for (const [k, e] of noteEdits) { if (c.noteSeq != null && e.seq <= c.noteSeq) noteEdits.delete(k); else if (e.body) nb.set(k, e.body); else nb.delete(k); }
+      notesIndex = c.notesIndex; noteBodies = c.noteBodies = nb;
+    } else { c.notesIndex = notesIndex; c.noteBodies = noteBodies; }
     if (c.practiceKept) { c.practiceOk = practiceOk; c.lastDone = lastDone; } else { practiceOk = c.practiceOk; lastDone = c.lastDone; }
     // cached URLs (expired or not) until new ones are signed: the service worker answers a photo by its path
     for (const [p, url] of c.signed || []) if (!signed.has(p)) signed.set(p, {url, exp: 0});
@@ -881,10 +920,10 @@ dialog.ph-dlg::backdrop{background:#000}
     let fromCache = shown, sessionsError = null;
     const current = () => gen === practiceGen && client === sb && !!user && user.id === uid;
     const res = await RS.refreshCatalogue({
-      read: async () => shown ? null : RS.restoreCatalogueSnapshot(await idb.get(key)),
+      read: async () => shown ? null : unsnapshot(await idb.get(key)),
       fetch: async () => { const c = await fetchCatalogue(); sessionsError = c.sessionsError; return c; },
       apply: (c, from) => { applyCatalogue(c); if (from === 'cache') { fromCache = true; loading = false; route(); } },
-      write: c => current() ? idb.set(key, RS.catalogueSnapshot(c)) : null,
+      write: c => current() ? idb.set(key, snapshot(c)) : null,
       current, gen: () => localGen
     });
     if (res.source === 'stale') return;
@@ -915,7 +954,7 @@ dialog.ph-dlg::backdrop{background:#000}
   // L12: at most two meta pills, on one line: callers list them most useful first.
   const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}
       <img src="${esc(thumbUrl)}" alt="" loading="lazy">
-      <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>${extra && extra.fmt ? `<p class="fmt">${esc(extra.fmt)}</p>` : ''}
+      <div class="b"><h3>${esc(e.title)}</h3>${extra && extra.where && extra.where.length ? `<p class="where">${esc(extra.where.join(' · '))}</p>` : ''}<p>${esc(e.summary)}</p>${extra && extra.fmt ? `<p class="fmt">${esc(extra.fmt)}</p>` : ''}
       <div class="m">${(extra && extra.meta || []).slice(0, 2).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   // The « + Add a notebook » card: its examples are the first three library notebooks not added yet; with none
@@ -965,10 +1004,10 @@ dialog.ph-dlg::backdrop{background:#000}
   const inTag = slug => { const n = (inSessions.get(slug) || []).length; return n ? [{txt: `in ${plural(n, 'session')}`, cls: 'session'}] : []; };
   // L6: « done 28 Oct », the latest practice of a sheet or a session (key as for notes).
   const doneTag = key => practiceOk && lastDone.has(key) ? [{txt: 'done ' + fmtDay(lastDone.get(key)), cls: 'done'}] : [];
-  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, ...doneTag(e.slug), ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : []), {txt: e.duration}, {txt: (e.source || {}).author || ''}].filter(m => m.txt)});
+  const sheetCard = (e, pre = [], where = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {where, meta: [...pre, ...doneTag(e.slug), ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : []), {txt: e.duration}, {txt: (e.source || {}).author || ''}].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return purl(s.thumbnail); const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
-  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : []), {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
+  const v2Card = (s, pre = [], big = true, where = []) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, where, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : []), {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
   // ---------- L7: « New » row ----------
   // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen.<user id>
   // holds the keys of the pages opened (a sheet's slug, « session/<slug> » for a session, as RS.noteKey), the last
@@ -1095,25 +1134,47 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   window.addEventListener('scroll', () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(spy); } }, {passive: true});
   // ---------- search ----------
-  // Every word must appear, accents and case ignored, in a title, summary, group, notebook or author
-  // (a v2 session: its title, format, notebook or author).
+  // Every word must appear, accents and case ignored, at the start of a word (« dos » does not find « abdos »)
+  // of a title, summary, group, notebook or author (a v2 session: its title, format, notebook or author), else
+  // of the sheet's text (search_text, L14: empty or absent until written) or of the user's note. A card found
+  // through those says where under its title; cards found by their metadata come first.
   const fold = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const searchTerms = () => fold($('q').value).split(/\s+/).filter(Boolean);
-  const hit = (terms, fields) => { const hay = fold(fields.join(' ')); return terms.every(w => hay.includes(w)); };
+  const hit = (terms, fields) => { const hay = fold(fields.join(' ')); return terms.every(w => hay.includes(w)); }; // « + New session » filter
+  const wordStart = w => new RegExp('(?:^|[^\\p{L}\\p{N}])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'u');
+  // the folded search_text of a sheet row, folded once per row (a new catalogue brings new rows)
+  const foldedText = new WeakMap();
+  const textOf = e => { if (!e.search_text) return ''; let f = foldedText.get(e); if (f === undefined) { f = fold(e.search_text); foldedText.set(e, f); } return f; };
+  // null: no match; else the places named under the title ([] when the metadata hold every word)
+  const matchWhere = (res, fields, text, note) => {
+    const meta = fold(fields.join(' ')), noteF = fold(note);
+    let inSheet = false, inNote = false;
+    for (const re of res) {
+      if (re.test(meta)) continue;
+      if (text && re.test(text)) { inSheet = true; continue; }
+      if (noteF && re.test(noteF)) { inNote = true; continue; }
+      return null;
+    }
+    return [...(inSheet ? ['in the sheet'] : []), ...(inNote ? ['in your note'] : [])];
+  };
   const renderSearch = (terms, t) => {
-    const cards = [];
+    const res = terms.map(wordStart), found = [];
     for (const e of sheets) {
       if (t && e.theme !== t.id) continue;
       const nb = (themeById.get(e.theme) || {}).title || '', author = (e.source || {}).author || '';
       const pre = t ? [] : [{txt: nb}];
-      if (hit(terms, [e.title, e.summary, e.group, nb, author])) cards.push(sheetCard(e, pre));
+      const where = matchWhere(res, [e.title, e.summary, e.group, nb, author], textOf(e), noteBodies.get(e.slug));
+      if (where) found.push({rank: where.length ? 1 : 0, html: sheetCard(e, pre, where)});
     }
     for (const s of v2Sessions) {
       if (t && s.theme !== t.id) continue;
       const nb = (themeById.get(s.theme) || {}).title || '';
-      if (hit(terms, [s.title, s.format, nb, (s.source || {}).author || ''])) cards.push(v2Card(s, t ? [] : [{txt: nb}], false));
+      const where = matchWhere(res, [s.title, s.format, nb, (s.source || {}).author || ''], '', noteBodies.get(RS.noteKey(s.slug)));
+      if (where) found.push({rank: where.length ? 1 : 0, html: v2Card(s, t ? [] : [{txt: nb}], false, where)});
     }
-    $('results').innerHTML = cards.length ? `<div class="grid">${cards.join('')}</div>` : `<p class="empty">Nothing matches « ${esc($('q').value.trim())} »${t ? ' in this notebook' : ''}.</p>`;
+    const cards = found.filter(c => !c.rank).concat(found.filter(c => c.rank)).map(c => c.html);
+    $('results').innerHTML = cards.length ? `<div class="grid">${cards.join('')}</div>`
+      : `<p class="empty">Nothing matches « ${esc($('q').value.trim())} »${t ? ' in this notebook' : ''}. Try a body part or a piece of kit.</p>`;
     return plural(cards.length, 'result');
   };
   $('q').addEventListener('input', () => renderHome());
@@ -1421,7 +1482,7 @@ dialog.ph-dlg::backdrop{background:#000}
             // only a note that appears or empties changes the catalogue (notesIndex): typing does not drop its read
             const flip = !!body !== notesIndex.has(key); if (flip) touched();
             const {error} = await owner.client.from('notes').upsert({slug: key, body}); if (error) throw error;
-            ok = true; saved = body; if (flip) { if (body) notesIndex.add(key); else notesIndex.delete(key); saveCatalogue(); }
+            ok = true; saved = body; if (ours()) { noteEdits.set(key, {body, seq: ++noteSeq}); if (body) noteBodies.set(key, body); else noteBodies.delete(key); if (!flip) writeCatalogue(); } if (flip) { if (body) notesIndex.add(key); else notesIndex.delete(key); saveCatalogue(); }
           } catch {}
         }
         if (sending === body) sending = null;
@@ -2091,7 +2152,7 @@ dialog.ph-dlg::backdrop{background:#000}
       if (data && data.length && !gone()) await st.remove(data.map(o => `${dir}/${o.name}`));
     } catch {}
     if (gone()) return;
-    try { await client.from('notes').delete().eq('slug', e.slug); if (!gone()) notesIndex.delete(e.slug); } catch {}
+    try { await client.from('notes').delete().eq('slug', e.slug); if (!gone()) { notesIndex.delete(e.slug); noteBodies.delete(e.slug); noteEdits.delete(e.slug); } } catch {}
     if (gone()) return;
     sheets = sheets.filter(x => x.slug !== e.slug); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
     idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue(); toWorker({type: 'DROP_PHOTOS', path: `${user.id}/${e.slug}/`});
@@ -2200,7 +2261,7 @@ dialog.ph-dlg::backdrop{background:#000}
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity; peeked = false;
-      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = '';
+      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
     if (!sb) {
@@ -2212,7 +2273,7 @@ dialog.ph-dlg::backdrop{background:#000}
       // supabase-js to confirm the user (an unconfirmed read would go out without the user's token).
       const peek = storedUser();
       if (peek) idb.get(RS.catalogueCacheKey(backend.url, peek.id)).then(snap => {
-        const c = RS.restoreCatalogueSnapshot(snap), still = storedUser();
+        const c = unsnapshot(snap), still = storedUser();
         if (!c || client !== sb || user || !still || still.id !== peek.id) return;
         user = peek; peeked = true; applyCatalogue(c); loading = false; route();
       });
@@ -2231,7 +2292,7 @@ dialog.ph-dlg::backdrop{background:#000}
         const changed = (next && next.id) !== (user && user.id);
         if (changed && user) clearUserCache(user.id); // signed out (button, reset, revoked session) or another account
         user = next;
-        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });

@@ -16,6 +16,9 @@ Ten minutes, free tier, no card. You get a private backend that only you can rea
    level security policies and a private storage bucket `sheets`. It is safe to run again later.
 3. **After each Reelbook update**, run the latest `supabase/schema.sql` again the same way: it only
    adds what is missing (sessions, for instance, need the `sessions` table) and keeps your data.
+   The update that added search in the text of the sheets (`sheets.search_text`) also needs, once,
+   `python3 tools/rb.py backfill-search` (try `--dry-run` first) so that sheets published before it
+   are found by their content too.
 
 ## 3. Allow password sign-in without email confirmation (recommended for a single user)
 
