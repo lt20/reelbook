@@ -4,7 +4,9 @@
 // Query options:
 //   ?noauth                         no session: the app shows the sign-in screen
 //   ?missing=sessions,practice_log  those tables answer like a backend without them
-//                                   (PostgREST PGRST205, HTTP 404)
+//                                   (PostgREST PGRST205, HTTP 404); a table.column entry
+//                                   (?missing=sheets.search_text): a read selecting that column answers
+//                                   42703 « column … does not exist » (HTTP 400), and the rows lose it
 //   ?empty=sheets,sessions,...      those tables start with no row (an empty account: ?empty=all)
 // Storage: a signed URL for <user id>/<slug>/<rel> is the local file files/<slug>/<rel>.
 (function () {
@@ -32,7 +34,7 @@
 
   class Query {
     constructor(table) { this.t = table; this.f = []; this.op = 'select'; this.one = 0; this.sorts = []; this.max = null; this.opts = {}; }
-    select() { return this; }
+    select(cols) { this.cols = String(cols || '').split(',').map(c => c.trim().replace(/"/g, '')); return this; }
     order(col, {ascending = true} = {}) { this.sorts.push([col, ascending]); return this; }
     limit(n) { this.max = n; return this; }
     range(from, to) { this.from = from; this.max = to - from + 1; return this; }
@@ -56,7 +58,14 @@
         return {data: null, status: 404, statusText: 'Not Found', error: {code: 'PGRST205', details: null, hint: null,
           message: `Could not find the table 'public.${this.t}' in the schema cache`}};
       }
+      const gone = [...missing].filter(m => m.startsWith(this.t + '.')).map(m => m.slice(this.t.length + 1));
+      const asked = gone.find(c => (this.cols || []).includes(c));
+      if (asked) {
+        return {data: null, status: 400, statusText: 'Bad Request', error: {code: '42703', details: null, hint: null,
+          message: `column ${this.t}.${asked} does not exist`}};
+      }
       const rows = D[this.t] = D[this.t] || [];
+      for (const r of rows) for (const c of gone) delete r[c];
       const fresh = r => Object.assign((DEFAULTS[this.t] || (() => ({})))(), clone(r));
       let out;
       if (this.op === 'insert') {
