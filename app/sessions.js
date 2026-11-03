@@ -4,9 +4,23 @@
 (root => {
   'use strict';
   // The app route of a v2 session: #session/<slug>. A sheet slug or a notebook id never holds a « / ».
+  // One exercise of a session (L5): #session/<slug>/<n>, n counted from 1 over the items whose sheet exists
+  // (resolveItems), so the sheet page knows its place in the session: dose banner, back link, previous / next.
   const ROUTE = 'session/';
   const sessionHref = slug => '#' + ROUTE + slug;
-  const sessionSlugOf = tok => (typeof tok === 'string' && tok.startsWith(ROUTE) && tok.length > ROUTE.length) ? tok.slice(ROUTE.length) : null;
+  const sessionItemHref = (slug, n) => '#' + ROUTE + slug + '/' + n;
+  // {slug, n}: n is null on the session route itself; null when tok is not a session route (a sheet slug, a
+  // notebook id, « session/x/0 », « session/x/nope », « session/x/2/extra »).
+  const parseRoute = tok => {
+    if (typeof tok !== 'string' || !tok.startsWith(ROUTE)) return null;
+    const parts = tok.slice(ROUTE.length).split('/');
+    if (!parts[0] || parts.length > 2) return null;
+    if (parts.length === 1) return {slug: parts[0], n: null};
+    return /^[1-9][0-9]*$/.test(parts[1]) ? {slug: parts[0], n: Number(parts[1])} : null;
+  };
+  const sessionSlugOf = tok => { const r = parseRoute(tok); return r ? r.slug : null; };
+  // {slug, n} for an exercise route only (#session/<slug>/<n>), else null.
+  const sessionItemOf = tok => { const r = parseRoute(tok); return r && r.n ? r : null; };
 
   // A backend set up before sessions v2 has no `sessions` table. PostgREST answers 42P01 (undefined table),
   // PGRST205 (table not in the schema cache) or a bare 404, depending on its version.
@@ -95,7 +109,7 @@
   // What Edit saves: {slug, dose} only; `was` (the dose when Edit opened) keeps an untouched dose whole.
   const cleanItems = items => itemsOf({items}).map(it => ({slug: it.slug, dose: keepOrClip(it.dose, it.was, MAX.dose)}));
 
-  const api = {ROUTE, sessionHref, sessionSlugOf, missingTable, splitV1, resolveItems, sessionsBySheet,
+  const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

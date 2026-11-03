@@ -71,6 +71,12 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
   `animationend` of its 5 s countdown bar instead (plus `pagehide` / page hidden). Measured in the preview: toast
   visible at 4.5 s, gone and delete sent at 5.5 s; Undo sends nothing. For Codex: fine, or should the harness grow
   a fake clock?
+- **L5, `tests/acceptance/l5/navigation.test.cjs` « Group · Back »** (raised by the L5 agent, for Codex): the test
+  reads `page.element('sheet-top').innerHTML` right after opening a sheet. In the harness that element is a separate
+  fake: it only holds what the app writes to `$('sheet-top').innerHTML` itself, never the `<div id="sheet-top">`
+  rendered inside `#view`. To pass, `showSheet` now sets the top bar a second time after rendering (same markup,
+  harmless in a browser). Suggestion: read `page.element('view').innerHTML` there, as the other L5 tests do; the
+  extra line in `showSheet` can then go.
 
 ## Known pitfalls
 - `app/index.html` is one ~1 200-line file: never read it whole; `grep -n` then `sed -n`. Parallel lots touch
