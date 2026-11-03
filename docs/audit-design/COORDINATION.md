@@ -1,8 +1,9 @@
-# Design audit — phases P0, P1, P2: coordination
+# Design audit — phases P0 to P4: coordination
 
 Source: the design audit of 3 Nov 2026 (six expert reviews, consolidated plan, private artifact
-https://claude.ai/artifact/NFEons9RCq5bvS2xpFaCM5). This chantier delivers phases **P0 (fixes), P1 (usable during the
-workout) and P2 (practice loop)**: 18 items, ~50 h estimated.
+https://claude.ai/artifact/NFEons9RCq5bvS2xpFaCM5). First chantier (3 Nov): phases **P0 (fixes), P1 (usable during the
+workout) and P2 (practice loop)**, lots L0–L8. Second chantier (from 3 Nov evening, « enchaîne sur P3 et P4 en
+autonomie »): **P3 (session player) and P4 (scale and finish)**, lots L9–L20.
 
 ## Protocol (Paul's, adapted to Reelbook — Laurent, 3 Nov 2026: « follow the Paul rules, as autonomous as possible »)
 
@@ -33,20 +34,47 @@ workout) and P2 (practice loop)**: 18 items, ~50 h estimated.
 3. Two additive migrations: practice log in P2 (this chantier), full-text search in P4. `db push` by Laurent.
 4. Public demo with Laurent's own videos: later (P5). **Consequence here**: no screenshot of real sheets in the
    README (frames belong to third parties); README gets the app link only.
+5. (3 Nov, P3/P4, « OK recos ») The full-text search backfill of existing
+   sheets writes to production: the coordinator prepares `rb.py backfill-search`, **Laurent runs it** after the
+   `db push` of the column.
+6. (3 Nov, « OK recos ») The new « technique » template applies to new videos only; existing kitesurf / fight sheets are not
+   reprocessed (it would spend Laurent's Claude runs).
+7. Arbitrated on the audit: no bottom tab bar (three destinations): sticky nav bar + floating « + » button.
+   Notebook pages keep photo cards, one horizontal row per group.
+8. Every local state tied to an account's content is stored per user (`<key>.<user id>`) — Codex, L7 pass 4.
 
 ## Lots
 
 | Lot | What | Audit items | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
 |---|---|---|---|---|---|---|---|---|
-| L0 | Tooling: Codex scripts, preview with fake backend, iPhone screenshots | — | M | no | — | A | `chore/agent-tooling` | to launch |
-| L1 | App fixes: session format truncation, copy bugs, sign-up redirect, accessibility base | C1 C2 C5 C6 | M | no (agent writes the regression tests) | — | A | `fix/p0-app` | to launch |
-| L2 | Docs and install: app link, Supabase pause, Python 3.9 | C3 C4 | S | no | — | A | `docs/p0-install` | to launch |
-| L3 | Sheet in use: keep screen on, gesture first, full-screen photos | Q1 Q3 Q4 | M | no | L0 L1 | B | `feat/p1-sheet` | waiting |
-| L4 | Queue and polish: queue states, retry, tap targets, danger colour, session format pill | Q6 Q7 Q8 | M | yes | L0 L1 | B | `feat/p1-queue` | waiting |
-| L5 | Session navigation and notes autosave | Q5 Q2 | M | yes | L3 | C | `feat/p1-session-nav` | waiting |
-| L6 | Practice log (schema + UI) | B1 | L | yes | L5 | D | `feat/p2-practice` | waiting |
-| L7 | New arrivals and « Something wrong? » | B2 B4 | M | yes | L4 | C | `feat/p2-arrivals` | waiting |
-| L8 | « To try » shelf | B3 | S | yes | L6 L7 | E | `feat/p2-to-try` | waiting |
+| L0 | Tooling: Codex scripts, preview with fake backend, iPhone screenshots | — | M | no | — | A | `chore/agent-tooling` | merged #26 |
+| L1 | App fixes: session format truncation, copy bugs, sign-up redirect, accessibility base | C1 C2 C5 C6 | M | no (agent writes the regression tests) | — | A | `fix/p0-app` | merged #25 |
+| L2 | Docs and install: app link, Supabase pause, Python 3.9 | C3 C4 | S | no | — | A | `docs/p0-install` | merged #27 |
+| L3 | Sheet in use: keep screen on, gesture first, full-screen photos | Q1 Q3 Q4 | M | no | L0 L1 | B | `feat/p1-sheet` | merged #29 |
+| L4 | Queue and polish: queue states, retry, tap targets, danger colour, session format pill | Q6 Q7 Q8 | M | yes | L0 L1 | B | `feat/p1-queue` | merged #28 |
+| L5 | Session navigation and notes autosave | Q5 Q2 | M | yes | L3 | C | `feat/p1-session-nav` | merged #29 |
+| L6 | Practice log (schema + UI) | B1 | L | yes | L5 | D | `feat/p2-practice` | merged #30 |
+| L7 | New arrivals and « Something wrong? » | B2 B4 | M | yes | L4 | C | `feat/p2-arrivals` | merged #28 |
+| L8 | « To try » shelf | B3 | S | yes | L6 L7 | E | `feat/p2-to-try` | in progress |
+
+### P3 and P4 (second chantier)
+
+| Lot | What | Audit items | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
+|---|---|---|---|---|---|---|---|---|
+| L9 | Structured dose: parser + skill fields | S2 | S | yes | — | F | `feat/p3-dose` | waiting |
+| L10 | Session player: one exercise per screen | S1 | L | yes | L9 | G | `feat/p3-player` | waiting |
+| L11 | Player: sets, rest timer, end of session | S3 S4 | M | yes | L10 | H | `feat/p3-sets` | waiting |
+| L12 | Notebook page in five screens + photo cards | E1 E2 | M | yes | — | F | `feat/p4-notebook` | waiting |
+| L13 | Home recomposed | E3 | S | yes | L12 L8 | G | `feat/p4-home` | waiting |
+| L14 | Full-text search (column + backfill + app) — protected | E4 | M | yes | L13 | H | `feat/p4-search` | waiting |
+| L15 | Skill writing rules | E5 | S | no | L9 | G | `docs/p4-skill-rules` | waiting |
+| L16 | « Technique » template for board sports and fighting — protected (`app/config.js`) | E6 | M | no | L15 | H | `feat/p4-technique` | waiting |
+| L17 | Native navigation: sticky bar, back, scroll restore, ⋯ menu, floating + | E7 | M | yes | L11 L13 L18 | I | `feat/p4-nav` | waiting |
+| L18 | Bottom sheets instead of centred dialogs | E8 | M | no | L11 | I | `feat/p4-sheets` | waiting |
+| L19 | Instant start: service worker, cached catalogue, parallel loads, self-hosted fonts | E9 | M | yes | — | F | `feat/p4-instant` | waiting |
+| L20 | Type scale in rem, tokens, wordmark SVG | E10 | M | no | all others | J | `feat/p4-type` | waiting |
+
+Ports: L9 8779, L10 8780 … L20 8790.
 
 Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in parallel): L0 8770, L1 8771 … L8 8778.
 
@@ -62,6 +90,10 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
 - L8: `app/index.html` home.
 
 ## Open questions
+_(P0–P2 questions below were settled by the coordinator's arbitration comments in each PR: L4 dot before « 1 failed »
+and `animationend` toast accepted (#28); L5 double write of the top bar accepted (#30); L6 Log assertion scoped
+(#32); L7 slug and `rb.seen.<user id>` (#31).)_
+
 - **L4, `tests/acceptance/l4/queue.test.cjs` (summary row)** — the spec wants the failed count « in danger colour »,
   the test matches `3 in the queue · 1 failed` as one run of text in `#queue-summary`'s HTML, so `1 failed` cannot
   sit in its own coloured `<span>`. L4 ships the label in ink with a danger-coloured dot before it. Proposal: accept
@@ -81,15 +113,23 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
 - **L7, `tests/acceptance/l7/report-correction.test.cjs` (Redo payload)** — settled (3 Nov, coordinator decision
   after Codex review ×3): slug added (`{url, theme, note, slug}`, spec §B4 updated).
 
-- **L8, `tests/acceptance/l8/to-try.test.cjs` « hidden when no sheet qualifies », case `empty catalogue`**
-  (raised by the L8 agent, for Codex): the test expects `#home` shown with an empty catalogue, but since before L6
-  a signed-in user with no sheet and no `rb.welcome.<id>` is sent to `#welcome` (`reload`), so `#home` is hidden.
-  The shelf itself is hidden (the first assertion passes); only `home.hidden === false` fails. L8 does not change
-  the welcome flow. Proposal: in that case only, store `rb.welcome.u1` (welcome already seen) or drop the
-  `home.hidden` assertion for the empty catalogue. Until then `node --test tests/acceptance/` has this one failure.
+- **L8, `tests/acceptance/l8/to-try.test.cjs` « hidden when no sheet qualifies », case `empty catalogue`** —
+  settled (3 Nov, coordinator decision after Codex review ×3): the app sends a user with no sheet to `#welcome`, so
+  that case alone now stores `rb.welcome.u1` before loading the home page.
+
+## Debt (found during P0–P2, not blocking)
+- Queue: a stale read can show a removed row until the next refresh (#28, Codex pass 4).
+- Notes: drafts `rb.draft.<uid>.<key>` are not cleared on sign-out (#30).
+- Practice log: a save stored at 23:59 whose answer is lost, retried after midnight, makes a duplicate entry (#32).
+- `scripts/codex-acceptance.sh --out` accepts any folder of the repo; should be limited to `tests/` (L0).
+- Screenshots run in Chromium, not WebKit (L0).
+- Queue delete on page close may not leave a real iPhone (supabase-js fetches the token first) (#28).
 
 ## Known pitfalls
-- `app/index.html` is one ~1 200-line file: never read it whole; `grep -n` then `sed -n`. Parallel lots touch
+- **Every change to `app/sessions.js` or `app/sheet.js` bumps its `?v=` in `index.html` and in `SHELL` of `app/sw.js`,
+  and the cache `VERSION`** (Codex, L5 pass 4: an installed PWA could pair a new `index.html` with an old module).
+- Every local state tied to an account's content is keyed per user (decision 8).
+- `app/index.html` is one ~1 800-line file (it was 1 200): never read it whole; `grep -n` then `sed -n`. Parallel lots touch
   different regions; expect small merge conflicts in the CSS head.
 - `tests/auth-flow.test.cjs` runs the app script in a `vm` with a fake DOM: new DOM APIs (`dialog.showModal`,
   `navigator.wakeLock`, `IntersectionObserver`) must be guarded so the harness keeps working.
