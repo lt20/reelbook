@@ -86,7 +86,10 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
         const client = {url, key, options, calls: [], from: tables ? query : table => ({
           async insert(row) { client.calls.push(['insert', table, row]); return {error: null}; }
         }),
-          storage: {from: () => ({createSignedUrls: async () => ({data: []})})}, auth: {
+          // storage: list answers one photo; list and remove are recorded in client.calls (not in writesOf)
+          storage: {from: () => ({createSignedUrls: async () => ({data: []}),
+            async list(dir) { client.calls.push(['list', dir]); return {data: [{name: 'thumb.jpg'}], error: null}; },
+            async remove(paths) { client.calls.push(['remove', paths]); return {data: [], error: null}; }})}, auth: {
           onAuthStateChange(listener) {
             queueMicrotask(() => listener('INITIAL_SESSION', sessions[url] ? {user: sessions[url]} : null));
             return {data: {subscription: {unsubscribe() {}}}};
@@ -432,6 +435,42 @@ test('Delete session asks in an app dialog, deletes the row only and refreshes t
   assert.doesNotMatch(groups, /#session\/gsp-shoulders|in 1 session/);
   assert.match(groups, /href="#gsp-angel"/, 'its sheets stay');
   assert.match(page.element('flash').textContent, /Session deleted/);
+});
+
+test('Delete sheet asks in an app dialog, deletes the row, its photos and its note, then opens the notebook', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#gsp-angel'});
+  await settle();
+  assert.match(page.element('view').innerHTML, /id="sd-open">Delete sheet</);
+  clickIn(page, 'view', '#sd-open');
+  assert.equal(page.element('sd-dlg').open, true);
+  assert.equal(page.element('sd-name').textContent, 'Floor angel');
+  assert.match(page.element('sd-what').textContent, /It leaves the session « GSP shoulders »\./);
+  await page.fire('sd-cancel');
+  assert.equal(page.element('sd-dlg').open, false);
+  assert.equal(writesOf(page).length, 0);
+  clickIn(page, 'view', '#sd-open');
+  await page.fire('sd-ok');
+  await settle();
+  assert.deepEqual(writesOf(page), [['delete', 'sheets', null, [['slug', 'gsp-angel']]], ['delete', 'notes', null, [['slug', 'gsp-angel']]]]);
+  assert.deepEqual(page.clients.at(-1).calls.find(c => c[0] === 'remove'), ['remove', ['existing-user/gsp-angel/img/thumb.jpg']]);
+  assert.equal(page.element('sd-dlg').open, false);
+  assert.equal(page.element('home').hidden, false);
+  assert.doesNotMatch(page.element('groups').innerHTML, /href="#gsp-angel"/);
+  assert.match(page.element('flash').textContent, /Sheet deleted/);
+});
+
+test('Delete sheet keeps the sheet and says so when the delete fails; a v1 session has no such button', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#curl', writes: {sheets: {data: [], error: null}}});
+  await settle();
+  clickIn(page, 'view', '#sd-open');
+  await page.fire('sd-ok');
+  await settle();
+  assert.equal(page.element('sd-dlg').open, true);
+  assert.match(page.element('sd-err').textContent, /Could not delete/);
+  assert.equal(page.clients.at(-1).calls.some(c => c[0] === 'remove'), false, 'photos kept');
+  const v1 = await app({...signedIn, tables: v2Tables(), hash: '#old-routine'});
+  await settle();
+  assert.doesNotMatch(v1.element('view').innerHTML, /sd-open/);
 });
 
 test('« Add to session » appends the sheet once, says when it is already there, and can create a session', async () => {
