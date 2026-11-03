@@ -125,6 +125,10 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
 - **L7, `tests/acceptance/l7/report-correction.test.cjs` (Redo payload)** — settled (3 Nov, coordinator decision
   after Codex review ×3): slug added (`{url, theme, note, slug}`, spec §B4 updated).
 
+- **L8, `tests/acceptance/l8/to-try.test.cjs` « hidden when no sheet qualifies », case `empty catalogue`** —
+  settled (3 Nov, coordinator decision after Codex review ×3): the app sends a user with no sheet to `#welcome`, so
+  that case alone now stores `rb.welcome.u1` before loading the home page.
+
 ## Debt (found during P0–P2, not blocking)
 - Queue: a stale read can show a removed row until the next refresh (#28, Codex pass 4).
 - Notes: drafts `rb.draft.<uid>.<key>` are not cleared on sign-out (#30).
