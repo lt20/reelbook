@@ -406,7 +406,7 @@ dialog.ph-dlg::backdrop{background:#000}
 #home.nb #brand-wordmark img{display:none}
 /* L20: a notebook page keeps its colour: a 6 px band over the eyebrow, the eyebrow in the colour (darkened towards the ink for small text) */
 #home.nb #h-eyebrow{border-top:6px solid var(--t,var(--accent));padding-top:var(--s-3);color:color-mix(in srgb,var(--t,var(--accent)) 75%,var(--ink))}
-#home.nb #brand-wordmark h1{white-space:normal;text-wrap:balance}
+#home.nb #brand-wordmark h1{white-space:normal;text-wrap:balance;overflow:visible} /* L20: overflow visible, the line-height .95 clipped the « g » of « Strength » */
 #home.nb #brand-bar .set{margin-left:auto}
 #home.nb #count{font-size:var(--fs-sm);margin-top:var(--s-1)}
 #home .newsec{margin:0 0 10px}
