@@ -771,7 +771,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   // The queue shows on the home page only, not inside a notebook. It folds into one summary row (rb.queueOpen
   // remembers it open); a failed request can be retried; a removal waits for the « Removed · Undo » toast to end.
   let queueCount = 0, queueRows = [], lastRun = null, pendingDel = null;
-  const retryErr = new Map(), DAY = 86400000, QOPEN = 'rb.queueOpen';
+  const rowErr = new Map(), DAY = 86400000, QOPEN = 'rb.queueOpen';
   const queueOpen = () => ls.get(QOPEN) === 'true';
   const hhmm = iso => { try { return new Date(iso).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false}); } catch { return ''; } };
   const dayStart = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
@@ -784,10 +784,10 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
     if (d.status === 'processing' && d.processed_at) info.push(`since ${hhmm(d.processed_at)}`);
     if (d.status === 'queued' && age > 7) info.push(`waiting ${age} days`);
     const fail = d.status === 'error', pill = fail ? '<span class="st fail">Failed</span>' : d.status === 'processing' ? '<span class="st proc">Processing</span>' : '<span class="st">Waiting</span>';
-    const id = esc(d.id), err = retryErr.get(String(d.id));
+    const id = esc(d.id), err = rowErr.get(String(d.id));
     return `<div class="q"><div class="ico">${platformTag(host)}</div>
       <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
-      <small>${info.join(' · ')}</small>${fail && d.note ? `<small class="why">${esc(d.note)}</small>` : ''}${err ? `<small class="qerr" role="alert">Retry failed: ${esc(err)}</small>` : ''}</div>
+      <small>${info.join(' · ')}</small>${fail && d.note ? `<small class="why">${esc(d.note)}</small>` : ''}${err ? `<small class="qerr" role="alert">${esc(err)}</small>` : ''}</div>
       <div class="side">${pill}${fail ? '' : `<button type="button" data-del="${id}" aria-label="Remove from the queue" title="Remove">×</button>`}</div>
       ${fail ? `<div class="qa"><button type="button" data-retry="${id}">Retry</button><button type="button" data-del="${id}">Remove</button></div>` : ''}</div>`;
   };
@@ -806,35 +806,42 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   // repeated here: a done row or a row being removed stays out of the list.
   const refreshQueue = async () => {
     try {
-      const [{data}, {data: done}] = await Promise.all([
+      const [list, last] = await Promise.all([
         sb.from('requests').select('id,url,status,theme,note,created_at,processed_at').neq('status', 'done').order('created_at', {ascending: false}).limit(50),
         sb.from('requests').select('processed_at').eq('status', 'done').order('processed_at', {ascending: false}).limit(1).maybeSingle()
       ]);
-      queueRows = (data || []).filter(d => d.status !== 'done' && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
-      lastRun = (done && done.processed_at) || null;
+      // a failed read keeps what is shown: an empty list is only believed from a successful read
+      if (list.error) return;
+      queueRows = (list.data || []).filter(d => d.status !== 'done' && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
+      if (!last.error) lastRun = (last.data && last.data.processed_at) || null;
       renderQueue();
     } catch {}
   };
   // A removal is sent when the toast's bar ends, when the page is left or hidden, or when another row is removed.
+  // If the delete fails, the row comes back where it was, with the reason.
   const commitDel = () => {
     if (!pendingDel) return;
-    const {row} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
-    sb.from('requests').delete().eq('id', row.id).then(r => { if (r && r.error) refreshQueue(); }, () => refreshQueue());
+    const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
+    const restore = e => {
+      if (!queueRows.some(d => String(d.id) === String(row.id))) queueRows.splice(Math.min(i, queueRows.length), 0, row);
+      rowErr.set(String(row.id), `Could not remove it: ${(e && e.message) || 'try again in a moment.'}`); renderQueue();
+    };
+    sb.from('requests').delete().eq('id', row.id).then(r => { if (r && r.error) restore(r.error); }, restore);
   };
   $('queue').addEventListener('click', async ev => {
     const r = ev.target.closest('[data-retry]');
     if (r) {
-      const id = r.dataset.retry; r.disabled = true; retryErr.delete(id);
+      const id = r.dataset.retry; r.disabled = true; rowErr.delete(id);
       try {
         const {error} = await sb.from('requests').update({status: 'queued', note: null, processed_at: null}).eq('id', id); if (error) throw error;
         const d = queueRows.find(x => String(x.id) === id); if (d) Object.assign(d, {status: 'queued', note: null, processed_at: null});
-      } catch (e) { retryErr.set(id, (e && e.message) || 'try again in a moment.'); }
+      } catch (e) { rowErr.set(id, `Retry failed: ${(e && e.message) || 'try again in a moment.'}`); }
       renderQueue(); return;
     }
     const b = ev.target.closest('[data-del]'); if (!b) return;
     const i = queueRows.findIndex(d => String(d.id) === b.dataset.del); if (i < 0) return;
     commitDel();
-    pendingDel = {row: queueRows[i], i}; queueRows.splice(i, 1); retryErr.delete(String(pendingDel.row.id)); renderQueue();
+    pendingDel = {row: queueRows[i], i}; queueRows.splice(i, 1); rowErr.delete(String(pendingDel.row.id)); renderQueue();
     $('queue-toast').innerHTML = 'Removed · Undo<span class="qbar" aria-hidden="true"></span>'; $('queue-undo').hidden = false;
   });
   $('queue-undo').addEventListener('click', () => {
