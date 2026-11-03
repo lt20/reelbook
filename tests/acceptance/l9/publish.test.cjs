@@ -13,7 +13,7 @@ spec.loader.exec_module(rb)
 item = {'slug': 'move', 'dose': '3×10', 'sets': 4, 'reps': 12, 'seconds': 30, 'rest_s': 45, 'per_side': True}
 meta = {'slug': 'session-dose', 'kind': 'session', 'theme': 'strength', 'title': 'Dose session', 'format': '60 s rest', 'why': 'Move.', 'key_points': ['Breathe.'], 'source': {'url': 'https://example.test/video'}, 'items': [item]}
 posted = []
-rb._read_session = lambda directory, session: [('move', None, {'theme': 'strength'})]
+rb._read_session = lambda directory, session: [('move', pathlib.Path('/unused/move'), {'theme': 'strength'})]
 rb.session = lambda: {'user_id': 'u1'}
 rb._known_themes = lambda cfg: ['strength']
 rb._check_theme = lambda *args: None

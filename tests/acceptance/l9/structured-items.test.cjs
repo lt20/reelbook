@@ -47,7 +47,7 @@ test('App — an item without structured fields can use its parsed free-text dos
 test('App — a backend without the sessions table still loads its sheets', async () => {
   const page = await app({...signedIn, tables: tables(), hash: '#strength', failing: {sessions: {error: {code: 'PGRST205', message: 'Could not find the table'}, status: 404}}});
   await settle();
-  assert.equal(page.element('home').hidden, true);
+  assert.equal(page.element('home').hidden, false); // the notebook page is drawn inside #home
   assert.match(page.element('groups').innerHTML, /href="#move"/);
   assert.doesNotMatch(page.element('groups').innerHTML, /#session\/session-dose/);
 });

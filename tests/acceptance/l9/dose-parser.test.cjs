@@ -104,5 +104,5 @@ test('Parser — every fixture and Laurent session format is covered by parseRes
   ];
   for (const [format, want] of formats) assert.equal(RS.parseRest(format), want, format);
   assert.equal(formats.length, 14);
-  assert.equal(formats.filter(([, value]) => value !== null).length, 6, '6/13 nonempty corpus formats state a rest duration');
+  assert.equal(formats.filter(([, value]) => value !== null).length, 7, '7/13 nonempty corpus formats state a rest duration');
 });
