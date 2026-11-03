@@ -229,6 +229,22 @@ test('the synthetic technique sheet of the preview (Kitesurf, backroll) is arran
   assert.deepEqual(content(doc), before);
 });
 
+test('the player on a technique sheet: step photos without the mistake, no dose taken from the try plan, key points optional', () => {
+  // the photos and cues the player reads (playMedia: SH.photosOf(page), SH.keyPoints(page)) on the raw sheet html
+  const page = parse(soloHtml);
+  assert.deepEqual(SH.photosOf(page).map(p => p.src), ['img/01-approach.jpg', 'img/02-pop.jpg', 'img/03-landing.jpg']);
+  assert.deepEqual(SH.keyPoints(page).map(k => k.cue), ['Short bold cue.', 'Second cue.']);
+  // Key points dropped (the video shows none): no cue, the photos stay
+  const noKeys = parse(soloHtml.replace(/\n<h2>Key points<\/h2>\n<ol class="keys">[\s\S]*?<\/ol>\n/, '\n'));
+  assert.equal(noKeys.querySelector('ol.keys'), null);
+  assert.deepEqual(SH.keyPoints(noKeys), []);
+  assert.equal(SH.photosOf(noKeys).length, 3);
+  // the player's dose comes from the session item only (playAct: RS.doseLabel(it), it.dose), never from the sheet
+  const html = fs.readFileSync(path.join(__dirname, '../app/index.html'), 'utf8');
+  assert.match(html, /const big = RS\.doseLabel\(it\), free = it \? it\.dose\.trim\(\) : '';/);
+  assert.doesNotMatch(html, /querySelector(All)?\(['"][^'"]*\.dose/, 'no sheet .dose grid is read by the app');
+});
+
 test('a technique sheet without go / no-go box is arranged like a sheet; the go / no-go box alone is enough to move', () => {
   // no .gonogo: the gym order, the try plan (.dose) pulled after the steps
   const noBox = soloHtml.replace(/\n<h2>Go \/ no-go<\/h2>\n<div class="gonogo">[\s\S]*?\n<\/div>\n/, '\n');

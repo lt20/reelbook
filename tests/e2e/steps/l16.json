@@ -4,5 +4,6 @@
   {"name": "l16-02-technique-top", "hash": "backroll",
    "actions": [{"wait": "#view h1 >> text=Backroll"}, {"wait": "#view .gonogo"}]},
   {"name": "l16-03-kitesurf-notebook", "hash": "kitesurf", "full": true, "actions": [{"wait": "#home >> text=Backroll"}]},
-  {"name": "l16-04-home", "full": true, "actions": [{"wait": "#portal >> text=Kitesurf"}]}
+  {"name": "l16-04-home", "full": true, "actions": [{"wait": "#portal >> text=Kitesurf"}]},
+  {"name": "l16-05-player", "hash": "backroll/play", "actions": [{"wait": "#play-car img"}, {"wait": "#play-keys li"}]}
 ]
