@@ -5,6 +5,7 @@
 //   ?noauth                         no session: the app shows the sign-in screen
 //   ?missing=sessions,practice_log  those tables answer like a backend without them
 //                                   (PostgREST PGRST205, HTTP 404)
+//   ?empty=sheets,sessions,...      those tables start with no row (an empty account: ?empty=all)
 // Storage: a signed URL for <user id>/<slug>/<rel> is the local file files/<slug>/<rel>.
 (function () {
   const D = window.__FAKE || {};
@@ -12,6 +13,9 @@
   const params = new URLSearchParams(location.search);
   let signedIn = !params.has('noauth');
   const missing = new Set((params.get('missing') || '').split(',').map(s => s.trim()).filter(Boolean));
+  for (const t of (params.get('empty') || '').split(',').map(s => s.trim()).filter(Boolean)) {
+    if (t === 'all') { for (const k of Object.keys(D)) if (k !== 'user_themes') D[k] = []; } else D[t] = [];
+  }
   const local = p => 'files/' + String(p).replace(/^u1\//, '');
   const uid = () => 'fake-' + Math.random().toString(36).slice(2, 10);
   const now = () => new Date().toISOString();

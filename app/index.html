@@ -35,11 +35,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 6px;font-weight:600}
 .brand{display:flex;align-items:center;gap:10px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:32px;font-weight:800;line-height:1.1;letter-spacing:-.055em;margin:0 0 20px;text-decoration:none}
 .brand img{display:block;width:40px;height:40px;flex:none}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand img{content:url("icons/reelbook-mark-light.svg")} :root:not([data-theme="light"]) h1.brand-title::before{background-image:url("icons/reelbook-mark-light.svg")}}
-:root[data-theme="dark"] .brand img{content:url("icons/reelbook-mark-light.svg")}
-:root[data-theme="dark"] h1.brand-title::before{background-image:url("icons/reelbook-mark-light.svg")}
-h1.brand-title{display:flex;align-items:center;gap:12px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:clamp(40px,10vw,60px);font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1.1}
-h1.brand-title::before{content:"";display:block;flex:none;width:.95em;height:.95em;background:url("icons/reelbook-mark.svg") center/contain no-repeat}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand img,:root:not([data-theme="light"]) #brand-wordmark img{content:url("icons/reelbook-mark-light.svg")}}
+:root[data-theme="dark"] .brand img,:root[data-theme="dark"] #brand-wordmark img{content:url("icons/reelbook-mark-light.svg")}
 h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,12vw,64px);line-height:.95;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
 h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1;margin:30px 0 10px;text-transform:uppercase;letter-spacing:.02em}
 h2 small{font-family:var(--body);font-weight:600;font-size:13px;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px}
@@ -63,8 +60,6 @@ textarea{line-height:1.5;min-height:120px;resize:vertical}
 code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
 pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
 /* ---- header ---- */
-.head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:22px;flex-wrap:wrap}
-.head .cnt{font-size:14px;color:var(--muted)}
 .crumb{font-size:14px;margin:0 0 6px}.crumb a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
 .topbar{display:flex;justify-content:flex-end;gap:12px;font-size:14px;margin-bottom:8px}
 .topbar a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
@@ -107,7 +102,7 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .tcard h2{font-size:38px;margin:0;text-transform:none;letter-spacing:-.01em;color:var(--t,var(--accent))}
 .tcard p{margin:0;font-size:15px;color:var(--muted)}
 .tcard .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
-.tcard .thumbs img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;max-width:100%;background:var(--tag)}
+.tcard .thumbs img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;max-width:100%;background:var(--tag)}
 .tcard .empty{margin:4px 0 0;padding:12px;font-size:14px}
 .tcard.add{border-top-color:var(--line);border-style:dashed;cursor:pointer;font:inherit;text-align:left;background:transparent}
 .tcard.add h2{color:var(--muted);font-size:30px}
@@ -316,6 +311,25 @@ dialog.ph-dlg::backdrop{background:#000}
 /* ---- L8: « To try » shelf on the home page (row and cards as « New ») ---- */
 .totry .tt{display:grid;gap:6px;align-content:start;min-width:0;scroll-snap-align:start}
 .totry .tt .btn{justify-self:start}
+/* ---- L13: home recomposed — compact brand bar, small counter, narrower « New » / « To try » cards ---- */
+#brand-bar{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 0 2px}
+#brand-wordmark{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1}
+#brand-wordmark img{display:block;width:28px;height:28px;flex:none}
+#brand-wordmark h1{font:inherit;letter-spacing:inherit;color:inherit;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#brand-bar .set{text-decoration:none;font-size:14px;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
+#brand-bar .set:active{opacity:.6}
+#count{font-size:13px;color:var(--muted);margin:0 0 14px}
+/* a notebook page: the title on its own line, large; « + Add a video » and Settings under it */
+#home.nb #brand-wordmark{flex-basis:100%;color:var(--ink);font-family:var(--display);font-size:clamp(44px,12vw,64px);font-weight:700;letter-spacing:-.01em;text-transform:none;line-height:.95}
+#home.nb #brand-wordmark img{display:none}
+#home.nb #brand-wordmark h1{white-space:normal;text-wrap:balance}
+#home.nb #brand-bar .set{margin-left:auto}
+#home.nb #count{font-size:14px;margin-top:4px}
+#home .newsec{margin:0 0 10px}
+.newrow{grid-auto-columns:min(44%,220px);margin:0 -16px;padding:2px 16px 10px;scroll-padding:0 16px;scrollbar-width:none}
+.newrow::-webkit-scrollbar{display:none}
+.newrow .card h3{font-size:19px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qsum{margin:16px 0 10px}
 </style>
 </head>
 <body>
@@ -371,16 +385,15 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <!-- ===== Home: portal / theme ===== -->
 <div id="home" class="wide" hidden>
-  <div class="topbar"><a href="#settings">Settings</a></div>
-  <div class="head">
-    <div>
-      <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
-      <p class="eyebrow" id="h-eyebrow">Your videos, by notebook</p>
-      <h1 id="h-title" class="brand-title">Reelbook</h1>
-      <p class="cnt" id="count" aria-live="polite"></p>
-    </div>
-    <button class="btn" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
-  </div>
+  <!-- L13: a notebook page keeps its crumb and eyebrow above the bar; the home page shows neither -->
+  <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
+  <p class="eyebrow" id="h-eyebrow" hidden>Find it fast, when you need it</p>
+  <header id="brand-bar">
+    <div id="brand-wordmark"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><h1 id="h-title">Reelbook</h1></div>
+    <button class="btn sm" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
+    <a class="set" href="#settings">Settings</a>
+  </header>
+  <p class="cnt" id="count" aria-live="polite"></p>
   <!-- L12: a notebook page's groups, with their counts; sticks to the top while scrolling -->
   <nav class="group-chips" id="group-chips" aria-label="Groups" hidden></nav>
 
@@ -400,18 +413,17 @@ dialog.ph-dlg::backdrop{background:#000}
   </dialog>
   <div class="flash" id="flash" role="status" hidden></div>
 
-  <section id="queue-sec" aria-label="Queue" hidden>
-    <div class="qsum" id="queue-summary"></div>
-    <div class="queue" id="queue" hidden></div>
-  </section>
-
+  <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
+  <div id="results" hidden></div>
   <!-- L7: sheets and video sessions delivered in the last 72 h, not opened yet on this device -->
   <section class="newsec" id="new-sec" aria-labelledby="new-h" hidden></section>
   <!-- L8: up to 3 sheets older than 3 days, never practised, chosen once a day -->
   <section class="newsec totry" id="to-try" aria-labelledby="totry-h" hidden></section>
 
-  <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
-  <div id="results" hidden></div>
+  <section id="queue-sec" aria-label="Queue" hidden>
+    <div class="qsum" id="queue-summary"></div>
+    <div class="queue" id="queue" hidden></div>
+  </section>
 
   <div id="portal" class="portal" hidden></div>
   <section class="panel picker" id="picker" hidden>
@@ -759,7 +771,7 @@ dialog.ph-dlg::backdrop{background:#000}
       const list = sheets.filter(e => e.theme === t.id);
       const n = list.length, sessions = v2Sessions.filter(s => s.theme === t.id).length;
       const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (sessions ? ` · ${plural(sessions, 'session')}` : '');
-      const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="">`).join('');
+      const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="${esc(e.title)}">`).join('');
       return `<a class="tcard" href="#${esc(t.id)}" style="--t:${colorOf(t)}">
         <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
         ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
@@ -955,10 +967,11 @@ dialog.ph-dlg::backdrop{background:#000}
     const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
     $('h-crumb').hidden = !t;
     $('h-crumb').innerHTML = one ? `<a href="#${esc(t.id)}">← ${esc(t.title)}</a>` : '<a href="#">← Reelbook</a>'; // L12: a group grid goes back to its notebook
-    $('h-eyebrow').textContent = t ? 'Find it fast, when you need it' : 'Your videos, by notebook';
+    $('h-eyebrow').hidden = !t;
     $('h-title').textContent = t ? t.title : 'Reelbook';
-    $('h-title').classList.toggle('brand-title', !t);
-    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
+    $('home').classList.toggle('nb', !!t); // L13: a notebook page shows its title large, without the mark
+    // L13: « How it works » leaves the home page once the account has 5 sheets (the guide stays in Settings)
+    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t || loading || sheets.length >= 5; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t, one);
     else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${practiceOk ? `${practisedCount()} practised · ${n} saved` : plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
