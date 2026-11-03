@@ -111,8 +111,9 @@
 
   // L8, « To try »: the sheets added more than `minDays` calendar days before `today` (local YYYY-MM-DD; added_at is
   // read as a local date too) and never practised (`practised`: anything with .has(slug), e.g. the practice Map),
-  // minus the `dismissed` slugs; at most `n`, in an order seeded by `today`: the choice changes once a day, stays the
-  // same within the day, and does not depend on the catalogue's order.
+  // minus the `dismissed` slugs; at most `n`. The sheets that qualify are put in a fixed order (a hash of the slug,
+  // not the catalogue's order) and the shelf is a window of `n` that moves by `n` each day: stable within the day,
+  // never the same three two days running when more than `n` qualify, and every sheet comes round in turn.
   const DAY_MS = 86400000;
   const isoDay = s => { const [y, m, d] = String(s || '').split('-').map(Number); return y && m && d ? Date.UTC(y, m - 1, d) : NaN; };
   const localDay = v => { const d = new Date(v || ''); return isNaN(d) ? NaN : Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
@@ -121,10 +122,12 @@
     const t = isoDay(today);
     if (isNaN(t)) return [];
     const gone = new Set(dismissed);
-    return (sheets || []).filter(s => s && s.slug && !practised.has(s.slug) && !gone.has(s.slug) && (t - localDay(s.added_at)) / DAY_MS > minDays)
-      .map(s => ({s, h: seedHash(today + '|' + s.slug)}))
-      .sort((a, b) => a.h - b.h || (a.s.slug < b.s.slug ? -1 : a.s.slug > b.s.slug ? 1 : 0))
-      .slice(0, n).map(x => x.s);
+    const list = (sheets || []).filter(s => s && s.slug && !practised.has(s.slug) && !gone.has(s.slug) && (t - localDay(s.added_at)) / DAY_MS > minDays)
+      .map(s => ({s, h: seedHash(s.slug)}))
+      .sort((a, b) => a.h - b.h || (a.s.slug < b.s.slug ? -1 : a.s.slug > b.s.slug ? 1 : 0)).map(x => x.s);
+    if (list.length <= n) return list;
+    const from = ((t / DAY_MS) * n) % list.length;
+    return Array.from({length: n}, (_, i) => list[(from + i) % list.length]);
   };
 
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,

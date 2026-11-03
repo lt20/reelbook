@@ -28,10 +28,28 @@ test('L8 toTry: at most 3, the same on the same day whatever the catalogue order
   assert.notDeepEqual(slugs(b), slugs(a));
 });
 
-test('L8 toTry: a dismissed sheet leaves room for the next one of the day', () => {
+test('L8 toTry: never the same three two days running when more qualify, and every sheet comes round', () => {
+  const day = k => { const d = new Date(Date.UTC(2026, 10, 20 + k)); return d.toISOString().slice(0, 10); };
+  for (let m = 4; m <= 12; m++) {
+    const rows = many.slice(0, m);
+    const seen = new Set();
+    let prev = null;
+    for (let k = 0; k < 40; k++) {
+      const got = slugs(RS.toTry(rows, {today: day(k)})).sort().join(',');
+      assert.notEqual(got, prev, `${m} sheets, ${day(k)}`);
+      prev = got;
+      if (k < Math.ceil(m / 3)) for (const s of got.split(',')) seen.add(s);
+    }
+    assert.equal(seen.size, m, `${m} sheets: all shown within ${Math.ceil(m / 3)} days`);
+  }
+  // three or fewer: all of them, every day
+  assert.deepEqual(slugs(RS.toTry(many.slice(0, 2), {today: '2026-11-20'})).sort(), ['s00', 's01']);
+});
+
+test('L8 toTry: a dismissed sheet is never chosen', () => {
   const day = {today: '2026-11-20'};
-  const full = slugs(RS.toTry(many, {...day, n: 4}));
-  assert.deepEqual(slugs(RS.toTry(many, {...day, dismissed: [full[0]]})), full.slice(1));
+  const first = slugs(RS.toTry(many, day))[0];
+  for (let k = 20; k < 30; k++) assert.ok(!slugs(RS.toTry(many, {today: `2026-11-${k}`, dismissed: [first]})).includes(first));
 });
 
 test('L8 toTry: no valid date, nothing to show', () => {
