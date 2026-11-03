@@ -321,8 +321,40 @@
     return (it.sets ? it.sets + ' × ' : '') + count + (it.per_side ? ' / side' : '');
   };
 
+  // ---------- player: sets and rest timer (L11) ----------
+  // The check boxes of a resolved item: one per set when its dose has sets, else one (« Done »).
+  const setCount = it => it && Number.isInteger(it.sets) && it.sets > 0 ? Math.min(it.sets, 20) : 1;
+  // Seconds left of a rest started at `startMs` (Date.now() then) for `seconds`, read on `clock` (Date.now): from
+  // the timestamps, never from a count of timer callbacks, so a hidden page or a locked screen shows the right time
+  // on return. Rounded up (a fresh 60 s rest reads 60, not 59), never below 0.
+  const restRemaining = (startMs, seconds, clock = Date.now) => {
+    const left = Number(seconds) - (clock() - Number(startMs)) / 1000;
+    return left > 0 ? Math.ceil(left - 1e-9) : 0;
+  };
+  // « 0:45 », « 1:00 », « 2:05 ».
+  const restClock = s => { const n = Math.max(0, Math.floor(Number(s) || 0)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
+  // The checked sets of one play ({<exercise n>: [set numbers]}), cleaned: only exercises 1..count, whole set
+  // numbers 1..20, no repeat, sorted.
+  const cleanChecks = (checks, count) => {
+    const out = {};
+    if (!checks || typeof checks !== 'object' || Array.isArray(checks)) return out;
+    for (const [k, v] of Object.entries(checks)) {
+      const n = Number(k);
+      if (!Number.isInteger(n) || n < 1 || (count && n > count) || !Array.isArray(v)) continue;
+      const sets = [...new Set(v.filter(x => Number.isInteger(x) && x >= 1 && x <= 20))].sort((a, b) => a - b);
+      if (sets.length) out[n] = sets;
+    }
+    return out;
+  };
+  // {exercises, sets}: the exercises with at least one set checked, and the sets checked.
+  const playTally = checks => {
+    const lists = Object.values(cleanChecks(checks));
+    return {exercises: lists.length, sets: lists.reduce((a, l) => a + l.length, 0)};
+  };
+
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
-    catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel};
+    catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel,
+    setCount, restRemaining, restClock, cleanChecks, playTally};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);
