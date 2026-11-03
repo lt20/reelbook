@@ -3,7 +3,9 @@
 
     rb.py login [--url U --key K]   sign in (email + password; URL and anon key asked unless given) and keep a session
     rb.py whoami                show the signed-in account and backend
-    rb.py themes                list the account's notebooks (id, title, description, groups), JSON lines
+    rb.py themes                list the account's notebooks (id, title, description, groups, profile), JSON lines;
+                                profile (gym | technique | partner) picks the sheet template: read from the library
+                                of app/config.js by id, "gym" for a custom notebook
     rb.py queue                 list queued requests (JSON lines: id, url, theme, note, created_at); a note that
                                 starts with « Redo: » is a correction asked from the app (« Something wrong? »):
                                 its line also has redo_of, {"sheets": [slugs], "sessions": [slugs]} published
@@ -141,10 +143,28 @@ def cmd_whoami(args):
 # requests
 # ---------------------------------------------------------------------------
 
+LIBRARY_JS = pathlib.Path(__file__).resolve().parent.parent / "app" / "config.js"
+PROFILES = ("gym", "technique", "partner")
+
+def library_profiles(path=None):
+    """{notebook id: profile} of the built-in notebooks of app/config.js; {} when the file cannot be read.
+    A user_themes row has no profile column: the library is the only place it is written (L16)."""
+    try:
+        src = pathlib.Path(path or LIBRARY_JS).read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    out = {}
+    for m in re.finditer(r"\{\s*id:\s*'([^']+)'([^{}]*)\}", src):
+        p = re.search(r"\bprofile:\s*'([^']*)'", m.group(2))
+        out[m.group(1)] = p.group(1) if p and p.group(1) in PROFILES else "gym"
+    return out
+
 def cmd_themes(args):
     cfg = session()
     rows = rest(cfg, "GET", "user_themes", params={"select": "id,title,description,groups,builtin", "order": "position.asc,title.asc"})
+    profiles = library_profiles()
     for r in rows or []:
+        r["profile"] = profiles.get(r.get("id"), "gym")
         print(json.dumps(r, ensure_ascii=False))
     if not rows:
         print("no notebook yet: open the app once, it creates the default ones", file=sys.stderr)
