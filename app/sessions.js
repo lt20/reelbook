@@ -109,7 +109,25 @@
   // What Edit saves: {slug, dose} only; `was` (the dose when Edit opened) keeps an untouched dose whole.
   const cleanItems = items => itemsOf({items}).map(it => ({slug: it.slug, dose: keepOrClip(it.dose, it.was, MAX.dose)}));
 
+  // L8, « To try »: the sheets added more than `minDays` calendar days before `today` (local YYYY-MM-DD; added_at is
+  // read as a local date too) and never practised (`practised`: anything with .has(slug), e.g. the practice Map),
+  // minus the `dismissed` slugs; at most `n`, in an order seeded by `today`: the choice changes once a day, stays the
+  // same within the day, and does not depend on the catalogue's order.
+  const DAY_MS = 86400000;
+  const isoDay = s => { const [y, m, d] = String(s || '').split('-').map(Number); return y && m && d ? Date.UTC(y, m - 1, d) : NaN; };
+  const localDay = v => { const d = new Date(v || ''); return isNaN(d) ? NaN : Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
+  const seedHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0; return h; };
+  const toTry = (sheets, {today, practised = new Set(), dismissed = [], n = 3, minDays = 3} = {}) => {
+    const t = isoDay(today);
+    if (isNaN(t)) return [];
+    const gone = new Set(dismissed);
+    return (sheets || []).filter(s => s && s.slug && !practised.has(s.slug) && !gone.has(s.slug) && (t - localDay(s.added_at)) / DAY_MS > minDays)
+      .map(s => ({s, h: seedHash(today + '|' + s.slug)}))
+      .sort((a, b) => a.h - b.h || (a.s.slug < b.s.slug ? -1 : a.s.slug > b.s.slug ? 1 : 0))
+      .slice(0, n).map(x => x.s);
+  };
+
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
-    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems};
+    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);
