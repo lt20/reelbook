@@ -78,12 +78,8 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
   harmless in a browser). Suggestion: read `page.element('view').innerHTML` there, as the other L5 tests do; the
   extra line in `showSheet` can then go.
 
-- **L7, `tests/acceptance/l7/report-correction.test.cjs` (Redo payload)** — the test wants the insert to be exactly
-  `{url, theme, note}`, so the page the user flagged (one exercise of a session made from the same video) is not
-  sent. Codex's review (pass 1) asked for it. L7 ships `rb.py queue` with `redo_of` (the sheets and sessions
-  published from that URL) and the skill reads the note to tell which exercise is wrong. Proposal: allow a
-  `slug` field in the payload (the `requests.slug` column, otherwise set by `rb.py done`) so the skill knows the
-  page for sure. For Codex.
+- **L7, `tests/acceptance/l7/report-correction.test.cjs` (Redo payload)** — settled (3 Nov, coordinator decision
+  after Codex review ×3): slug added (`{url, theme, note, slug}`, spec §B4 updated).
 
 ## Known pitfalls
 - `app/index.html` is one ~1 200-line file: never read it whole; `grep -n` then `sed -n`. Parallel lots touch
