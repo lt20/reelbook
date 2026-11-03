@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "resume", "points", "donnees_existantes"],
+  "properties": {
+    "verdict": { "type": "string", "enum": ["ok", "bloquant"] },
+    "resume": { "type": "string" },
+    "points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gravite", "fichier", "ligne", "constat"],
+        "properties": {
+          "gravite": { "type": "string", "enum": ["bloquant", "attention", "remarque"] },
+          "fichier": { "type": "string" },
+          "ligne": { "type": ["integer", "null"] },
+          "constat": { "type": "string" }
+        }
+      }
+    },
+    "donnees_existantes": { "type": "string" }
+  }
+}

@@ -1,0 +1,284 @@
+{
+ "user_themes": [
+  {
+   "id": "strength",
+   "title": null,
+   "description": "",
+   "groups": null,
+   "builtin": true,
+   "position": 0
+  },
+  {
+   "id": "yoga",
+   "title": null,
+   "description": "",
+   "groups": null,
+   "builtin": true,
+   "position": 1
+  },
+  {
+   "id": "fight",
+   "title": null,
+   "description": "",
+   "groups": null,
+   "builtin": true,
+   "position": 2
+  }
+ ],
+ "sheets": [
+  {
+   "slug": "pompes-inclinees",
+   "kind": "sheet",
+   "theme": "strength",
+   "group": "Chest",
+   "title": "Pompes inclinées",
+   "summary": "Mains sur un banc ou une table, corps gainé : la pompe pour débuter ou finir une séance.",
+   "duration": "5 min",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Coach Démo",
+    "url": "https://www.instagram.com/reel/PREVIEW0001/",
+    "platform": "Instagram"
+   },
+   "added_at": "2026-10-11T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Pectoraux · triceps · 5 minutes</p>\n    <h1>Pompes inclinées</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes inclinées\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Des pompes les mains en appui sur un support surélevé : plus le support est haut, plus c'est facile.</p>\n<div class=\"kit\"><span>un banc ou une table stable</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>La pompe classique est trop dure au début ; l'inclinaison garde le même geste avec moins de charge.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>8–12</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Corps en planche.</b> Les fesses ne montent pas, le ventre ne s'affaisse pas.</li>\n  <li><b>Coudes à 45°.</b> Ni collés au corps, ni ouverts en croix.</li>\n  <li><b>Poitrine au support.</b> Descends jusqu'à frôler le bord avec le sternum.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Position haute, bras tendus sur le banc\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Mains un peu plus larges que les épaules, bras tendus.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Poitrine près du banc, coudes fléchis\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Descente</h3><p>Trois secondes, coudes à 45°, jusqu'au support.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Remonte en poussant le support loin de toi ; si le dos se creuse, prends un support plus haut.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0001/\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "fente-arriere",
+   "kind": "sheet",
+   "theme": "strength",
+   "group": "Legs",
+   "title": "Fente arrière",
+   "summary": "Un pas en arrière, le genou frôle le sol : la fente la plus douce pour les genoux.",
+   "duration": "6 min",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Coach Démo",
+    "url": "https://www.tiktok.com/@coach.demo/video/7400000000000000002",
+    "platform": "TikTok"
+   },
+   "added_at": "2026-10-12T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Cuisses · fessiers · 6 minutes</p>\n    <h1>Fente arrière</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Fente arrière\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Debout, tu recules une jambe et descends jusqu'à ce que le genou arrière frôle le sol.</p>\n<div class=\"kit\"><span>poids du corps</span><span>ou deux haltères légers</span></div>\n\n<h2>Pourquoi</h2>\n<p>Reculer plutôt qu'avancer garde le poids sur le talon avant : moins de pression sur le genou.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>par jambe</span></div>\n  <div class=\"d\"><b>45 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Buste droit.</b> Regarde devant toi, pas tes pieds.</li>\n  <li><b>Poids sur le talon avant.</b> Les orteils avant peuvent se soulever.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Debout, pieds parallèles\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Debout</h3><p>Pieds largeur de hanches, mains sur les hanches.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Fente basse, genou arrière près du sol\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En bas</h3><p>Genou arrière à un doigt du sol, genou avant au-dessus de la cheville.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens en poussant dans le talon avant ; alterne les jambes ou enchaîne toute une série du même côté.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000002\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "chien-tete-en-bas",
+   "kind": "sheet",
+   "theme": "yoga",
+   "group": "Poses",
+   "title": "Chien tête en bas",
+   "summary": "Le V inversé : étire l'arrière des jambes et allonge le dos.",
+   "duration": "2 min",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Studio Démo",
+    "url": "https://www.youtube.com/shorts/PREVIEW0003",
+    "platform": "YouTube"
+   },
+   "added_at": "2026-10-13T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Posture · dos · ischios · 2 minutes</p>\n    <h1>Chien tête en bas</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Chien tête en bas\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Mains et pieds au sol, bassin vers le plafond : le corps dessine un V à l'envers.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Une posture de transition qui étire tout l'arrière du corps et soulage le bas du dos.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>5</b><span>respirations</span></div>\n  <div class=\"d\"><b>3</b><span>fois</span></div>\n  <div class=\"d\"><b>libre</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Dos long avant jambes tendues.</b> Plie les genoux si le dos s'arrondit.</li>\n  <li><b>Pousse le sol.</b> Les épaules s'éloignent des oreilles.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À quatre pattes sur le tapis\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À quatre pattes</h3><p>Mains sous les épaules, genoux sous les hanches.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Corps en V inversé\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Le V</h3><p>Décolle les genoux, envoie le bassin haut et loin.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Respire lentement par le nez ; reviens à quatre pattes entre deux tenues.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0003\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "jab-cross",
+   "kind": "sheet",
+   "theme": "fight",
+   "group": "Striking",
+   "title": "Jab-cross",
+   "summary": "Direct du bras avant puis du bras arrière, garde haute.",
+   "duration": "4 min",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Coach Démo",
+    "url": "https://www.instagram.com/reel/PREVIEW0004/",
+    "platform": "Instagram"
+   },
+   "added_at": "2026-10-14T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Boxe · enchaînement de base</p>\n    <h1>Jab-cross</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Jab-cross\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Le premier enchaînement de la boxe : un jab rapide, puis un cross qui part de la hanche.</p>\n<div class=\"kit\"><span>des bandes</span><span>un sac ou dans le vide</span></div>\n\n<h2>Pourquoi</h2>\n<p>Le jab mesure la distance, le cross porte : les deux ensemble construisent tout le reste.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>rounds</span></div>\n  <div class=\"d\"><b>2 min</b><span>par round</span></div>\n  <div class=\"d\"><b>1 min</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Le menton rentré.</b> L'épaule protège la mâchoire à chaque frappe.</li>\n  <li><b>La hanche tourne.</b> Le pied arrière pivote sur le cross.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Jab bras avant tendu\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Jab</h3><p>Bras avant tendu, poing tourné, l'autre main reste à la joue.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Cross bras arrière tendu\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Cross</h3><p>Pivot du pied arrière, la hanche entraîne le bras.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Ramène chaque poing à la garde par le même chemin ; si la garde tombe, ralentis.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0004/\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "session-gainage-planche",
+   "kind": "sheet",
+   "theme": "strength",
+   "group": "Core",
+   "title": "Planche",
+   "summary": "Sur les avant-bras et la pointe des pieds, le corps droit comme une planche.",
+   "duration": "",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Coach Démo",
+    "url": "https://www.instagram.com/reel/PREVIEW0005/",
+    "platform": "Instagram"
+   },
+   "added_at": "2026-10-15T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Abdominaux · épaules</p>\n    <h1>Planche</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Planche\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur les avant-bras et la pointe des pieds, le corps droit comme une planche.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Avant-bras au sol\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Installation</h3><p>Avant-bras au sol, coudes sous les épaules.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Planche tenue\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tenue</h3><p>Décolle les genoux, corps aligné.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Fesses serrées.</b> Le bassin ne tombe pas.</li>\n  <li><b>Coudes sous les épaules.</b> Pousse le sol.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Genoux au sol, la ligne épaules-genoux reste droite.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "session-gainage-planche-laterale",
+   "kind": "sheet",
+   "theme": "strength",
+   "group": "Core",
+   "title": "Planche latérale",
+   "summary": "Sur un avant-bras et le bord des pieds, le bassin haut.",
+   "duration": "",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Coach Démo",
+    "url": "https://www.instagram.com/reel/PREVIEW0005/",
+    "platform": "Instagram"
+   },
+   "added_at": "2026-10-16T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Obliques · hanches</p>\n    <h1>Planche latérale</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Planche latérale\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur un avant-bras et le bord des pieds, le bassin haut.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Allongé sur le côté\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Sur le côté</h3><p>Coude sous l'épaule, jambes tendues.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Planche latérale tenue\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bassin haut</h3><p>Monte le bassin, corps aligné.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Hanches hautes.</b> Elles ne s'affaissent pas vers le sol.</li>\n  <li><b>Épaule active.</b> Pousse le sol avec l'avant-bras.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Genou du dessous au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "session-gainage-dead-bug",
+   "kind": "sheet",
+   "theme": "strength",
+   "group": "Core",
+   "title": "Dead bug",
+   "summary": "Sur le dos, bras et jambes en l'air, tu allonges un bras et la jambe opposée.",
+   "duration": "",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Coach Démo",
+    "url": "https://www.instagram.com/reel/PREVIEW0005/",
+    "platform": "Instagram"
+   },
+   "added_at": "2026-10-17T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Abdominaux profonds</p>\n    <h1>Dead bug</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Dead bug\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur le dos, bras et jambes en l'air, tu allonges un bras et la jambe opposée.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Sur le dos, genoux pliés en l'air\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Genoux à 90°, bras vers le plafond.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bras et jambe opposés allongés\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Allonger</h3><p>Bras droit et jambe gauche vers le sol.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lombaires au sol.</b> Le bas du dos reste collé.</li>\n  <li><b>Lentement.</b> Trois secondes pour allonger.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Allonge seulement les jambes, bras vers le plafond.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "session-shadow-garde",
+   "kind": "sheet",
+   "theme": "fight",
+   "group": "Footwork",
+   "title": "Garde et déplacements",
+   "summary": "En garde, petits pas avant, arrière et sur les côtés, sans croiser les pieds.",
+   "duration": "",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Club Démo",
+    "url": "https://www.tiktok.com/@coach.demo/video/7400000000000000006",
+    "platform": "TikTok"
+   },
+   "added_at": "2026-10-18T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Boxe · déplacements</p>\n    <h1>Garde et déplacements</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Garde et déplacements\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">En garde, petits pas avant, arrière et sur les côtés, sans croiser les pieds.</p>\n<div class=\"kit\"><span>de la place</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Position de garde\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>En garde</h3><p>Pied avant devant, poings aux joues.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Pas latéral en garde\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Pas latéral</h3><p>Glisse le pied du côté où tu vas, l'autre suit.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Pas glissés.</b> Le pied qui part en premier est celui du côté où tu vas.</li>\n  <li><b>Mains aux joues.</b> Les coudes protègent les côtes.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Seulement avant et arrière.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000006\">Voir la vidéo</a>.</footer>\n</div>\n"
+  },
+  {
+   "slug": "session-shadow-esquives",
+   "kind": "sheet",
+   "theme": "fight",
+   "group": "Defense",
+   "title": "Esquives rotatives",
+   "summary": "Fléchis les jambes et tourne le buste pour passer sous un coup imaginaire.",
+   "duration": "",
+   "thumbnail": "img/thumb.jpg",
+   "source": {
+    "author": "Club Démo",
+    "url": "https://www.tiktok.com/@coach.demo/video/7400000000000000006",
+    "platform": "TikTok"
+   },
+   "added_at": "2026-10-19T09:00:00Z",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Boxe · défense</p>\n    <h1>Esquives rotatives</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Esquives rotatives\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Fléchis les jambes et tourne le buste pour passer sous un coup imaginaire.</p>\n<div class=\"kit\"><span>de la place</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Position de garde\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>En garde</h3><p>Jambes souples, poids réparti.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Esquive en flexion\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Sous le coup</h3><p>Flexion et rotation, la tête passe sous la ligne.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Les jambes travaillent.</b> On ne se penche pas du dos.</li>\n  <li><b>Les yeux devant.</b> Ne regarde jamais le sol.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Sans rotation, seulement la flexion des jambes.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000006\">Voir la vidéo</a>.</footer>\n</div>\n"
+  }
+ ],
+ "sessions": [
+  {
+   "id": "ses-1",
+   "slug": "session-gainage-10-min",
+   "theme": "strength",
+   "title": "Gainage en 10 minutes",
+   "format": "3 exercices en circuit · 3 tours · 30 s de repos entre les tours",
+   "why": "Une routine courte pour la sangle abdominale, sans matériel, à placer en fin de séance.",
+   "key_points": [
+    "Le dos reste neutre : pas de creux dans les lombaires.",
+    "Respire pendant la tenue, ne bloque pas."
+   ],
+   "source": {
+    "author": "Coach Démo",
+    "url": "https://www.instagram.com/reel/PREVIEW0005/",
+    "platform": "Instagram"
+   },
+   "origin": "video",
+   "thumbnail": "u1/session-gainage-planche/img/thumb.jpg",
+   "items": [
+    {
+     "slug": "session-gainage-planche",
+     "dose": "3 × 30 s"
+    },
+    {
+     "slug": "session-gainage-planche-laterale",
+     "dose": "3 × 20 s par côté"
+    },
+    {
+     "slug": "session-gainage-dead-bug",
+     "dose": "3 × 10"
+    }
+   ],
+   "created_at": "2026-10-25T18:00:00Z",
+   "updated_at": "2026-10-25T18:00:00Z"
+  },
+  {
+   "id": "ses-2",
+   "slug": "session-shadow-boxing",
+   "theme": "fight",
+   "title": "Shadow boxing pour débuter",
+   "format": "2 exercices · rounds de 2 min · 1 min de repos",
+   "why": "Travailler la garde et les esquives sans partenaire, avant de taper dans un sac.",
+   "key_points": [
+    "Garde haute du début à la fin.",
+    "Reste sur l'avant des pieds."
+   ],
+   "source": {
+    "author": "Club Démo",
+    "url": "https://www.tiktok.com/@coach.demo/video/7400000000000000006",
+    "platform": "TikTok"
+   },
+   "origin": "video",
+   "thumbnail": "u1/session-shadow-garde/img/thumb.jpg",
+   "items": [
+    {
+     "slug": "session-shadow-garde",
+     "dose": "2 min"
+    },
+    {
+     "slug": "session-shadow-esquives",
+     "dose": "3 × 1 min"
+    }
+   ],
+   "created_at": "2026-10-25T18:00:00Z",
+   "updated_at": "2026-10-25T18:00:00Z"
+  }
+ ],
+ "notes": [
+  {
+   "slug": "pompes-inclinees",
+   "body": "Mardi : 3 × 10 sur la table de la cuisine. Prochaine fois, le banc plus bas.",
+   "updated_at": "2026-10-28T19:30:00Z"
+  }
+ ],
+ "requests": [
+  {
+   "id": "req-1",
+   "url": "https://www.instagram.com/reel/PREVIEW0101/",
+   "status": "queued",
+   "theme": "strength",
+   "note": null,
+   "created_at": "2026-11-02T08:15:00Z"
+  },
+  {
+   "id": "req-2",
+   "url": "https://www.tiktok.com/@coach.demo/video/7400000000000000102",
+   "status": "processing",
+   "theme": "yoga",
+   "note": null,
+   "created_at": "2026-11-02T07:40:00Z"
+  },
+  {
+   "id": "req-3",
+   "url": "https://www.youtube.com/shorts/PREVIEW0103",
+   "status": "error",
+   "theme": null,
+   "note": "Video unavailable: the post is private or was deleted.",
+   "created_at": "2026-11-01T21:05:00Z"
+  }
+ ]
+}
