@@ -79,3 +79,29 @@ test('L5: leaving the page saves nothing more when the note is saved; a note typ
   page.go('#session/flow/1'); await settle();
   assert.deepEqual(JSON.parse(JSON.stringify(noteWrites(page).map(c => c[2]))), [{slug: 'session/flow', body: 'Done three times'}]);
 });
+
+test('L5: a note that cannot be read is never overwritten by typing', async () => {
+  const page = await open('#m1', {failing: {notes: {error: {message: 'offline'}, status: 0}}});
+  assert.equal(page.element('n-status').textContent, 'Could not read the note.');
+  page.element('n-text').value = 'typed over';
+  await page.fire('n-text', 'input'); await settle();
+  page.go('#m2'); await settle();
+  assert.equal(noteWrites(page).length, 0);
+});
+
+test('L5: a typed note not saved yet is kept on the device and shown again, Not saved, until Retry saves it', async () => {
+  const failed = await open('#m1', {writes: {notes: {data: null, error: {message: 'offline'}}}});
+  failed.element('n-text').value = 'Heavy today';
+  await failed.fire('n-text', 'input'); await settle();
+  assert.equal(failed.storage.get('rb.draft.u1.m1'), 'Heavy today');
+  const t = tables();
+  t.notes = [{slug: 'm1', body: 'Older', updated_at: '2026-11-01T10:00:00Z'}];
+  const page = await open('#m1', {tables: t, stored: {'rb.draft.u1.m1': 'Heavy today'}});
+  assert.equal(page.element('n-text').value, 'Heavy today');
+  assert.equal(page.element('n-status').textContent, 'Not saved');
+  assert.equal(page.element('n-retry').hidden, false);
+  await page.fire('n-retry'); await settle();
+  assert.equal(page.element('n-status').textContent, 'Saved');
+  assert.deepEqual(JSON.parse(JSON.stringify(noteWrites(page).map(c => c[2]))), [{slug: 'm1', body: 'Heavy today'}]);
+  assert.equal(page.storage.has('rb.draft.u1.m1'), false, 'saved: the device copy goes');
+});

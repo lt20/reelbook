@@ -1003,60 +1003,71 @@ dialog.ph-dlg::backdrop{background:#000}
       <div class="actions"><span class="status" id="n-status" role="status">Loading…</span><button type="button" class="nretry" id="n-retry" hidden>Retry</button></div></section></div>`;
   // L5: notes save themselves, 800 ms after the last keystroke, and at once when the page is hidden or left
   // (flushNotes: visibilitychange, pagehide, route change). Writes go one after the other (noteQueue), so an
-  // older text never lands after a newer one; a text equal to the last one saved is not written. A failed save
-  // keeps the text in the field (and in noteDrafts, should the page be left and opened again), shows
-  // « Not saved » and Retry; the next keystroke tries again too.
+  // older text never lands after a newer one; a text equal to the one stored (or on its way) is not written.
+  // Until it is stored, a typed text is also kept on the device (rb.draft.<user id>.<note key>): a failed save,
+  // or an app closed before its save went out, shows it again with « Not saved » and Retry next time. A failed
+  // save never clears the field; Retry or the next keystroke tries again. The field stays read-only until the
+  // stored note is read: typing over a note that could not be read would replace it.
   const NOTE_DELAY = 800;
   let notesNow = null, noteQueue = Promise.resolve();
-  const noteDrafts = new Map(); // note key -> text not saved yet (on its way, or failed)
   const flushNotes = () => { if (notesNow) notesNow.flush(); };
   const wireNotes = async key => {
     flushNotes();
     const ta = $('n-text'), st = $('n-status'), retry = $('n-retry');
-    let saved = null, typed = false, tick = 0; // saved: the text stored, once read; tick: the last keystroke
+    // the account and client the note belongs to: a save still queued after a sign-out is not sent
+    const owner = {client: sb, uid: user ? user.id : ''}, draftKey = 'rb.draft.' + owner.uid + '.' + key;
+    const ours = () => sb === owner.client && !!user && user.id === owner.uid;
+    let saved = null, sending = null, tick = 0; // saved: the text stored, once read; sending: the text queued
     const me = {};
     const live = () => notesNow === me;
     const shownAs = (text, failed) => { if (!live()) return; st.textContent = text; retry.hidden = !failed; };
     const save = body => {
-      noteDrafts.set(key, body);
+      sending = body;
       const run = noteQueue.then(async () => {
-        const done = () => { if (noteDrafts.get(key) === body) noteDrafts.delete(key); if (ta.value.trim() === body) shownAs('Saved', false); };
-        if (body === saved) { done(); return; }
-        try {
-          const {error} = await sb.from('notes').upsert({slug: key, body}); if (error) throw error;
-          saved = body; if (body) notesIndex.add(key); else notesIndex.delete(key);
-          done();
-        } catch { if (ta.value.trim() === body) shownAs('Not saved', true); }
+        if (!ours()) return; // signed out meanwhile: the text stays in rb.draft for its owner
+        let ok = body === saved;
+        if (!ok) {
+          try {
+            const {error} = await owner.client.from('notes').upsert({slug: key, body}); if (error) throw error;
+            ok = true; saved = body; if (body) notesIndex.add(key); else notesIndex.delete(key);
+          } catch {}
+        }
+        if (sending === body) sending = null;
+        if (ok && ls.get(draftKey) === body) ls.del(draftKey);
+        if (ta.value.trim() === body) shownAs(ok ? 'Saved' : 'Not saved', !ok);
       });
       noteQueue = run.catch(() => {});
     };
+    const latest = () => sending !== null ? sending : saved;
     me.flush = () => {
       tick++;
       const body = ta.value.trim();
-      if (!typed || (body === saved && !noteDrafts.has(key))) return;
+      if (saved === null || body === latest()) return;
       shownAs('Saving…', false); save(body);
     };
     notesNow = me;
     ta.addEventListener('input', () => {
-      typed = true;
-      const t = ++tick;
-      if (ta.value.trim() === saved && !noteDrafts.has(key)) { shownAs('Saved', false); return; }
+      if (saved === null) return; // not read yet (the field is read-only)
+      const t = ++tick, body = ta.value.trim();
+      if (body === saved) ls.del(draftKey); else ls.set(draftKey, body);
+      if (body === latest()) { if (sending === null) shownAs('Saved', false); return; }
       shownAs('Saving…', false);
       setTimeout(() => { if (live() && t === tick) me.flush(); }, NOTE_DELAY);
     });
-    retry.addEventListener('click', () => { typed = true; me.flush(); });
+    retry.addEventListener('click', () => me.flush());
     // a save of this note still on its way (the page was left and opened again) lands before the read
     await noteQueue;
     try {
-      const {data, error} = await sb.from('notes').select('body,updated_at').eq('slug', key).maybeSingle(); if (error) throw error;
+      const {data, error} = await owner.client.from('notes').select('body,updated_at').eq('slug', key).maybeSingle(); if (error) throw error;
       if (!live()) return;
       saved = data && typeof data.body === 'string' ? data.body : '';
-      const draft = noteDrafts.get(key);
-      if (draft !== undefined && draft !== saved) { if (!typed) ta.value = draft; typed = true; shownAs('Not saved', true); return; }
-      noteDrafts.delete(key);
-      if (!typed) ta.value = saved;
-      if (ta.value.trim() === saved) shownAs(saved ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.', false);
-    } catch { shownAs('Could not read the note.', false); } finally { if (live()) ta.readOnly = false; } // read-only while it loads
+      ta.readOnly = false;
+      const draft = ls.get(draftKey);
+      if (draft !== null && draft !== saved) { ta.value = draft; shownAs('Not saved', true); return; }
+      ls.del(draftKey);
+      ta.value = saved;
+      shownAs(saved ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.', false);
+    } catch { shownAs('Could not read the note.', false); }
   };
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNotes(); });
   window.addEventListener('pagehide', flushNotes);
@@ -1113,17 +1124,20 @@ dialog.ph-dlg::backdrop{background:#000}
     wireNotes(RS.noteKey(slug));
   };
   // `at`: {s, n, items} when the sheet is opened from a session (#session/<slug>/<n>), else null.
+  // sheetLoad: the last sheet asked for; an older load that ends later (A, B, then A again) is dropped.
   const seatKey = at => at ? at.s.slug + '/' + at.n : '';
+  let sheetLoad = 0;
   const showSheet = async (slug, at = null) => {
     const e = bySlug.get(slug);
     if (shown === slug && seatKey(seat) === seatKey(at) && !view.hidden) return;
     shown = slug; seat = at; show('view');
+    const load = ++sheetLoad;
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
     const back = `<div class="wrap" id="sheet-top">${sheetTop(e)}</div>`;
     // Delete sheet: also under a sheet that fails to load.
     const del = '<div class="wrap"><div class="actions" style="margin-top:36px"><button class="btn ghost" type="button" id="sd-open">Delete sheet</button></div></div>';
     let html; try { html = await loadSheet(slug); } catch { html = null; }
-    if (shown !== slug || seatKey(seat) !== seatKey(at)) return; // left (Next tapped twice) while it loaded
+    if (load !== sheetLoad || shown !== slug) return; // left (Next tapped twice, another page) while it loaded
     if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + del; return; }
     view.innerHTML = back + html + notesHtml() + seatNav() + del;
     // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)

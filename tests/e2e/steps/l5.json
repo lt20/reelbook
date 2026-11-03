@@ -16,10 +16,10 @@
   {"name": "l5-07-notes-saved", "hash": "fente-arriere",
    "actions": [{"wait": "#n-status >> text=No note yet."}, {"fill": "#n-text", "value": "Genou arrière à 2 cm du sol, 3 × 8 par jambe."}, {"wait": "#n-status:text-is(\"Saved\")"}, {"scroll": "#n-text"}],
    "why": "no Save button; « Saved » about 800 ms after the last keystroke"},
-  {"name": "l5-08-notes-not-saved", "hash": "fente-arriere", "query": "missing=notes",
-   "actions": [{"wait": "#n-status >> text=Could not read the note."}, {"fill": "#n-text", "value": "Pas de réseau ici."}, {"wait": "#n-status:text-is(\"Not saved\")"}, {"wait": "#n-retry:visible"}, {"scroll": "#n-text"}],
+  {"name": "l5-08-notes-read-error", "hash": "fente-arriere", "query": "missing=notes",
+   "actions": [{"wait": "#n-status >> text=Could not read the note."}, {"wait": "#n-text[readonly]"}, {"scroll": "#n-text"}],
    "allow": ["notes", "404", "Failed to load resource"],
-   "why": "a backend whose notes table fails: the text stays, « Not saved » and Retry"},
+   "why": "a note that cannot be read stays read-only: typing would replace the stored note"},
   {"name": "l5-09-session-out-of-range", "hash": "session/session-gainage-10-min/9",
    "actions": [{"wait": "#view h1 >> text=Gainage en 10 minutes"}]}
 ]
