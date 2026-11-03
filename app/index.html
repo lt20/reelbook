@@ -1345,11 +1345,16 @@ dialog.nav-menu .actions{margin-top:12px}
   // ---------- queue ----------
   // L17: « + Add a video » is the floating button (#add-video-fab); from a notebook page the link is filed there.
   const sheetForm = $('sheet-new'), btn = $('add-video-fab');
+  // The hint names the notebook queueLink files the link in (the page shown when it is sent): painted again on
+  // every page (syncNav), as the form stays open from one page to the next.
   const HINT = 'The sheet is built on your next Claude Code run: <code>/reelbook</code>.';
-  const openForm = v => {
-    sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (!v) return;
+  const paintHint = () => {
     const t = currentTheme && themeById.get(currentTheme);
     $('f-hint').innerHTML = (t ? `It goes to ${esc(t.title)}; the group is decided when the video is analysed. ` : 'Notebook and group are decided when the video is analysed. ') + HINT;
+  };
+  const openForm = v => {
+    sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (!v) return;
+    paintHint();
     if (sheetForm.scrollIntoView) sheetForm.scrollIntoView({block: 'center'});
     $('f-url').focus();
   };
@@ -2607,7 +2612,7 @@ dialog.nav-menu .actions{margin-top:12px}
       navBack.textContent = '‹ ' + p.up[1]; navBack.setAttribute('href', '#' + p.up[0]); navBack.setAttribute('aria-label', 'Back to ' + p.up[1]);
       navTitle.textContent = p.title; navMore.hidden = !p.menu;
     }
-    paintMenu();
+    paintMenu(); paintHint();
     Promise.resolve().then(watchTitle);
   };
   // Leaving a session edit with unsaved changes asks first (window.confirm: synchronous, so a swipe can be undone).

@@ -93,3 +93,17 @@ test('L17: « + Add a video » says which notebook the link goes to', async () =
   await page.fire('add-video-fab');
   assert.match(page.element('f-hint').innerHTML, /^Notebook and group are decided when the video is analysed\./);
 });
+
+test('L17: the form left open from a notebook to home names no notebook any more, and none is sent', async () => {
+  const page = await open('#strength');
+  await page.fire('add-video-fab');
+  page.go('#'); await settle();
+  assert.equal(page.element('sheet-new').hidden, false, 'the form stays open');
+  assert.match(page.element('f-hint').innerHTML, /^Notebook and group are decided when the video is analysed\./);
+  page.element('f-url').value = url;
+  await page.fire('sheet-new', 'submit'); await settle();
+  const insert = page.clients.at(-1).calls.find(call => call[0] === 'insert' && call[1] === 'requests');
+  assert.equal(insert[2].theme, undefined);
+  page.go('#strength'); await settle();
+  assert.match(page.element('f-hint').innerHTML, /^It goes to Strength;/);
+});
