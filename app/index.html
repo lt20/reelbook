@@ -23,7 +23,7 @@
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
+:root[data-theme="dark"],:root:not([data-theme="light"]) .player{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));padding-block:20px 56px}
@@ -298,6 +298,36 @@ dialog.ph-dlg::backdrop{background:#000}
 /* ---- L8: « To try » shelf on the home page (row and cards as « New ») ---- */
 .totry .tt{display:grid;gap:6px;align-content:start;min-width:0;scroll-snap-align:start}
 .totry .tt .btn{justify-self:start}
+/* ---- L10: session player, one exercise per screen (dark unless the light theme is chosen: its tokens are set
+   with :root[data-theme="dark"] near the top) ---- */
+.pl-start{margin:14px 0 4px}
+.pl-start .btn{min-height:52px;padding:12px 32px;font-size:18px}
+.player{position:fixed;inset:0;z-index:10;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+.player .pl{max-width:560px;min-height:100%;margin:0 auto;display:flex;flex-direction:column}
+.pl-top{display:flex;align-items:center;gap:10px;padding:8px 12px 6px}
+.pl-x{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.pl-n{margin:0;font:700 22px var(--display);color:var(--muted);font-variant-numeric:tabular-nums}
+.pl-t{font-size:clamp(28px,8vw,40px);line-height:1;margin:2px 16px 12px;outline:none}
+.pl-car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.pl-car::-webkit-scrollbar{display:none}
+.pl-car figure{flex:0 0 100%;margin:0;scroll-snap-align:center;scroll-snap-stop:always}
+.pl-car img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:var(--paper);cursor:zoom-in}
+.pl-dots{display:flex;justify-content:center;gap:8px;margin:10px 0 0}
+.pl-dots span{width:8px;height:8px;border-radius:50%;background:var(--line-strong)}
+.pl-dots span.on{background:var(--ink)}
+.pl-body{flex:1;padding:14px 16px 20px;touch-action:pan-y}
+.pl-dose{font-family:var(--display);font-weight:700;font-size:64px;line-height:1;margin:0 0 8px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pl-free{font-size:17px;color:var(--muted);margin:0 0 12px}
+.pl-keys{margin:14px 0 0;padding:0;list-style:none;counter-reset:k;display:grid;gap:12px}
+.pl-keys li{counter-increment:k;display:grid;grid-template-columns:32px 1fr;gap:10px;font-size:18px;line-height:1.35}
+.pl-keys li::before{content:counter(k);font:700 22px/1.1 var(--display);color:var(--accent)}
+.pl-keys b{display:block}
+.pl-resume{display:grid;gap:12px;padding:16px}
+.pl-nav{position:sticky;bottom:0;display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+.pl-nav .btn,.pl-resume .btn{flex:1;min-height:64px;font-size:19px;border-radius:16px}
+.pl-nav .btn.ghost{color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.pl-car{scroll-behavior:smooth}}
+@media (prefers-reduced-motion: reduce){.player,.player *{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -485,6 +515,8 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
+<!-- ===== L10: session player ===== -->
+<div id="player" class="player" hidden></div>
 <dialog class="dlg" id="move-dlg" aria-labelledby="mv-title">
   <form id="mv-form" style="display:grid;gap:12px">
     <h2 id="mv-title">Move this sheet</h2>
@@ -544,8 +576,8 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
-<script src="sessions.js?v=6"></script>
-<script src="sheet.js?v=1"></script>
+<script src="sessions.js?v=7"></script>
+<script src="sheet.js?v=2"></script>
 <script>
 (() => {
   'use strict';
@@ -563,7 +595,7 @@ dialog.ph-dlg::backdrop{background:#000}
   // the day before west of Greenwich.
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
-  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view'];
+  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player'];
   const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
 
@@ -1372,9 +1404,10 @@ dialog.ph-dlg::backdrop{background:#000}
     const items = RS.resolveItems(s, bySlug), img = v2Thumb(s);
     view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
-      ${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
+      ${items.length ? startBtn() : ''}${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
       <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
+    if (items.length) wireStart(RS.playHref(esc(slug)));
     wireNotes(RS.noteKey(slug));
     readPractice(RS.noteKey(slug));
   };
@@ -1394,10 +1427,11 @@ dialog.ph-dlg::backdrop{background:#000}
     let html; try { html = await loadSheet(slug); } catch { html = null; }
     if (load !== sheetLoad || shown !== slug) return; // left (Next tapped twice, another page) while it loaded
     if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav() + del; return; }
-    view.innerHTML = back + (practiceOk ? underTitle(html, practiceBox(), e.title) : html) + notesHtml() + reportHtml(e) + seatNav() + del;
+    view.innerHTML = back + underTitle(html, startBtn() + practiceBox(), e.title) + notesHtml() + reportHtml(e) + seatNav() + del;
     markSeen(slug); // only once shown: a sheet that fails to load stays « New »
     // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)
     $('sheet-top').innerHTML = sheetTop(e);
+    wireStart(seat ? RS.playHref(esc(seat.s.slug), seat.n) : RS.sheetPlayHref(esc(slug)));
     wireNotes(slug);
     readPractice(slug);
   };
@@ -1440,7 +1474,8 @@ dialog.ph-dlg::backdrop{background:#000}
   let wakeLock = null, wakeAsking = false;
   function wakeSync() {
     const api = wakeApi(); if (!api) return;
-    const want = wakeWanted() && !!shown && !view.hidden && document.visibilityState !== 'hidden';
+    // L10: the session player keeps the screen on whatever the toggle
+    const want = ((wakeWanted() && !!shown && !view.hidden) || !$('player').hidden) && document.visibilityState !== 'hidden';
     if (want && !wakeLock && !wakeAsking) {
       wakeAsking = true;
       Promise.resolve().then(() => api.request('screen')).then(lock => {
@@ -1462,9 +1497,10 @@ dialog.ph-dlg::backdrop{background:#000}
   // focus goes back to the tapped photo.
   const phDlg = $('ph-dlg'), phStrip = $('ph-strip');
   let phFrom = null;
-  const openPhotos = img => {
+  // `list`: the photos to show instead of the sheet page's (the session player's carousel, L10).
+  const openPhotos = (img, list = null) => {
     if (!SH || !phDlg.showModal || !view.querySelectorAll) return;
-    const all = SH.photosOf(view), i = Math.max(0, all.findIndex(p => p.img === img));
+    const all = list || SH.photosOf(view), i = Math.max(0, all.findIndex(p => p.img === img));
     if (!all.length) return;
     phFrom = img;
     phStrip.innerHTML = all.map((p, k) => `<figure><img src="${esc(p.src)}" alt="${esc(p.alt)}"><figcaption>${p.title ? `<b>${esc(p.title)}</b>` : ''}${esc(p.caption)}</figcaption></figure>`).join('');
@@ -1481,6 +1517,130 @@ dialog.ph-dlg::backdrop{background:#000}
     const img = ev.target && ev.target.closest ? ev.target.closest('[data-ph]') : null;
     if (img && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openPhotos(img); }
   });
+
+
+  // ---------- L10: session player, one exercise per screen ----------
+  // #session/<slug>/play[/<n>] plays a session, #<slug>/play one sheet (RS.playRoute). Full screen over the app,
+  // the screen kept on (wakeSync). Previous / Next redraw in place and only rewrite the address (replaceState), so
+  // Back leaves the player. The exercise reached is kept per user and session in rb.play.<user id> ({slug: n},
+  // decision 8): `#session/<slug>/play` then offers « Resume at n/N » or « Start over »; Finish forgets it.
+  const playerEl = $('player');
+  let play = null, playLoad = 0, playPhotos = [], swipeAt = null;
+  const PLAY_KEEP = 50; // sessions remembered at most (the oldest go)
+  const playKey = () => user && user.id ? 'rb.play.' + user.id : '';
+  const playStore = () => { try { const o = JSON.parse(ls.get(playKey()) || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch { return {}; } };
+  const keepPlace = (slug, n) => {
+    const k = playKey(); if (!k) return;
+    const o = playStore(); delete o[slug]; if (n) o[slug] = n;
+    const keys = Object.keys(o).slice(-PLAY_KEEP);
+    if (keys.length) ls.set(k, JSON.stringify(Object.fromEntries(keys.map(x => [x, o[x]])))); else ls.del(k);
+  };
+  const playAddress = () => {
+    if (!play || play.kind !== 'session' || typeof history === 'undefined' || !history.replaceState) return;
+    try { history.replaceState(history.state, '', RS.playHref(encodeURIComponent(play.s.slug), play.n)); } catch {}
+  };
+  const onClick = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
+  const leavePlayer = () => {
+    const p = play; if (!p) return;
+    location.hash = p.kind === 'session' ? RS.sessionHref(p.s.slug) : p.e.slug;
+  };
+  const finishPlay = () => { if (play && play.kind === 'session') keepPlace(play.s.slug, 0); leavePlayer(); };
+  const stepPlay = d => {
+    if (!play || play.kind !== 'session' || play.prompt) return;
+    const n = play.n + d; if (n < 1 || n > play.items.length) return;
+    play.n = n; keepPlace(play.s.slug, n); playAddress(); renderPlay();
+  };
+  const enterPlayer = () => { shown = null; seat = null; show('player'); playerEl.scrollTop = 0; };
+  // false when there is nothing to play (no exercise left, n out of range): the caller shows the session page.
+  const playSession = (slug, n) => {
+    const s = v2BySlug.get(slug), items = RS.resolveItems(s, bySlug);
+    if (!items.length || (n && n > items.length)) return false;
+    const at = Number(playStore()[slug]);
+    play = {kind: 'session', s, items, n: n || 1, prompt: !n && at > 1 && at <= items.length ? at : 0};
+    if (!play.prompt) keepPlace(slug, play.n);
+    enterPlayer(); renderPlay();
+    return true;
+  };
+  const playSheet = slug => { play = {kind: 'sheet', e: bySlug.get(slug)}; enterPlayer(); renderPlay(); };
+  const playTop = (count, title) => `<div class="pl-top"><button type="button" class="pl-x" id="play-close" aria-label="Close the player">✕</button>${count ? `<p class="pl-n">${count}</p>` : ''}</div>`
+    + `<h1 class="pl-t" id="play-title" tabindex="-1">${esc(title)}</h1>`;
+  const renderPlay = () => {
+    const p = play; if (!p) return;
+    const load = ++playLoad; playPhotos = [];
+    if (p.prompt) {
+      document.title = p.s.title;
+      playerEl.innerHTML = `<div class="pl">${playTop('', p.s.title)}<div class="pl-resume">`
+        + `<button type="button" class="btn" id="play-resume">Resume at ${p.prompt}/${p.items.length}</button>`
+        + '<button type="button" class="btn ghost" id="play-restart">Start over</button></div></div>';
+      onClick('play-close', leavePlayer);
+      onClick('play-resume', () => { if (!play || !play.prompt) return; play.n = play.prompt; play.prompt = 0; keepPlace(play.s.slug, play.n); playAddress(); renderPlay(); });
+      onClick('play-restart', () => { if (!play || !play.prompt) return; play.n = 1; play.prompt = 0; keepPlace(play.s.slug, 1); playAddress(); renderPlay(); });
+      $('play-title').focus();
+      return;
+    }
+    const session = p.kind === 'session', it = session ? p.items[p.n - 1] : null, e = session ? it.sheet : p.e;
+    const big = RS.doseLabel(it), free = it ? it.dose.trim() : '';
+    const same = (a, b) => a.toLowerCase().replace(/\s*[x×]\s*/g, ' × ').replace(/\s+/g, ' ') === b.toLowerCase().replace(/\s+/g, ' ');
+    const last = !session || p.n === p.items.length;
+    document.title = e.title;
+    playerEl.innerHTML = `<div class="pl">${playTop(session ? `${p.n}/${p.items.length}` : '', e.title)}`
+      + '<div class="pl-media" id="play-media"></div>'
+      + `<div class="pl-body" id="play-body">${big || free ? `<p class="pl-dose">${esc(big || free)}</p>` : ''}${big && free && !same(free, big) ? `<p class="pl-free">${esc(free)}</p>` : ''}`
+      + '<ol class="pl-keys" id="play-keys"></ol></div>'
+      + `<nav class="pl-nav" aria-label="Exercises">${session ? `<button type="button" class="btn ghost" id="play-prev"${p.n > 1 ? '' : ' disabled'}>← Previous</button>` : ''}`
+      + (last ? '<button type="button" class="btn" id="play-finish">Finish</button>' : '<button type="button" class="btn" id="play-next">Next →</button>') + '</nav></div>';
+    onClick('play-close', leavePlayer);
+    onClick('play-prev', () => stepPlay(-1));
+    onClick('play-next', () => stepPlay(1));
+    onClick('play-finish', finishPlay);
+    playerEl.scrollTop = 0;
+    $('play-title').focus();
+    playMedia(e.slug, load);
+  };
+  // The step photos (carousel, dots) and the first key points, read from the sheet once it is loaded; a sheet
+  // that fails to load only leaves them out.
+  const playMedia = async (slug, load) => {
+    let html; try { html = await loadSheet(slug); } catch { return; }
+    if (load !== playLoad || playerEl.hidden || !SH || typeof DOMParser === 'undefined') return;
+    let page; try { page = new DOMParser().parseFromString(html, 'text/html').body; } catch { return; }
+    if (!page || !page.querySelectorAll) return;
+    const photos = SH.photosOf(page), keys = SH.keyPoints(page), media = $('play-media'), list = $('play-keys');
+    if (photos.length && media) {
+      media.innerHTML = `<div class="pl-car" id="play-car" aria-label="Photos of the exercise">${photos.map((ph, k) => `<figure><img src="${esc(ph.src)}" alt="${esc(ph.alt)}" data-ph data-pi="${k}" tabindex="0" role="button" aria-label="Photo ${k + 1} of ${photos.length}, full screen"></figure>`).join('')}</div>`
+        + (photos.length > 1 ? `<p class="pl-dots" aria-hidden="true">${photos.map((_, k) => `<span${k ? '' : ' class="on"'}></span>`).join('')}</p>` : '');
+      const car = $('play-car'), imgs = car && car.querySelectorAll ? [...car.querySelectorAll('img')] : [];
+      playPhotos = photos.map((ph, k) => ({...ph, img: imgs[k]}));
+      const dots = media.querySelectorAll ? [...media.querySelectorAll('.pl-dots span')] : [];
+      if (car && dots.length) car.addEventListener('scroll', () => {
+        const i = Math.round(car.scrollLeft / Math.max(1, car.clientWidth));
+        dots.forEach((d, k) => d.classList.toggle('on', k === i));
+      }, {passive: true});
+    }
+    if (list) list.innerHTML = keys.map(k => `<li><span>${k.cue ? `<b>${esc(k.cue)}</b>` : ''}${esc(k.text)}</span></li>`).join('');
+  };
+  playerEl.addEventListener('click', ev => {
+    const img = ev.target && ev.target.closest ? ev.target.closest('[data-ph]') : null;
+    if (img) openPhotos(img, playPhotos);
+  });
+  playerEl.addEventListener('keydown', ev => {
+    const t = ev.target && ev.target.closest ? ev.target : null;
+    const img = t && t.closest('[data-ph]');
+    if (img && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openPhotos(img, playPhotos); return; }
+    if (t && t.closest('.pl-car, input, textarea')) return; // the carousel scrolls with the arrows
+    if (ev.key === 'ArrowRight') stepPlay(1); else if (ev.key === 'ArrowLeft') stepPlay(-1);
+  });
+  // Swipe on the dose and key points (not on the carousel, which scrolls its photos): left = next, right = previous.
+  playerEl.addEventListener('pointerdown', ev => { swipeAt = ev.target && ev.target.closest && ev.target.closest('#play-body') ? {x: ev.clientX, y: ev.clientY} : null; });
+  playerEl.addEventListener('pointercancel', () => { swipeAt = null; });
+  playerEl.addEventListener('pointerup', ev => {
+    const a = swipeAt; swipeAt = null; if (!a) return;
+    const dx = ev.clientX - a.x, dy = ev.clientY - a.y;
+    if (Math.abs(dx) >= 50 && Math.abs(dx) > 1.5 * Math.abs(dy)) stepPlay(dx < 0 ? 1 : -1);
+  });
+  // « Start » under the title of a session page, or of a sheet page (opened from a session: plays the session from
+  // that exercise).
+  const startBtn = () => '<p class="pl-start"><button type="button" class="btn" id="play-start">Start</button></p>';
+  const wireStart = href => onClick('play-start', () => { location.hash = href; });
 
   // ---------- move a sheet, or a v2 session (Notebook menu only) ----------
   const NEW_GROUP = '__new_group__';
@@ -1765,6 +1925,10 @@ dialog.ph-dlg::backdrop{background:#000}
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
     if (tok && bySlug.has(tok)) { showSheet(tok); return; }
+    // L10: the player (#session/<slug>/play[/<n>], #<slug>/play); a session with nothing to play shows its page.
+    const pr = RS.playRoute(tok);
+    if (pr && pr.sheet && bySlug.has(pr.sheet)) { playSheet(pr.sheet); return; }
+    if (pr && pr.session && v2BySlug.has(pr.session)) { if (!playSession(pr.session, pr.n)) showSession(pr.session); return; }
     // #session/<slug>/<n>: the n-th exercise of the session; out of range, the session page.
     if (at && v2BySlug.has(at.slug)) {
       const s = v2BySlug.get(at.slug), items = RS.resolveItems(s, bySlug), it = items[at.n - 1];

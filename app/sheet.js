@@ -122,6 +122,19 @@
     return {img, src: img.getAttribute('src') || '', alt: img.getAttribute('alt') || '', title: text(h), caption: text(p)};
   });
 
-  const api = {arrange, markPhotos, photosOf, MORE};
+  // The first key points of a page (L10, session player): the <li> of its ol.keys lists in order (after arrange,
+  // the shown ones then those under « +N more »), each as {cue, text}: the bold lead (« <b>Cue.</b> rest ») and
+  // the rest, plain text.
+  const keyPoints = (page, n = MORE) => {
+    const lis = page && page.querySelectorAll ? [...page.querySelectorAll('ol.keys')].flatMap(ol => [...ol.children].filter(li => tag(li) === 'LI')) : [];
+    return lis.slice(0, n).map(li => {
+      const first = [...li.childNodes].find(c => !blank(c) && c.nodeType !== 8);
+      const lead = ['B', 'STRONG'].includes(tag(first)) ? text(first) : '';
+      const all = text(li);
+      return {cue: lead, text: lead && all.startsWith(lead) ? all.slice(lead.length).trim() : all};
+    }).filter(k => k.cue || k.text);
+  };
+
+  const api = {arrange, markPhotos, photosOf, keyPoints, MORE};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSheet = api;
 })(typeof window !== 'undefined' ? window : globalThis);
