@@ -164,7 +164,8 @@ test('v2 sessions show in their notebook, in search and on their own page', asyn
   assert.match(groups, /Sessions <span class="n">1<\/span>/, 'the old one-page session is not counted');
   assert.match(groups, /href="#session\/gsp-shoulders"/);
   assert.doesNotMatch(groups, /old-routine|Old move/, 'no v1 session card, no v1 exercise card');
-  assert.match(page.element('count').textContent, /^2 sheets · 1 session · /);
+  // L12: standalone sheets · sessions (their exercise sheets): gsp-angel belongs to the video session
+  assert.equal(page.element('count').textContent, '1 sheet · 1 session (1 exercise)');
   assert.match(groups, /2 exercises/, 'the deleted sheet is not counted');
   assert.match(groups, /href="#gsp-angel"[\s\S]*?in 1 session/);
   assert.doesNotMatch(groups.match(/href="#curl"[\s\S]*?<\/a>/)[0], /in \d session/);
@@ -598,4 +599,50 @@ test('C1: a text past its limit that the user did not touch is saved as it is; a
   assert.equal(row.format, format.slice(0, 240), 'an edited format is clipped to its limit');
   assert.equal(row.items[0].dose, longDose.slice(0, 60), 'an edited dose is clipped to its limit');
   assert.equal(row.title, title);
+});
+
+// ---------- L19, pass 4: a catalogue read overtaken by a local change ----------
+test('a sheet deleted while the catalogue is being read does not come back, and the saved catalogue drops it', async () => {
+  const RS = require('../app/sessions.js');
+  const tables = v2Tables(), idb = new Map(), key = RS.catalogueCacheKey(ownUrl, 'existing-user');
+  const before = {data: tables.sheets.map(s => ({...s})), error: null}; // what the read in flight will answer
+  idb.set(key, RS.catalogueSnapshot({themes: tables.user_themes, sheets: tables.sheets.filter(s => s.kind !== 'session'),
+    sessions: tables.sessions, sessionsOk: true, notesIndex: new Set(), lastDone: new Map(), practiceOk: true}));
+  let release, reads = 0;
+  const gate = new Promise(r => { release = r; });
+  const hold = (t, ops) => t === 'sheets' && ops.some(o => o[0] === 'order') && reads++ === 0 ? gate : null;
+  const page = await app({...signedIn, tables, hash: '#gsp-angel', idb, hold});
+  await settle();
+  assert.equal(reads, 1, 'the catalogue read is on its way');
+  clickIn(page, 'view', '#sd-open');
+  await page.fire('sd-ok');
+  await settle();
+  assert.deepEqual(writesOf(page)[0], ['delete', 'sheets', null, [['slug', 'gsp-angel']]]);
+  tables.sheets = tables.sheets.filter(s => s.slug !== 'gsp-angel'); // the backend no longer has it
+  release(before); // the read made before the delete answers now
+  await settle();
+  assert.equal(reads, 2, 'read again once');
+  assert.doesNotMatch(page.element('groups').innerHTML, /href="#gsp-angel"/);
+  assert.match(page.element('groups').innerHTML, /href="#curl"/);
+  assert.deepEqual(idb.get(key).sheets.map(s => s.slug).sort(), ['curl', 'gsp-rot']);
+});
+
+test('pass 5: a sheet delete that resumes after a switch to another account leaves that account alone', async () => {
+  const RS = require('../app/sessions.js');
+  const idb = new Map(), keyB = RS.catalogueCacheKey(ownUrl, 'user-b');
+  let release;
+  const gate = new Promise(r => { release = r; });
+  const hold = (t, ops) => t === 'notes' && ops.some(o => o[0] === 'delete') ? gate : null;
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#gsp-angel', idb, hold});
+  await settle();
+  clickIn(page, 'view', '#sd-open');
+  const deleting = page.fire('sd-ok'); // waits on the note delete
+  await settle();
+  page.clients.at(-1).authListener('SIGNED_IN', {user: {id: 'user-b', email: 'b@example.test'}});
+  await settle();
+  assert.ok(idb.get(keyB).sheets.some(s => s.slug === 'gsp-angel'), "B's own gsp-angel is read");
+  release();
+  await deleting; await settle();
+  assert.ok(idb.get(keyB).sheets.some(s => s.slug === 'gsp-angel'), "B's catalogue is not touched");
+  assert.notEqual(page.element('flash').textContent, 'Sheet deleted.');
 });

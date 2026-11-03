@@ -11,8 +11,12 @@
 <link rel="icon" href="icons/reelbook-app.svg" type="image/svg+xml">
 <link rel="icon" href="icons/reelbook-icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/reelbook-icon-180.png" sizes="180x180">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="preload" href="fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+/* Self-hosted fonts (L19): Google Fonts latin subset (French accents, « » and œ included), SIL OFL 1.1, licences in fonts/. */
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-condensed-600-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/barlow-condensed-700-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Source Sans 3";font-style:normal;font-weight:400 600;font-display:swap;src:url(fonts/source-sans-3-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{
   --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd; --line-strong:#8f8a80;
   --accent:#1f4fa3; --accent-ink:#ffffff; --tag:#e4eaf6; --warn:#8a5a12; --warn-bg:#f6ead3; --ok:#1f6b3a; --ok-bg:#e1f0e6;
@@ -23,7 +27,7 @@
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
+:root[data-theme="dark"],:root:not([data-theme="light"]) .player{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));padding-block:20px 56px}
@@ -35,11 +39,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 6px;font-weight:600}
 .brand{display:flex;align-items:center;gap:10px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:32px;font-weight:800;line-height:1.1;letter-spacing:-.055em;margin:0 0 20px;text-decoration:none}
 .brand img{display:block;width:40px;height:40px;flex:none}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand img{content:url("icons/reelbook-mark-light.svg")} :root:not([data-theme="light"]) h1.brand-title::before{background-image:url("icons/reelbook-mark-light.svg")}}
-:root[data-theme="dark"] .brand img{content:url("icons/reelbook-mark-light.svg")}
-:root[data-theme="dark"] h1.brand-title::before{background-image:url("icons/reelbook-mark-light.svg")}
-h1.brand-title{display:flex;align-items:center;gap:12px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:clamp(40px,10vw,60px);font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1.1}
-h1.brand-title::before{content:"";display:block;flex:none;width:.95em;height:.95em;background:url("icons/reelbook-mark.svg") center/contain no-repeat}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand img,:root:not([data-theme="light"]) #brand-wordmark img{content:url("icons/reelbook-mark-light.svg")}}
+:root[data-theme="dark"] .brand img,:root[data-theme="dark"] #brand-wordmark img{content:url("icons/reelbook-mark-light.svg")}
 h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,12vw,64px);line-height:.95;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
 h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1;margin:30px 0 10px;text-transform:uppercase;letter-spacing:.02em}
 h2 small{font-family:var(--body);font-weight:600;font-size:13px;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px}
@@ -63,8 +64,6 @@ textarea{line-height:1.5;min-height:120px;resize:vertical}
 code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
 pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
 /* ---- header ---- */
-.head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:22px;flex-wrap:wrap}
-.head .cnt{font-size:14px;color:var(--muted)}
 .crumb{font-size:14px;margin:0 0 6px}.crumb a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
 .topbar{display:flex;justify-content:flex-end;gap:12px;font-size:14px;margin-bottom:8px}
 .topbar a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
@@ -107,7 +106,7 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .tcard h2{font-size:38px;margin:0;text-transform:none;letter-spacing:-.01em;color:var(--t,var(--accent))}
 .tcard p{margin:0;font-size:15px;color:var(--muted)}
 .tcard .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
-.tcard .thumbs img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;max-width:100%;background:var(--tag)}
+.tcard .thumbs img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;max-width:100%;background:var(--tag)}
 .tcard .empty{margin:4px 0 0;padding:12px;font-size:14px}
 .tcard.add{border-top-color:var(--line);border-style:dashed;cursor:pointer;font:inherit;text-align:left;background:transparent}
 .tcard.add h2{color:var(--muted);font-size:30px}
@@ -129,18 +128,19 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
 @media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr)}}
 .card{display:block;color:inherit;text-decoration:none;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.card img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;max-width:100%;background:var(--tag)}
+/* L12: one photo format on every card, 4:5, framed on the upper third (burned-in subtitles sit lower) */
+.card img{display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;object-position:50% 30%;max-width:100%;background:var(--tag)}
 .card .b{padding:10px 12px 12px}
 .card h3{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.05;margin:0 0 4px}
-.card p{margin:0;font-size:14px;line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.card .m{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
-.card .m span{background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card p{margin:0;font-size:14px;line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .m{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:6px;flex-wrap:nowrap;min-width:0}
+.card .m span{flex:0 1 auto;display:block;min-width:0;margin:0;background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .m span.note{background:var(--ok-bg);color:var(--ok)}
 .card .m span.session,.card .m span.dose{background:var(--accent);color:var(--accent-ink)}
 .card{position:relative}
 .card>.k{position:absolute;left:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:16px;line-height:1;padding:5px 8px 4px;border-radius:6px}
 .from,.src{font-size:15px;color:var(--muted);margin:0 0 16px}
-.card.big img{aspect-ratio:2/1}
+.card.big img{object-position:50% 30%}
 /* ---- queue ---- */
 .queue{display:grid;gap:8px}
 .q{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;min-width:0}
@@ -243,6 +243,23 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 .report{margin-top:14px}
 .report .link{appearance:none;background:transparent;border:0;padding:10px 0;min-height:44px;color:var(--muted);font:600 14px var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 #report-dlg textarea{min-height:110px}
+/* ---- L12: notebook page — sticky group chips, one row of cards per group, « See all » grid ---- */
+.group-chips{position:sticky;top:0;z-index:5;display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:12px -16px 0;padding:8px 16px;background:var(--bg);-webkit-overflow-scrolling:touch}
+.group-chips::-webkit-scrollbar{display:none}
+.group-chips a{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);text-decoration:none;font:600 14px var(--body);white-space:nowrap}
+.group-chips a.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+#groups section{scroll-margin-top:64px}
+#groups section>h2,#groups .sh2 h2{font-size:24px;margin:22px 0 8px}
+#groups .sh2 .btn{margin-top:14px}
+.group-row{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:2px 16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.group-row::-webkit-scrollbar{display:none}
+.group-row .card{flex:none;width:min(44%,220px);scroll-snap-align:start}
+.group-row .card h3{font-size:19px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .m span:first-child{flex-shrink:0}
+.group-row .from-ses{flex:none;margin:0;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-right:2px solid var(--line);padding-left:6px}
+.grid .from-ses{grid-column:1/-1;margin:6px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.see-all{flex:none;width:min(30%,140px);display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed var(--line-strong);border-radius:12px;color:var(--ink);font-weight:600;font-size:15px;text-decoration:none;scroll-snap-align:end}
+.see-all:active{opacity:.6}
 #report-status:empty{display:none}
 #report-status.err{color:var(--danger)}
 .q .redo{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;margin-bottom:2px;background:var(--accent);color:var(--accent-ink)}
@@ -298,6 +315,61 @@ dialog.ph-dlg::backdrop{background:#000}
 /* ---- L8: « To try » shelf on the home page (row and cards as « New ») ---- */
 .totry .tt{display:grid;gap:6px;align-content:start;min-width:0;scroll-snap-align:start}
 .totry .tt .btn{justify-self:start}
+/* ---- L13: home recomposed — compact brand bar, small counter, narrower « New » / « To try » cards ---- */
+#brand-bar{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 0 2px}
+#brand-wordmark{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1}
+#brand-wordmark img{display:block;width:28px;height:28px;flex:none}
+#brand-wordmark h1{font:inherit;letter-spacing:inherit;color:inherit;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#brand-bar .set{text-decoration:none;font-size:14px;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
+#brand-bar .set:active{opacity:.6}
+/* 320 px wide (iPhone SE 1st gen, zoomed display): tighter gaps keep the bar on one line */
+@media (max-width:359px){#brand-bar{column-gap:6px}#brand-wordmark{gap:6px}#brand-bar #btn-new{padding:7px 10px}#brand-bar .set{padding:0 2px}}
+#count{font-size:13px;color:var(--muted);margin:0 0 14px}
+/* a notebook page: the title on its own line, large; « + Add a video » and Settings under it */
+#home.nb #brand-wordmark{flex-basis:100%;color:var(--ink);font-family:var(--display);font-size:clamp(44px,12vw,64px);font-weight:700;letter-spacing:-.01em;text-transform:none;line-height:.95}
+#home.nb #brand-wordmark img{display:none}
+#home.nb #brand-wordmark h1{white-space:normal;text-wrap:balance}
+#home.nb #brand-bar .set{margin-left:auto}
+#home.nb #count{font-size:14px;margin-top:4px}
+#home .newsec{margin:0 0 10px}
+.newrow{grid-auto-columns:min(44%,220px);margin:0 -16px;padding:2px 16px 10px;scroll-padding:0 16px;scrollbar-width:none}
+.newrow::-webkit-scrollbar{display:none}
+.newrow .card h3{font-size:19px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qsum{margin:16px 0 10px}
+.totry .tt{grid-template-rows:1fr auto}
+/* ---- L10: session player, one exercise per screen (dark unless the light theme is chosen: its tokens are set
+   with :root[data-theme="dark"] near the top) ---- */
+.pl-start{margin:14px 0 4px}
+.pl-start .btn{min-height:52px;padding:12px 32px;font-size:18px}
+.player{position:fixed;inset:0;z-index:10;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+.player .pl{max-width:560px;min-height:100%;margin:0 auto;display:flex;flex-direction:column}
+.pl-top{display:flex;align-items:flex-start;gap:12px;padding:10px 16px 12px 12px}
+.pl-x{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.pl-n{margin:0;font:700 18px/1.1 var(--display);color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.pl-t{font-size:clamp(28px,8vw,38px);line-height:1;margin:2px 0 0;outline:none;overflow-wrap:anywhere}
+.pl-top>div{min-width:0;padding-top:4px}
+.pl-car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.pl-car::-webkit-scrollbar{display:none}
+.pl-car figure{flex:0 0 100%;margin:0;scroll-snap-align:center;scroll-snap-stop:always;display:flex;justify-content:center}
+/* 4:5 at full width, narrower on a short screen so the dose stays in view */
+.pl-car img{display:block;width:auto;max-width:100%;height:min(calc(min(100vw,560px) * 1.25),46vh);height:min(calc(min(100vw,560px) * 1.25),46dvh);aspect-ratio:4/5;object-fit:cover;background:var(--paper);cursor:zoom-in}
+.pl-dots{display:flex;justify-content:center;gap:8px;margin:10px 0 0}
+.pl-media .empty{margin:0 16px}
+.pl-dots span{width:8px;height:8px;border-radius:50%;background:var(--line-strong)}
+.pl-dots span.on{background:var(--ink)}
+.pl-body{flex:1;padding:14px 16px 20px;touch-action:pan-y}
+.pl-dose{font-family:var(--display);font-weight:700;font-size:64px;line-height:1;margin:0 0 8px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pl-free{font-size:17px;color:var(--muted);margin:0 0 12px}
+.pl-keys{margin:14px 0 0;padding:0;list-style:none;counter-reset:k;display:grid;gap:12px}
+.pl-keys li{counter-increment:k;display:grid;grid-template-columns:32px 1fr;gap:10px;font-size:18px;line-height:1.35}
+.pl-keys li::before{content:counter(k);font:700 22px/1.1 var(--display);color:var(--accent)}
+.pl-keys b{display:block}
+.pl-resume{display:grid;gap:12px;padding:16px}
+.pl-nav{position:sticky;bottom:0;display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+.pl-nav .btn,.pl-resume .btn{flex:1;min-height:64px;font-size:19px;border-radius:16px}
+.pl-nav .btn.ghost{color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.pl-car{scroll-behavior:smooth}}
+@media (prefers-reduced-motion: reduce){.player,.player *{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -353,16 +425,17 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <!-- ===== Home: portal / theme ===== -->
 <div id="home" class="wide" hidden>
-  <div class="topbar"><a href="#settings">Settings</a></div>
-  <div class="head">
-    <div>
-      <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
-      <p class="eyebrow" id="h-eyebrow">Your videos, by notebook</p>
-      <h1 id="h-title" class="brand-title">Reelbook</h1>
-      <p class="cnt" id="count" aria-live="polite"></p>
-    </div>
-    <button class="btn" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
-  </div>
+  <!-- L13: a notebook page keeps its crumb and eyebrow above the bar; the home page shows neither -->
+  <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
+  <p class="eyebrow" id="h-eyebrow" hidden>Find it fast, when you need it</p>
+  <header id="brand-bar">
+    <div id="brand-wordmark"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><h1 id="h-title">Reelbook</h1></div>
+    <button class="btn sm" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
+    <a class="set" href="#settings">Settings</a>
+  </header>
+  <p class="cnt" id="count" aria-live="polite"></p>
+  <!-- L12: a notebook page's groups, with their counts; sticks to the top while scrolling -->
+  <nav class="group-chips" id="group-chips" aria-label="Groups" hidden></nav>
 
   <form class="sheet" id="sheet-new" hidden>
     <h2>Add a video</h2>
@@ -380,18 +453,17 @@ dialog.ph-dlg::backdrop{background:#000}
   </dialog>
   <div class="flash" id="flash" role="status" hidden></div>
 
-  <section id="queue-sec" aria-label="Queue" hidden>
-    <div class="qsum" id="queue-summary"></div>
-    <div class="queue" id="queue" hidden></div>
-  </section>
-
+  <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
+  <div id="results" hidden></div>
   <!-- L7: sheets and video sessions delivered in the last 72 h, not opened yet on this device -->
   <section class="newsec" id="new-sec" aria-labelledby="new-h" hidden></section>
   <!-- L8: up to 3 sheets older than 3 days, never practised, chosen once a day -->
   <section class="newsec totry" id="to-try" aria-labelledby="totry-h" hidden></section>
 
-  <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
-  <div id="results" hidden></div>
+  <section id="queue-sec" aria-label="Queue" hidden>
+    <div class="qsum" id="queue-summary"></div>
+    <div class="queue" id="queue" hidden></div>
+  </section>
 
   <div id="portal" class="portal" hidden></div>
   <section class="panel picker" id="picker" hidden>
@@ -485,6 +557,8 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
+<!-- ===== L10: session player ===== -->
+<div id="player" class="player" hidden></div>
 <dialog class="dlg" id="move-dlg" aria-labelledby="mv-title">
   <form id="mv-form" style="display:grid;gap:12px">
     <h2 id="mv-title">Move this sheet</h2>
@@ -544,8 +618,8 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
-<script src="sessions.js?v=6"></script>
-<script src="sheet.js?v=1"></script>
+<script src="sessions.js?v=8"></script>
+<script src="sheet.js?v=2"></script>
 <script>
 (() => {
   'use strict';
@@ -563,7 +637,7 @@ dialog.ph-dlg::backdrop{background:#000}
   // the day before west of Greenwich.
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
-  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view'];
+  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player'];
   const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
 
@@ -663,68 +737,157 @@ dialog.ph-dlg::backdrop{background:#000}
     themes.sort((a, b) => a.position - b.position || a.title.localeCompare(b.title));
     themeById = new Map(themes.map(t => [t.id, t]));
   };
-  const loadThemes = async () => {
+  const readThemes = async () => {
     let {data, error} = await sb.from('user_themes').select('id,title,description,groups,builtin,position');
     if (error) throw error;
     if (!data || !data.length) {
       const seed = (CFG.defaults || []).map((id, i) => libById.get(id)).filter(Boolean).map((t, i) => ({id: t.id, title: t.title, groups: t.groups, builtin: true, position: i}));
       if (seed.length) { const r = await sb.from('user_themes').insert(seed).select('id,title,description,groups,builtin,position'); if (r.error) throw r.error; data = r.data; }
     }
-    setThemes(data || []);
+    return data || [];
   };
-  const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
-  const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
+  const loadThemes = async () => { themeRows = await readThemes(); setThemes(themeRows); saveCatalogue(); };
+  const addTheme = async row => { touched(); const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
+  const removeTheme = async id => { touched(); const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
   const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
-  const loadCatalogue = async () => {
-    await loadThemes();
-    const {data, error} = await sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at').order('title');
-    if (error) throw error;
-    // Old one-page sessions (kind 'session') are not shown any more; Settings counts them (RS.splitV1).
-    ({sheets, v1: v1Hidden} = RS.splitV1(data)); bySlug = new Map(sheets.map(s => [s.slug, s]));
-    // v2 sessions; a backend without the table only loses them (sessionsOk false, one line in Settings).
-    const r = await sb.from('sessions').select(SESSION_COLS).order('title');
-    if (r.error && !RS.missingTable(r.error, r.status)) throw r.error;
-    sessionsOk = !r.error; setSessions(r.error ? [] : r.data || []);
-    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
-    const paths = [];
-    for (const s of sheets) if (s.thumbnail) paths.push(spath(s.slug, s.thumbnail));
-    for (const s of v2Sessions) if (s.thumbnail) paths.push(s.thumbnail);
-    await signAll(paths);
-    try { const {data: n} = await sb.from('notes').select('slug').neq('body', ''); notesIndex = new Set((n || []).map(r => r.slug)); } catch {}
-    await loadPractice();
+  // L19, instant start. A key-value store in IndexedDB for the last catalogue and the sheets opened, per backend
+  // and user (RS.catalogueCacheKey). None (private mode, an old browser, the test harness): reads give null and
+  // writes do nothing, the app reads the network as before.
+  const idb = (() => {
+    let db = null;
+    const has = (() => { try { return !!window.indexedDB; } catch { return false; } })();
+    const open = () => db || (db = new Promise((ok, ko) => {
+      const r = window.indexedDB.open('reelbook', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+    }));
+    const run = (mode, fn) => open().then(d => new Promise((ok, ko) => {
+      const t = d.transaction('kv', mode), q = fn(t.objectStore('kv'));
+      t.oncomplete = () => ok(q && q.result); t.onerror = t.onabort = () => ko(t.error);
+    }));
+    return {
+      get: k => has ? run('readonly', st => st.get(k)).catch(() => null) : Promise.resolve(null),
+      set: (k, v) => has ? run('readwrite', st => st.put(v, k)).catch(() => {}) : Promise.resolve(),
+      drop: prefix => has ? run('readwrite', st => st.delete(IDBKeyRange.bound(prefix, prefix + '￿'))).catch(() => {}) : Promise.resolve()
+    };
+  })();
+  const catKey = () => RS.catalogueCacheKey(backend.url, user.id);
+  // The cached catalogue after a change made in the app (a sheet or session deleted, a notebook added...), so a
+  // start without network does not bring it back. themeRows: the user_themes rows last read.
+  let themeRows = [];
+  const cardPaths = () => [...sheets.filter(s => s.thumbnail).map(s => spath(s.slug, s.thumbnail)), ...v2Sessions.filter(s => s.thumbnail).map(s => s.thumbnail)];
+  // localGen: bumped by every local change of the catalogue, before its write goes out (touched) and once it is
+  // applied (saveCatalogue): a catalogue read it overtook is dropped and read again (RS.refreshCatalogue gen).
+  let localGen = 0;
+  const touched = () => { localGen++; };
+  const saveCatalogue = () => {
+    touched();
+    if (!user || !sb || loading) return;
+    idb.set(catKey(), RS.catalogueSnapshot({themes: themeRows, sheets, v1: v1Hidden, sessions: v2Sessions, sessionsOk, notesIndex, lastDone, practiceOk,
+      signed: cardPaths().filter(p => signed.has(p)).map(p => [p, signed.get(p).url])}));
   };
-  // The latest date per key, read 1 000 rows at a time (PostgREST's cap). Never fails the catalogue: a backend
-  // without the table (not pushed yet), or a read that fails, only hides the practice log.
+  // Sign-out: the user's cached catalogue and sheets, and the photos the service worker kept.
+  const toWorker = msg => { try { if (navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage(msg)).catch(() => {}); } catch {} };
+  const clearUserCache = uid => {
+    idb.drop(RS.catalogueCacheKey('', uid)); // the key prefix of every backend for this user
+    toWorker({type: 'CLEAR_USER_CACHE'});
+  };
+  // Every read at once (L19), then the photos of the cards; nothing is applied here (RS.refreshCatalogue).
+  const fetchCatalogue = async () => {
+    const [themeRows, sh, r, notes, last] = await Promise.all([
+      readThemes(),
+      sb.from('sheets').select('slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at,updated_at').order('title'),
+      // v2 sessions; a backend without the table only loses them (sessionsOk false, one line in Settings).
+      sb.from('sessions').select(SESSION_COLS).order('title'),
+      sb.from('notes').select('slug').neq('body', '').then(x => x, () => null), // null or {error}: kept as known
+      readLastDone()
+    ]);
+    if (sh.error) throw sh.error;
+    // A sessions read that failed (not a missing table) keeps the sessions known, and the sheets still apply (as
+    // before L19, when sheets were read first): reload reports it like a failed catalogue.
+    const sessionsError = r.error && !RS.missingTable(r.error, r.status) ? r.error : null;
+    // Old one-page sessions (kind 'session') are not shown any more; Settings counts them (RS.splitV1).
+    const {sheets: list, v1} = RS.splitV1(sh.data), rows = r.error ? [] : r.data || [];
+    const paths = [...list.filter(s => s.thumbnail).map(s => spath(s.slug, s.thumbnail)), ...rows.filter(s => s.thumbnail).map(s => s.thumbnail)];
+    await signAll(paths);
+    return {themes: themeRows, sheets: list, v1, sessions: rows, sessionsOk: !r.error, sessionsKept: !!sessionsError, sessionsError,
+      notesIndex: notes && !notes.error ? new Set((notes.data || []).map(n => n.slug)) : null,
+      lastDone: last || new Map(), practiceOk: !!last, practiceKept: last === null,
+      signed: paths.filter(p => signed.has(p)).map(p => [p, signed.get(p).url])};
+  };
+  const applyCatalogue = c => {
+    themeRows = c.themes; setThemes(c.themes);
+    sheets = c.sheets; v1Hidden = c.v1 || 0; bySlug = new Map(sheets.map(s => [s.slug, s]));
+    if (c.sessionsKept) { c.sessionsOk = sessionsOk; c.sessions = v2Sessions; } else { sessionsOk = c.sessionsOk; setSessions(c.sessions); }
+    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
+    // A notes or practice log read that failed keeps what was known (cached or earlier); a backend without the
+    // practice_log table hides the practice log (readLastDone false).
+    if (c.notesIndex) notesIndex = c.notesIndex; else c.notesIndex = notesIndex;
+    if (c.practiceKept) { c.practiceOk = practiceOk; c.lastDone = lastDone; } else { practiceOk = c.practiceOk; lastDone = c.lastDone; }
+    // cached URLs (expired or not) until new ones are signed: the service worker answers a photo by its path
+    for (const [p, url] of c.signed || []) if (!signed.has(p)) signed.set(p, {url, exp: 0});
+  };
+  // L6: the latest date per key, read 1 000 rows at a time (PostgREST's cap). Never fails the catalogue: false for
+  // a backend without the table (not pushed yet: the practice log is hidden), null for a read that failed (L19:
+  // what was known stays).
   const PAGE = 1000;
-  const loadPractice = async () => {
-    practiceOk = false; lastDone = new Map();
-    const gen = ++practiceGen, last = new Map(), current = () => gen === practiceGen; // a sign-out or a newer read drops this one
+  const readLastDone = async () => {
+    const last = new Map();
     try {
       for (let from = 0; ; from += PAGE) { // every row: a key practised only long ago keeps its date
         const {data, error, status} = await sb.from('practice_log').select('slug,done_on').order('done_on', {ascending: false}).order('id').range(from, from + PAGE - 1);
-        if (!current()) return;
-        if (error) { if (!RS.missingTable(error, status)) console.warn('Practice log not read:', error.message || error); return; }
+        if (error) { if (RS.missingTable(error, status)) return false; console.warn('Practice log not read:', error.message || error); return null; }
         for (const r of data || []) if (!last.has(r.slug) || r.done_on > last.get(r.slug)) last.set(r.slug, r.done_on);
         if (!data || data.length < PAGE) break;
       }
-    } catch (e) { console.warn('Practice log not read:', (e && e.message) || e); return; }
-    if (current()) { practiceOk = true; lastDone = last; }
+    } catch (e) { console.warn('Practice log not read:', (e && e.message) || e); return null; }
+    return last;
   };
-  const reload = async () => {
-    loading = true; loadError = ''; if (!$('home').hidden) renderHome();
-    try { await loadCatalogue(); } catch (e) { loadError = (e && e.message) || 'unknown error'; console.error(e); }
+  // The last catalogue shows at once (IndexedDB), the fresh read replaces it; a failed read keeps the cached one.
+  // shown: the cached catalogue is already on screen (shown before the session was confirmed, see boot).
+  const reload = async ({shown = false} = {}) => {
+    loadError = ''; if (!shown) { loading = true; if (!$('home').hidden) renderHome(); }
+    const gen = ++practiceGen, client = sb, uid = user.id, key = catKey(); // practiceGen: a sign-out or a newer read drops this one
+    let fromCache = shown, sessionsError = null;
+    const current = () => gen === practiceGen && client === sb && !!user && user.id === uid;
+    const res = await RS.refreshCatalogue({
+      read: async () => shown ? null : RS.restoreCatalogueSnapshot(await idb.get(key)),
+      fetch: async () => { const c = await fetchCatalogue(); sessionsError = c.sessionsError; return c; },
+      apply: (c, from) => { applyCatalogue(c); if (from === 'cache') { fromCache = true; loading = false; route(); } },
+      write: c => current() ? idb.set(key, RS.catalogueSnapshot(c)) : null,
+      current, gen: () => localGen
+    });
+    if (res.source === 'stale') return;
     loading = false;
-    if (!loadError && !sheets.length && !ls.get(welcomeKey()) && !location.hash) { location.hash = 'welcome'; } else route();
+    if (res.source === 'local') saveCatalogue(); // overtaken twice by local changes: what is shown is kept
+    if (!res.error && res.source === 'network' && sessionsError) res.error = sessionsError;
+    if (res.error) {
+      if (fromCache) console.warn('Catalogue not refreshed, the last one stays:', (res.error && res.error.message) || res.error);
+      else { loadError = (res.error && res.error.message) || 'unknown error'; console.error(res.error); }
+    }
+    if (fromCache) {
+      // Already on screen: the home page is redrawn in place (no scroll jump); a sheet being read is left alone.
+      // A link to a sheet the cached catalogue did not hold opens now.
+      const tok = decodeURIComponent(location.hash.slice(1)), ses = RS.sessionSlugOf(tok);
+      if (!$('home').hidden) { if (bySlug.has(tok) || (ses && v2BySlug.has(ses))) route(); else renderHome(); }
+    } else if (!loadError && !sheets.length && !ls.get(welcomeKey()) && !location.hash) { location.hash = 'welcome'; } else route();
     refreshQueue();
   };
-  const thumb = (slug, rel) => rel ? (signed.get(spath(slug, rel)) || {}).url || '' : '';
+  // L19: a photo URL carries its sheet's updated_at (rbv), part of the service worker's cache key: a sheet
+  // republished with new photos under the same paths gets them, not the cached ones. Paths are <user>/<slug>/...
+  // Only under a service worker, which strips it before Storage: with none, the URL goes to Storage as signed.
+  const swOn = () => { try { return !!(navigator.serviceWorker && navigator.serviceWorker.controller); } catch { return false; } };
+  const vurl = (url, v) => url && v && swOn() ? `${url}${url.includes('?') ? '&' : '?'}rbv=${encodeURIComponent(v)}` : url;
+  const purl = p => vurl((signed.get(p) || {}).url || '', (bySlug.get(String(p).split('/')[1]) || {}).updated_at);
+  const thumb = (slug, rel) => rel ? purl(spath(slug, rel)) : '';
 
   // ---------- home rendering ----------
+  // L12: at most two meta pills, on one line: callers list them most useful first.
   const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}
       <img src="${esc(thumbUrl)}" alt="" loading="lazy">
       <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>${extra && extra.fmt ? `<p class="fmt">${esc(extra.fmt)}</p>` : ''}
-      <div class="m">${(extra && extra.meta || []).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
+      <div class="m">${(extra && extra.meta || []).slice(0, 2).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   // The « + Add a notebook » card: its examples are the first three library notebooks not added yet; with none
   // left, no count and no examples, only the custom notebook.
@@ -738,8 +901,9 @@ dialog.ph-dlg::backdrop{background:#000}
       const list = sheets.filter(e => e.theme === t.id);
       const n = list.length, sessions = v2Sessions.filter(s => s.theme === t.id).length;
       const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (sessions ? ` · ${plural(sessions, 'session')}` : '');
-      const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="">`).join('');
-      return `<a class="tcard" href="#${esc(t.id)}" style="--t:${colorOf(t)}">
+      const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="${esc(e.title)}">`).join('');
+      // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
+      return `<a class="tcard" href="#${esc(t.id)}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
         <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
         ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
     }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
@@ -772,10 +936,10 @@ dialog.ph-dlg::backdrop{background:#000}
   const inTag = slug => { const n = (inSessions.get(slug) || []).length; return n ? [{txt: `in ${plural(n, 'session')}`, cls: 'session'}] : []; };
   // L6: « done 28 Oct », the latest practice of a sheet or a session (key as for notes).
   const doneTag = key => practiceOk && lastDone.has(key) ? [{txt: 'done ' + fmtDay(lastDone.get(key)), cls: 'done'}] : [];
-  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, {txt: e.duration}, {txt: (e.source || {}).author || ''}, ...inTag(e.slug), ...doneTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const sheetCard = (e, pre = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {meta: [...pre, ...doneTag(e.slug), ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : []), {txt: e.duration}, {txt: (e.source || {}).author || ''}].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
-  const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
-  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const v2Thumb = s => { if (s.thumbnail) return purl(s.thumbnail); const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
+  const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : []), {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
   // ---------- L7: « New » row ----------
   // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen.<user id>
   // holds the keys of the pages opened (a sheet's slug, « session/<slug> » for a session, as RS.noteKey), the last
@@ -830,22 +994,77 @@ dialog.ph-dlg::backdrop{background:#000}
   const shelfNewDay = () => { if (shelfOn && !$('home').hidden && shelfDay !== todayIso()) renderToTry(true); };
   document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'hidden') shelfNewDay(); });
   if (typeof setInterval === 'function') setInterval(shelfNewDay, 60000);
-  const renderGroups = t => {
-    const solo = sheets.filter(e => e.theme === t.id);
-    const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
-    const push = (g, h) => { if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(h); };
-    for (const e of solo) push(e.group, sheetCard(e));
+  // ---------- L12: notebook page ----------
+  // One horizontal row of cards per group (library order, empty groups hidden), standalone sheets first, then the
+  // exercise sheets of a video session after « From sessions ». Sticky chips above jump to a group; « See all N »
+  // opens the group as a grid at #<notebook>~<group> (an old #<slug>~<anchor> link still opens the home page).
+  // `one`: the group shown as a grid, else null (the rows).
+  let currentGroup = null; // the <group> of #<notebook>~<group>
+  let groupIds = new Map(); // group -> id of its section, for the chips and the way back from a grid
+  const fromVideo = slug => (inSessions.get(slug) || []).some(s => s.origin === 'video');
+  const groupHref = (t, g) => `#${esc(t.id)}~${esc(encodeURIComponent(g))}`;
+  const groupOf = t => t && currentGroup && sheets.some(e => e.theme === t.id && e.group === currentGroup) ? currentGroup : null;
+  const renderGroups = (t, one) => {
+    const solo = sheets.filter(e => e.theme === t.id), chips = $('group-chips');
+    const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, {own: [], ses: []});
+    for (const e of solo) { if (!byGroup.has(e.group)) byGroup.set(e.group, {own: [], ses: []}); byGroup.get(e.group)[fromVideo(e.slug) ? 'ses' : 'own'].push(e); }
+    const groups = [...byGroup].filter(([, l]) => l.own.length + l.ses.length);
     const v2 = v2Sessions.filter(s => s.theme === t.id).sort((a, b) => a.title.localeCompare(b.title)), nS = v2.length;
-    // The Sessions section shows as soon as the backend has sessions, for « + New session ».
+    const nEx = solo.filter(e => fromVideo(e.slug)).length;
+    groupIds = new Map(groups.map(([g], i) => [g, 'grp-' + i]));
+    // « 14 sheets · 9 sessions (64 exercises) »: standalone sheets · sessions (their exercise sheets)
+    const counter = `${plural(solo.length - nEx, 'sheet')}${nS ? ` · ${plural(nS, 'session')}${nEx ? ` (${plural(nEx, 'exercise')})` : ''}` : ''}`;
+    if (loadError || (loading && !solo.length)) { chips.hidden = true; chips.innerHTML = ''; $('groups').innerHTML = ''; return loadError ? loadErrorText() : 'Loading…'; }
+    chips.innerHTML = groups.map(([g, l]) => `<a href="${groupHref(t, g)}" data-grp="${groupIds.get(g)}"${g === one ? ' class="on" aria-current="page"' : ''}>${esc(g)} ${l.own.length + l.ses.length}</a>`).join('');
+    chips.hidden = groups.length < 2;
+    const cards = (l, wrap) => l.own.map(e => sheetCard(e)).join('') + (l.ses.length ? `<p class="from-ses">From sessions</p>` + l.ses.map(e => sheetCard(e)).join('') : '') + wrap;
+    if (one) {
+      const l = byGroup.get(one);
+      $('groups').innerHTML = `<section data-group="${esc(one)}" id="${groupIds.get(one)}"><h2>${esc(one)} <span class="n">${l.own.length + l.ses.length}</span></h2><div class="grid">${cards(l, '')}</div></section>`;
+      return counter;
+    }
     let html = '';
-    for (const [g, list] of byGroup) { if (list.length) html += `<section><h2>${esc(g)} <span class="n">${list.length}</span></h2><div class="grid">${list.join('')}</div></section>`; }
+    for (const [g, l] of groups) {
+      const n = l.own.length + l.ses.length;
+      html += `<section data-group="${esc(g)}" id="${groupIds.get(g)}"><h2>${esc(g)} <span class="n">${n}</span></h2><div class="group-row">${cards(l, n > 2 ? `<a class="see-all" href="${groupHref(t, g)}">See all ${n}</a>` : '')}</div></section>`;
+    }
     if (!html) html = '<p class="empty">No sheet in this theme yet. Paste a first link.</p>';
+    // The Sessions section shows as soon as the backend has sessions, for « + New session »; its cards are a row too.
     if (nS || sessionsOk) html = `<section><div class="sh2"><h2>Sessions${nS ? ` <span class="n">${nS}</span>` : ''}</h2>${sessionsOk ? '<button class="btn ghost sm" type="button" id="ns-open">+ New session</button>' : ''}</div>`
-      + (nS ? '<div class="grid">' + v2.map(s => v2Card(s)).join('') + '</div>' : '<p class="hint">No session yet. Make one from the sheets of this notebook.</p>') + '</section>' + html;
+      + (nS ? '<div class="group-row">' + v2.map(s => v2Card(s)).join('') + '</div>' : '<p class="hint">No session yet. Make one from the sheets of this notebook.</p>') + '</section>' + html;
     $('groups').innerHTML = html;
-    const g = [...byGroup].filter(([, l]) => l.length).length;
-    return `${plural(solo.length, 'sheet')}${nS ? ` · ${plural(nS, 'session')}` : ''} · ${plural(g, 'group')}`;
+    return counter;
   };
+  // A chip scrolls to its group (smoothly unless reduced motion) and turns active; on a group grid it follows its link.
+  const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const markChip = id => {
+    const chips = $('group-chips');
+    for (const a of chips.querySelectorAll ? chips.querySelectorAll('a[data-grp]') : []) {
+      const on = a.dataset.grp === id; a.classList.toggle('on', on);
+      if (on) { a.setAttribute('aria-current', 'true'); if (chips.scrollTo) chips.scrollTo({left: a.offsetLeft - 16, behavior: reducedMotion() ? 'auto' : 'smooth'}); } else a.removeAttribute('aria-current');
+    }
+  };
+  $('group-chips').addEventListener('click', ev => {
+    const a = ev.target.closest && ev.target.closest('a[data-grp]'); if (!a || groupOf(themeById.get(currentTheme))) return;
+    const sec = document.getElementById(a.dataset.grp); if (!sec) return;
+    ev.preventDefault(); chipPinned = a.dataset.grp; markChip(chipPinned); sec.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
+  });
+  // While scrolling the rows, the chip of the group under the bar is the active one, page bottom included. A tapped
+  // chip stays active until the user scrolls himself or leaves the page (its group may stay below the bar).
+  let spyQueued = false, chipPinned = '';
+  for (const type of ['wheel', 'touchmove', 'keydown']) window.addEventListener(type, () => { chipPinned = ''; }, {passive: true});
+  const spy = () => {
+    spyQueued = false;
+    const chips = $('group-chips');
+    if ($('home').hidden || chips.hidden || !currentTheme || groupOf(themeById.get(currentTheme))) return;
+    if (chipPinned) { markChip(chipPinned); return; }
+    // at the page bottom, the last groups may never reach the bar: the last one whose top is on screen is active
+    const bottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    const line = bottom ? window.innerHeight : chips.getBoundingClientRect().bottom + 8; let on = '';
+    for (const id of groupIds.values()) { const sec = document.getElementById(id); if (sec && sec.getBoundingClientRect().top <= line) on = id; }
+    markChip(on);
+  };
+  window.addEventListener('scroll', () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(spy); } }, {passive: true});
   // ---------- search ----------
   // Every word must appear, accents and case ignored, in a title, summary, group, notebook or author
   // (a v2 session: its title, format, notebook or author).
@@ -876,21 +1095,24 @@ dialog.ph-dlg::backdrop{background:#000}
   // L6: the sheets and sessions practised at least once that still exist.
   const practisedCount = () => [...lastDone.keys()].filter(k => bySlug.has(k) || v2BySlug.has(RS.sessionSlugOf(k))).length;
   const renderHome = () => {
-    const t = currentTheme ? themeById.get(currentTheme) : null;
+    const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
     $('h-crumb').hidden = !t;
-    $('h-eyebrow').textContent = t ? 'Find it fast, when you need it' : 'Your videos, by notebook';
+    $('h-crumb').innerHTML = one ? `<a href="#${esc(t.id)}">← ${esc(t.title)}</a>` : '<a href="#">← Reelbook</a>'; // L12: a group grid goes back to its notebook
+    $('h-eyebrow').hidden = !t;
     $('h-title').textContent = t ? t.title : 'Reelbook';
-    $('h-title').classList.toggle('brand-title', !t);
-    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
-    if (t) $('count').textContent = renderGroups(t);
+    $('home').classList.toggle('nb', !!t); // L13: a notebook page shows its title large, without the mark
+    // L13: « How it works » leaves the home page once the account has 5 sheets (the guide stays in Settings)
+    $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t || loading || sheets.length >= 5; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
+    if (t) $('count').textContent = renderGroups(t, one);
     else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${practiceOk ? `${practisedCount()} practised · ${n} saved` : plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
     const terms = sheets.length ? searchTerms() : [];
     $('results').hidden = !terms.length;
     if (terms.length) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t); }
+    if (!t || terms.length) $('group-chips').hidden = true;
     renderNew(!t && !loading && !loadError && !terms.length);
     renderToTry(!t && !loading && !loadError && !terms.length);
-    document.title = t ? `${t.title} · Reelbook` : 'Reelbook';
+    document.title = t ? `${one ? one + ' · ' : ''}${t.title} · Reelbook` : 'Reelbook';
   };
 
   // ---------- queue ----------
@@ -1064,14 +1286,23 @@ dialog.ph-dlg::backdrop{background:#000}
   const view = $('view'), cache = new Map();
   const loadSheet = async slug => {
     if (cache.has(slug)) return cache.get(slug);
-    const {data, error} = await sb.from('sheets').select('html').eq('slug', slug).single();
+    // L19: a sheet opened once is kept (IndexedDB, as rendered: its photos by signed URL, which the service worker
+    // answers by path), for a start without network. Only a read that never reached the backend (status 0) uses it.
+    const key = catKey() + '|sheet|' + slug, uid = user.id;
+    let data, error, status;
+    try { ({data, error, status} = await sb.from('sheets').select('html,updated_at').eq('slug', slug).single()); } catch (e) { error = e; }
+    if ((error || !data) && !status) {
+      const kept = await idb.get(key);
+      if (!user || user.id !== uid) throw new Error('signed out'); // read before a sign-out: never into the new user's cache
+      if (typeof kept === 'string') { cache.set(slug, kept); return kept; }
+    }
     if (error || !data) throw new Error('not found');
     const doc = new DOMParser().parseFromString(data.html, 'text/html');
     // Photos get their signed URL in the parsed document, which loads nothing: imported into the page first,
     // an <img> fetched its raw src (img/thumb.jpg next to index.html, a 404) before being rewritten.
     const imgs = doc.querySelectorAll ? [...doc.querySelectorAll('img')] : [];
     const get = await signAll(imgs.map(i => spath(slug, (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'))));
-    imgs.forEach(i => { const rel = (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'); i.setAttribute('src', get(spath(slug, rel))); i.removeAttribute('loading'); });
+    imgs.forEach(i => { const rel = (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'); i.setAttribute('src', vurl(get(spath(slug, rel)), data.updated_at)); i.removeAttribute('loading'); });
     // L3: gesture first (sheet.js), never at the cost of the sheet: on any error it shows as written.
     if (SH && doc.querySelectorAll) { const keep = doc.body.cloneNode(true); try { SH.arrange(doc); SH.markPhotos(doc); } catch { doc.documentElement.replaceChild(keep, doc.body); } }
     const frag = document.createDocumentFragment();
@@ -1083,7 +1314,8 @@ dialog.ph-dlg::backdrop{background:#000}
     frag.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (h === '../index.html' || h === '../' || h === '#') a.setAttribute('href', '#'); else if (h.startsWith('#') && h.length > 1 && !routable(h)) a.setAttribute('href', `#${slug}`); });
     const wrap = document.createElement('div'); wrap.appendChild(frag);
     const lang = sheetLang(data.html), out = lang ? `<div lang="${esc(lang)}">${wrap.innerHTML}</div>` : wrap.innerHTML;
-    cache.set(slug, out); return out;
+    if (!user || user.id !== uid) throw new Error('signed out'); // not after a sign-out
+    cache.set(slug, out); idb.set(key, out); return out;
   };
   // The language of a sheet, for screen readers and hyphenation (the app around it is English): the sheet's own
   // <html lang> if it has one, else French when its text holds at least three distinct common French words,
@@ -1157,8 +1389,10 @@ dialog.ph-dlg::backdrop{background:#000}
         let ok = body === saved;
         if (!ok) {
           try {
+            // only a note that appears or empties changes the catalogue (notesIndex): typing does not drop its read
+            const flip = !!body !== notesIndex.has(key); if (flip) touched();
             const {error} = await owner.client.from('notes').upsert({slug: key, body}); if (error) throw error;
-            ok = true; saved = body; if (body) notesIndex.add(key); else notesIndex.delete(key);
+            ok = true; saved = body; if (flip) { if (body) notesIndex.add(key); else notesIndex.delete(key); saveCatalogue(); }
           } catch {}
         }
         if (sending === body) sending = null;
@@ -1305,7 +1539,7 @@ dialog.ph-dlg::backdrop{background:#000}
     // the field is read-only while the save is on its way: a correction typed then would be dropped once saved
     p.draft = text; p.busy = true; p.err = ''; $('practice-save').disabled = true; $('practice-text').readOnly = true;
     let res;
-    try { res = await owner.client.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
+    try { touched(); res = await owner.client.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
     p.busy = false;
     if (sb !== owner.client || !user || user.id !== owner.uid) return; // signed out, or another account, meanwhile
     const stored = res && (!res.error || res.error.code === '23505');
@@ -1317,7 +1551,7 @@ dialog.ph-dlg::backdrop{background:#000}
     }
     const got = (!res.error && (Array.isArray(res.data) ? res.data[0] : res.data)) || {};
     const entry = {id: got.id || row.id, slug: row.slug, done_on: got.done_on || row.done_on, text: typeof got.text === 'string' ? got.text : row.text, created_at: got.created_at || new Date().toISOString()};
-    if (!lastDone.has(row.slug) || entry.done_on > lastDone.get(row.slug)) lastDone.set(row.slug, entry.done_on);
+    if (!lastDone.has(row.slug) || entry.done_on > lastDone.get(row.slug)) { lastDone.set(row.slug, entry.done_on); saveCatalogue(); }
     p.attempt = null; unsavedLog.delete(unsavedKey(row.slug));
     if (!p.entries.some(r => r.id === entry.id)) p.entries = [entry, ...p.entries].sort(newestFirst).slice(0, 5);
     p.open = false; p.draft = '';
@@ -1372,9 +1606,10 @@ dialog.ph-dlg::backdrop{background:#000}
     const items = RS.resolveItems(s, bySlug), img = v2Thumb(s);
     view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
-      ${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
+      ${items.length ? startBtn() : ''}${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
       <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
+    if (items.length) wireStart(RS.playHref(esc(slug)));
     wireNotes(RS.noteKey(slug));
     readPractice(RS.noteKey(slug));
   };
@@ -1394,10 +1629,11 @@ dialog.ph-dlg::backdrop{background:#000}
     let html; try { html = await loadSheet(slug); } catch { html = null; }
     if (load !== sheetLoad || shown !== slug) return; // left (Next tapped twice, another page) while it loaded
     if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav() + del; return; }
-    view.innerHTML = back + (practiceOk ? underTitle(html, practiceBox(), e.title) : html) + notesHtml() + reportHtml(e) + seatNav() + del;
+    view.innerHTML = back + underTitle(html, startBtn() + practiceBox(), e.title) + notesHtml() + reportHtml(e) + seatNav() + del;
     markSeen(slug); // only once shown: a sheet that fails to load stays « New »
     // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)
     $('sheet-top').innerHTML = sheetTop(e);
+    wireStart(seat ? RS.playHref(esc(seat.s.slug), seat.n) : RS.sheetPlayHref(esc(slug)));
     wireNotes(slug);
     readPractice(slug);
   };
@@ -1440,7 +1676,8 @@ dialog.ph-dlg::backdrop{background:#000}
   let wakeLock = null, wakeAsking = false;
   function wakeSync() {
     const api = wakeApi(); if (!api) return;
-    const want = wakeWanted() && !!shown && !view.hidden && document.visibilityState !== 'hidden';
+    // L10: the session player keeps the screen on whatever the toggle
+    const want = ((wakeWanted() && !!shown && !view.hidden) || !$('player').hidden) && document.visibilityState !== 'hidden';
     if (want && !wakeLock && !wakeAsking) {
       wakeAsking = true;
       Promise.resolve().then(() => api.request('screen')).then(lock => {
@@ -1462,9 +1699,10 @@ dialog.ph-dlg::backdrop{background:#000}
   // focus goes back to the tapped photo.
   const phDlg = $('ph-dlg'), phStrip = $('ph-strip');
   let phFrom = null;
-  const openPhotos = img => {
+  // `list`: the photos to show instead of the sheet page's (the session player's carousel, L10).
+  const openPhotos = (img, list = null) => {
     if (!SH || !phDlg.showModal || !view.querySelectorAll) return;
-    const all = SH.photosOf(view), i = Math.max(0, all.findIndex(p => p.img === img));
+    const all = list || SH.photosOf(view), i = Math.max(0, all.findIndex(p => p.img === img));
     if (!all.length) return;
     phFrom = img;
     phStrip.innerHTML = all.map((p, k) => `<figure><img src="${esc(p.src)}" alt="${esc(p.alt)}"><figcaption>${p.title ? `<b>${esc(p.title)}</b>` : ''}${esc(p.caption)}</figcaption></figure>`).join('');
@@ -1481,6 +1719,132 @@ dialog.ph-dlg::backdrop{background:#000}
     const img = ev.target && ev.target.closest ? ev.target.closest('[data-ph]') : null;
     if (img && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openPhotos(img); }
   });
+
+
+  // ---------- L10: session player, one exercise per screen ----------
+  // #session/<slug>/play[/<n>] plays a session, #<slug>/play one sheet (RS.playRoute). Full screen over the app,
+  // the screen kept on (wakeSync). Previous / Next redraw in place and only rewrite the address (replaceState), so
+  // Back leaves the player. The exercise reached is kept per user and session in rb.play.<user id> ({slug: n},
+  // decision 8): `#session/<slug>/play` then offers « Resume at n/N » or « Start over »; Finish forgets it.
+  const playerEl = $('player');
+  let play = null, playLoad = 0, playPhotos = [], swipeAt = null;
+  const PLAY_KEEP = 50; // sessions remembered at most (the oldest go)
+  const playKey = () => user && user.id ? 'rb.play.' + user.id : '';
+  const playStore = () => { try { const o = JSON.parse(ls.get(playKey()) || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch { return {}; } };
+  const keepPlace = (slug, n) => {
+    const k = playKey(); if (!k) return;
+    const o = playStore(); delete o[slug]; if (n) o[slug] = n;
+    const keys = Object.keys(o).slice(-PLAY_KEEP);
+    if (keys.length) ls.set(k, JSON.stringify(Object.fromEntries(keys.map(x => [x, o[x]])))); else ls.del(k);
+  };
+  const playAddress = () => {
+    if (!play || play.kind !== 'session' || typeof history === 'undefined' || !history.replaceState) return;
+    try { history.replaceState(history.state, '', RS.playHref(encodeURIComponent(play.s.slug), play.n)); } catch {}
+  };
+  const onClick = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
+  const leavePlayer = () => {
+    const p = play; if (!p) return;
+    location.hash = p.kind === 'session' ? RS.sessionHref(p.s.slug) : p.e.slug;
+  };
+  const finishPlay = () => { if (play && play.kind === 'session') keepPlace(play.s.slug, 0); leavePlayer(); };
+  const stepPlay = d => {
+    if (!play || play.kind !== 'session' || play.prompt) return;
+    const n = play.n + d; if (n < 1 || n > play.items.length) return;
+    play.n = n; keepPlace(play.s.slug, n); playAddress(); renderPlay();
+  };
+  const enterPlayer = () => { shown = null; seat = null; show('player'); playerEl.scrollTop = 0; };
+  // false when there is nothing to play (no exercise left, n out of range): the caller shows the session page.
+  const playSession = (slug, n) => {
+    const s = v2BySlug.get(slug), items = RS.resolveItems(s, bySlug);
+    if (!items.length || (n && n > items.length)) return false;
+    const at = Number(playStore()[slug]);
+    play = {kind: 'session', s, items, n: n || 1, prompt: !n && at > 1 && at <= items.length ? at : 0};
+    if (!play.prompt) keepPlace(slug, play.n);
+    enterPlayer(); renderPlay();
+    return true;
+  };
+  const playSheet = slug => { play = {kind: 'sheet', e: bySlug.get(slug)}; enterPlayer(); renderPlay(); };
+  const playTop = (count, title) => `<div class="pl-top"><button type="button" class="pl-x" id="play-close" aria-label="Close the player">✕</button>`
+    + `<div>${count ? `<p class="pl-n">${count}</p>` : ''}<h1 class="pl-t" id="play-title" tabindex="-1">${esc(title)}</h1></div></div>`;
+  const renderPlay = () => {
+    const p = play; if (!p) return;
+    const load = ++playLoad; playPhotos = [];
+    if (p.prompt) {
+      document.title = p.s.title;
+      playerEl.innerHTML = `<div class="pl">${playTop('', p.s.title)}<div class="pl-resume">`
+        + `<button type="button" class="btn" id="play-resume">Resume at ${p.prompt}/${p.items.length}</button>`
+        + '<button type="button" class="btn ghost" id="play-restart">Start over</button></div></div>';
+      onClick('play-close', leavePlayer);
+      onClick('play-resume', () => { if (!play || !play.prompt) return; play.n = play.prompt; play.prompt = 0; keepPlace(play.s.slug, play.n); playAddress(); renderPlay(); });
+      onClick('play-restart', () => { if (!play || !play.prompt) return; play.n = 1; play.prompt = 0; keepPlace(play.s.slug, 1); playAddress(); renderPlay(); });
+      $('play-title').focus();
+      return;
+    }
+    const session = p.kind === 'session', it = session ? p.items[p.n - 1] : null, e = session ? it.sheet : p.e;
+    const big = RS.doseLabel(it), free = it ? it.dose.trim() : '';
+    const same = (a, b) => a.toLowerCase().replace(/\s*[x×]\s*/g, ' × ').replace(/\s+/g, ' ') === b.toLowerCase().replace(/\s+/g, ' ');
+    const last = !session || p.n === p.items.length;
+    document.title = e.title;
+    playerEl.innerHTML = `<div class="pl">${playTop(session ? `${p.n}/${p.items.length}` : '', e.title)}`
+      + '<div class="pl-media" id="play-media"></div>'
+      + `<div class="pl-body" id="play-body">${big || free ? `<p class="pl-dose">${esc(big || free)}</p>` : ''}${big && free && !same(free, big) ? `<p class="pl-free">${esc(free)}</p>` : ''}`
+      + '<ol class="pl-keys" id="play-keys"></ol></div>'
+      + `<nav class="pl-nav" aria-label="Exercises">${session ? `<button type="button" class="btn ghost" id="play-prev"${p.n > 1 ? '' : ' disabled'}>← Previous</button>` : ''}`
+      + (last ? '<button type="button" class="btn" id="play-finish">Finish</button>' : '<button type="button" class="btn" id="play-next">Next →</button>') + '</nav></div>';
+    onClick('play-close', leavePlayer);
+    onClick('play-prev', () => stepPlay(-1));
+    onClick('play-next', () => stepPlay(1));
+    onClick('play-finish', finishPlay);
+    playerEl.scrollTop = 0;
+    $('play-title').focus();
+    playMedia(e.slug, load);
+  };
+  // The step photos (carousel, dots) and the first key points, read from the sheet once it is loaded; a sheet
+  // that fails to load says so in their place (as its sheet page does), the dose and the buttons stay.
+  const playMedia = async (slug, load) => {
+    let html; try { html = await loadSheet(slug); } catch { html = null; }
+    if (load !== playLoad || playerEl.hidden) return;
+    if (html === null) { const m = $('play-media'); if (m) m.innerHTML = '<p class="empty" role="status">This sheet could not be loaded: no photos or key points.</p>'; return; }
+    if (!SH || typeof DOMParser === 'undefined') return;
+    let page; try { page = new DOMParser().parseFromString(html, 'text/html').body; } catch { return; }
+    if (!page || !page.querySelectorAll) return;
+    const photos = SH.photosOf(page), keys = SH.keyPoints(page), media = $('play-media'), list = $('play-keys');
+    if (photos.length && media) {
+      media.innerHTML = `<div class="pl-car" id="play-car" aria-label="Photos of the exercise">${photos.map((ph, k) => `<figure><img src="${esc(ph.src)}" alt="${esc(ph.alt)}" data-ph data-pi="${k}" tabindex="0" role="button" aria-label="Photo ${k + 1} of ${photos.length}, full screen"></figure>`).join('')}</div>`
+        + (photos.length > 1 ? `<p class="pl-dots" aria-hidden="true">${photos.map((_, k) => `<span${k ? '' : ' class="on"'}></span>`).join('')}</p>` : '');
+      const car = $('play-car'), imgs = car && car.querySelectorAll ? [...car.querySelectorAll('img')] : [];
+      playPhotos = photos.map((ph, k) => ({...ph, img: imgs[k]}));
+      const dots = media.querySelectorAll ? [...media.querySelectorAll('.pl-dots span')] : [];
+      if (car && dots.length) car.addEventListener('scroll', () => {
+        const i = Math.round(car.scrollLeft / Math.max(1, car.clientWidth));
+        dots.forEach((d, k) => d.classList.toggle('on', k === i));
+      }, {passive: true});
+    }
+    if (list) list.innerHTML = keys.map(k => `<li><span>${k.cue ? `<b>${esc(k.cue)}</b> ` : ''}${esc(k.text)}</span></li>`).join('');
+  };
+  playerEl.addEventListener('click', ev => {
+    const img = ev.target && ev.target.closest ? ev.target.closest('[data-ph]') : null;
+    if (img) openPhotos(img, playPhotos);
+  });
+  playerEl.addEventListener('keydown', ev => {
+    const t = ev.target && ev.target.closest ? ev.target : null;
+    const img = t && t.closest('[data-ph]');
+    if (img && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openPhotos(img, playPhotos); return; }
+    if (t && t.closest('.pl-car, input, textarea')) return; // the carousel scrolls with the arrows
+    if (ev.key === 'ArrowRight') stepPlay(1); else if (ev.key === 'ArrowLeft') stepPlay(-1);
+  });
+  // Swipe on the dose and key points (not on the carousel, which scrolls its photos): left = next, right = previous.
+  playerEl.addEventListener('pointerdown', ev => { swipeAt = ev.target && ev.target.closest && ev.target.closest('#play-body') ? {x: ev.clientX, y: ev.clientY} : null; });
+  playerEl.addEventListener('pointercancel', () => { swipeAt = null; });
+  playerEl.addEventListener('pointerup', ev => {
+    const a = swipeAt; swipeAt = null; if (!a) return;
+    const dx = ev.clientX - a.x, dy = ev.clientY - a.y;
+    if (Math.abs(dx) >= 50 && Math.abs(dx) > 1.5 * Math.abs(dy)) stepPlay(dx < 0 ? 1 : -1);
+  });
+  // « Start » under the title of a session page, or of a sheet page (opened from a session: plays the session from
+  // that exercise).
+  const startBtn = () => '<p class="pl-start"><button type="button" class="btn" id="play-start">Start</button></p>';
+  const wireStart = href => onClick('play-start', () => { location.hash = href; });
 
   // ---------- move a sheet, or a v2 session (Notebook menu only) ----------
   const NEW_GROUP = '__new_group__';
@@ -1519,8 +1883,8 @@ dialog.ph-dlg::backdrop{background:#000}
     if (theme === s.theme) { mdlg.close(); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
-      const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
-      s.theme = theme;
+      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
+      s.theme = theme; saveCatalogue();
       mdlg.close();
       const top = $('sheet-top');
       if (top && shownSession() === s) top.innerHTML = topNav(s, true) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`;
@@ -1538,8 +1902,8 @@ dialog.ph-dlg::backdrop{background:#000}
     if (theme === e.theme && group === e.group) { mdlg.close(); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
-      const {data, error} = await sb.from('sheets').update({theme, group}).eq('slug', e.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
-      e.theme = theme; e.group = group;
+      touched(); const {data, error} = await sb.from('sheets').update({theme, group}).eq('slug', e.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
+      e.theme = theme; e.group = group; saveCatalogue();
       mdlg.close();
       const top = $('sheet-top');
       if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
@@ -1554,8 +1918,8 @@ dialog.ph-dlg::backdrop{background:#000}
   const takenSlugs = () => new Set([...v2Sessions.map(s => s.slug), ...[...notesIndex].map(RS.sessionSlugOf).filter(Boolean)]);
   const createSession = async (theme, title, slugs) => {
     const row = {slug: RS.uniqueSlug(title, takenSlugs()), theme, title, origin: 'user', items: slugs.map(slug => ({slug, dose: ''}))};
-    const s = oneRow(await sb.from('sessions').insert(row).select(SESSION_COLS));
-    setSessions([...v2Sessions, s]);
+    touched(); const s = oneRow(await sb.from('sessions').insert(row).select(SESSION_COLS));
+    setSessions([...v2Sessions, s]); saveCatalogue();
     return s;
   };
   const flashHome = msg => { const f = $('flash'); f.textContent = msg; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000); };
@@ -1627,7 +1991,7 @@ dialog.ph-dlg::backdrop{background:#000}
     else { add = RS.addItem(s.items, e.slug); if (!add.added) return fail('This sheet is already in that session.'); }
     $('as-submit').disabled = true; err.hidden = true;
     try {
-      if (s) { oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); }
+      if (s) { touched(); oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
       else s = await createSession(e.theme, title, [e.slug]);
       adlg.close();
       const top = $('sheet-top');
@@ -1644,8 +2008,8 @@ dialog.ph-dlg::backdrop{background:#000}
     if (!row.title) { err.textContent = 'Give the session a title.'; err.hidden = false; $('ed-title').focus(); return; }
     b.disabled = true; err.hidden = true;
     try {
-      oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
-      Object.assign(s, row); setSessions(v2Sessions); edit = null;
+      touched(); oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
+      Object.assign(s, row); setSessions(v2Sessions); saveCatalogue(); edit = null;
       showSession(s.slug, 'Saved.');
     } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; }
   };
@@ -1663,8 +2027,8 @@ dialog.ph-dlg::backdrop{background:#000}
     const s = shownSession(), err = $('del-err'), b = $('del-ok'); if (!s) { ddlg.close(); return; }
     b.disabled = true; err.hidden = true;
     try {
-      oneRow(await sb.from('sessions').delete().eq('slug', s.slug).select('slug'));
-      setSessions(v2Sessions.filter(x => x !== s)); edit = null; ddlg.close();
+      touched(); oneRow(await sb.from('sessions').delete().eq('slug', s.slug).select('slug'));
+      setSessions(v2Sessions.filter(x => x.slug !== s.slug)); saveCatalogue(); edit = null; ddlg.close();
       flashHome('Session deleted. Its exercise sheets stay in your notebooks.');
       location.hash = s.theme;
     } catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; }
@@ -1685,17 +2049,23 @@ dialog.ph-dlg::backdrop{background:#000}
   $('sd-cancel').addEventListener('click', () => sdlg.close());
   $('sd-ok').addEventListener('click', async () => {
     const e = shownSheet(), err = $('sd-err'), b = $('sd-ok'); if (!e) { sdlg.close(); return; }
+    // Signed out or another account after an await: nothing is removed from the catalogue shown, nothing saved.
+    const client = sb, uid = user.id, gone = () => sb !== client || !user || user.id !== uid;
     b.disabled = true; err.hidden = true;
-    try { oneRow(await sb.from('sheets').delete().eq('slug', e.slug).select('slug')); }
-    catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; return; }
+    try { touched(); oneRow(await client.from('sheets').delete().eq('slug', e.slug).select('slug')); }
+    catch { if (gone()) return; err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; return; }
+    if (gone()) return;
     // The sheet is gone: images and note are best effort (`rb.py delete <slug>` clears what is left).
     try {
-      const dir = spath(e.slug, 'img'), st = sb.storage.from('sheets');
+      const dir = spath(e.slug, 'img'), st = client.storage.from('sheets');
       const {data} = await st.list(dir, {limit: 1000});
-      if (data && data.length) await st.remove(data.map(o => `${dir}/${o.name}`));
+      if (data && data.length && !gone()) await st.remove(data.map(o => `${dir}/${o.name}`));
     } catch {}
-    try { await sb.from('notes').delete().eq('slug', e.slug); notesIndex.delete(e.slug); } catch {}
-    sheets = sheets.filter(x => x !== e); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
+    if (gone()) return;
+    try { await client.from('notes').delete().eq('slug', e.slug); if (!gone()) notesIndex.delete(e.slug); } catch {}
+    if (gone()) return;
+    sheets = sheets.filter(x => x.slug !== e.slug); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
+    idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue(); toWorker({type: 'DROP_PHOTOS', path: `${user.id}/${e.slug}/`});
     b.disabled = false; sdlg.close();
     flashHome('Sheet deleted.');
     location.hash = e.theme;
@@ -1765,6 +2135,10 @@ dialog.ph-dlg::backdrop{background:#000}
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
     if (tok && bySlug.has(tok)) { showSheet(tok); return; }
+    // L10: the player (#session/<slug>/play[/<n>], #<slug>/play); a session with nothing to play shows its page.
+    const pr = RS.playRoute(tok);
+    if (pr && pr.sheet && bySlug.has(pr.sheet)) { playSheet(pr.sheet); return; }
+    if (pr && pr.session && v2BySlug.has(pr.session)) { if (!playSession(pr.session, pr.n)) showSession(pr.session); return; }
     // #session/<slug>/<n>: the n-th exercise of the session; out of range, the session page.
     if (at && v2BySlug.has(at.slug)) {
       const s = v2BySlug.get(at.slug), items = RS.resolveItems(s, bySlug), it = items[at.n - 1];
@@ -1772,19 +2146,31 @@ dialog.ph-dlg::backdrop{background:#000}
       return;
     }
     const ses = RS.sessionSlugOf(tok); if (ses && v2BySlug.has(ses)) { showSession(ses); return; }
-    shown = null; seat = null; currentTheme = themeById.has(tok) ? tok : null; view.innerHTML = ''; renderHome(); show('home');
+    // L12: #<notebook>~<group> is a group grid; back on the rows from it, the page opens at that group.
+    const cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
+    const from = currentTheme === nb && $('home').hidden === false ? groupOf(themeById.get(nb)) : null;
+    shown = null; seat = null; chipPinned = ''; currentTheme = themeById.has(nb) ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
+    view.innerHTML = ''; renderHome(); show('home');
+    if (from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
   };
   window.addEventListener('hashchange', route);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && user && !$('home').hidden) refreshQueue(); });
 
   // ---------- boot ----------
   let booted = null, authSubscription = null;
+  // L19: the user of the session supabase-js keeps for this backend, read before supabase-js answers (an expired
+  // token is refreshed over the network first: seconds on a slow network, and offline no session at all).
+  // peeked: the home page shows that user's cached catalogue and supabase-js has not confirmed the session yet.
+  let peeked = false;
+  const storedUser = () => {
+    try { const v = JSON.parse(ls.get('rb.auth.' + backend.url.replace(/\W/g, '')) || 'null'); return v && v.user && v.user.id ? v.user : null; } catch { return null; }
+  };
   const boot = () => {
     const identity = backend ? backend.url + '|' + backend.key : null;
     if (booted !== identity) {
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
-      booted = identity;
+      booted = identity; peeked = false;
       resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
@@ -1793,11 +2179,28 @@ dialog.ph-dlg::backdrop{background:#000}
       const keepaliveFetch = (input, init) => fetch(input, init && init.method === 'DELETE' ? {...init, keepalive: true} : init);
       sb = supabase.createClient(backend.url, backend.key, {global: {fetch: keepaliveFetch}, auth: {persistSession: true, autoRefreshToken: true, storageKey: 'rb.auth.' + backend.url.replace(/\W/g, '')}});
       const client = sb;
+      // L19: a stored session and a cached catalogue: the home page shows now, the network read waits for
+      // supabase-js to confirm the user (an unconfirmed read would go out without the user's token).
+      const peek = storedUser();
+      if (peek) idb.get(RS.catalogueCacheKey(backend.url, peek.id)).then(snap => {
+        const c = RS.restoreCatalogueSnapshot(snap), still = storedUser();
+        if (!c || client !== sb || user || !still || still.id !== peek.id) return;
+        user = peek; peeked = true; applyCatalogue(c); loading = false; route();
+      });
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
         if (client !== sb) return;
         const next = session ? session.user : null;
+        if (peeked && user) {
+          const kept = storedUser();
+          // No session but still stored: the auth server is out of reach (offline). The cached view stays; a later
+          // TOKEN_REFRESHED or SIGNED_IN of the same user loads the fresh catalogue.
+          if (!next && kept && kept.id === user.id) return;
+          if (next && next.id === user.id) { peeked = false; user = next; setTimeout(() => { if (client === sb && user) reload({shown: true}); }, 0); return; }
+          peeked = false; // another user, or a session removed (revoked): handled as a change below
+        }
         const changed = (next && next.id) !== (user && user.id);
+        if (changed && user) clearUserCache(user.id); // signed out (button, reset, revoked session) or another account
         user = next;
         if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();

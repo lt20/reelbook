@@ -1,0 +1,21 @@
+[
+  {"name": "l10-01-session-start", "hash": "session/session-gainage-10-min",
+   "actions": [{"wait": "#view h1 >> text=Gainage en 10 minutes"}, {"wait": "#view #play-start >> text=Start"}],
+   "why": "« Start » under the session title"},
+  {"name": "l10-02-player-1-of-3", "hash": "session/session-gainage-10-min/play",
+   "actions": [{"wait": "#player .pl-n >> text=1/3"}, {"wait": "#player .pl-dose >> text=3 × 30 s"}, {"wait": "#play-car img"}, {"wait": "#play-keys li"}, {"wait": 400}],
+   "why": "carousel, big dose, three key points, Previous disabled on the first"},
+  {"name": "l10-03-player-3-of-3", "hash": "session/session-gainage-10-min/play/3",
+   "actions": [{"wait": "#player .pl-n >> text=3/3"}, {"wait": "#play-finish >> text=Finish"}, {"wait": "#play-car img"}, {"wait": 400}]},
+  {"name": "l10-04-resume-prompt", "hash": "session/session-gainage-10-min/play/3",
+   "actions": [{"wait": "#player .pl-n >> text=3/3"}, {"click": "#play-close"}, {"wait": "#view #play-start"}, {"click": "#view #play-start"},
+     {"wait": "#play-resume >> text=Resume at 3/3"}, {"wait": "#play-restart >> text=Start over"}]},
+  {"name": "l10-05-sheet-start", "hash": "fente-arriere",
+   "actions": [{"wait": "#view #play-start >> text=Start"}]},
+  {"name": "l10-06-single-sheet-player", "hash": "fente-arriere",
+   "actions": [{"click": "#view #play-start"}, {"wait": "#play-finish >> text=Finish"}, {"wait": "#play-car img"}, {"wait": 400}],
+   "why": "one exercise: no counter, no Previous / Next"},
+  {"name": "l10-07-next-from-1-to-2", "hash": "session/session-gainage-10-min/play",
+   "actions": [{"click": "#play-next"}, {"wait": "#player .pl-n >> text=2/3"}, {"wait": "#player .pl-dose >> text=3 × 20 s"}, {"wait": "#play-car img"}, {"wait": 400}],
+   "why": "the free text shows under the dose when it says more (« par côté »)"}
+]

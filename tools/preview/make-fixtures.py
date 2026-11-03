@@ -4,8 +4,8 @@
     python3 tools/preview/make-fixtures.py            # needs Pillow (pip install pillow)
 
 The preview (tools/preview/build.sh) shows the app on a fake backend. Its default data is this
-synthetic set, committed: 3 notebooks, 9 sheets built like templates/sheet.html and
-templates/exercise.html (French content written for the preview), 2 video sessions with doses,
+synthetic set, committed: 3 notebooks, 29 sheets (25 in Strength, for the notebook page) built like templates/sheet.html and
+templates/exercise.html (French content written for the preview), 4 video sessions with doses,
 one note and 4 requests (queued, processing, error, done). Images are plain colour + label JPEGs made
 here: never a frame from a real video (the repository is public).
 
@@ -15,6 +15,7 @@ the signed path <user id>/<slug>/img/<file> to it).
 import json
 import os
 import sys
+import textwrap
 import unicodedata
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -222,6 +223,111 @@ SESSIONS = [
 ]
 
 
+# L12: a Strength notebook full enough for its page (one row per group, « See all », « From sessions »):
+# 14 more standalone sheets and 2 more video sessions, written compactly and filled with generic content.
+# Their photos are portrait (9:16), like the frames of a real video, so the 4:5 card crop shows.
+def filled(n, slug, group, title, eyebrow, duration, summary, s1, s2):
+    return dict(slug=slug, theme='strength', group=group, title=title, eyebrow=eyebrow, duration=duration,
+                source=src(n, ('Instagram', 'TikTok', 'YouTube')[n % 3]), summary=summary, lead=summary,
+                kit=['poids du corps', 'un tapis'],
+                why='Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.',
+                dose=[('3', 'séries'), ('10', 'répétitions'), ('60 s', 'repos')],
+                keys=[('Lentement.', 'Trois secondes dans la phase difficile.'),
+                      ('Respire.', 'Souffle pendant l\'effort, ne bloque pas.')],
+                steps=[(s1[0], s1[1], s1[0]), (s2[0], s2[1], s2[0])],
+                loop='Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.')
+
+
+EXTRA_SHEETS = [filled(10 + i, *row) for i, row in enumerate([
+    ('ange-au-sol', 'Shoulders', 'Ange au sol', 'Épaules · haut du dos · 4 minutes', '4 min',
+     'Allongé sur le dos, les bras glissent au sol du haut vers le bas, comme un ange dans la neige.',
+     ('Bras en W', 'Coudes et dos des mains au sol.'), ('Bras en Y', 'Glisse les bras au-dessus de la tête.')),
+    ('rotation-externe-elastique', 'Shoulders', 'Rotation externe à l\'élastique', 'Coiffe des rotateurs · 3 minutes', '3 min',
+     'Coude collé au corps, l\'avant-bras s\'ouvre vers l\'extérieur contre l\'élastique.',
+     ('Départ', 'Coude à 90°, main devant le ventre.'), ('Ouverture', 'L\'avant-bras pivote vers l\'extérieur.')),
+    ('elevations-laterales', 'Shoulders', 'Élévations latérales', 'Deltoïdes · 5 minutes', '5 min',
+     'Bras presque tendus, les haltères montent sur les côtés jusqu\'à hauteur d\'épaules.',
+     ('Bras le long du corps', 'Haltères légers, coudes souples.'), ('En haut', 'Mains à hauteur d\'épaules, pas plus.')),
+    ('pompes-piquees', 'Shoulders', 'Pompes piquées', 'Épaules · triceps · 5 minutes', '5 min',
+     'Bassin haut, la tête descend entre les mains : la pompe qui charge les épaules.',
+     ('Le V', 'Bassin haut, mains et pieds au sol.'), ('Descente', 'Le front vient entre les mains.')),
+    ('face-pull-elastique', 'Shoulders', 'Face pull à l\'élastique', 'Arrière d\'épaule · 4 minutes', '4 min',
+     'L\'élastique vient vers le visage, coudes hauts, omoplates serrées.',
+     ('Bras tendus', 'Élastique accroché à hauteur de visage.'), ('Tirage', 'Mains de part et d\'autre des oreilles.')),
+    ('curl-marteau', 'Arms', 'Curl marteau', 'Biceps · avant-bras · 4 minutes', '4 min',
+     'Paumes face à face, les haltères montent sans balancer le buste.',
+     ('Bras tendus', 'Paumes vers les cuisses.'), ('En haut', 'Coudes fixes, poings vers les épaules.')),
+    ('dips-banc', 'Arms', 'Dips sur banc', 'Triceps · 4 minutes', '4 min',
+     'Mains sur le bord d\'un banc derrière toi, tu descends en pliant les coudes.',
+     ('Départ', 'Bras tendus, fesses près du banc.'), ('En bas', 'Coudes à 90°, dirigés vers l\'arrière.')),
+    ('extension-triceps', 'Arms', 'Extension triceps au-dessus de la tête', 'Triceps · 4 minutes', '4 min',
+     'Un haltère à deux mains derrière la tête, les avant-bras se déplient vers le plafond.',
+     ('Derrière la tête', 'Coudes vers le plafond.'), ('Bras tendus', 'Seuls les avant-bras bougent.')),
+    ('rowing-sous-table', 'Back', 'Rowing inversé sous la table', 'Dos · biceps · 5 minutes', '5 min',
+     'Allongé sous une table solide, tu tires la poitrine vers le bord.',
+     ('Suspendu', 'Mains au bord, corps gainé.'), ('Tirage', 'Poitrine au bord, coudes près du corps.')),
+    ('superman', 'Back', 'Superman', 'Lombaires · fessiers · 3 minutes', '3 min',
+     'À plat ventre, bras et jambes décollent ensemble quelques secondes.',
+     ('À plat ventre', 'Bras devant, front au sol.'), ('Envol', 'Bras et jambes décollent, regard au sol.')),
+    ('tirage-horizontal-elastique', 'Back', 'Tirage horizontal à l\'élastique', 'Dos · 4 minutes', '4 min',
+     'Assis jambes tendues, l\'élastique autour des pieds, tu tires les coudes vers l\'arrière.',
+     ('Bras tendus', 'Dos droit, élastique tendu.'), ('Coudes en arrière', 'Omoplates serrées une seconde.')),
+    ('squat-gobelet', 'Legs', 'Squat gobelet', 'Cuisses · fessiers · 6 minutes', '6 min',
+     'Un poids tenu contre la poitrine, tu descends entre tes talons, dos droit.',
+     ('Debout', 'Poids contre le sternum, pieds un peu ouverts.'), ('En bas', 'Coudes entre les genoux.')),
+    ('pont-fessier', 'Legs', 'Pont fessier', 'Fessiers · ischios · 4 minutes', '4 min',
+     'Sur le dos, pieds au sol, tu montes le bassin en serrant les fessiers.',
+     ('Au sol', 'Pieds près des fesses.'), ('Bassin haut', 'Épaules-hanches-genoux alignés.')),
+    ('rotation-thoracique', 'Mobility', 'Rotations thoraciques à quatre pattes', 'Haut du dos · 3 minutes', '3 min',
+     'Une main derrière la tête, le coude part vers le plafond puis revient sous le buste.',
+     ('À quatre pattes', 'Main derrière la tête.'), ('Ouverture', 'Le coude monte, le regard suit.')),
+])]
+SHEETS += EXTRA_SHEETS
+PORTRAIT = {s['slug'] for s in EXTRA_SHEETS}
+
+
+def item(slug, title, group, dose, lead, s1, s2):
+    PORTRAIT.add(slug)
+    return dict(slug=slug, title=title, group=group, dose=dose, eyebrow=f'{group} · séance', lead=lead,
+                kit=['un tapis'], keys=[('Lentement.', 'Le geste avant la vitesse.'), ('Gainé.', 'Le bassin ne bouge pas.')],
+                easier='Moins d\'amplitude, ou les genoux au sol.',
+                steps=[(s1[0], s1[1], s1[0]), (s2[0], s2[1], s2[0])])
+
+
+SESSIONS += [
+    dict(slug='session-epaules-solides', theme='strength', title='Épaules solides',
+         format='4 exercices · 3 tours · 45 s de repos entre les exercices', source=src(30, 'YouTube', 'Coach Démo'),
+         why='Une routine de prévention pour les épaules qui travaillent beaucoup : nage, sports de raquette, bureau.',
+         key_points=['Omoplates basses pendant tout le circuit.', 'Charge légère, mouvement lent.'],
+         items=[
+             item('session-epaules-ytw', 'Y-T-W allongé', 'Shoulders', '3 × 8',
+                  'À plat ventre, les bras dessinent un Y, un T puis un W.',
+                  ('Le Y', 'Bras en Y, pouces vers le plafond.'), ('Le W', 'Coudes pliés, omoplates serrées.')),
+             item('session-epaules-pompes-scapulaires', 'Pompes scapulaires', 'Shoulders', '3 × 12',
+                  'En planche bras tendus, seules les omoplates se rapprochent puis s\'écartent.',
+                  ('Planche haute', 'Bras tendus, corps gainé.'), ('Omoplates', 'Elles se rapprochent sans plier les bras.')),
+             item('session-epaules-tenue-mur', 'Tenue bras au mur', 'Shoulders', '3 × 30 s',
+                  'Dos au mur, les bras glissent le long du mur sans le quitter.',
+                  ('Contre le mur', 'Dos, tête et bras au mur.'), ('Glisser', 'Les bras montent sans décoller.')),
+             item('session-epaules-rowing-un-bras', 'Rowing un bras', 'Back', '3 × 10 par bras',
+                  'Un genou sur le banc, l\'haltère monte vers la hanche.',
+                  ('Appui', 'Dos plat, bras tendu vers le sol.'), ('Tirage', 'Le coude file vers le plafond.')),
+         ]),
+    dict(slug='session-bras-express', theme='strength', title='Bras express',
+         format='2 exercices en superset · 3 tours · 1 min de repos', source=src(31, 'Instagram', 'Coach Démo'),
+         why='Dix minutes pour les bras, avec un élastique et le sol.',
+         key_points=['Coudes fixes sur les curls.', 'Corps gainé sur les pompes.'],
+         items=[
+             item('session-bras-curl-elastique', 'Curl à l\'élastique', 'Arms', '3 × 15',
+                  'Debout sur l\'élastique, les mains montent vers les épaules.',
+                  ('Bras tendus', 'Élastique sous les pieds.'), ('En haut', 'Poings aux épaules, coudes fixes.')),
+             item('session-bras-pompes-serrees', 'Pompes serrées', 'Arms', '3 × 8',
+                  'Mains sous les épaules, coudes le long du corps : la pompe des triceps.',
+                  ('Planche haute', 'Mains sous les épaules.'), ('Descente', 'Coudes qui frôlent les côtes.')),
+         ]),
+]
+
+
 def label_image(path, size, colour, text):
     from PIL import Image, ImageDraw, ImageFont
     # Pillow's bundled font has no accented glyphs: labels are written without accents.
@@ -256,13 +362,14 @@ def main():
     except ImportError:
         sys.exit('Pillow is required: pip install pillow (or run with a Python that has it).')
     sheets, sessions, n = [], [], 0
-    stamp = lambda: f'2026-10-{10 + n:02d}T09:00:00Z'  # noqa: E731
+    stamp = lambda: f'2026-10-{min(10 + n, 28):02d}T09:00:00Z'  # noqa: E731
     # « now-<N>h »: resolved when the preview is built (fake-data.py), for the home « New » row (L7, 72 h)
     RECENT = {'jab-cross': 'now-5h', 'chien-tete-en-bas': 'now-30h', 'session-shadow-boxing': 'now-20h'}
 
     def images(slug, theme, title, steps):
         c = COLOURS[theme]
-        label_image(os.path.join(OUT, 'files', slug, 'img', 'thumb.jpg'), (224, 224), c, f'{title}\n(preview)')
+        label_image(os.path.join(OUT, 'files', slug, 'img', 'thumb.jpg'), (270, 480) if slug in PORTRAIT else (224, 224), c,
+                    f'{textwrap.fill(title, 16) if slug in PORTRAIT else title}\n(preview)')
         for i, st in enumerate(steps):
             label_image(os.path.join(OUT, 'files', slug, 'img', f'0{i + 1}.jpg'), (360, 450), c, f'{i + 1}. {st[0]}\n{title}')
 

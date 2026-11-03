@@ -240,7 +240,89 @@
     return [...fresh, ...ranked.filter(s => was.has(s.slug))].slice(0, n);
   };
 
+  // L19, instant start: the last catalogue read, saved per backend and user (IndexedDB in the app), shown at the
+  // next start before the fresh read replaces it. A snapshot is plain JSON: Sets and Maps become arrays. A
+  // backend without `sessions` or `practice_log` keeps them empty (sessionsOk / practiceOk false). `signed`:
+  // [storage path, signed URL] pairs, so cached photos show before any new URL is signed (the service worker
+  // answers a signed photo by its path, whatever the token).
+  const SNAPSHOT = 1;
+  const catalogueSnapshot = c => ({
+    v: SNAPSHOT,
+    themes: c.themes || [], sheets: c.sheets || [], sessions: c.sessionsOk ? c.sessions || [] : [],
+    notesIndex: [...(c.notesIndex || [])], lastDone: c.practiceOk ? [...(c.lastDone || [])] : [],
+    sessionsOk: !!c.sessionsOk, practiceOk: !!c.practiceOk, v1: c.v1 || 0, signed: [...(c.signed || [])]
+  });
+  // null when the saved value is not a snapshot of this version (older app, damaged entry): no cached display.
+  const restoreCatalogueSnapshot = s => {
+    if (!s || s.v !== SNAPSHOT || !Array.isArray(s.themes) || !Array.isArray(s.sheets)) return null;
+    const list = x => Array.isArray(x) ? x : [];
+    return {
+      themes: s.themes, sheets: s.sheets, sessions: s.sessionsOk ? list(s.sessions) : [],
+      notesIndex: new Set(list(s.notesIndex)), lastDone: new Map(s.practiceOk ? list(s.lastDone) : []),
+      sessionsOk: !!s.sessionsOk, practiceOk: !!s.practiceOk, v1: s.v1 || 0, signed: new Map(list(s.signed))
+    };
+  };
+  // Decision 8 (state per user), and per backend: two projects can hold the same user id.
+  const catalogueCacheKey = (url, userId) => `rb.catalogue.${userId}.${url}`;
+  // The cached catalogue first, then the fresh one. The network read starts at once; the cached copy is applied
+  // only when it arrives before the fresh read ends. A failed read keeps what is shown and is returned as
+  // {source: 'cache' | 'none', error}. current(): false once the user or the backend changed (nothing applied).
+  // read() resolves a restored snapshot or null; write(data) saves the fresh one in the background (`saved`).
+  // gen(): the count of local changes (a sheet deleted, a session edited...). A read that a local change overtook
+  // is never applied nor saved (it would bring the change back): it is read again once; overtaken again, what is
+  // shown stays ({source: 'local'}, the app saves it). The cached copy is not applied after a local change either.
+  const LOCAL = {};
+  const refreshCatalogue = async ({read, fetch, apply, write, current = () => true, gen = () => 0}) => {
+    let ended = false, shown = false;
+    const g0 = gen();
+    const fetchFresh = async () => {
+      const first = await fetch(); if (gen() === g0) return first;
+      const g1 = gen(), again = await fetch(); return gen() === g1 ? again : LOCAL;
+    };
+    const fresh = Promise.resolve().then(fetchFresh);
+    fresh.then(() => { ended = true; }, () => {});
+    const cached = Promise.resolve().then(read).then(snap => {
+      if (snap && !ended && gen() === g0 && current()) { apply(snap, 'cache'); shown = true; }
+    }, () => {});
+    let data;
+    try { data = await fresh; } catch (error) { await cached; return {source: shown ? 'cache' : 'none', error}; }
+    if (!current()) return {source: 'stale'};
+    if (data === LOCAL) return {source: 'local'};
+    apply(data, 'network');
+    return {source: 'network', saved: Promise.resolve().then(() => write(data)).catch(() => {})}; // not awaited by the app
+  };
+
+  // ---------- session player (L10) ----------
+  // #session/<slug>/play (exercise 1, or the resume prompt), #session/<slug>/play/<n>, #<sheet slug>/play (one
+  // exercise). {session, n} (n null: no number given) or {sheet}; null for any other token.
+  const PLAY = 'play';
+  const playHref = (slug, n) => '#' + ROUTE + slug + '/' + PLAY + (n ? '/' + n : '');
+  const sheetPlayHref = slug => '#' + slug + '/' + PLAY;
+  const playRoute = tok => {
+    if (typeof tok !== 'string') return null;
+    const parts = tok.split('/');
+    if (tok.startsWith(ROUTE)) {
+      parts.shift();
+      if (!parts[0] || parts[1] !== PLAY || parts.length > 3) return null;
+      if (parts.length === 2) return {session: parts[0], n: null};
+      return /^[1-9][0-9]*$/.test(parts[2]) ? {session: parts[0], n: Number(parts[2])} : null;
+    }
+    return parts.length === 2 && parts[0] && parts[1] === PLAY ? {sheet: parts[0]} : null;
+  };
+  // The dose of a resolved item as the player shows it, big: from its numbers (« 3 × 10 », « 3 × 40 s »,
+  // « 10 / side », « 1 min », « 2:30 »), '' when it has none (the player then shows the free text). A range read
+  // from the text keeps its lower bound (« 3 × 8-12 »).
+  const secondsLabel = s => s >= 60 && !(s % 60) ? s / 60 + ' min' : s <= 90 ? s + ' s' : Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  const doseLabel = it => {
+    if (!it) return '';
+    const min = 'reps' in (it.given || {}) ? null : parseDose(it.dose).repsMin;
+    const count = it.reps ? (min ? min + '-' : '') + it.reps : it.seconds ? secondsLabel(it.seconds) : '';
+    if (!count) return '';
+    return (it.sets ? it.sets + ' × ' : '') + count + (it.per_side ? ' / side' : '');
+  };
+
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
-    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest};
+    MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
+    catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);
