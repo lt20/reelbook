@@ -82,6 +82,18 @@ def from_work(work, out):
     }
 
 
+def add_search_text(data):
+    """L14: each sheet gets the search_text `rb.py publish` would write (the same function); the preview's
+    ?missing=sheets.search_text then plays a backend before the column."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('rb', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'rb.py'))
+    rb = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rb)
+    for s in data.get('sheets') or []:
+        if 'search_text' not in s:
+            s['search_text'] = rb.search_text(s.get('html') or '')
+
+
 def main(argv):
     if len(argv) != 3 or argv[1] not in ('--fixtures', '--work'):
         sys.exit('usage: fake-data.py <out> --fixtures <dir> | --work <dir>')
@@ -89,6 +101,7 @@ def main(argv):
     if not os.path.isdir(src):
         sys.exit(f'not a folder: {src}')
     data = from_fixtures(src, out) if mode == '--fixtures' else from_work(src, out)
+    add_search_text(data)
     os.makedirs(os.path.join(out, 'vendor'), exist_ok=True)
     with open(os.path.join(out, 'vendor', 'fake-data.js'), 'w', encoding='utf-8') as f:
         f.write('window.__FAKE = ' + json.dumps(data, ensure_ascii=False) + ';\n')
