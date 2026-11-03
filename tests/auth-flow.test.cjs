@@ -28,7 +28,7 @@ const sheetDocument = {
 // `failing`: table -> {error, status} answered instead of rows (a backend without that table).
 // `writes`: table -> {data, error} answered to an insert / update / delete / upsert (default: one row written).
 // `dom`: a minimal DOMParser for a sheet's html made of `<a href="…">text</a>` links only, so loadSheet renders it.
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}]} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -60,7 +60,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     },
     window: {
       REELBOOK: {
-        library: [{id: 'strength', title: 'Strength', groups: []}],
+        library,
         hosted: {name: 'Reelbook hosted', url: hostedUrl, anonKey: ownKey, blurb: 'Free for now.'},
         repo: 'https://github.com/lt20/reelbook'
       },
@@ -611,4 +611,36 @@ test('C1: saving a video session after changing one dose keeps its long format a
   assert.equal(row.format, format, 'the format is saved whole');
   assert.deepEqual(row.items, [{slug: 'gsp-rot', dose: longDose}, {slug: 'gsp-angel', dose: '40 s'}]);
   assert.ok(page.element('view').innerHTML.includes(format), 'the saved page shows the whole format');
+});
+
+test('C2: the add-notebook card counts « N more to pick from » and suggests notebooks not added yet', async () => {
+  const lib = ['strength', 'kitesurf', 'mobility', 'cook', 'pilates', 'golf'].map(id => ({id, title: id === 'kitesurf' ? 'Kitesurf' : id === 'cook' ? 'Cooking' : id === 'mobility' ? 'Mobility & rehab' : id[0].toUpperCase() + id.slice(1), groups: []}));
+  const tables = v2Tables();
+  tables.user_themes.push({id: 'kitesurf', title: 'Kitesurf', groups: [], builtin: true, position: 2});
+  const page = await app({...signedIn, tables, library: lib});
+  await settle();
+  let card = page.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
+  assert.match(card, /<p class="eyebrow">3 more to pick from<\/p>/);
+  assert.match(card, /<p>Cooking, pilates, golf… or one you describe yourself\.<\/p>/, 'Kitesurf is already a notebook');
+  const one = await app({...signedIn, tables, library: lib.slice(0, 4)});
+  await settle();
+  card = one.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
+  assert.match(card, /1 more to pick from<\/p>[\s\S]*<p>Cooking… or one you describe yourself\.<\/p>/);
+  const none = await app({...signedIn, tables, library: lib.slice(0, 3)});
+  await settle();
+  assert.match(none.element('portal').innerHTML, /0 more to pick from<\/p>[\s\S]*<p>Describe one yourself\.<\/p>/);
+});
+
+test('C2: a queue row without a notebook shows no notebook label, and its reason sits on its own line', async () => {
+  const tables = v2Tables();
+  tables.requests = [
+    {id: 3, url: 'https://www.tiktok.com/@coach/video/7312', status: 'error', theme: null, note: 'Video unavailable (private account)', created_at: '2026-11-01T08:00:00Z'},
+    {id: 2, url: 'https://www.youtube.com/shorts/aBcD1234', status: 'processing', theme: 'strength', note: '', created_at: '2026-11-02T20:00:00Z'}
+  ];
+  const page = await app({...signedIn, tables});
+  await settle();
+  const rows = page.element('queue').innerHTML.split('<div class="q">').slice(1);
+  assert.match(rows[0], /<small>added 1 Nov<\/small><small class="why">Video unavailable \(private account\)<\/small>/);
+  assert.match(rows[0], /needs a look/);
+  assert.match(rows[1], /<small>added 2 Nov · Strength<\/small><\/div>/);
 });

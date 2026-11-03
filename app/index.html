@@ -145,6 +145,7 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .q .t{min-width:0}
 .q .t a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 .q .t small{color:var(--muted);font-size:13px}
+.q .t small.why{display:block}
 .q .st{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;background:var(--warn-bg);color:var(--warn);white-space:nowrap}
 .q button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;padding:4px 6px}
 /* ---- sheet page (styles used by templates/sheet.html and templates/exercise.html) ---- */
@@ -258,7 +259,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   <div class="head">
     <div>
       <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
-      <p class="eyebrow" id="h-eyebrow">Three notebooks, one place</p>
+      <p class="eyebrow" id="h-eyebrow">Your videos, by notebook</p>
       <h1 id="h-title" class="brand-title">Reelbook</h1>
       <p class="cnt" id="count"></p>
     </div>
@@ -586,6 +587,12 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       <div class="b"><h3>${esc(e.title)}</h3><p>${esc(e.summary)}</p>
       <div class="m">${(extra && extra.meta || []).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  // The « + Add a notebook » card: its examples are the first three library notebooks not added yet.
+  const addNotebookCard = rest => {
+    const ex = rest.slice(0, 3).map((t, i) => i ? t.title.charAt(0).toLowerCase() + t.title.slice(1) : t.title);
+    const hint = ex.length ? `${ex.join(', ')}… or one you describe yourself.` : 'Describe one yourself.';
+    return `<button type="button" class="tcard add" id="add-nb"><p class="eyebrow">${rest.length} more to pick from</p><h2>+ Add a notebook</h2><p>${esc(hint)}</p></button>`;
+  };
   const renderPortal = () => {
     $('portal').innerHTML = themes.map(t => {
       const list = sheets.filter(e => e.theme === t.id);
@@ -595,7 +602,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       return `<a class="tcard" href="#${esc(t.id)}" style="--t:${colorOf(t)}">
         <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
         ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
-    }).join('') + `<button type="button" class="tcard add" id="add-nb"><p class="eyebrow">${plural(library.filter(t => !themeById.has(t.id)).length, 'more to pick')}</p><h2>+ Add a notebook</h2><p>Kitesurf, cooking, pilates… or one you describe yourself.</p></button>`;
+    }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
     $('add-nb').addEventListener('click', () => { renderPicker(); $('picker').hidden = !$('picker').hidden; if (!$('picker').hidden) $('picker').scrollIntoView({block: 'start'}); });
   };
   const renderPicker = () => {
@@ -731,7 +738,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       const st = d.status === 'processing' ? 'in progress' : d.status === 'error' ? 'needs a look' : 'queued';
       return `<div class="q"><div class="ico">${platformTag(host)}</div>
         <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
-        <small>added ${fmtDate(d.created_at)}${d.theme && themeById.has(d.theme) ? ' · ' + esc(themeById.get(d.theme).title) : ''}${d.note ? ' · ' + esc(d.note) : ''}</small></div>
+        <small>added ${fmtDate(d.created_at)}${d.theme && themeById.has(d.theme) ? ' · ' + esc(themeById.get(d.theme).title) : ''}</small>${d.note ? `<small class="why">${esc(d.note)}</small>` : ''}</div>
         <div style="display:flex;align-items:center;gap:4px"><span class="st">${st}</span><button type="button" data-del="${esc(d.id)}" aria-label="Remove from the queue" title="Remove">×</button></div></div>`;
     }).join('');
   };
