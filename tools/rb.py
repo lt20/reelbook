@@ -200,6 +200,9 @@ def now():
 
 REQUIRED = ("slug", "theme", "group", "title")
 SESSION_REQUIRED = ("slug", "theme", "title")
+# Optional structured dose of a session item, written when the video states it (the app reads them before the
+# free-text dose): whole numbers >= 0, and per_side a boolean; null counts as absent.
+ITEM_FIELDS = ("sets", "reps", "seconds", "rest_s", "per_side")
 IMG_EXT = (".jpg", ".jpeg", ".png", ".webp")
 NO_SESSIONS = "this backend has no sessions table: re-run supabase/schema.sql (see docs/own-supabase.md)"
 
@@ -251,6 +254,10 @@ def _read_session(d, meta):
     for it in items:
         if not isinstance(it, dict) or not isinstance(it.get("slug"), str) or not it["slug"] or not isinstance(it.get("dose", ""), str):
             die(f"{where}: bad item {json.dumps(it, ensure_ascii=False)}: expected {{\"slug\": \"…\", \"dose\": \"…\"}}")
+        for k in ITEM_FIELDS:
+            v = it.get(k)
+            if v is not None and not (isinstance(v, bool) if k == "per_side" else isinstance(v, int) and not isinstance(v, bool) and v >= 0):
+                die(f"{where}: bad item {json.dumps(it, ensure_ascii=False)}: {k} must be " + ("true or false" if k == "per_side" else "a whole number >= 0"))
     for k in ("format", "why"):
         if not isinstance(meta.get(k, ""), str): die(f"{where}: {k} must be a string")
     kp = meta.get("key_points", [])
@@ -314,7 +321,8 @@ def _publish_session(d, meta):
     row = {"slug": meta["slug"], "theme": meta["theme"], "title": meta["title"], "format": meta.get("format", ""),
            "why": meta.get("why", ""), "key_points": meta.get("key_points", []), "source": meta.get("source", {}),
            "origin": "video", "thumbnail": f"{cfg['user_id']}/{th}" if th else "",
-           "items": [{"slug": it["slug"], "dose": it.get("dose", "")} for it in meta["items"]]}
+           "items": [dict({"slug": it["slug"], "dose": it.get("dose", "")}, **{k: it[k] for k in ITEM_FIELDS if it.get(k) is not None})
+                     for it in meta["items"]]}
     out = rest(cfg, "POST", "sessions", row, prefer="resolution=merge-duplicates,return=representation", params={"on_conflict": "user_id,slug"})
     print(f"published session {meta['slug']}: {len(row['items'])} item(s), {len(sheets)} sheet(s), row {out[0]['id']}")
     _drop_v1_sessions(cfg, (meta.get("source") or {}).get("url"))

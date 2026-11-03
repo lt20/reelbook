@@ -213,7 +213,14 @@ titles follow the template, translated.
   given). When the `format` states one dose for every exercise (« 40 s per exercise, 20 s
   rest »), copy that dose into each `items[].dose` (« 40 s ») instead of leaving it empty: the
   app shows `items[].dose` on top of each exercise, and the user can still edit every dose in
-  the app (Edit on the session). `why` and `key_points` are written in the user's language, like the sheets. Optional
+  the app (Edit on the session). **Structured dose** (optional, for the session player): on an item,
+  add `sets`, `reps`, `seconds` (time per set), `rest_s` (rest after each set, in seconds) and
+  `per_side` (`true` when the dose is for each side) **only for what the video states**, e.g.
+  `{"slug": "…", "dose": "3 × 8-12 per side", "sets": 3, "reps": 12, "per_side": true}`. Whole
+  numbers (`reps` = the upper bound of a range), `per_side` true or false; leave out a field the video
+  does not give, never put a suggestion there. `items[].dose` stays the free-text dose the user reads
+  and edits: always write it too. Without these fields the app reads the numbers from the dose and the
+  rest from the `format`. `why` and `key_points` are written in the user's language, like the sheets. Optional
   `"thumbnail": "<exercise slug>/img/thumb.jpg"`; leave it out and the app uses the first
   item's.
 - **Requeued old sessions**: a backend set up before sessions v2 may still hold old one-page
