@@ -37,7 +37,7 @@ test('L13 — Compact brand bar: 28 px mark, about 22 px wordmark, Settings on t
   assert.match(bar[1], /<img[^>]*width="28"[^>]*height="28"/);
   assert.match(bar[1], /id="h-title"[^>]*>Reelbook<\/h1>/);
   assert.match(bar[1], /<a[^>]*href="#settings"[^>]*>Settings<\/a>/);
-  assert.match(bar[1], /id="btn-new"[^>]*>\+ Add a video<\/button>/);
+  assert.doesNotMatch(bar[1], /id="btn-new"/); // L17: « + Add a video » is the floating #add-video-fab
   assert.doesNotMatch(bar[1], /eyebrow|h-eyebrow/);
   assert.match(rule('#brand-bar'), /display:flex/);
   assert.match(rule('#brand-bar'), /align-items:center/);
@@ -52,7 +52,7 @@ test('L13 — Compact brand bar: 28 px mark, about 22 px wordmark, Settings on t
   })});
   assert.equal(page.element('home').hidden, false);
   assert.equal(page.element('count').textContent, '23 practised · 107 saved · 4 notebooks');
-  await page.fire('btn-new');
+  await page.fire('add-video-fab');
   assert.equal(page.element('sheet-new').hidden, false);
 });
 
@@ -115,7 +115,7 @@ test('L13 — Empty account keeps the home usable without New, To try, queue or 
   assert.equal(page.element('portal').hidden, false);
   assert.doesNotMatch(page.element('portal').innerHTML, /<div class="thumbs">/);
   assert.equal(page.element('howto').hidden, false);
-  await page.fire('btn-new');
+  await page.fire('add-video-fab');
   assert.equal(page.element('sheet-new').hidden, false);
 });
 
