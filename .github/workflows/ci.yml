@@ -16,16 +16,18 @@ jobs:
           node-version: '22'
       - run: node --check app/config.js
       - run: node --check app/sw.js
-      - run: node --test tests/auth-flow.test.cjs
       - run: node --check app/sessions.js
-      - run: node --test tests/sessions.test.cjs
+      - run: node --check app/sheet.js
+      # every app test, the acceptance tests written by Codex, and the tests of the Codex scripts
+      - run: node --test tests/*.cjs tests/acceptance/*/*.test.cjs scripts/tests/*.test.mjs
   rb-py:
-    runs-on: ubuntu-latest
+    # Python 3.9 (the installer's floor) is not built for Ubuntu 26.04 runners
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.9'
       - run: bash -n tools/nightly.sh
       - run: python -m py_compile tools/rb.py tools/crop.py tools/vstack.py
       - run: python -I tests/rb-sessions.test.py -v
