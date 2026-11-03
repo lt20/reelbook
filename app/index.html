@@ -233,6 +233,19 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 @keyframes qhold{to{opacity:.6}}
 @media (prefers-reduced-motion:reduce){.toast .qbar{animation-name:qhold}}
 @media (prefers-reduced-motion:no-preference){.card img,.step img{transition:transform .25s}.card:hover img,.step figure:hover img{transform:scale(1.02)}}
+/* ---- L7: « New » row on the home page, « Something wrong? », Redo in the queue ---- */
+.newsec{margin:20px 0 4px}
+.newsec h2{margin:0 0 8px}
+.newrow{display:grid;grid-auto-flow:column;grid-auto-columns:min(72%,260px);gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 2px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch}
+.newrow .card{scroll-snap-align:start}
+.newrow .card h3{font-size:19px}
+.newrow .card p{-webkit-line-clamp:2}
+.report{margin-top:14px}
+.report .link{appearance:none;background:transparent;border:0;padding:10px 0;min-height:44px;color:var(--muted);font:600 14px var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#report-dlg textarea{min-height:110px}
+#report-status:empty{display:none}
+#report-status.err{color:var(--danger)}
+.q .redo{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;margin-bottom:2px;background:var(--accent);color:var(--accent-ink)}
 /* ---- L3: sheet in use (keep screen on, gesture first, full-screen photos) ---- */
 .top{flex-wrap:wrap;gap:8px 10px}
 .top>a{white-space:nowrap}
@@ -368,6 +381,9 @@ dialog.ph-dlg::backdrop{background:#000}
     <div class="qsum" id="queue-summary"></div>
     <div class="queue" id="queue" hidden></div>
   </section>
+
+  <!-- L7: sheets and video sessions delivered in the last 72 h, not opened yet on this device -->
+  <section class="newsec" id="new-sec" aria-labelledby="new-h" hidden></section>
 
   <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
   <div id="results" hidden></div>
@@ -512,6 +528,9 @@ dialog.ph-dlg::backdrop{background:#000}
   <p class="err" id="sd-err" hidden></p>
   <div class="actions"><button class="btn danger" type="button" id="sd-ok">Delete sheet</button><button class="btn ghost" type="button" id="sd-cancel">Keep it</button></div>
 </dialog>
+<!-- L7: « Something wrong? » queues the video again with a « Redo: » note for the next run -->
+<!-- (its content is written by openReport, fresh for each sheet or session) -->
+<dialog class="dlg" id="report-dlg" aria-labelledby="report-h"></dialog>
 <!-- L3: full-screen viewer of a sheet's step photos -->
 <dialog class="ph-dlg" id="ph-dlg" aria-label="Photos">
   <button type="button" class="ph-x" id="ph-close" aria-label="Close the photos">✕</button>
@@ -650,7 +669,7 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
-  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items';
+  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
   const loadCatalogue = async () => {
     await loadThemes();
@@ -752,6 +771,29 @@ dialog.ph-dlg::backdrop{background:#000}
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return (signed.get(s.thumbnail) || {}).url || ''; const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
   const v2Card = (s, pre = [], big = true) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, {txt: (s.source || {}).author || ''}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  // ---------- L7: « New » row ----------
+  // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen.<user id>
+  // holds the keys of the pages opened (a sheet's slug, « session/<slug> » for a session, as RS.noteKey), the last
+  // 500. One list per account (the id is unique across backends), so a page opened by A does not leave B's « New »;
+  // the old shared key rb.seen is ignored. A new session's exercise sheets are left to the session's card.
+  // Home page only, 6 cards, newest first.
+  const NEW_MS = 72 * 3600 * 1000, NEW_MAX = 6;
+  const seenKey = () => user && user.id ? 'rb.seen.' + user.id : '';
+  const seenKeys = () => { const k = seenKey(); if (!k) return []; try { const a = JSON.parse(ls.get(k) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+  const markSeen = key => { const k = seenKey(); if (!k) return; const a = seenKeys().filter(x => x !== key); a.push(key); ls.set(k, JSON.stringify(a.slice(-500))); };
+  const isRecent = v => { const t = Date.parse(v || ''); return t > Date.now() - NEW_MS; };
+  const renderNew = show => {
+    const seen = new Set(seenKeys());
+    const ses = show ? v2Sessions.filter(s => s.origin === 'video' && isRecent(s.created_at)) : [];
+    const inNew = new Set(ses.flatMap(s => (s.items || []).map(i => i && i.slug)));
+    const list = [
+      ...ses.filter(s => !seen.has(RS.noteKey(s.slug))).map(s => ({at: s.created_at, html: v2Card(s, [], false)})),
+      ...(show ? sheets : []).filter(e => isRecent(e.added_at) && !inNew.has(e.slug) && !seen.has(e.slug)).map(e => ({at: e.added_at, html: sheetCard(e)}))
+    ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, NEW_MAX);
+    $('new-sec').hidden = !list.length;
+    $('new-sec').innerHTML = list.length ? '<h2 class="eyebrow" id="new-h">New</h2><div class="newrow" id="new-cards"></div>' : '';
+    if (list.length) $('new-cards').innerHTML = list.map(x => x.html).join('');
+  };
   const renderGroups = t => {
     const solo = sheets.filter(e => e.theme === t.id);
     const byGroup = new Map(); for (const g of (t.groups || [])) byGroup.set(g, []);
@@ -810,6 +852,7 @@ dialog.ph-dlg::backdrop{background:#000}
     const terms = sheets.length ? searchTerms() : [];
     $('results').hidden = !terms.length;
     if (terms.length) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t); }
+    renderNew(!t && !loading && !loadError && !terms.length);
     document.title = t ? `${t.title} · Reelbook` : 'Reelbook';
   };
 
@@ -870,6 +913,9 @@ dialog.ph-dlg::backdrop{background:#000}
   const hhmm = iso => { try { return new Date(iso).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit', hour12: false}); } catch { return ''; } };
   const dayStart = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
   const daysAgo = iso => { const n = Math.round((dayStart(Date.now()) - dayStart(iso)) / DAY); return n <= 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`; };
+  // L7: a correction's note is « Redo: <text> » on one line; when its run fails, `rb.py error` keeps that line
+  // and puts the error on the next ones. The row shows the error; Retry puts back the first line alone.
+  const redoLine = note => /^Redo:/.test(note || '') ? String(note).split('\n')[0] : '';
   const queueRow = d => {
     let host = ''; try { host = new URL(d.url).hostname; } catch {}
     const age = Math.floor((Date.now() - new Date(d.created_at).getTime()) / DAY);
@@ -878,10 +924,11 @@ dialog.ph-dlg::backdrop{background:#000}
     if (d.status === 'processing' && d.processed_at) info.push(`since ${hhmm(d.processed_at)}`);
     if (d.status === 'queued' && age > 7) info.push(`waiting ${age} days`);
     const fail = d.status === 'error', pill = fail ? '<span class="st fail">Failed</span>' : d.status === 'processing' ? '<span class="st proc">Processing</span>' : '<span class="st">Waiting</span>';
-    const id = esc(d.id), err = rowErr.get(String(d.id));
+    const id = esc(d.id), err = rowErr.get(String(d.id)), redo = redoLine(d.note);
+    const why = redo ? String(d.note).split('\n').slice(1).join(' ').trim() : d.note;
     return `<div class="q"><div class="ico">${platformTag(host)}</div>
-      <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
-      <small>${info.join(' · ')}</small>${fail && d.note ? `<small class="why">${esc(d.note)}</small>` : ''}${err ? `<small class="qerr" role="alert">${esc(err)}</small>` : ''}</div>
+      <div class="t">${redo ? '<span class="redo">Redo</span>' : ''}<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
+      <small>${info.join(' · ')}</small>${fail && why ? `<small class="why">${esc(why)}</small>` : ''}${err ? `<small class="qerr" role="alert">${esc(err)}</small>` : ''}</div>
       <div class="side">${pill}${fail ? '' : `<button type="button" data-del="${id}" aria-label="Remove from the queue" title="Remove">×</button>`}</div>
       ${fail ? `<div class="qa"><button type="button" data-retry="${id}">Retry</button><button type="button" data-del="${id}">Remove</button></div>` : ''}</div>`;
   };
@@ -930,14 +977,16 @@ dialog.ph-dlg::backdrop{background:#000}
     const r = ev.target.closest('[data-retry]');
     if (r) {
       const id = r.dataset.retry, epoch = queueEpoch; r.disabled = true; rowErr.delete(id);
+      // L7: a failed correction goes back with its « Redo: … » instruction, not as a plain request
+      const was = queueRows.find(x => String(x.id) === id), note = redoLine(was && was.note) || null;
       try {
         // only a request still in error is reset (`in`, not a second eq: the harness records eq filters);
         // none touched = the computer moved it meanwhile: re-read, no alarm
-        const {data, error} = await sb.from('requests').update({status: 'queued', note: null, processed_at: null}).eq('id', id).in('status', ['error']).select('id'); if (error) throw error;
+        const {data, error} = await sb.from('requests').update({status: 'queued', note, processed_at: null}).eq('id', id).in('status', ['error']).select('id'); if (error) throw error;
         if (epoch !== queueEpoch) return;
         if (Array.isArray(data) && !data.length) { refreshQueue(); return; }
         queueGen++;
-        const d = queueRows.find(x => String(x.id) === id); if (d) Object.assign(d, {status: 'queued', note: null, processed_at: null});
+        const d = queueRows.find(x => String(x.id) === id); if (d) Object.assign(d, {status: 'queued', note, processed_at: null});
       } catch (e) { if (epoch !== queueEpoch) return; rowErr.set(id, `Retry failed: ${(e && e.message) || 'try again in a moment.'}`); }
       renderQueue(); return;
     }
@@ -1266,7 +1315,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const showSession = (slug, flash = '') => {
     const s = v2BySlug.get(slug);
     if (edit && edit.slug !== slug) edit = null;
-    shown = RS.ROUTE + slug; seat = null; show('view'); document.title = s.title;
+    shown = RS.ROUTE + slug; seat = null; show('view'); document.title = s.title; markSeen(RS.noteKey(slug));
     if (edit) {
       view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true, true)}</div>
         <div class="wrap fiche"><div class="edit"><p class="eyebrow">Editing the session</p>
@@ -1285,7 +1334,7 @@ dialog.ph-dlg::backdrop{background:#000}
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
       ${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml();
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
     wireNotes(RS.noteKey(slug));
     readPractice(RS.noteKey(slug));
   };
@@ -1305,11 +1354,41 @@ dialog.ph-dlg::backdrop{background:#000}
     let html; try { html = await loadSheet(slug); } catch { html = null; }
     if (load !== sheetLoad || shown !== slug) return; // left (Next tapped twice, another page) while it loaded
     if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav() + del; return; }
-    view.innerHTML = back + (practiceOk ? underTitle(html, practiceBox(), e.title) : html) + notesHtml() + seatNav() + del;
+    view.innerHTML = back + (practiceOk ? underTitle(html, practiceBox(), e.title) : html) + notesHtml() + reportHtml(e) + seatNav() + del;
+    markSeen(slug); // only once shown: a sheet that fails to load stays « New »
     // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)
     $('sheet-top').innerHTML = sheetTop(e);
     wireNotes(slug);
     readPractice(slug);
+  };
+
+  // ---------- L7: « Something wrong? » ----------
+  // In its own block under « My notes » of a sheet or session that has a source video: the dialog queues that
+  // video again, in the page's notebook, with the note « Redo: <text> ». The skill reads it as a correction
+  // (same slug, republished over the old sheet); `slug` names the page flagged (a session: session/<slug>, as
+  // RS.noteKey) so the skill fixes that one first. Send stays disabled while the text is blank.
+  const reportHtml = x => httpUrl(((x && x.source) || {}).url) ? '<div class="wrap report"><button type="button" class="link" id="report-open">Something wrong?</button></div>' : '';
+  const rdlg = $('report-dlg');
+  const openReport = () => {
+    const ses = RS.sessionSlugOf(shown || ''), x = ses ? v2BySlug.get(ses) : bySlug.get(shown);
+    const url = x && httpUrl((x.source || {}).url); if (!url) return;
+    rdlg.innerHTML = `<h2 id="report-h">Something wrong?</h2>
+      <label for="report-note">What should Claude fix?</label><textarea id="report-note" maxlength="1000"></textarea>
+      <p class="status" id="report-status" role="status"></p>
+      <div class="actions"><button class="btn" type="button" id="report-send" disabled>Send</button><button class="btn ghost" type="button" id="report-cancel">Cancel</button></div>`;
+    const ta = $('report-note'), send = $('report-send'), st = $('report-status');
+    ta.addEventListener('input', () => { send.disabled = !ta.value.trim(); });
+    $('report-cancel').addEventListener('click', () => rdlg.close());
+    send.addEventListener('click', async () => {
+      const text = ta.value.replace(/\s+/g, ' ').trim(); if (!text) return; // one line: see redoLine
+      send.disabled = true; st.className = 'status'; st.textContent = 'Sending…';
+      try {
+        const {error} = await sb.from('requests').insert({url, theme: x.theme, note: 'Redo: ' + text, slug: ses ? RS.noteKey(ses) : x.slug}); if (error) throw error;
+        ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; $('report-cancel').textContent = 'Close';
+        refreshQueue();
+      } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
+    });
+    rdlg.showModal(); ta.focus();
   };
 
   // ---------- L3: keep the screen on, full-screen photos ----------
@@ -1592,6 +1671,7 @@ dialog.ph-dlg::backdrop{background:#000}
     else if (at('#sd-open')) openSheetDelete();
     else if (at('#practice-done')) openPractice();
     else if (at('#practice-save')) savePractice();
+    else if (at('#report-open')) openReport();
     else if (!edit) return;
     else if ((b = at('[data-up]'))) reorder(+b.dataset.up, -1);
     else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);

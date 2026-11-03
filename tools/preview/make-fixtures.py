@@ -257,6 +257,8 @@ def main():
         sys.exit('Pillow is required: pip install pillow (or run with a Python that has it).')
     sheets, sessions, n = [], [], 0
     stamp = lambda: f'2026-10-{10 + n:02d}T09:00:00Z'  # noqa: E731
+    # « now-<N>h »: resolved when the preview is built (fake-data.py), for the home « New » row (L7, 72 h)
+    RECENT = {'jab-cross': 'now-5h', 'chien-tete-en-bas': 'now-30h', 'session-shadow-boxing': 'now-20h'}
 
     def images(slug, theme, title, steps):
         c = COLOURS[theme]
@@ -269,7 +271,7 @@ def main():
         images(s['slug'], s['theme'], s['title'], s['steps'])
         sheets.append({'slug': s['slug'], 'kind': 'sheet', 'theme': s['theme'], 'group': s['group'], 'title': s['title'],
                        'summary': s['summary'], 'duration': s['duration'], 'thumbnail': 'img/thumb.jpg',
-                       'source': s['source'], 'added_at': stamp(), 'html': sheet_html(s)})
+                       'source': s['source'], 'added_at': RECENT.get(s['slug']) or stamp(), 'html': sheet_html(s)})
     for ses in SESSIONS:
         for it in ses['items']:
             n += 1
@@ -282,7 +284,7 @@ def main():
                          'format': ses['format'], 'why': ses['why'], 'key_points': ses['key_points'], 'source': ses['source'],
                          'origin': 'video', 'thumbnail': f"u1/{ses['items'][0]['slug']}/img/thumb.jpg",
                          'items': [{'slug': it['slug'], 'dose': it['dose']} for it in ses['items']],
-                         'created_at': '2026-10-25T18:00:00Z', 'updated_at': '2026-10-25T18:00:00Z'})
+                         'created_at': RECENT.get(ses['slug'], '2026-10-25T18:00:00Z'), 'updated_at': '2026-10-25T18:00:00Z'})
     data = {
         'user_themes': [{'id': t, 'title': None, 'description': '', 'groups': None, 'builtin': True, 'position': i}
                         for i, t in enumerate(['strength', 'yoga', 'fight'])],

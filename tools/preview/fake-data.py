@@ -16,11 +16,25 @@ import shutil
 import sys
 
 
+def relative_stamps(data):
+    """« now-5h » in a fixture's added_at / created_at becomes that time at build: the home « New » row (L7,
+    last 72 h) keeps something to show whatever the day the preview is built."""
+    import datetime, re
+    now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+    for rows in data.values():
+        for r in rows if isinstance(rows, list) else []:
+            for k in ('added_at', 'created_at'):
+                m = re.fullmatch(r'now-(\d+)h', str(r.get(k) or ''))
+                if m:
+                    r[k] = (now - datetime.timedelta(hours=int(m.group(1)))).isoformat().replace('+00:00', 'Z')
+    return data
+
+
 def from_fixtures(src, out):
     with open(os.path.join(src, 'data.json'), encoding='utf-8') as f:
         data = json.load(f)
     shutil.copytree(os.path.join(src, 'files'), os.path.join(out, 'files'), dirs_exist_ok=True)
-    return data
+    return relative_stamps(data)
 
 
 def from_work(work, out):

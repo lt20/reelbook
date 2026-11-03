@@ -78,6 +78,9 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
   harmless in a browser). Suggestion: read `page.element('view').innerHTML` there, as the other L5 tests do; the
   extra line in `showSheet` can then go.
 
+- **L7, `tests/acceptance/l7/report-correction.test.cjs` (Redo payload)** — settled (3 Nov, coordinator decision
+  after Codex review ×3): slug added (`{url, theme, note, slug}`, spec §B4 updated).
+
 ## Known pitfalls
 - `app/index.html` is one ~1 200-line file: never read it whole; `grep -n` then `sed -n`. Parallel lots touch
   different regions; expect small merge conflicts in the CSS head.
