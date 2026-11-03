@@ -32,7 +32,25 @@ const sheetDocument = {
 // `dom`: a minimal DOMParser for a sheet's html made of `<a href="…">text</a>` links only, so loadSheet renders it.
 // `library`: the built-in notebooks of the app config (window.REELBOOK.library).
 // `nav`: the navigator (none of its APIs by default, e.g. no wakeLock).
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}} = {}) {
+// `idb`: a Map standing for IndexedDB's key-value store (none by default: the app reads the network only).
+// `hold`: (table, ops) -> a promise a read or write waits for before answering (still on its way), or null; a
+// promise resolving to {data, error} answers that instead of the table's rows at that time (a read made earlier).
+// IndexedDB as the app uses it (open, one 'kv' store, get / put; a ranged delete is not supported and fails).
+const fakeIndexedDB = store => ({
+  open() {
+    const r = {};
+    queueMicrotask(() => {
+      r.result = {transaction() {
+        const t = {}, done = q => { queueMicrotask(() => t.oncomplete && t.oncomplete()); return q; };
+        t.objectStore = () => ({get: k => done({result: store.get(k)}), put: (v, k) => done(store.set(k, JSON.parse(JSON.stringify(v))))});
+        return t;
+      }};
+      r.onsuccess();
+    });
+    return r;
+  }
+});
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -68,7 +86,8 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
         hosted: {name: 'Reelbook hosted', url: hostedUrl, anonKey: ownKey, blurb: 'Free for now.'},
         repo: 'https://github.com/lt20/reelbook'
       },
-      scrollTo() {}, addEventListener(type, listener) { winListeners[type] = listener; }
+      scrollTo() {}, addEventListener(type, listener) { winListeners[type] = listener; },
+      ...(idb ? {indexedDB: fakeIndexedDB(idb)} : {})
     },
     document: {
       getElementById: element,
@@ -97,7 +116,8 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
             if (ops.some(o => o[0] === 'maybeSingle' || o[0] === 'single')) return {data: rows.find(r => eqs.every(([c, v]) => r[c] === v)) || null, error: null};
             return {data: rows, error: null};
           };
-          const q = new Proxy({}, {get: (_, k) => k === 'then' ? (ok, ko) => Promise.resolve().then(result).then(ok, ko) : (...a) => { ops.push([k, ...a]); return q; }});
+          const wait = () => hold(table, ops);
+          const q = new Proxy({}, {get: (_, k) => k === 'then' ? (ok, ko) => Promise.resolve().then(wait).then(v => v || result()).then(ok, ko) : (...a) => { ops.push([k, ...a]); return q; }});
           return q;
         };
         const client = {url, key, options, calls: [], from: tables ? query : table => ({
@@ -108,6 +128,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
             async list(dir) { client.calls.push(['list', dir]); return {data: [{name: 'thumb.jpg'}], error: null}; },
             async remove(paths) { client.calls.push(['remove', paths]); return {data: [], error: null}; }})}, auth: {
           onAuthStateChange(listener) {
+            client.authListener = listener; // a test can fire a later auth event (another account signed in)
             queueMicrotask(() => listener('INITIAL_SESSION', sessions[url] ? {user: sessions[url]} : null));
             return {data: {subscription: {unsubscribe() {}}}};
           },
