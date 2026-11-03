@@ -4,8 +4,9 @@
     python3 tools/preview/make-fixtures.py            # needs Pillow (pip install pillow)
 
 The preview (tools/preview/build.sh) shows the app on a fake backend. Its default data is this
-synthetic set, committed: 3 notebooks, 29 sheets (25 in Strength, for the notebook page) built like templates/sheet.html and
-templates/exercise.html (French content written for the preview), 4 video sessions with doses,
+synthetic set, committed: 4 notebooks, 30 sheets (25 in Strength, for the notebook page) built like templates/sheet.html and
+templates/exercise.html, one Kitesurf sheet built like templates/technique.html (L16; French content written for the
+preview), 4 video sessions with doses,
 one note and 4 requests (queued, processing, error, done). Images are plain colour + label JPEGs made
 here: never a frame from a real video (the repository is public).
 
@@ -20,7 +21,7 @@ import unicodedata
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT = os.path.join(ROOT, 'tests', 'fixtures', 'preview')
-COLOURS = {'strength': (196, 92, 62), 'yoga': (74, 140, 118), 'fight': (70, 96, 160)}
+COLOURS = {'strength': (196, 92, 62), 'yoga': (74, 140, 118), 'fight': (70, 96, 160), 'kitesurf': (36, 122, 140)}
 
 
 def esc(s):
@@ -92,6 +93,64 @@ def sheet_html(s):
 
 <div class="wrap">
 {footer(s['source'], s.get('note', ''))}
+</div>
+'''
+
+
+def technique_html(s):
+    """A trick worked by tries (L16), structure of templates/technique.html, profile « technique » (no roles, no tap)."""
+    li = lambda xs: ''.join(f'<li>{esc(x)}</li>' for x in xs)  # noqa: E731
+    kit = ''.join(f'<span>{esc(k)}</span>' for k in s['kit'])
+    cond = ''.join(f'  <div class="c"><b>{esc(b)}</b><span>{esc(t)}</span></div>\n' for b, t in s['cond'])
+    tries = ''.join(f'  <div class="d"><b>{esc(b)}</b><span>{esc(t)}</span></div>\n' for b, t in s['tries'])
+    keys = ''.join(f'  <li><b>{esc(b)}</b> {esc(t)}</li>\n' for b, t in s['keys'])
+    steps = '\n'.join(step(i + 1, f'0{i + 1}.jpg', t, p, a) for i, (t, p, a) in enumerate(s['steps']))
+    return f'''<div class="wrap fiche">
+<header>
+  <div>
+    <p class="eyebrow">{esc(s['eyebrow'])}</p>
+    <h1>{esc(s['title'])}</h1>
+  </div>
+  <img src="img/thumb.jpg" alt="{esc(s['title'])}" width="112" height="112">
+</header>
+<p class="lead">{esc(s['lead'])}</p>
+<div class="kit">{kit}</div>
+
+<h2>Prérequis</h2>
+<ul class="prereq">{li(s['prereq'])}</ul>
+
+<h2>Conditions</h2>
+<div class="cond">
+{cond}</div>
+
+<h2>Go / no-go</h2>
+<div class="gonogo">
+  <div class="go"><h3>Go</h3><ul>{li(s['go'])}</ul></div>
+  <div class="nogo"><h3>No-go</h3><ul>{li(s['nogo'])}</ul></div>
+</div>
+</div>
+
+<div class="wide">
+<h2>Étapes</h2>
+<div class="steps">
+{steps}
+</div>{mistakes(s)}
+</div>
+
+<div class="wrap">
+<h2>Points clés</h2>
+<ol class="keys">
+{keys}</ol>
+
+<h2>Plan d'essais <small>suggestion, absente de la vidéo</small></h2>
+<div class="dose">
+{tries}</div>
+<p class="note">{esc(s['tries_note'])}</p>
+
+<h2>Sécurité <small>conseil général, absent de la vidéo</small></h2>
+<div class="safety"><ul>{li(s['safety'])}</ul></div>
+
+{footer(s['source'])}
 </div>
 '''
 
@@ -305,6 +364,32 @@ EXTRA_SHEETS = [filled(10 + i, *row) for i, row in enumerate([
      ('À quatre pattes', 'Main derrière la tête.'), ('Ouverture', 'Le coude monte, le regard suit.')),
 ])]
 SHEETS += EXTRA_SHEETS
+
+# L16: a Kitesurf sheet on templates/technique.html (notebook profile « technique »).
+SHEETS.append(dict(
+    slug='backroll', theme='kitesurf', group='Jumps & tricks', title='Backroll', technique=True,
+    eyebrow='Rotation · 20 min', duration='20 min', source=src(40, 'YouTube', 'Rider Démo'),
+    summary='La première rotation en kite : une vrille arrière, la voile reste haute.',
+    lead='Une rotation arrière sur l\'axe du corps, en sautant depuis la carre : la première figure après le saut simple.',
+    kit=['twin-tip', 'aile 9–12 m', 'harnais et leash', 'casque'],
+    prereq=['Sauts simples posés des deux côtés, sans perdre la voile.', 'Remontée au vent sur les deux bords.'],
+    cond=[('15–25 nds', 'vent établi'), ('9–12 m', 'aile'), ('Plat', 'eau à la taille ou plus')],
+    go=['Vent régulier, rafales de moins de 8 nds d\'écart.', 'Au moins 50 m libres sous le vent.',
+        'Tu poses tes sauts simples à chaque essai.'],
+    nogo=['Vent de terre ou rafaleux.', 'Eau trop peu profonde ou du monde sous le vent.',
+          'Fatigue : tes réceptions deviennent approximatives.'],
+    steps=[('Approche', 'Vitesse moyenne, carre franche, voile à 11 h.', 'Rider en carre, voile haute'),
+           ('Appel', 'Pop sur la carre, la tête et les épaules tournent vers l\'arrière.', 'Rider qui décolle en tournant les épaules'),
+           ('Rotation', 'Genoux groupés, la barre près des hanches, le regard cherche la voile.', 'Rider en rotation, genoux groupés'),
+           ('Réception', 'Planche sous le vent, voile qui descend, tu repars en carre.', 'Rider qui atterrit planche à plat')],
+    mistakes=[('Barre tirée en tournant', 'La voile remonte et te soulève trop : garde la barre au même endroit pendant la rotation.',
+               'barre tirée, rider soulevé trop haut')],
+    keys=[('La tête d\'abord.', 'Les épaules suivent le regard, le reste du corps suit les épaules.'),
+          ('Barre immobile.', 'Elle ne bouge pas pendant la rotation.'),
+          ('Repère la voile.', 'Dès que tu la revois, ouvre et prépare la réception.')],
+    tries=[('3–5', 'essais par côté'), ('1', 'réception propre, puis l\'autre côté'), ('20 min', 'puis navigue sans essayer')],
+    tries_note='La vidéo ne donne ni nombre d\'essais ni durée : plan suggéré.',
+    safety=['Casque et gilet d\'impact tant que tu l\'apprends.', 'Personne sous le vent, jamais près du bord.']))
 PORTRAIT = {s['slug'] for s in EXTRA_SHEETS}
 
 
@@ -400,9 +485,10 @@ def main():
     for s in SHEETS:
         n += 1
         images(s['slug'], s['theme'], s['title'], s['steps'], s.get('mistakes', ()))
+        html = technique_html(s) if s.get('technique') else sheet_html(s)
         sheets.append({'slug': s['slug'], 'kind': 'sheet', 'theme': s['theme'], 'group': s['group'], 'title': s['title'],
                        'summary': s['summary'], 'duration': s['duration'], 'thumbnail': 'img/thumb.jpg',
-                       'source': s['source'], 'added_at': RECENT.get(s['slug']) or stamp(), 'html': sheet_html(s)})
+                       'source': s['source'], 'added_at': RECENT.get(s['slug']) or stamp(), 'html': html})
     for ses in SESSIONS:
         for it in ses['items']:
             n += 1
@@ -418,7 +504,7 @@ def main():
                          'created_at': RECENT.get(ses['slug'], '2026-10-25T18:00:00Z'), 'updated_at': '2026-10-25T18:00:00Z'})
     data = {
         'user_themes': [{'id': t, 'title': None, 'description': '', 'groups': None, 'builtin': True, 'position': i}
-                        for i, t in enumerate(['strength', 'yoga', 'fight'])],
+                        for i, t in enumerate(['strength', 'yoga', 'fight', 'kitesurf'])],
         'sheets': sheets,
         'sessions': sessions,
         'notes': [{'slug': 'pompes-inclinees', 'body': 'Mardi : 3 × 10 sur la table de la cuisine. Prochaine fois, le banc plus bas.',

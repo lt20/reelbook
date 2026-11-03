@@ -215,6 +215,30 @@ ol.keys b{font-weight:600}
 .step.bad figure{border:2px solid var(--danger)}
 .step.bad figure::after{content:"✕";position:absolute;left:8px;top:8px;background:var(--danger);color:var(--paper);font-weight:700;font-size:15px;line-height:1;padding:5px 7px;border-radius:6px}
 .step.bad>h3:first-child::before{content:"✕ ";color:var(--danger)}
+/* L16: technique sheets (templates/technique.html): prerequisites, conditions grid, roles, go / no-go box, safety box */
+ul.prereq{margin:0;padding-left:22px}
+ul.prereq li{margin-bottom:6px}
+.cond{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 8px}
+@media (max-width:460px){.cond{grid-template-columns:1fr 1fr}.cond .c:last-child:nth-child(odd){grid-column:1/-1}}
+.cond .c{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.cond b{font-family:var(--display);font-size:28px;line-height:1;display:block;color:var(--ink);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.cond span{font-size:14px;color:var(--muted)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.roles .r{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.roles h3,.gonogo h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.05;margin:0 0 6px;text-transform:uppercase;letter-spacing:.02em}
+.roles p{font-size:15px;line-height:1.35;margin:0}
+.gonogo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:460px){.gonogo{grid-template-columns:1fr}}
+.gonogo>div{border-radius:10px;padding:12px 14px;min-width:0;border:2px solid}
+.gonogo .go{background:var(--ok-bg);border-color:var(--ok)}
+.gonogo .nogo{background:var(--danger-bg);border-color:var(--danger)}
+.gonogo .go h3{color:var(--ok)}
+.gonogo .nogo h3{color:var(--danger)}
+.gonogo .go h3::before{content:"✓ "}
+.gonogo .nogo h3::before{content:"✕ "}
+.gonogo ul,.safety ul{margin:0;padding-left:20px}
+.gonogo li,.safety li{font-size:15px;line-height:1.35;margin-bottom:4px;color:var(--ink)}
+.safety{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 14px}
 .arrow{color:var(--accent);font-weight:700}
 .loop{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:15px}
 footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
@@ -404,6 +428,32 @@ dialog.ph-dlg::backdrop{background:#000}
 .pl-nav .btn.ghost{color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.pl-car{scroll-behavior:smooth}}
 @media (prefers-reduced-motion: reduce){.player,.player *{transition:none!important;animation:none!important}}
+/* ---- L11: player sets (round check boxes), rest timer, flash at zero, end of session ---- */
+.pl-act{scroll-margin-bottom:104px}
+.pl-sets{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 4px}
+label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointer}
+.pl-set input{appearance:none;-webkit-appearance:none;grid-area:1/1;margin:0;width:56px;height:56px;border-radius:50%;border:2px solid var(--line-strong);background:transparent;cursor:pointer}
+.pl-set span{grid-area:1/1;pointer-events:none;font:700 24px/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.pl-one input{width:148px;border-radius:28px}
+.pl-set input:checked{background:var(--accent);border-color:var(--accent)}
+.pl-set input:checked+span{color:var(--accent-ink)}
+.pl-one input:checked+span::before{content:"✓ "}
+.pl-set input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.pl-restk{margin:0;font:700 18px/1.1 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.pl-dose.pl-rest{font-size:96px;color:var(--accent);margin:0 0 8px}
+.pl-restb{display:flex;gap:8px;margin:0 0 14px}
+.pl-restb .btn{flex:1;min-height:52px;padding:10px 8px;font-size:18px;border-radius:14px}
+.pl-restb .btn.ghost{color:var(--ink)}
+.pl-flash{position:fixed;inset:0;z-index:12;background:var(--accent);pointer-events:none;animation:pl-flash .6s ease-out forwards}
+@keyframes pl-flash{from{opacity:.9}to{opacity:0}}
+.pl-end .end-k{margin:28px 0 8px;font:700 22px/1 var(--display);text-transform:uppercase;letter-spacing:.06em;color:var(--ok);outline:none}
+.pl-end .end-k::before{content:"✓ "}
+.pl-end .end-sum{margin:8px 0 20px;font:700 40px/1.05 var(--display);font-variant-numeric:tabular-nums}
+.pl-end .pr-row{margin:0 0 8px}
+.pl-end .pr-row input{width:100%;min-height:48px;box-sizing:border-box}
+.pl-end .err{color:var(--danger);margin:0 0 8px}
+.pl-end .actions{margin-top:12px}
+.pl-end .actions .btn{min-height:52px;padding:12px 28px;font-size:17px}
 </style>
 </head>
 <body>
@@ -593,6 +643,7 @@ dialog.ph-dlg::backdrop{background:#000}
 <div id="view" class="wide" hidden></div>
 <!-- ===== L10: session player ===== -->
 <div id="player" class="player" hidden></div>
+<div id="play-flash" class="pl-flash" hidden aria-hidden="true"></div>
 <dialog class="dlg" id="move-dlg" aria-labelledby="mv-title">
   <form id="mv-form" style="display:grid;gap:12px">
     <div class="sh-h"><button class="btn ghost sh-no" type="button" id="mv-cancel">Cancel</button><h2 id="mv-title">Move this sheet</h2><button class="btn sh-ok" type="submit" id="mv-submit">Move</button></div>
@@ -648,9 +699,9 @@ dialog.ph-dlg::backdrop{background:#000}
 </dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
-<script src="config.js?v=5"></script>
-<script src="sessions.js?v=8"></script>
-<script src="sheet.js?v=3"></script>
+<script src="config.js?v=6"></script>
+<script src="sessions.js?v=9"></script>
+<script src="sheet.js?v=4"></script>
 <script>
 (() => {
   'use strict';
@@ -806,8 +857,9 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   const spath = (slug, rel) => `${user.id}/${slug}/${rel.replace(/^\.?\/?/, '')}`;
 
+  // profile (L16): the template family of a notebook, read from the library by id ('gym' for a custom notebook).
   const setThemes = rows => {
-    themes = rows.map(r => { const lib = libById.get(r.id); return {id: r.id, title: r.title || (lib && lib.title) || r.id, sub: r.description || (lib && lib.sub) || '', description: r.description || '', groups: (r.groups && r.groups.length) ? r.groups : (lib ? lib.groups : []), color: lib ? lib.color : null, builtin: r.builtin, position: r.position}; });
+    themes = rows.map(r => { const lib = libById.get(r.id); return {id: r.id, title: r.title || (lib && lib.title) || r.id, sub: r.description || (lib && lib.sub) || '', description: r.description || '', groups: (r.groups && r.groups.length) ? r.groups : (lib ? lib.groups : []), color: lib ? lib.color : null, profile: (lib && lib.profile) || 'gym', builtin: r.builtin, position: r.position}; });
     themes.sort((a, b) => a.position - b.position || a.title.localeCompare(b.title));
     themeById = new Map(themes.map(t => [t.id, t]));
   };
@@ -920,7 +972,7 @@ dialog.ph-dlg::backdrop{background:#000}
     themeRows = c.themes; setThemes(c.themes);
     sheets = c.sheets; v1Hidden = c.v1 || 0; bySlug = new Map(sheets.map(s => [s.slug, s]));
     if (c.sessionsKept) { c.sessionsOk = sessionsOk; c.sessions = v2Sessions; } else { sessionsOk = c.sessionsOk; setSessions(c.sessions); }
-    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
+    for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, profile: (lib && lib.profile) || 'gym', builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
     // A notes or practice log read that failed keeps what was known (cached or earlier); a backend without the
     // practice_log table hides the practice log (readLastDone false).
     if (c.notesIndex) {
@@ -1585,10 +1637,10 @@ dialog.ph-dlg::backdrop{background:#000}
   // It ends with a marker comment so that, without a DOM to query (tests/harness.cjs), the page's markup can be
   // edited in its place.
   const region = (id, cls, inner = '') => `<div class="${cls}" id="${id}">${inner}<!--/${id}--></div>`;
-  const repaint = (id, inner) => {
+  const repaint = (id, inner, root = view) => {
     const end = `<!--/${id}-->`;
-    if (view.querySelector) { const el = view.querySelector('#' + id); if (el) el.innerHTML = inner + end; return; }
-    view.innerHTML = view.innerHTML.replace(new RegExp(`(id="${id}"[^>]*>)[\\s\\S]*?${end}`), (_, open) => open + inner + end);
+    if (root.querySelector) { const el = root.querySelector('#' + id); if (el) el.innerHTML = inner + end; return; }
+    root.innerHTML = root.innerHTML.replace(new RegExp(`(id="${id}"[^>]*>)[\\s\\S]*?${end}`), (_, open) => open + inner + end);
   };
   const practiceBox = () => practiceOk ? region('practice', 'practice') : '';
   // The block goes under the title: after the sheet's header when its <h1> is in one, else right after the <h1>.
@@ -1657,28 +1709,39 @@ dialog.ph-dlg::backdrop{background:#000}
     const h = b.map(x => x.toString(16).padStart(2, '0')).join('');
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
   };
+  // A try: {id, slug, done_on, text}, the same one again for the same text the same day (see above).
+  const logAttempt = (prev, key, text) => prev && prev.text === text && prev.done_on === todayIso() ? prev : {id: newId(), slug: key, done_on: todayIso(), text};
+  // The write behind « Done today » and the player's « Save to log » (L11): one practice_log row (a catalogue change:
+  // localGen). {entry} once stored, {} when not saved, null when signed out or another account meanwhile.
+  const insertPractice = async row => {
+    const owner = {client: sb, uid: user ? user.id : ''};
+    let res;
+    try { touched(); res = await owner.client.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
+    if (sb !== owner.client || !user || user.id !== owner.uid) return null;
+    if (!res || (res.error && res.error.code !== '23505')) return {};
+    const got = (!res.error && (Array.isArray(res.data) ? res.data[0] : res.data)) || {};
+    const entry = {id: got.id || row.id, slug: row.slug, done_on: got.done_on || row.done_on, text: typeof got.text === 'string' ? got.text : row.text, created_at: got.created_at || new Date().toISOString()};
+    if (!lastDone.has(row.slug) || entry.done_on > lastDone.get(row.slug)) { lastDone.set(row.slug, entry.done_on); saveCatalogue(); }
+    unsavedLog.delete(unsavedKey(row.slug));
+    return {entry};
+  };
   const savePractice = async () => {
     const p = pageLog; if (!p || !p.open || p.busy) return;
     const text = String($('practice-text').value || '').trim().slice(0, LOG_MAX);
-    if (!p.attempt || p.attempt.text !== text || p.attempt.done_on !== todayIso()) p.attempt = {id: newId(), slug: p.key, done_on: todayIso(), text};
-    const row = p.attempt, owner = {client: sb, uid: user ? user.id : ''};
+    const row = p.attempt = logAttempt(p.attempt, p.key, text);
     // the field is read-only while the save is on its way: a correction typed then would be dropped once saved
     p.draft = text; p.busy = true; p.err = ''; $('practice-save').disabled = true; $('practice-text').readOnly = true;
-    let res;
-    try { touched(); res = await owner.client.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
+    const done = await insertPractice(row);
     p.busy = false;
-    if (sb !== owner.client || !user || user.id !== owner.uid) return; // signed out, or another account, meanwhile
-    const stored = res && (!res.error || res.error.code === '23505');
-    if (!stored) {
+    if (!done) return; // signed out, or another account, meanwhile
+    if (!done.entry) {
       // keep what is in the field now (typed while the save was on its way), not the text that was sent
       const input = $('practice-text'); if (input && pageLog === p && p.open) p.draft = String(input.value || '');
       unsavedLog.set(unsavedKey(p.key), p.draft);
       p.err = 'Not saved. Try again.'; paintPractice(); return;
     }
-    const got = (!res.error && (Array.isArray(res.data) ? res.data[0] : res.data)) || {};
-    const entry = {id: got.id || row.id, slug: row.slug, done_on: got.done_on || row.done_on, text: typeof got.text === 'string' ? got.text : row.text, created_at: got.created_at || new Date().toISOString()};
-    if (!lastDone.has(row.slug) || entry.done_on > lastDone.get(row.slug)) { lastDone.set(row.slug, entry.done_on); saveCatalogue(); }
-    p.attempt = null; unsavedLog.delete(unsavedKey(row.slug));
+    const entry = done.entry;
+    p.attempt = null;
     if (!p.entries.some(r => r.id === entry.id)) p.entries = [entry, ...p.entries].sort(newestFirst).slice(0, 5);
     p.open = false; p.draft = '';
     paintPractice();
@@ -1729,6 +1792,7 @@ dialog.ph-dlg::backdrop{background:#000}
         <div class="actions" style="margin-top:36px"><button class="btn ghost" type="button" id="ed-delete">Delete session</button></div></div>`;
       return;
     }
+    if (ended && ended.slug === slug) { showEnd(s); return; }
     const items = RS.resolveItems(s, bySlug), img = v2Thumb(s);
     view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
@@ -1851,14 +1915,28 @@ dialog.ph-dlg::backdrop{background:#000}
   // the screen kept on (wakeSync). Previous / Next redraw in place and only rewrite the address (replaceState), so
   // Back leaves the player. The exercise reached is kept per user and session in rb.play.<user id> ({slug: n},
   // decision 8): `#session/<slug>/play` then offers « Resume at n/N » or « Start over »; Finish forgets it.
+  // L11: the sets checked in this play are kept there too: {slug: n} becomes {slug: {n, sets: {<exercise n>: [set
+  // numbers]}}} once a set is checked (a place without checks stays a number); Start over and Finish clear them.
   const playerEl = $('player');
   let play = null, playLoad = 0, playPhotos = [], swipeAt = null;
+  // L11: the end screen of the session just finished, until Close, a save, or another page: {slug, summary, draft,
+  // err, busy, attempt}.
+  let ended = null;
   const PLAY_KEEP = 50; // sessions remembered at most (the oldest go)
   const playKey = () => user && user.id ? 'rb.play.' + user.id : '';
   const playStore = () => { try { const o = JSON.parse(ls.get(playKey()) || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch { return {}; } };
-  const keepPlace = (slug, n) => {
+  const placeOf = v => Number(v && typeof v === 'object' ? v.n : v) || 0;
+  // `checks`: the sets to keep with the place, with the sheet of each checked exercise (`of`, so that a session
+  // edited meanwhile does not move them: RS.fitChecks); undefined keeps the stored ones, null clears them.
+  const keepPlace = (slug, n, checks) => {
     const k = playKey(); if (!k) return;
-    const o = playStore(); delete o[slug]; if (n) o[slug] = n;
+    const o = playStore(), was = o[slug] && typeof o[slug] === 'object' ? o[slug] : null; delete o[slug];
+    if (n) {
+      const items = play && play.kind === 'session' && play.s.slug === slug ? play.items : [];
+      const sets = RS.cleanChecks(checks === undefined ? was && was.sets : checks);
+      const of = checks === undefined ? (was && was.of) || {} : RS.checksOf(sets, items);
+      o[slug] = Object.keys(sets).length ? {n, sets, of} : n;
+    }
     const keys = Object.keys(o).slice(-PLAY_KEEP);
     if (keys.length) ls.set(k, JSON.stringify(Object.fromEntries(keys.map(x => [x, o[x]])))); else ls.del(k);
   };
@@ -1869,26 +1947,37 @@ dialog.ph-dlg::backdrop{background:#000}
   const onClick = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
   const leavePlayer = () => {
     const p = play; if (!p) return;
+    stopRest();
     location.hash = p.kind === 'session' ? RS.sessionHref(p.s.slug) : p.e.slug;
   };
-  const finishPlay = () => { if (play && play.kind === 'session') keepPlace(play.s.slug, 0); leavePlayer(); };
+  // L11: Finish on a session opens its end screen (drawn by showSession in #view, at the session's address).
+  const finishPlay = () => {
+    if (play && play.kind === 'session') {
+      const {exercises, sets} = RS.playTally(play.checks), summary = `${plural(exercises, 'exercise')} · ${plural(sets, 'set')}`;
+      ended = {slug: play.s.slug, summary, draft: summary, err: '', busy: false, attempt: null};
+      keepPlace(play.s.slug, 0);
+    }
+    leavePlayer();
+  };
   const stepPlay = d => {
     if (!play || play.kind !== 'session' || play.prompt) return;
     const n = play.n + d; if (n < 1 || n > play.items.length) return;
-    play.n = n; keepPlace(play.s.slug, n); playAddress(); renderPlay();
+    play.n = n; keepPlace(play.s.slug, n, play.checks); playAddress(); renderPlay();
   };
   const enterPlayer = () => { shown = null; seat = null; show('player'); playerEl.scrollTop = 0; };
   // false when there is nothing to play (no exercise left, n out of range): the caller shows the session page.
   const playSession = (slug, n) => {
     const s = v2BySlug.get(slug), items = RS.resolveItems(s, bySlug);
     if (!items.length || (n && n > items.length)) return false;
-    const at = Number(playStore()[slug]);
-    play = {kind: 'session', s, items, n: n || 1, prompt: !n && at > 1 && at <= items.length ? at : 0};
-    if (!play.prompt) keepPlace(slug, play.n);
+    const kept = playStore()[slug], at = placeOf(kept), checks = RS.fitChecks(kept && kept.sets, kept && kept.of, items);
+    const resume = at >= 1 && at <= items.length && (at > 1 || Object.keys(checks).length > 0);
+    stopRest();
+    play = {kind: 'session', s, items, n: n || 1, prompt: !n && resume ? at : 0, checks, rest: null};
+    if (!play.prompt) keepPlace(slug, play.n, checks);
     enterPlayer(); renderPlay();
     return true;
   };
-  const playSheet = slug => { play = {kind: 'sheet', e: bySlug.get(slug)}; enterPlayer(); renderPlay(); };
+  const playSheet = slug => { stopRest(); play = {kind: 'sheet', e: bySlug.get(slug)}; enterPlayer(); renderPlay(); };
   const playTop = (count, title) => `<div class="pl-top"><button type="button" class="pl-x" id="play-close" aria-label="Close the player">✕</button>`
     + `<div>${count ? `<p class="pl-n">${count}</p>` : ''}<h1 class="pl-t" id="play-title" tabindex="-1">${esc(title)}</h1></div></div>`;
   const renderPlay = () => {
@@ -1900,19 +1989,17 @@ dialog.ph-dlg::backdrop{background:#000}
         + `<button type="button" class="btn" id="play-resume">Resume at ${p.prompt}/${p.items.length}</button>`
         + '<button type="button" class="btn ghost" id="play-restart">Start over</button></div></div>';
       onClick('play-close', leavePlayer);
-      onClick('play-resume', () => { if (!play || !play.prompt) return; play.n = play.prompt; play.prompt = 0; keepPlace(play.s.slug, play.n); playAddress(); renderPlay(); });
-      onClick('play-restart', () => { if (!play || !play.prompt) return; play.n = 1; play.prompt = 0; keepPlace(play.s.slug, 1); playAddress(); renderPlay(); });
+      onClick('play-resume', () => { if (!play || !play.prompt) return; play.n = play.prompt; play.prompt = 0; keepPlace(play.s.slug, play.n, play.checks); playAddress(); renderPlay(); }); // keeps the checks as fitted to the session now
+      onClick('play-restart', () => { if (!play || !play.prompt) return; play.n = 1; play.prompt = 0; play.checks = {}; keepPlace(play.s.slug, 1, null); playAddress(); renderPlay(); });
       $('play-title').focus();
       return;
     }
     const session = p.kind === 'session', it = session ? p.items[p.n - 1] : null, e = session ? it.sheet : p.e;
-    const big = RS.doseLabel(it), free = it ? it.dose.trim() : '';
-    const same = (a, b) => a.toLowerCase().replace(/\s*[x×]\s*/g, ' × ').replace(/\s+/g, ' ') === b.toLowerCase().replace(/\s+/g, ' ');
     const last = !session || p.n === p.items.length;
     document.title = e.title;
     playerEl.innerHTML = `<div class="pl">${playTop(session ? `${p.n}/${p.items.length}` : '', e.title)}`
       + '<div class="pl-media" id="play-media"></div>'
-      + `<div class="pl-body" id="play-body">${big || free ? `<p class="pl-dose">${esc(big || free)}</p>` : ''}${big && free && !same(free, big) ? `<p class="pl-free">${esc(free)}</p>` : ''}`
+      + `<div class="pl-body" id="play-body">${region('play-act', 'pl-act', playAct())}`
       + '<ol class="pl-keys" id="play-keys"></ol></div>'
       + `<nav class="pl-nav" aria-label="Exercises">${session ? `<button type="button" class="btn ghost" id="play-prev"${p.n > 1 ? '' : ' disabled'}>← Previous</button>` : ''}`
       + (last ? '<button type="button" class="btn" id="play-finish">Finish</button>' : '<button type="button" class="btn" id="play-next">Next →</button>') + '</nav></div>';
@@ -1920,9 +2007,157 @@ dialog.ph-dlg::backdrop{background:#000}
     onClick('play-prev', () => stepPlay(-1));
     onClick('play-next', () => stepPlay(1));
     onClick('play-finish', finishPlay);
+    wireAct();
     playerEl.scrollTop = 0;
     $('play-title').focus();
     playMedia(e.slug, load);
+  };
+  // ---------- L11: sets, rest timer ----------
+  // Under the dose, one round check box per set (« 3 × 10 »: 3), or one « Done » box. Checking a set, but the one that
+  // completes the last exercise, starts a rest: the item's rest_s (its own, else read from the session format by
+  // resolveItems; 0: none), else 60 s. Its countdown takes the dose's place (on the next exercise too), with −15 s, +15 s and
+  // Skip. It is read from timestamps (RS.restRemaining); the interval only repaints it. At zero: a short beep (Web
+  // Audio, made on a tap so iOS lets it play) and a 600 ms flash of the accent colour (none when reduced motion is
+  // asked: the beep only). play.rest: {at: Date.now() at the start, s: its seconds}.
+  let restTimer = null, audio = null;
+  const playAct = () => {
+    const p = play, session = !!p && p.kind === 'session', it = session ? p.items[p.n - 1] : null;
+    const big = RS.doseLabel(it), free = it ? it.dose.trim() : '';
+    const same = (a, b) => a.toLowerCase().replace(/\s*[x×]\s*/g, ' × ').replace(/\s+/g, ' ') === b.toLowerCase().replace(/\s+/g, ' ');
+    const dose = session && p.rest
+      ? `<p class="pl-restk">Rest</p><p class="pl-dose pl-rest" id="play-rest" role="timer">${RS.restClock(RS.restRemaining(p.rest.at, p.rest.s))}</p>`
+        + '<p class="pl-restb"><button type="button" class="btn ghost" id="play-rest-minus">−15 s</button><button type="button" class="btn ghost" id="play-rest-plus">+15 s</button><button type="button" class="btn" id="play-rest-skip">Skip</button></p>'
+      : (big || free ? `<p class="pl-dose">${esc(big || free)}</p>` : '') + (big && free && !same(free, big) ? `<p class="pl-free">${esc(free)}</p>` : '');
+    if (!session) return dose;
+    const count = RS.setCount(it), on = p.checks[p.n] || [];
+    const box = k => `<label class="pl-set${count > 1 ? '' : ' pl-one'}"><input type="checkbox" class="play-set" id="play-set-${k}"${on.includes(k) ? ' checked' : ''}`
+      + `${count > 1 ? ` aria-label="Set ${k} of ${count}"` : ''}><span${count > 1 ? ' aria-hidden="true"' : ''}>${count > 1 ? k : 'Done'}</span></label>`;
+    return dose + `<div class="pl-sets" role="group" aria-label="Sets">${Array.from({length: count}, (_, i) => box(i + 1)).join('')}</div>`;
+  };
+  const paintAct = focusId => {
+    if (!play || playerEl.hidden) return;
+    repaint('play-act', playAct(), playerEl); wireAct();
+    const el = focusId ? $(focusId) : null; if (el && el.focus) el.focus();
+  };
+  const wireAct = () => {
+    const p = play; if (!p || p.kind !== 'session' || p.prompt) return;
+    for (let k = 1; k <= RS.setCount(p.items[p.n - 1]); k++) {
+      const el = $('play-set-' + k); if (el) el.addEventListener('change', () => checkSet(k, el));
+    }
+    onClick('play-rest-minus', () => moveRest(-15));
+    onClick('play-rest-plus', () => moveRest(15));
+    onClick('play-rest-skip', () => { audioOn(); stopRest(); paintAct('play-set-1'); });
+  };
+  const checkSet = (k, el) => {
+    const p = play; if (!p || p.kind !== 'session' || p.prompt) return;
+    audioOn();
+    const it = p.items[p.n - 1], list = p.checks[p.n] || [], was = list.includes(k);
+    const now = el && typeof el.checked === 'boolean' ? el.checked : !was; // the box's own state (a test fake has none)
+    const next = now ? [...new Set([...list, k])].sort((a, b) => a - b) : list.filter(x => x !== k);
+    if (next.length) p.checks[p.n] = next; else delete p.checks[p.n];
+    keepPlace(p.s.slug, p.n, p.checks);
+    const done = p.n === p.items.length && next.length === RS.setCount(it); // the session's last set
+    // rest_s 0 (« no rest » in the format, or the item's own 0): no countdown; none stated: 60 s
+    const secs = it.rest_s === 0 ? 0 : Number(it.rest_s) > 0 ? Number(it.rest_s) : 60;
+    const rest = now && !was && !done && secs > 0;
+    if (rest) startRest(secs);
+    else if (done || (now && !was)) stopRest();
+    paintAct('play-set-' + k);
+    const act = rest ? $('play-act') : null; // the countdown and its buttons in view, above the sticky nav
+    if (act && act.scrollIntoView) act.scrollIntoView({block: 'nearest'});
+  };
+  const startRest = secs => {
+    stopRest();
+    play.rest = {at: Date.now(), s: secs};
+    if (typeof setInterval === 'function') restTimer = setInterval(restTick, 250);
+  };
+  const stopRest = () => {
+    if (restTimer !== null && typeof clearInterval === 'function') clearInterval(restTimer);
+    restTimer = null; if (play) play.rest = null;
+  };
+  // −15 s / +15 s; taken to zero, the rest ends as with Skip.
+  const moveRest = d => {
+    const p = play; if (!p || !p.rest) return;
+    audioOn();
+    p.rest.s += d;
+    if (RS.restRemaining(p.rest.at, p.rest.s) <= 0) { stopRest(); paintAct('play-set-1'); return; }
+    paintAct(d > 0 ? 'play-rest-plus' : 'play-rest-minus');
+  };
+  const restTick = () => {
+    const p = play;
+    if (!p || !p.rest || playerEl.hidden) { stopRest(); return; }
+    const left = RS.restRemaining(p.rest.at, p.rest.s), el = $('play-rest');
+    if (left > 0) { if (el) el.textContent = RS.restClock(left); return; }
+    stopRest(); beep(); flash(); paintAct();
+  };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && play && play.rest) restTick(); });
+  // Web Audio, made (or woken) inside a tap: iOS plays nothing from a context made outside one.
+  const audioOn = () => {
+    try {
+      if (!audio) {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        audio = new AC();
+        const o = audio.createOscillator(), g = audio.createGain(); // a silent note unlocks it on iOS
+        g.gain.value = 0; o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.01);
+      }
+      if (audio.state === 'suspended' && audio.resume) audio.resume();
+    } catch {}
+  };
+  const beep = () => {
+    if (!audio) return;
+    try {
+      const t = audio.currentTime, o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + 0.4);
+    } catch {}
+  };
+  const flash = () => {
+    const f = $('play-flash'); if (!f) return;
+    try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch {}
+    f.hidden = true; void f.offsetWidth; f.hidden = false; // hidden, then shown again: the animation starts over
+    setTimeout(() => { f.hidden = true; }, 600);
+  };
+  // ---------- L11: end of session ----------
+  // Drawn in #view at the session's address: « Session done », the exercises and sets checked, and, when the
+  // practice log is read (practiceOk; no table: the summary and Close only), the L6 field prefilled with them and
+  // « Save to log » (a practice_log row for session/<slug>, the « Done today » write). « Close »: the session page.
+  const showEnd = s => {
+    const e = ended, log = practiceOk;
+    view.innerHTML = `<div class="wrap fiche pl-end"><p class="end-k" id="end-done" tabindex="-1">Session done</p><h1>${esc(s.title)}</h1>`
+      + `<p class="end-sum">${esc(e.summary)}</p>`
+      + (log ? `<label class="pr-row">Practice log<input id="end-log-text" type="text" value="${esc(e.draft)}" maxlength="${LOG_MAX}" autocomplete="off" enterkeyhint="done" placeholder="12 kg, 3x10…"${e.busy ? ' readonly' : ''}></label>`
+        + (e.err ? `<p class="err" role="alert">${esc(e.err)}</p>` : '') : '')
+      + `<p class="actions">${log ? `<button type="button" class="btn" id="end-save"${e.busy ? ' disabled' : ''}>Save to log</button>` : ''}<button type="button" class="btn ghost" id="end-close">Close</button></p></div>`;
+    const input = $('end-log-text');
+    if (input) { input.value = e.draft; input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); saveEnd(); } }); }
+    onClick('end-save', saveEnd);
+    onClick('end-close', closeEnd);
+    $('end-done').focus();
+  };
+  const endShown = e => ended === e && shown === RS.ROUTE + e.slug && !view.hidden;
+  // Close works while a save is on its way too: that save still counts (lastDone), its answer no longer repaints.
+  const closeEnd = () => { const e = ended; if (!e) return; ended = null; if (shown === RS.ROUTE + e.slug && !view.hidden) showSession(e.slug); };
+  // Saved: the session page (its « Done today ✓ »). Not saved: the end screen stays, with what is in the field and
+  // « Not saved. Try again. ».
+  const saveEnd = async () => {
+    const e = ended; if (!e || e.busy || !practiceOk) return;
+    const input = $('end-log-text'), text = String(input ? input.value || '' : e.draft).trim().slice(0, LOG_MAX);
+    const row = e.attempt = logAttempt(e.attempt, RS.noteKey(e.slug), text);
+    e.draft = text; e.busy = true; e.err = '';
+    const btn = $('end-save'); if (btn) btn.disabled = true; if (input) input.readOnly = true;
+    const done = await insertPractice(row);
+    e.busy = false;
+    if (!done) return; // signed out, or another account, meanwhile
+    if (!done.entry) {
+      const now = $('end-log-text'); if (now && endShown(e)) e.draft = String(now.value || '');
+      e.err = 'Not saved. Try again.';
+      if (endShown(e)) showEnd(v2BySlug.get(e.slug));
+      return;
+    }
+    const here = endShown(e);
+    if (ended === e) ended = null;
+    if (here) showSession(e.slug);
   };
   // The step photos (carousel, dots) and the first key points, read from the sheet once it is loaded; a sheet
   // that fails to load says so in their place (as its sheet page does), the dose and the buttons stay.
@@ -2257,6 +2492,7 @@ dialog.ph-dlg::backdrop{background:#000}
     flushNotes(); // notes typed on the page being left are saved now
     const at = RS.sessionItemOf(tok);
     if (edit && (at || RS.sessionSlugOf(tok) !== edit.slug)) edit = null; // leaving a session page drops its unsaved edits
+    if (ended && tok !== RS.ROUTE + ended.slug) ended = null; // L11: another page drops the end screen
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
     if (tok && bySlug.has(tok)) { showSheet(tok); return; }
@@ -2296,7 +2532,7 @@ dialog.ph-dlg::backdrop{background:#000}
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity; peeked = false;
-      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = '';
+      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; ended = null; signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
     if (!sb) {
@@ -2327,7 +2563,7 @@ dialog.ph-dlg::backdrop{background:#000}
         const changed = (next && next.id) !== (user && user.id);
         if (changed && user) clearUserCache(user.id); // signed out (button, reset, revoked session) or another account
         user = next;
-        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; ended = null; signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });

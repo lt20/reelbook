@@ -167,6 +167,100 @@ test('step photos become buttons of the viewer, with their step caption', () => 
   for (const p of photos) { assert.equal(p.img.getAttribute('role'), 'button'); assert.equal(p.img.getAttribute('tabindex'), '0'); }
 });
 
+// ---------- L16: the technique template (board sports, fighting) ----------
+const techniqueHtml = template('technique.html');
+// profile « technique »: the partner-only sections (Roles, Control / tap) dropped, as the skill does
+const soloHtml = techniqueHtml.replace(/\n<h2>Roles<\/h2>\n<div class="roles">[\s\S]*?\n<\/div>\n/, '\n')
+  .replace(/\n<h2>Control \/ tap<\/h2>\n<div class="safety tap">[\s\S]*?\n<\/div>\n/, '\n');
+const boxes = doc => doc.body.children.map(b => `${b.getAttribute('class')}: ${b.children.map(el => el.tagName === 'H2' ? 'h2:' + el.childNodes.filter(n => n.nodeType === 3).map(n => n.data).join('').trim() : el.tagName + (el.getAttribute('class') ? '.' + el.getAttribute('class') : '')).join(' ')}`);
+
+test('a technique sheet (templates/technique.html, partner): header → go / no-go → steps → the rest in its order, nothing lost', () => {
+  const {doc, before, changed} = arranged(techniqueHtml);
+  assert.equal(changed, true);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:Go / no-go', 'h2:Steps', 'h2:Prerequisites', 'h2:Conditions', 'h2:Roles',
+    'h2:Common mistakes', 'h2:Key points', 'key:Short bold cue.', 'key:Second cue.', 'h2:Try plan suggestion, not in the video',
+    'h2:Safety general advice, not in the video', 'h2:Control / tap', 'footer']);
+  assert.deepEqual(content(doc), before, 'every block kept');
+  // go / no-go stays in the header's box, the photos of the movement come right after it; no mistake in the sequence
+  assert.deepEqual(boxes(doc), [
+    'wrap fiche: HEADER P.lead DIV.kit h2:Go / no-go DIV.gonogo',
+    'wide: h2:Steps DIV.steps',
+    'wrap: h2:Prerequisites UL.prereq h2:Conditions DIV.cond h2:Roles DIV.roles',
+    'wide: h2:Common mistakes DIV.steps',
+    'wrap: h2:Key points OL.keys h2:Try plan DIV.dose P.note h2:Safety DIV.safety h2:Control / tap DIV.safety tap FOOTER']);
+  assert.equal(doc.body.children[1].querySelector('.step.bad'), null);
+  assert.equal(doc.querySelectorAll('.fiche').length, 1);
+  assert.equal(doc.querySelector('details.rb-why'), null);
+});
+
+test('a technique sheet (profile technique, French, 5 key points): same order, « +2 more », the viewer and the player read it', () => {
+  const fr = soloHtml.replace('<h2>Prerequisites</h2>', '<h2>Prérequis</h2>')
+    .replace('<h2>Steps</h2>', '<h2>Étapes</h2>').replace('<h2>Common mistakes</h2>', '<h2>Erreurs fréquentes</h2>')
+    .replace('<h2>Key points</h2>', '<h2>Points clés</h2>')
+    .replace('<h2>Try plan <small>suggestion, not in the video</small></h2>', '<h2>Plan d\'essais <small>suggestion, absente de la vidéo</small></h2>')
+    .replace('<h2>Safety <small>general advice, not in the video</small></h2>', '<h2>Sécurité <small>conseil général, absent de la vidéo</small></h2>')
+    .replace('<li><b>Second cue.</b> One sentence.</li>', ['Second', 'Third', 'Fourth', 'Fifth'].map(w => `<li><b>${w} cue.</b> x</li>`).join(''));
+  assert.equal(fr.includes('class="roles"'), false);
+  assert.equal(fr.includes('safety tap'), false);
+  const {doc, before} = arranged(fr);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:Go / no-go', 'h2:Étapes', 'h2:Prérequis', 'h2:Conditions', 'h2:Erreurs fréquentes',
+    'h2:Points clés', 'key:Short bold cue.', 'key:Second cue.', 'key:Third cue.', 'summary:+2 more', 'more:Fourth cue.', 'more:Fifth cue.',
+    'h2:Plan d\'essais suggestion, absente de la vidéo', 'h2:Sécurité conseil général, absent de la vidéo', 'footer']);
+  assert.deepEqual(content(doc), before, 'every block kept');
+  // the try plan is not pulled up like a gym dose: it stays after the key points
+  const h2s = doc.querySelectorAll('h2').map(h => h.childNodes.filter(n => n.nodeType === 3).map(n => n.data).join('').trim());
+  assert.ok(h2s.indexOf('Plan d\'essais') > h2s.indexOf('Points clés'));
+  // the photo viewer and the session player (L10) find the steps and the cues
+  assert.equal(SH.markPhotos(doc), 4);
+  assert.deepEqual(SH.photosOf(doc).map(p => p.title), ['Approach', 'Pop', 'Landing']);
+  assert.deepEqual(SH.photosOf(doc, true).map(p => p.title), ['Approach', 'Pop', 'Landing', '✕ Opening too early']);
+  assert.deepEqual(SH.keyPoints(doc).map(k => k.cue), ['Short bold cue.', 'Second cue.', 'Third cue.']);
+});
+
+test('the synthetic technique sheet of the preview (Kitesurf, backroll) is arranged the same way', () => {
+  const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/preview/data.json'), 'utf8'));
+  const sheet = data.sheets.find(s => s.slug === 'backroll');
+  assert.equal(sheet.theme, 'kitesurf');
+  assert.ok(data.user_themes.some(t => t.id === 'kitesurf'));
+  const {doc, before} = arranged(sheet.html);
+  assert.deepEqual(landmarks(doc).filter(l => l.startsWith('h2:') || l === 'header' || l === 'footer'), ['header', 'h2:Go / no-go', 'h2:Étapes',
+    'h2:Prérequis', 'h2:Conditions', 'h2:Erreurs fréquentes', 'h2:Points clés', 'h2:Plan d\'essais suggestion, absente de la vidéo',
+    'h2:Sécurité conseil général, absent de la vidéo', 'footer']);
+  assert.deepEqual(content(doc), before);
+});
+
+test('the player on a technique sheet: step photos without the mistake, no dose taken from the try plan, key points optional', () => {
+  // the photos and cues the player reads (playMedia: SH.photosOf(page), SH.keyPoints(page)) on the raw sheet html
+  const page = parse(soloHtml);
+  assert.deepEqual(SH.photosOf(page).map(p => p.src), ['img/01-approach.jpg', 'img/02-pop.jpg', 'img/03-landing.jpg']);
+  assert.deepEqual(SH.keyPoints(page).map(k => k.cue), ['Short bold cue.', 'Second cue.']);
+  // Key points dropped (the video shows none): no cue, the photos stay
+  const noKeys = parse(soloHtml.replace(/\n<h2>Key points<\/h2>\n<ol class="keys">[\s\S]*?<\/ol>\n/, '\n'));
+  assert.equal(noKeys.querySelector('ol.keys'), null);
+  assert.deepEqual(SH.keyPoints(noKeys), []);
+  assert.equal(SH.photosOf(noKeys).length, 3);
+  // the player's dose comes from the session item only (playAct: RS.doseLabel(it), it.dose), never from the sheet
+  const html = fs.readFileSync(path.join(__dirname, '../app/index.html'), 'utf8');
+  assert.match(html, /const big = RS\.doseLabel\(it\), free = it \? it\.dose\.trim\(\) : '';/);
+  assert.doesNotMatch(html, /querySelector(All)?\(['"][^'"]*\.dose/, 'no sheet .dose grid is read by the app');
+});
+
+test('a technique sheet without go / no-go box is arranged like a sheet; the go / no-go box alone is enough to move', () => {
+  // no .gonogo: the gym order, the try plan (.dose) pulled after the steps
+  const noBox = soloHtml.replace(/\n<h2>Go \/ no-go<\/h2>\n<div class="gonogo">[\s\S]*?\n<\/div>\n/, '\n');
+  assert.equal(noBox.includes('gonogo'), false);
+  const a = arranged(noBox);
+  assert.deepEqual(landmarks(a.doc).filter(l => l.startsWith('h2:')).slice(0, 3), ['h2:Steps', 'h2:Try plan suggestion, not in the video', 'h2:Key points']);
+  assert.deepEqual(content(a.doc), a.before);
+  // a go / no-go box and no photo sequence: header → go / no-go → the rest
+  const b = arranged(`<div class="wrap fiche"><header><h1>T</h1></header><h2>Conditions</h2><p>Wind</p>
+    <h2>Go / no-go</h2><div class="gonogo"><div class="go"><h3>Go</h3></div><div class="nogo"><h3>No-go</h3></div></div></div>
+    <div class="wrap"><footer>Src</footer></div>`);
+  assert.equal(b.changed, true);
+  assert.deepEqual(landmarks(b.doc), ['header', 'h2:Go / no-go', 'h2:Conditions', 'footer']);
+  assert.deepEqual(content(b.doc), b.before);
+});
+
 // ---------- « Keep screen on » ----------
 const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'u1', email: 'u@example.test'}}};
 const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r)); };
