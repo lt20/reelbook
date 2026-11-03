@@ -109,6 +109,7 @@ class PublishSessionV2(Base):
         self.assertEqual(writes, [("sheets", "s-b"), ("sheets", "s-a"), ("sessions", "session-x")])
         sheet_rows = [c[3] for c in fake.rest_calls("POST", "sheets")]
         self.assertTrue(all(r["kind"] == "sheet" for r in sheet_rows))
+        self.assertFalse(any("exercises" in r for r in sheet_rows), "the v1 column is left to its default")
         row = fake.rest_calls("POST", "sessions")[0][3]
         self.assertEqual(row["origin"], "video")
         self.assertEqual(row["items"], [{"slug": "s-b", "dose": "30 s"}, {"slug": "s-a", "dose": "30 s"}, {"slug": "s-b", "dose": "30 s"}])

@@ -14,9 +14,21 @@ const hostedUrl = 'https://hosted.example.test';
 const ownUrl = 'https://personal.example.test';
 const ownKey = 'a-public-anon-key-long-enough';
 
+// A sheet's html in tests holds only `<a href="…">text</a>` links: enough for loadSheet's link rewriting.
+const sheetLinks = html => [...String(html || '').matchAll(/<a href="([^"]*)">([^<]*)<\/a>/g)].map(([, href, text]) => ({
+  tagName: 'A', text, attrs: {href}, getAttribute(k) { return this.attrs[k] ?? null; }, setAttribute(k, v) { this.attrs[k] = v; }
+}));
+class SheetParser { parseFromString(html) { return {body: {children: sheetLinks(html)}}; } }
+const sheetDocument = {
+  importNode: n => n,
+  createDocumentFragment: () => ({nodes: [], appendChild(n) { this.nodes.push(n); }, querySelectorAll(sel) { return sel === 'a[href]' ? this.nodes : []; }}),
+  createElement: () => ({frag: null, appendChild(f) { this.frag = f; }, get innerHTML() { return this.frag.nodes.map(a => `<a href="${a.attrs.href}">${a.text}</a>`).join(''); }})
+};
+
 // `failing`: table -> {error, status} answered instead of rows (a backend without that table).
 // `writes`: table -> {data, error} answered to an insert / update / delete / upsert (default: one row written).
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = ''} = {}) {
+// `dom`: a minimal DOMParser for a sheet's html made of `<a href="…">text</a>` links only, so loadSheet renders it.
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -61,6 +73,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       title: 'Reelbook'
     },
     navigator: {},
+    ...(dom ? {DOMParser: SheetParser} : {}),
     supabase: {
       createClient(url, key, options) {
         // with `tables`, a read chain resolves to that table's rows (maybeSingle: the first row matching its eq
@@ -77,7 +90,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
               return writes[table] || {data: w[0] === 'insert' ? [].concat(w[1]).map(r => ({format: '', why: '', key_points: [], source: {}, thumbnail: '', ...r})) : [{}], error: null};
             }
             const rows = tables[table] || [];
-            if (ops.some(o => o[0] === 'maybeSingle')) return {data: rows.find(r => eqs.every(([c, v]) => r[c] === v)) || null, error: null};
+            if (ops.some(o => o[0] === 'maybeSingle' || o[0] === 'single')) return {data: rows.find(r => eqs.every(([c, v]) => r[c] === v)) || null, error: null};
             return {data: rows, error: null};
           };
           const q = new Proxy({}, {get: (_, k) => k === 'then' ? (ok, ko) => Promise.resolve().then(result).then(ok, ko) : (...a) => { ops.push([k, ...a]); return q; }});
@@ -103,6 +116,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       }
     }
   };
+  if (dom) Object.assign(context.document, sheetDocument);
   vm.createContext(context);
   vm.runInContext(sessionsJs, context);
   vm.runInContext(script, context);
@@ -226,7 +240,7 @@ test('discarding from the dialog forgets the link', async () => {
   assert.equal(page.clients.at(-1).calls.some(c => c[0] === 'insert'), false);
 });
 
-test('keyword search finds sheets and session exercises, accents and case ignored', async () => {
+test('keyword search finds sheets, accents and case ignored; an old one-page session is not shown', async () => {
   const page = await app({
     remembered: {mode: 'own', url: ownUrl, key: ownKey},
     sessions: {[ownUrl]: {id: 'u1', email: 'user@example.test'}},
@@ -243,11 +257,13 @@ test('keyword search finds sheets and session exercises, accents and case ignore
   assert.equal(page.element('home').hidden, false);
   assert.equal(page.element('search').hidden, false);
   const search = async q => { page.element('q').value = q; await page.fire('q', 'input'); return page.element('results').innerHTML; };
-  let html = await search('EPAULE');
-  assert.match(html, /#routine~rot/);
-  assert.match(html, /href="#routine"/);
-  assert.doesNotMatch(html, /#curl/);
+  let html = await search('HALTERES');
+  assert.match(html, /href="#curl"/);
+  assert.doesNotMatch(html, /#ange/);
   assert.equal(page.element('portal').hidden, true);
+  html = await search('EPAULE');
+  assert.doesNotMatch(html, /#routine/, 'v1 session hidden, its exercises too');
+  assert.match(html, /Nothing matches/);
   html = await search('shoulders plat');
   assert.match(html, /#ange/);
   assert.doesNotMatch(html, /#routine/);
@@ -276,9 +292,10 @@ test('v2 sessions show in their notebook, in search and on their own page', asyn
   const page = await app({...signedIn, tables: v2Tables(), hash: '#strength'});
   await settle();
   const groups = page.element('groups').innerHTML;
-  assert.match(groups, /Sessions <span class="n">2<\/span>/);
+  assert.match(groups, /Sessions <span class="n">1<\/span>/, 'the old one-page session is not counted');
   assert.match(groups, /href="#session\/gsp-shoulders"/);
-  assert.match(groups, /href="#old-routine~a"/, 'v1 exercise cards stay');
+  assert.doesNotMatch(groups, /old-routine|Old move/, 'no v1 session card, no v1 exercise card');
+  assert.match(page.element('count').textContent, /^2 sheets · 1 session · /);
   assert.match(groups, /2 exercises/, 'the deleted sheet is not counted');
   assert.match(groups, /href="#gsp-angel"[\s\S]*?in 1 session/);
   assert.doesNotMatch(groups.match(/href="#curl"[\s\S]*?<\/a>/)[0], /in \d session/);
@@ -459,7 +476,7 @@ test('Delete sheet asks in an app dialog, deletes the row, its photos and its no
   assert.match(page.element('flash').textContent, /Sheet deleted/);
 });
 
-test('Delete sheet keeps the sheet and says so when the delete fails; a v1 session has no such button', async () => {
+test('Delete sheet keeps the sheet and says so when the delete fails', async () => {
   const page = await app({...signedIn, tables: v2Tables(), hash: '#curl', writes: {sheets: {data: [], error: null}}});
   await settle();
   clickIn(page, 'view', '#sd-open');
@@ -468,9 +485,50 @@ test('Delete sheet keeps the sheet and says so when the delete fails; a v1 sessi
   assert.equal(page.element('sd-dlg').open, true);
   assert.match(page.element('sd-err').textContent, /Could not delete/);
   assert.equal(page.clients.at(-1).calls.some(c => c[0] === 'remove'), false, 'photos kept');
-  const v1 = await app({...signedIn, tables: v2Tables(), hash: '#old-routine'});
+});
+
+// ---------- old one-page sessions (v1), left on an older self-hosted backend (S4) ----------
+test('old one-page sessions are hidden, and Settings says how to rebuild them', async () => {
+  const page = await app({...signedIn, tables: v2Tables(), hash: '#settings'});
   await settle();
-  assert.doesNotMatch(v1.element('view').innerHTML, /sd-open/);
+  assert.equal(page.element('settings').hidden, false);
+  assert.equal(page.element('s-v1').hidden, false);
+  assert.match(page.element('s-v1').innerHTML, /^1 old-format session hidden: run <code>python3 tools\/rb.py requeue-sessions<\/code>, then <code>\/reelbook<\/code>, to rebuild them\.$/);
+  assert.match(page.element('nblist').innerHTML, /Strength<\/b><small>2 sheets · 1 session</);
+  page.go('');
+  await settle();
+  assert.match(page.element('count').textContent, /^3 sheets · 1 session · 2 notebooks$/);
+  assert.match(page.element('portal').innerHTML, /2 sheets · 1 session/);
+  const tables = v2Tables(); tables.sheets = tables.sheets.filter(s => s.kind !== 'session');
+  const clean = await app({...signedIn, tables, hash: '#settings'});
+  await settle();
+  assert.equal(clean.element('s-v1').hidden, true, 'no hint once every old session is rebuilt');
+});
+
+test('a link to an old session, or an old #<slug>~<anchor> link, opens the home page without failing', async () => {
+  for (const hash of ['#old-routine', '#old-routine~a', '#gsp-angel~x']) {
+    const page = await app({...signedIn, tables: v2Tables(), hash});
+    await settle();
+    assert.equal(page.element('home').hidden, false, hash);
+    assert.equal(page.element('view').hidden, true, hash);
+    assert.doesNotMatch(page.element('count').textContent, /Could not load/, hash);
+  }
+});
+
+test('a link in a sheet to another sheet or a session is kept; an unknown #anchor stays on the sheet', async () => {
+  const tables = v2Tables();
+  tables.sheets.find(s => s.slug === 'curl').html = '<a href="#gsp-angel">Floor angel</a><a href="#session/gsp-shoulders">GSP</a>'
+    + '<a href="#cues">Cues</a><a href="#session/gone">Gone</a><a href="#">Home</a><a href="https://example.test/v">Video</a>';
+  const page = await app({...signedIn, tables, hash: '#curl', dom: true});
+  await settle();
+  const html = page.element('view').innerHTML;
+  assert.doesNotMatch(html, /could not be loaded/);
+  assert.match(html, /<a href="#gsp-angel">Floor angel<\/a>/, 'existing sheet: kept');
+  assert.match(html, /<a href="#session\/gsp-shoulders">GSP<\/a>/, 'existing session: kept');
+  assert.match(html, /<a href="#curl">Cues<\/a>/, 'unknown anchor: the current sheet');
+  assert.match(html, /<a href="#curl">Gone<\/a>/, 'unknown session: the current sheet');
+  assert.match(html, /<a href="#">Home<\/a>/);
+  assert.match(html, /<a href="https:\/\/example.test\/v">Video<\/a>/);
 });
 
 test('« Add to session » appends the sheet once, says when it is already there, and can create a session', async () => {

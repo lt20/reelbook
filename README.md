@@ -137,7 +137,7 @@ security (`supabase/schema.sql`):
 | Table / bucket | Holds |
 | --- | --- |
 | `requests` | pasted links: `url`, `status` (queued → processing → done / error), `theme` hint, `slug` |
-| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html` (`kind` and `exercises` only serve the old one-page sessions, to be removed) |
+| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html` (`kind` and `exercises` are left from the old one-page sessions and only serve their migration, below) |
 | `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `origin` (`video` or `user`), `thumbnail`, `items` (ordered `{slug, dose}`, each slug a sheet) |
 | `notes` | your personal note per sheet (key: its slug) and per session (key: `session/<slug>`) |
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
@@ -147,14 +147,17 @@ The app renders `sheets.html` inside its own styles, builds session pages from t
 row, and signs image URLs on the fly. Nothing is public, nothing is shared between accounts.
 A backend set up before sessions existed has no `sessions` table: re-run `supabase/schema.sql`
 (it only adds what is missing); until then the app hides sessions and says so in Settings.
+A backend that still holds old one-page sessions (`sheets` rows with `kind = 'session'`, before
+sessions were made of sheets): the app hides them and Settings counts them. Run
+`python3 tools/rb.py requeue-sessions` (add `--dry-run` first to see the list), then `/reelbook`:
+each video is rebuilt as exercise sheets plus a session, and its old page is deleted.
 
 ## Repository layout
 
 ```
 app/        the web app (index.html, config.js, sessions.js, manifest, service worker, vendored supabase-js)
 skill/      the Claude Code skill (reelbook/SKILL.md)
-templates/  sheet.html and exercise.html (one exercise of a session), the HTML the skill fills in;
-            session.html is the old one-page session, no longer written
+templates/  sheet.html and exercise.html (one exercise of a session), the HTML the skill fills in
 tools/      rb.py (backend CLI), crop.py, vstack.py (Pillow), nightly.sh (overnight runs, macOS),
             import-legacy.py (one-off import of the author's first notebook)
 supabase/   schema.sql

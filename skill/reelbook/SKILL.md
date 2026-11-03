@@ -19,7 +19,7 @@ needs a `theme` from that list and a `group`: use the notebook's groups when it 
 create a short, reusable group name (custom notebooks start with none). If no notebook fits at
 all, do not invent one: publish in the closest and tell the user, who can add a notebook in the
 app. Routes in the app: `#` portal, `#<theme>`, `#<slug>` for a sheet, `#session/<slug>` for a
-session (`#<slug>~<anchor>` only for the old one-page sessions, which section 3 bis no longer writes).
+session.
 
 **Language**: write the sheet in the user's language (the one they talk to you in). Section
 titles follow the template, translated.
@@ -151,7 +151,8 @@ titles follow the template, translated.
 - Section order is fixed: Why → Dose (marked "suggestion" when the reel gives none) → Key points →
   Sequence (numbered photos, palm/direction badge when useful) → Variation → Source.
 - Second person, short sentences, author credit + video link in the footer. No `<script>`, no
-  `<style>`: the app provides the styles (class names in `templates/`).
+  `<style>`: the app provides the styles (class names in `templates/`). To point to another of
+  the user's sheets, link `#<its slug>` (`rb.py list` gives the slugs).
 - `meta.json`: `slug`, `kind: "sheet"`, `theme`, `group`, `title`, `summary` (one line for the
   card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok`, `youtube` or `facebook`).
 
@@ -171,8 +172,7 @@ titles follow the template, translated.
   through… are stages of the front kick through). In doubt, one sheet, and say so to the user.
 - A workout: several named exercises = **one session**: one light
   exercise sheet per exercise, plus one session that links them **in the video's order**. Grid per
-  exercise, photos per the count rule. Processing is the same as for the old one-page session:
-  only the output is split.
+  exercise, photos per the count rule.
 - Work folder: `work/<session-slug>/` holds the session `meta.json` and **one sub-folder per
   exercise**, `work/<session-slug>/<exercise-slug>/` (`index.html`, `meta.json`, `img/`, as in
   section 3). No `index.html` at the session level: the app draws the session page itself.
@@ -202,17 +202,17 @@ titles follow the template, translated.
   given). `why` and `key_points` are written in the user's language, like the sheets. Optional
   `"thumbnail": "<exercise slug>/img/thumb.jpg"`; leave it out and the app uses the first
   item's.
-- Old one-page sessions (`templates/session.html`, `exercises[]`) are **no longer written**:
-  `rb.py publish` refuses them.
-- **Requeued old sessions** (`rb.py requeue-sessions` put their videos back in the queue): process
-  them like any video, and keep `source.url` **exactly** the request's URL: the publish deletes
-  the old page that has the same `source.url` (with its images), and nothing else does.
+- **Requeued old sessions**: a backend set up before sessions v2 may still hold old one-page
+  sessions; the app hides them and Settings tells the user to run `rb.py requeue-sessions`, which
+  puts their videos back in the queue. Process them like any video, and keep `source.url`
+  **exactly** the request's URL: the publish deletes the old page that has the same `source.url`
+  (with its images), and nothing else does. `rb.py publish` refuses the old format (`exercises[]`).
 
 ## 4. Publish and close
 - Sheet: `python3 tools/rb.py publish work/<slug>` uploads the images and upserts the sheet.
 - Session: `python3 tools/rb.py publish work/<session-slug>` checks the whole folder first, then
   publishes each exercise sheet, then the session, then deletes the old one-page session of the
-  same video if there is one. « no sessions table »: the user has to re-run
+  same video if an older backend still has one. « no sessions table »: the user has to re-run
   `supabase/schema.sql` on their project (`docs/own-supabase.md`); say so and flag the request
   with `rb.py error`. Reprocessing a video rewrites its session: changes made to it in the app
   (order, doses, removed items) are lost.

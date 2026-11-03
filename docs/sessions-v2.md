@@ -3,11 +3,11 @@
 Framing doc, decided with Laurent on 2026-11-02 (grill session). Reread before touching any lot below.
 PR 1 (#12) shipped the independent part: queue only on the home page, « Move » on simple sheets.
 
-## Today (v1)
+## Before (v1, rendering removed in S4)
 
-A session is one `sheets` row with `kind = 'session'`: one HTML page written by Claude from one video,
+A session was one `sheets` row with `kind = 'session'`: one HTML page written by Claude from one video,
 each exercise a `<section class="exo">` inside it, listed in `sheets.exercises` (jsonb) for the cards.
-Exercises are not sheets: their content and photos live only in the session page.
+Exercises were not sheets: their content and photos lived only in the session page.
 
 ## Decisions
 
@@ -44,14 +44,15 @@ Exercises are not sheets: their content and photos live only in the session page
 - « in N sessions » tag and « From the session … » are computed client-side from `sessions.items`; no extra column.
 - The app **tolerates a backend without the `sessions` table** (self-hosted users who have not re-run the schema):
   session features hidden, one line in Settings: « Re-run supabase/schema.sql to enable sessions. »
-- v1 sessions (`sheets.kind = 'session'`) keep rendering as today until migrated.
+- v1 sessions (`sheets.kind = 'session'`) kept rendering until migrated; since S4 the app hides them
+  and Settings counts them (see « Notes from S4 »).
 - `rb.py`:
   - `publish` accepts a session folder v2 (`meta.json` `kind: "session"`, `format`, `why`, `key_points`,
     `items[{slug, dose}]`, plus one sub-folder per exercise sheet): publishes the sheets, then upserts the session
     (`origin: 'video'`). If a v1 session row has the same `source.url`, it is deleted with its storage files.
   - `requeue-sessions [--dry-run]`: inserts one `requests` row per v1 session source URL (skips a URL already queued).
 - Skill (`skill/reelbook/SKILL.md`, `templates/`): section 3 bis rewritten for v2; new `templates/exercise.html`
-  (light sheet), `templates/session.html` removed once v1 is gone.
+  (light sheet), `templates/session.html` removed in S4.
 
 ## Notes from S1 (#14)
 
@@ -77,6 +78,23 @@ Exercises are not sheets: their content and photos live only in the session page
 - Deleting a session keeps its note; slugs are never reused, so the note never shows on another session.
 - Title ≤ 80 characters; renaming keeps the slug. « My notes » is hidden in Edit mode.
 
+## Notes from S4 (#23)
+
+- The app no longer renders v1 sessions: no session or exercise card from `sheets.exercises`, no
+  `#<slug>~<anchor>` route nor anchor scroll, no v1 case in Move, Delete sheet, Add to session, the
+  counters or search. `templates/session.html` and its `.plan` / `.exo` styles are gone.
+- Fallback for self-hosted backends that still hold v1 rows (applied by default, to be confirmed by
+  Laurent): `RS.splitV1` drops them at load; Settings shows « N old-format session(s) hidden: run
+  `python3 tools/rb.py requeue-sessions`, then `/reelbook`, to rebuild them. » An old `#<slug>` or
+  `#<slug>~…` link opens the home page, like any unknown route.
+- Kept for that migration: `rb.py requeue-sessions`, the v1 cleanup in `publish` (`_drop_v1_sessions`),
+  the refusal of the v1 format. `publish` no longer sends `exercises: []` (column default).
+- `tools/import-legacy.py` skips the « seance » entries of the old carnet (« skipped: session, reprocess
+  its video with /reelbook »): splitting their one page into exercise sheets is not worth it for a
+  one-off import.
+- Schema untouched: `sheets.kind`, `sheets.exercises` and the `kind` check stay. Dropping them is
+  destructive on existing backends; for Laurent to decide later.
+
 ## Lots
 
 | Lot | Content | Files | Depends on | Status |
@@ -84,7 +102,7 @@ Exercises are not sheets: their content and photos live only in the session page
 | S1 | Schema + `rb.py` (publish v2, legacy delete, `requeue-sessions`) + skill and templates | `supabase/`, `tools/rb.py`, `skill/`, `templates/`, `docs/own-supabase.md` | nothing | merged (#14) |
 | S2 | App, read side: session page from structure, Sessions section, « in N sessions », « From the session », Move for sessions, legacy fallback, missing-table tolerance | `app/` | #12 merged, S1 schema | merged (#15) |
 | S3 | App, composition: « + New session », « Add to session », Edit mode | `app/` | S2 | merged (#16) |
-| S4 | Cleanup once Laurent has run `requeue-sessions` and the queue is empty: drop v1 rendering, `exercises` column use, `templates/session.html` | `app/`, `templates/`, `skill/` | S1–S3 + migration done | to do: unblocked on 2026-11-03 (no v1 session left in prod) |
+| S4 | Cleanup once Laurent has run `requeue-sessions` and the queue is empty: drop v1 rendering, `exercises` column use, `templates/session.html` | `app/`, `templates/`, `skill/`, `tools/`, docs | S1–S3 + migration done | delivered (#23) |
 
 S2 and S3 touch `app/index.html`: one after the other, never stacked.
 

@@ -14,7 +14,9 @@
     rb.py delete <slug>         remove a sheet and its images
     rb.py requeue-sessions [--dry-run]
                                 queue again the video of every old (v1, one HTML page) session, so the skill
-                                rebuilds it as exercise sheets + a session; skips a URL already queued or processing
+                                rebuilds it as exercise sheets + a session; skips a URL already queued or processing.
+                                For backends that still hold v1 sessions: the app no longer shows them
+                                (Settings counts them) and nothing writes them any more
     rb.py requeue-stuck [--hours N] [--dry-run]
                                 put back in the queue every request left « processing » for more than N hours
                                 (default 6) by a run that died (Mac asleep, crash); run first by nightly.sh and the skill
@@ -34,7 +36,9 @@ meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no
     Every item slug is the slug of a sub-folder's meta.json, and every sub-folder is an item. Optional
     "thumbnail": "<item slug>/img/<file>" (else the app uses the first item's). Publishing then deletes
     the old v1 session (sheets row with kind "session", images included) that has the same source.url.
-    The v1 format (kind "session" with "exercises" and one index.html) is refused.
+    The v1 format (kind "session" with "exercises" and one index.html) is refused. The sheets columns
+    `kind` and `exercises` only serve this migration now; `publish` writes kind "sheet" and leaves
+    `exercises` to its default.
 """
 import json, os, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error
 
@@ -209,7 +213,7 @@ def _publish_sheet(cfg, d, meta):
             n += 1
     row = {"slug": slug, "kind": "sheet", "theme": meta["theme"], "group": meta["group"], "title": meta["title"],
            "summary": meta.get("summary", ""), "duration": meta.get("duration", ""), "thumbnail": meta.get("thumbnail", "img/thumb.jpg"),
-           "source": meta.get("source", {}), "exercises": [], "html": (d / "index.html").read_text()}
+           "source": meta.get("source", {}), "html": (d / "index.html").read_text()}
     out = rest(cfg, "POST", "sheets", row, prefer="resolution=merge-duplicates,return=representation", params={"on_conflict": "user_id,slug"})
     print(f"published {slug}: {n} image(s), row {out[0]['id']}")
 
