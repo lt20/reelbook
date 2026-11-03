@@ -359,9 +359,12 @@ def cmd_requeue_sessions(args):
 def _ts(v):
     """A PostgREST timestamp (« …+00:00 » or « …Z ») as epoch seconds; None when absent or unreadable."""
     if not v: return None
-    import datetime
+    import datetime, re
+    s = str(v).replace("Z", "+00:00")
+    # Postgres drops trailing zeros (« .12345 »); fromisoformat wants 3 or 6 digits before Python 3.11
+    s = re.sub(r"\.(\d+)", lambda m: "." + (m.group(1) + "000000")[:6], s, count=1)
     try:
-        return datetime.datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp()
+        return datetime.datetime.fromisoformat(s).timestamp()
     except ValueError:
         return None
 
