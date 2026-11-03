@@ -14,9 +14,21 @@ const hostedUrl = 'https://hosted.example.test';
 const ownUrl = 'https://personal.example.test';
 const ownKey = 'a-public-anon-key-long-enough';
 
+// A sheet's html in tests holds only `<a href="…">text</a>` links: enough for loadSheet's link rewriting.
+const sheetLinks = html => [...String(html || '').matchAll(/<a href="([^"]*)">([^<]*)<\/a>/g)].map(([, href, text]) => ({
+  tagName: 'A', text, attrs: {href}, getAttribute(k) { return this.attrs[k] ?? null; }, setAttribute(k, v) { this.attrs[k] = v; }
+}));
+class SheetParser { parseFromString(html) { return {body: {children: sheetLinks(html)}}; } }
+const sheetDocument = {
+  importNode: n => n,
+  createDocumentFragment: () => ({nodes: [], appendChild(n) { this.nodes.push(n); }, querySelectorAll(sel) { return sel === 'a[href]' ? this.nodes : []; }}),
+  createElement: () => ({frag: null, appendChild(f) { this.frag = f; }, get innerHTML() { return this.frag.nodes.map(a => `<a href="${a.attrs.href}">${a.text}</a>`).join(''); }})
+};
+
 // `failing`: table -> {error, status} answered instead of rows (a backend without that table).
 // `writes`: table -> {data, error} answered to an insert / update / delete / upsert (default: one row written).
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = ''} = {}) {
+// `dom`: a minimal DOMParser for a sheet's html made of `<a href="…">text</a>` links only, so loadSheet renders it.
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -61,6 +73,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       title: 'Reelbook'
     },
     navigator: {},
+    ...(dom ? {DOMParser: SheetParser} : {}),
     supabase: {
       createClient(url, key, options) {
         // with `tables`, a read chain resolves to that table's rows (maybeSingle: the first row matching its eq
@@ -77,7 +90,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
               return writes[table] || {data: w[0] === 'insert' ? [].concat(w[1]).map(r => ({format: '', why: '', key_points: [], source: {}, thumbnail: '', ...r})) : [{}], error: null};
             }
             const rows = tables[table] || [];
-            if (ops.some(o => o[0] === 'maybeSingle')) return {data: rows.find(r => eqs.every(([c, v]) => r[c] === v)) || null, error: null};
+            if (ops.some(o => o[0] === 'maybeSingle' || o[0] === 'single')) return {data: rows.find(r => eqs.every(([c, v]) => r[c] === v)) || null, error: null};
             return {data: rows, error: null};
           };
           const q = new Proxy({}, {get: (_, k) => k === 'then' ? (ok, ko) => Promise.resolve().then(result).then(ok, ko) : (...a) => { ops.push([k, ...a]); return q; }});
@@ -103,6 +116,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       }
     }
   };
+  if (dom) Object.assign(context.document, sheetDocument);
   vm.createContext(context);
   vm.runInContext(sessionsJs, context);
   vm.runInContext(script, context);
@@ -499,6 +513,22 @@ test('a link to an old session, or an old #<slug>~<anchor> link, opens the home 
     assert.equal(page.element('view').hidden, true, hash);
     assert.doesNotMatch(page.element('count').textContent, /Could not load/, hash);
   }
+});
+
+test('a link in a sheet to another sheet or a session is kept; an unknown #anchor stays on the sheet', async () => {
+  const tables = v2Tables();
+  tables.sheets.find(s => s.slug === 'curl').html = '<a href="#gsp-angel">Floor angel</a><a href="#session/gsp-shoulders">GSP</a>'
+    + '<a href="#cues">Cues</a><a href="#session/gone">Gone</a><a href="#">Home</a><a href="https://example.test/v">Video</a>';
+  const page = await app({...signedIn, tables, hash: '#curl', dom: true});
+  await settle();
+  const html = page.element('view').innerHTML;
+  assert.doesNotMatch(html, /could not be loaded/);
+  assert.match(html, /<a href="#gsp-angel">Floor angel<\/a>/, 'existing sheet: kept');
+  assert.match(html, /<a href="#session\/gsp-shoulders">GSP<\/a>/, 'existing session: kept');
+  assert.match(html, /<a href="#curl">Cues<\/a>/, 'unknown anchor: the current sheet');
+  assert.match(html, /<a href="#curl">Gone<\/a>/, 'unknown session: the current sheet');
+  assert.match(html, /<a href="#">Home<\/a>/);
+  assert.match(html, /<a href="https:\/\/example.test\/v">Video<\/a>/);
 });
 
 test('« Add to session » appends the sheet once, says when it is already there, and can create a session', async () => {

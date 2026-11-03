@@ -151,7 +151,8 @@ titles follow the template, translated.
 - Section order is fixed: Why → Dose (marked "suggestion" when the reel gives none) → Key points →
   Sequence (numbered photos, palm/direction badge when useful) → Variation → Source.
 - Second person, short sentences, author credit + video link in the footer. No `<script>`, no
-  `<style>`: the app provides the styles (class names in `templates/`).
+  `<style>`: the app provides the styles (class names in `templates/`). To point to another of
+  the user's sheets, link `#<its slug>` (`rb.py list` gives the slugs).
 - `meta.json`: `slug`, `kind: "sheet"`, `theme`, `group`, `title`, `summary` (one line for the
   card), `duration`, `thumbnail`, `source {author, url, platform}` (`platform`: `instagram`, `tiktok`, `youtube` or `facebook`).
 

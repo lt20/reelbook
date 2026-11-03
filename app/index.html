@@ -770,7 +770,10 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     const imgs = [...frag.querySelectorAll('img')];
     const get = await signAll(imgs.map(i => spath(slug, (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'))));
     imgs.forEach(i => { const rel = (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'); i.setAttribute('src', get(spath(slug, rel))); i.removeAttribute('loading'); });
-    frag.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (h === '../index.html' || h === '../' || h === '#') a.setAttribute('href', '#'); else if (h.startsWith('#') && h.length > 1) a.setAttribute('href', `#${slug}`); }); // no in-page anchor route: stay on the sheet
+    // « #x » in a sheet: kept when x is another sheet or a v2 session (how the skill links sheets);
+    // otherwise an in-page anchor, which has no route: it stays on this sheet.
+    const routable = h => { let x = h.slice(1); try { x = decodeURIComponent(x); } catch {} const ses = RS.sessionSlugOf(x); return bySlug.has(x) || !!(ses && v2BySlug.has(ses)); };
+    frag.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (h === '../index.html' || h === '../' || h === '#') a.setAttribute('href', '#'); else if (h.startsWith('#') && h.length > 1 && !routable(h)) a.setAttribute('href', `#${slug}`); });
     const wrap = document.createElement('div'); wrap.appendChild(frag);
     cache.set(slug, wrap.innerHTML); return wrap.innerHTML;
   };
