@@ -31,7 +31,8 @@ const sheetDocument = {
 // `writes`: table -> {data, error} answered to an insert / update / delete / upsert (default: one row written).
 // `dom`: a minimal DOMParser for a sheet's html made of `<a href="…">text</a>` links only, so loadSheet renders it.
 // `library`: the built-in notebooks of the app config (window.REELBOOK.library).
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}]} = {}) {
+// `nav`: the navigator (none of its APIs by default, e.g. no wakeLock).
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -75,7 +76,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       addEventListener() {},
       title: 'Reelbook'
     },
-    navigator: {},
+    navigator: nav,
     ...(dom ? {DOMParser: SheetParser} : {}),
     supabase: {
       createClient(url, key, options) {

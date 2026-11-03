@@ -1,0 +1,166 @@
+// L3 (sheet in use): gesture-first order of a sheet at display time (app/sheet.js), and the « Keep screen on »
+// toggle of the sheet and session pages, guarded when the Screen Wake Lock API is missing.
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const SH = require('../app/sheet.js');
+const {parse} = require('./mini-dom.cjs');
+const {app, ownUrl, ownKey} = require('./harness.cjs');
+
+const template = name => fs.readFileSync(path.join(__dirname, '../templates', name), 'utf8');
+const sheetHtml = template('sheet.html');
+const exerciseHtml = template('exercise.html');
+// The sheet template with 6 key points (3 shown, « +3 more »).
+const sixKeys = sheetHtml.replace('<li><b>Third cue.</b> One sentence.</li>',
+  '<li><b>Third cue.</b> One sentence.</li><li><b>Fourth cue.</b> Four.</li><li><b>Fifth cue.</b> Five.</li><li><b>Sixth cue.</b> Six.</li>');
+
+// Every element of the sheet except the .wrap / .wide boxes and what arrange adds (data-rb), with its own text:
+// the same before and after, whatever the order.
+const content = doc => doc.querySelectorAll('*')
+  .filter(el => !el.hasAttribute('data-rb') && !(el.parentNode === doc.body && el.tagName === 'DIV'))
+  .map(el => `${el.tagName}|${el.childNodes.filter(n => n.nodeType === 3).map(n => n.data).join('').replace(/\s+/g, ' ').trim()}`).sort();
+// The landmarks of the page in document order: header, h2 headings (with « why » when inside the collapsed
+// why), the key points shown, the « +N more » summary and its points, footer.
+const landmarks = doc => doc.querySelectorAll('header, h2, ol.keys li, details.rb-more summary, footer').map(el => {
+  if (el.tagName === 'H2') return (el.closest('details.rb-why') ? 'why:' : 'h2:') + el.textContent.replace(/\s+/g, ' ').trim();
+  if (el.tagName === 'LI') return (el.closest('details.rb-more') ? 'more:' : 'key:') + el.querySelector('b').textContent;
+  if (el.tagName === 'SUMMARY') return 'summary:' + el.textContent;
+  return el.tagName.toLowerCase();
+});
+const arranged = html => { const doc = parse(html), before = content(doc); const changed = SH.arrange(doc); return {doc, before, changed}; };
+
+test('a sheet (templates/sheet.html) shows the gesture first: sequence, dose, key points, then why, then the rest', () => {
+  const {doc, before, changed} = arranged(sixKeys);
+  assert.equal(changed, true);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:The sequence', 'h2:Dose suggestion, not in the reel',
+    'h2:Key points', 'key:Short bold cue.', 'key:Second cue.', 'key:Third cue.', 'summary:+3 more',
+    'more:Fourth cue.', 'more:Fifth cue.', 'more:Sixth cue.', 'why:Why', 'h2:Variation', 'footer']);
+  assert.deepEqual(content(doc), before, 'every block kept');
+  // header, lead and kit stay together in the first box, the first photo of the movement right after
+  const [first, second] = doc.body.children;
+  assert.deepEqual(first.children.map(el => el.tagName + (el.getAttribute('class') ? '.' + el.getAttribute('class') : '')), ['HEADER', 'P.lead', 'DIV.kit']);
+  assert.equal(first.getAttribute('class'), 'wrap fiche');
+  assert.equal(second.getAttribute('class'), 'wide');
+  assert.ok(second.querySelector('.steps img'));
+  // the dose keeps its note; the why keeps its quote, collapsed under its own heading
+  const dose = doc.querySelector('.dose');
+  assert.equal(dose.nextSibling.nextSibling.getAttribute('class'), 'note');
+  const why = doc.querySelector('details.rb-why');
+  assert.equal(why.hasAttribute('open'), false);
+  assert.equal(why.querySelector('summary').textContent.trim(), 'Why');
+  assert.ok(why.querySelector('blockquote'));
+  // the hidden key points go on numbering from 4
+  const more = doc.querySelector('details.rb-more ol.keys');
+  assert.equal(more.getAttribute('start'), '4');
+  assert.match(more.getAttribute('style'), /counter-reset:k 3/);
+  // no box is left empty, no « fiche » copied
+  for (const box of doc.body.children) assert.ok(box.children.length, box.outerHTML.slice(0, 60));
+  assert.equal(doc.querySelectorAll('.fiche').length, 1);
+});
+
+test('three key points or fewer: no « more »', () => {
+  const {doc, before} = arranged(sheetHtml);
+  assert.equal(doc.querySelector('details.rb-more'), null);
+  assert.deepEqual(landmarks(doc).filter(l => l.startsWith('key:')), ['key:Short bold cue.', 'key:Second cue.', 'key:Third cue.']);
+  assert.deepEqual(content(doc), before);
+});
+
+test('an exercise sheet (templates/exercise.html) keeps its order: header, movement, cues, easier version, source', () => {
+  const {doc, before} = arranged(exerciseHtml);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:The movement', 'h2:Cues', 'key:Short bold cue.', 'key:Second cue.', 'h2:Easier version', 'footer']);
+  assert.deepEqual(content(doc), before);
+  assert.equal(doc.querySelector('details'), null);
+  assert.deepEqual(doc.body.children.map(b => b.getAttribute('class')), ['wrap fiche', 'wide', 'wrap']);
+});
+
+test('a part that is not found stays where it is, nothing is dropped', () => {
+  // no dose, the sequence in the first box, an extra section and a loose top-level element
+  const html = `<div class="wrap fiche"><header><h1>T</h1></header><p class="lead">L</p>
+    <h2>Pourquoi</h2><p>Parce que.</p><p class="note">Note.</p>
+    <h2>Conditions</h2><ul class="keys"><li>Vent</li></ul>
+    <h2>Points clés</h2><ol class="keys"><li><b>A</b></li><li><b>B</b></li><li><b>C</b></li><li><b>D</b></li></ol>
+    <h2>La séquence</h2><div class="steps"><div class="step"><figure><img src="img/1.jpg"></figure><h3>Un</h3><p>x</p></div></div></div>
+    <p class="loose">Loose</p><div class="wrap"><footer>Src</footer></div>`;
+  const {doc, before} = arranged(html);
+  assert.deepEqual(landmarks(doc), ['header', 'h2:La séquence', 'h2:Points clés', 'key:A', 'key:B', 'key:C', 'summary:+1 more', 'more:D', 'why:Pourquoi', 'h2:Conditions', 'footer']);
+  assert.deepEqual(content(doc), before);
+  assert.ok(doc.querySelector('details.rb-why p.note'), 'the note of the why goes with it');
+  assert.ok(doc.querySelector('p.loose'));
+});
+
+test('a page that is not built from the templates is left as is', () => {
+  for (const html of ['<p>Just text</p>', '<div class="wrap"><h2>A</h2><p>B</p></div>', '<div class="wrap fiche"><header><h1>T</h1></header><p>Only a header.</p></div>']) {
+    const doc = parse(html), was = doc.body.innerHTML;
+    assert.equal(SH.arrange(doc), false, html);
+    assert.equal(doc.body.innerHTML, was);
+  }
+});
+
+test('step photos become buttons of the viewer, with their step caption', () => {
+  const doc = parse(sheetHtml);
+  SH.arrange(doc);
+  assert.equal(SH.markPhotos(doc), 4);
+  const header = doc.querySelector('header img');
+  assert.equal(header.hasAttribute('data-ph'), false, 'the header photo is not a step');
+  const photos = SH.photosOf(doc);
+  assert.deepEqual(photos.map(p => [p.src, p.title, p.caption]), [['img/01-start.jpg', 'Start', 'What to set up before moving.'],
+    ['img/02-middle.jpg', 'Middle', 'The move itself.'], ['img/03-end.jpg', 'End', 'Where it finishes and how to come back.'],
+    ['img/04-variation.jpg', 'Easier / harder', 'One variation shown or named in the reel.']]);
+  for (const p of photos) { assert.equal(p.img.getAttribute('role'), 'button'); assert.equal(p.img.getAttribute('tabindex'), '0'); }
+});
+
+// ---------- « Keep screen on » ----------
+const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'u1', email: 'u@example.test'}}};
+const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r)); };
+const tables = () => ({
+  user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}],
+  sheets: [{slug: 'angel', kind: 'sheet', theme: 'strength', group: 'Shoulders', title: 'Floor angel', summary: 'Face down.', duration: '', html: '<a href="#">Home</a>'}],
+  sessions: [{slug: 'gsp', theme: 'strength', title: 'GSP', format: '', origin: 'user', items: [{slug: 'angel', dose: '30 s'}]}],
+  notes: [], requests: []
+});
+const fakeWakeLock = () => {
+  const log = [];
+  return {log, wakeLock: {async request(type) { log.push('request:' + type); const lock = {released: false, addEventListener() {}, async release() { lock.released = true; log.push('release'); }}; return lock; }}};
+};
+const clickWake = page => page.element('view').listeners.click({target: {closest: s => s === '#wake' ? {} : null}});
+
+test('without the Screen Wake Lock API there is no « Keep screen on » button, and nothing fails', async () => {
+  for (const hash of ['#angel', '#session/gsp']) {
+    const page = await app({...signedIn, tables: tables(), hash, dom: true, stored: {'rb.wake': '1'}});
+    await settle();
+    assert.equal(page.element('view').hidden, false, hash);
+    assert.doesNotMatch(page.element('view').innerHTML, /id="wake"|Keep screen on/, hash);
+    assert.match(page.element('view').innerHTML, /id="mv-open"/, hash);
+  }
+});
+
+test('« Keep screen on » asks for the lock, is remembered, and lets go when leaving the page', async () => {
+  const nav = fakeWakeLock();
+  const page = await app({...signedIn, tables: tables(), hash: '#angel', dom: true, nav});
+  await settle();
+  assert.match(page.element('view').innerHTML, /<button type="button" class="mv wake" id="wake" aria-pressed="false">Keep screen on<\/button>/);
+  assert.deepEqual(nav.log, [], 'off by default');
+  clickWake(page); await settle();
+  assert.equal(page.storage.get('rb.wake'), '1');
+  assert.deepEqual(nav.log, ['request:screen']);
+  page.go('#strength'); await settle();
+  assert.equal(page.element('home').hidden, false);
+  assert.deepEqual(nav.log, ['request:screen', 'release']);
+  // remembered: the next sheet or session page asks again by itself, with the button pressed
+  page.go('#session/gsp'); await settle();
+  assert.match(page.element('view').innerHTML, /id="wake" aria-pressed="true"/);
+  assert.deepEqual(nav.log, ['request:screen', 'release', 'request:screen']);
+  // turned off: released and forgotten
+  clickWake(page); await settle();
+  assert.equal(page.storage.has('rb.wake'), false);
+  assert.deepEqual(nav.log, ['request:screen', 'release', 'request:screen', 'release']);
+});
+
+test('a refused wake lock leaves the page working', async () => {
+  const nav = {wakeLock: {request: async () => { throw new Error('NotAllowedError'); }}};
+  const page = await app({...signedIn, tables: tables(), hash: '#angel', dom: true, nav, stored: {'rb.wake': '1'}});
+  await settle();
+  assert.equal(page.element('view').hidden, false);
+  assert.match(page.element('view').innerHTML, /id="wake" aria-pressed="true"/);
+});
