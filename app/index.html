@@ -608,7 +608,7 @@ dialog.ph-dlg::backdrop{background:#000}
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
 <script src="sessions.js?v=8"></script>
-<script src="sheet.js?v=2"></script>
+<script src="sheet.js?v=3"></script>
 <script>
 (() => {
   'use strict';
@@ -1689,7 +1689,7 @@ dialog.ph-dlg::backdrop{background:#000}
   // `list`: the photos to show instead of the sheet page's (the session player's carousel, L10).
   const openPhotos = (img, list = null) => {
     if (!SH || !phDlg.showModal || !view.querySelectorAll) return;
-    const all = list || SH.photosOf(view), i = Math.max(0, all.findIndex(p => p.img === img));
+    const all = list || SH.photosOf(view, true), i =Math.max(0, all.findIndex(p => p.img === img));
     if (!all.length) return;
     phFrom = img;
     phStrip.innerHTML = all.map((p, k) => `<figure><img src="${esc(p.src)}" alt="${esc(p.alt)}"><figcaption>${p.title ? `<b>${esc(p.title)}</b>` : ''}${esc(p.caption)}</figcaption></figure>`).join('');

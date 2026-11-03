@@ -156,11 +156,14 @@ test('step photos become buttons of the viewer, with their step caption', () => 
   assert.equal(SH.markPhotos(doc), 5);
   const header = doc.querySelector('header img');
   assert.equal(header.hasAttribute('data-ph'), false, 'the header photo is not a step');
-  const photos = SH.photosOf(doc);
-  assert.deepEqual(photos.map(p => [p.src, p.title, p.caption]), [['img/01-start.jpg', 'Start', 'What to set up before moving.'],
-    ['img/02-middle.jpg', 'Middle', 'The move itself.'], ['img/03-end.jpg', 'End', 'Where it finishes and how to come back.'],
-    ['img/04-mistake.jpg', 'Lower back arched', 'What goes wrong, and the fix.'],
-    ['img/05-variation.jpg', 'Easier', 'One variation shown or named in the reel.']]);
+  // the sheet page's viewer (mistakes: true) shows the mistake too, flagged and titled « ✕ … »
+  const photos = SH.photosOf(doc, true);
+  assert.deepEqual(photos.map(p => [p.src, p.title, p.caption, p.bad]), [['img/01-start.jpg', 'Start', 'What to set up before moving.', false],
+    ['img/02-middle.jpg', 'Middle', 'The move itself.', false], ['img/03-end.jpg', 'End', 'Where it finishes and how to come back.', false],
+    ['img/04-mistake.jpg', '✕ Lower back arched', 'What goes wrong, and the fix.', true],
+    ['img/05-variation.jpg', 'Easier', 'One variation shown or named in the reel.', false]]);
+  // by default (the session player) the mistake is left out
+  assert.deepEqual(SH.photosOf(doc).map(p => p.src), ['img/01-start.jpg', 'img/02-middle.jpg', 'img/03-end.jpg', 'img/05-variation.jpg']);
   for (const p of photos) { assert.equal(p.img.getAttribute('role'), 'button'); assert.equal(p.img.getAttribute('tabindex'), '0'); }
 });
 
