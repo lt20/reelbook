@@ -216,10 +216,24 @@ class PublishSessionV2(Base):
             row = fake.rest_calls("POST", "sheets")[0][3]
             self.assertEqual(row["duration"], dur)
             self.assertNotIn("steps", row, "no column for it yet")
-        for i, dur in enumerate(("0:45", "1:02:30", " 12 : 05 ", "5 étapes", "5 steps", "3 exercises", "4 exercices", 5)):
+        for i, dur in enumerate(("0:45", "0:45 min", "1:02:30", " 12 : 05 ", "5 étapes", "5 steps", "3 exercises", "4 exercices")):
             self.assertRefused(self.sheet(f"bad-dur-{i}", duration=dur), "practice time")
+        self.assertRefused(self.sheet("bad-type", duration=5), "duration must be a string")
         for i, steps in enumerate((0, "5", 2.5, True)):
             self.assertRefused(self.sheet(f"bad-steps-{i}", steps=steps), "steps must be")
+
+    def test_a_sheet_published_before_the_rule_is_republished_with_a_warning(self):
+        # decision 6: the rule is for new sheets; correcting an older sheet must not be blocked by its old duration
+        fake = self.use(FakeBackend(sheets=[{"slug": "old-sheet", "kind": "sheet", "source": {}}]))
+        _, err = self.run_cmd(rb.cmd_publish, [str(self.sheet("old-sheet", duration="0:45"))])
+        self.assertIn("warning", err)
+        self.assertEqual(fake.rest_calls("POST", "sheets")[0][3]["duration"], "0:45")
+        # a session mixing an older exercise and a new one: the new one is still refused, before any write
+        d = session_folder(self.root, items=("old-sheet", "s-new"))
+        for s in ("old-sheet", "s-new"):
+            meta = json.loads((d / s / "meta.json").read_text()); meta["duration"] = "3 étapes"
+            write(d / s / "meta.json", meta)
+        self.assertRefused(d, "s-new", FakeBackend(sheets=[{"slug": "old-sheet", "kind": "sheet", "source": {}}]))
 
     def test_a_session_exercise_with_a_step_count_as_duration_is_refused(self):
         d = session_folder(self.root)

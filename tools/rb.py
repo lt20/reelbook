@@ -33,7 +33,8 @@ meta.json of a sheet folder (meta.json + index.html + img/):
     {"slug": "floor-angel", "kind": "sheet", "theme": "strength", "group": "Shoulders",
      "title": "Floor angel", "summary": "…", "duration": "3 min", "thumbnail": "img/thumb.jpg",
      "source": {"author": "Georges St-Pierre", "url": "https://…", "platform": "instagram | tiktok | youtube | facebook"}}
-    `duration` is the practice time or "" (refused when it looks like a video length or a step count). Optional
+    `duration` is the practice time or "" (a video length or a step count is refused on a new sheet, only
+    warned about on a sheet already published). Optional
     `steps` (whole number >= 1): checked, kept in meta.json only (no column yet; the app shows `duration`).
 
 meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no index.html):
@@ -208,7 +209,7 @@ ITEM_FIELDS = ("sets", "reps", "seconds", "rest_s", "per_side")
 IMG_EXT = (".jpg", ".jpeg", ".png", ".webp")
 # A sheet's duration is its practice time (« 5 min ») or "": never the video length (« 0:45 », « 1:02:30 ») nor a
 # step count (L15)
-NOT_A_DURATION = re.compile(r"^\s*\d+(\s*:\s*\d\d){1,2}\s*$|\b(steps?|stages?|exercises?|étapes?|exercices?)\b", re.I)
+NOT_A_DURATION = re.compile(r"(?<!\d)\d+(\s*:\s*\d\d){1,2}(?!\d)|\b(steps?|stages?|exercises?|étapes?|exercices?)\b", re.I)
 NO_SESSIONS = "this backend has no sessions table: re-run supabase/schema.sql (see docs/own-supabase.md)"
 
 def _known_themes(cfg):
@@ -230,13 +231,26 @@ def _read_sheet(d):
     for k in REQUIRED:
         if not meta.get(k): die(f"{meta_p}: missing {k}")
     if meta.get("kind", "sheet") != "sheet": die(f"{meta_p}: kind must be \"sheet\" here")
-    dur, steps = meta.get("duration", ""), meta.get("steps")
-    if not isinstance(dur, str) or NOT_A_DURATION.search(dur):
-        die(f"{meta_p}: duration {json.dumps(dur, ensure_ascii=False)} must be the practice time (\"5 min\") or \"\", "
-            "never the video length nor a step count (put a count in \"steps\")")
+    if not isinstance(meta.get("duration", ""), str): die(f"{meta_p}: duration must be a string")
+    steps = meta.get("steps")
     if steps is not None and (not isinstance(steps, int) or isinstance(steps, bool) or steps < 1):
         die(f"{meta_p}: steps must be a whole number >= 1")
     return meta
+
+def _check_durations(cfg, sheets):
+    """L15, new sheets only: refuse a duration that is a video length or a step count, before any write.
+    `sheets` is [(meta.json path, meta)]. A sheet already published (a correction of an older sheet) only gets a
+    warning, so that it can still be republished."""
+    bad = [(p, m) for p, m in sheets if NOT_A_DURATION.search(m.get("duration", ""))]
+    if not bad: return
+    slugs = sorted({m["slug"] for _, m in bad})
+    rows = rest(cfg, "GET", "sheets", params={"select": "slug", "slug": f"in.({','.join(slugs)})"}) or []
+    old = {r.get("slug") for r in rows} & set(slugs)
+    for p, m in bad:
+        msg = (f"{p}: duration {json.dumps(m['duration'], ensure_ascii=False)} must be the practice time (\"5 min\") "
+               "or \"\", never the video length nor a step count (put a count in \"steps\")")
+        if m["slug"] in old: print(f"rb: warning: {msg}; published anyway, the sheet existed before this rule", file=sys.stderr)
+        else: die(msg)
 
 def _publish_sheet(cfg, d, meta):
     slug = meta["slug"]
@@ -326,6 +340,7 @@ def _publish_session(d, meta):
     _check_theme(meta["theme"], known, d / "meta.json")
     for _, sub, m in sheets:
         _check_theme(m["theme"], known, sub / "meta.json")
+    _check_durations(cfg, [(sub / "meta.json", m) for _, sub, m in sheets])
     for _, sub, m in sheets:          # the sheets first: the session only links to them
         _publish_sheet(cfg, sub, m)
     th = meta.get("thumbnail", "")
@@ -353,6 +368,7 @@ def cmd_publish(args):
     meta = _read_sheet(d)
     cfg = session()
     _check_theme(meta["theme"], _known_themes(cfg), meta_p)
+    _check_durations(cfg, [(meta_p, meta)])
     _publish_sheet(cfg, d, meta)
 
 def cmd_list(args):
