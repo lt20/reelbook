@@ -4,13 +4,16 @@
     rb.py login [--url U --key K]   sign in (email + password; URL and anon key asked unless given) and keep a session
     rb.py whoami                show the signed-in account and backend
     rb.py themes                list the account's notebooks (id, title, description, groups), JSON lines
-    rb.py queue                 list queued requests (JSON lines)
+    rb.py queue                 list queued requests (JSON lines: id, url, theme, note, created_at); a note that
+                                starts with « Redo: » is a correction asked from the app (« Something wrong? »)
     rb.py claim <id>            mark a request as processing (processed_at = claim time until done/error)
     rb.py publish <dir>         sheet folder: upload <dir>/img/* and upsert the sheet (<dir>/meta.json + <dir>/index.html)
                                 session folder: publish each exercise sheet sub-folder, then upsert the session
     rb.py done <id> --slug S    close a request once its sheet or session is published
     rb.py error <id> --note T   flag a request that could not be processed
-    rb.py list                  list published sheets and sessions
+    rb.py list [--since ISO]    list published sheets and sessions; --since: only those added at or after ISO
+                                (UTC, e.g. 2026-11-03T02:00:00Z), oldest first, without the exercise sheets of a
+                                session listed too (used by nightly.sh for its « 2 new sheets: … » notice)
     rb.py delete <slug>         remove a sheet and its images
     rb.py requeue-sessions [--dry-run]
                                 queue again the video of every old (v1, one HTML page) session, so the skill
@@ -142,7 +145,7 @@ def cmd_themes(args):
 
 def cmd_queue(args):
     cfg = session()
-    rows = rest(cfg, "GET", "requests", params={"status": "eq.queued", "order": "created_at.asc", "select": "id,url,theme,created_at"})
+    rows = rest(cfg, "GET", "requests", params={"status": "eq.queued", "order": "created_at.asc", "select": "id,url,theme,note,created_at"})
     for r in rows or []:
         print(json.dumps(r, ensure_ascii=False))
     if not rows:
@@ -314,15 +317,30 @@ def cmd_publish(args):
     _publish_sheet(cfg, d, meta)
 
 def cmd_list(args):
+    usage = "usage: rb.py list [--since <ISO time, e.g. 2026-11-03T02:00:00Z>]"
+    since = None
+    if args:
+        if len(args) != 2 or args[0] != "--since" or _ts(args[1]) is None: die(usage)
+        since = args[1]
     cfg = session()
-    rows = rest(cfg, "GET", "sheets", params={"select": "slug,kind,theme,group,title,added_at", "order": "theme,group,title"})
-    for r in rows or []:
-        print(f"{r['theme']:9} {r['group']:20} {r['kind']:8} {r['slug']:32} {r['title']}")
+    sp = {"select": "slug,kind,theme,group,title,added_at", "order": "added_at.asc" if since else "theme,group,title"}
+    pp = {"select": "slug,theme,title,items,created_at", "order": "created_at.asc" if since else "theme,title"}
+    if since:
+        sp["added_at"] = f"gte.{since}"
+        pp["created_at"] = f"gte.{since}"
+    rows = rest(cfg, "GET", "sheets", params=sp) or []
     try:
-        ses = rest(cfg, "GET", "sessions", params={"select": "slug,theme,title,items", "order": "theme,title"}, tolerate=(404,))
+        ses = rest(cfg, "GET", "sessions", params=pp, tolerate=(404,)) or []
     except RbHTTPError:
+        ses = None
+    if since and ses:   # a new session's exercise sheets are part of it: the session alone stands for them
+        items = {i.get("slug") for r in ses for i in (r.get("items") or []) if isinstance(i, dict)}
+        rows = [r for r in rows if r["slug"] not in items]
+    for r in rows:
+        print(f"{r['theme']:9} {r['group']:20} {r['kind']:8} {r['slug']:32} {r['title']}")
+    if ses is None:
         print(NO_SESSIONS + " to enable sessions", file=sys.stderr); return
-    for r in ses or []:   # kind "session2": a v2 session (exercise sheets + order); "session" rows above are v1 pages
+    for r in ses:   # kind "session2": a v2 session (exercise sheets + order); "session" rows above are v1 pages
         print(f"{r['theme']:9} {str(len(r.get('items') or [])) + ' item(s)':20} {'session2':8} {r['slug']:32} {r['title']}")
 
 def cmd_delete(args):
@@ -380,7 +398,7 @@ def cmd_requeue_stuck(args):
             if hours <= 0: die(usage)
         else: die(usage)
     cfg = session()
-    rows = rest(cfg, "GET", "requests", params={"status": "eq.processing", "select": "id,url,processed_at,created_at", "order": "created_at.asc"}) or []
+    rows = rest(cfg, "GET", "requests", params={"status": "eq.processing", "select": "id,url,note,processed_at,created_at", "order": "created_at.asc"}) or []
     limit, n = time.time() - hours * 3600, 0
     for r in rows:
         since = _ts(r.get("processed_at")) or _ts(r.get("created_at"))
@@ -390,9 +408,11 @@ def cmd_requeue_stuck(args):
         print(f"{'would requeue' if dry else 'requeue'} {r['id']}: {r['url']} (processing since {stamp})")
         n += 1
         if not dry:
+            # a correction keeps its « Redo: … » note: it is the instruction the next run applies
+            note = r.get("note") or ""
+            if not note.startswith("Redo:"): note = f"requeued after a run stopped mid-way ({str(stamp)[:16]})"
             # status=eq.processing in the filter: a request closed meanwhile is left alone
-            rest(cfg, "PATCH", "requests", {"status": "queued", "processed_at": None,
-                                            "note": f"requeued after a run stopped mid-way ({str(stamp)[:16]})"},
+            rest(cfg, "PATCH", "requests", {"status": "queued", "processed_at": None, "note": note},
                  prefer="return=minimal", params={"id": f"eq.{r['id']}", "status": "eq.processing"})
     print(f"{len(rows)} processing, {n} {'to requeue (dry run, nothing written)' if dry else 'requeued'}")
 

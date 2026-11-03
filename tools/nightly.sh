@@ -13,7 +13,9 @@
 # Every run first puts back in the queue the requests a dead run left « processing » (rb.py requeue-stuck).
 # A Mac asleep at the scheduled time catches up on wake, but only within 3 hours: later, the
 # night is skipped rather than opening tabs in front of you.
-# Optional phone notice: REELBOOK_NOTIFY_URL (an ntfy topic URL), stored at install time.
+# Optional phone notice: REELBOOK_NOTIFY_URL (an ntfy topic URL), stored at install time. After a run it lists
+# the titles published (« 2 new sheets: … ») and opens the app when tapped: REELBOOK_APP_URL, default
+# https://lt20.github.io/reelbook/, with #<slug> when exactly one sheet or session was published.
 set -u
 # launchd starts jobs with a bare PATH: ioreg and pmset live in /usr/sbin.
 export PATH="$PATH:/usr/sbin:/usr/bin:/bin"
@@ -32,9 +34,36 @@ elif [ -x "$HOME/.local/bin/claude" ]; then CLAUDE="$HOME/.local/bin/claude"
 else CLAUDE="$(command -v claude)"; fi
 
 log() { echo "$(date '+%F %T') $*"; }
-notify() {
-  [ -n "${REELBOOK_NOTIFY_URL:-}" ] && curl -fsS -m 10 -H "Title: Reelbook" -d "$1" "$REELBOOK_NOTIFY_URL" >/dev/null 2>&1
+notify() {  # notify <message> [<url opened when the notice is tapped>]
+  [ -n "${REELBOOK_NOTIFY_URL:-}" ] && curl -fsS -m 10 -H "Title: Reelbook" ${2:+-H "Click: $2"} -d "$1" "$REELBOOK_NOTIFY_URL" >/dev/null 2>&1
   return 0
+}
+# night_notice <claude exit> <still queued> <rb.py list --since output>: prints the notice text on line 1 and the
+# app URL to open on line 2 (#<slug> when exactly one sheet or session was published). Pure, tested.
+night_notice() {
+  local status="$1" left="$2" listing="$3" app="${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"
+  local items n titles slug kind msg
+  # rb.py list line: theme, group (may hold spaces), kind, slug, title (the rest)
+  items="$(printf '%s\n' "$listing" | awk '{
+    for (i = 2; i < NF; i++) if ($i == "sheet" || $i == "session" || $i == "session2") {
+      t = $(i + 2); for (j = i + 3; j <= NF; j++) t = t " " $j
+      print $i "\t" $(i + 1) "\t" t; break
+    }
+  }')"
+  n=0; [ -n "$items" ] && n="$(printf '%s\n' "$items" | wc -l | tr -d ' ')"
+  if [ "$n" -eq 0 ]; then
+    msg="Night run: nothing published (claude exit $status)"
+  else
+    titles="$(printf '%s\n' "$items" | cut -f3 | awk 'NR > 1 { printf ", " } { printf "%s", $0 }')"
+    msg="$n new sheet$([ "$n" -gt 1 ] && echo s): $titles"
+    [ "$status" != 0 ] && msg="$msg (claude exit $status)"
+  fi
+  case "$left" in 0|"") ;; *) msg="$msg · $left still queued" ;; esac
+  if [ "$n" -eq 1 ]; then
+    kind="$(printf '%s\n' "$items" | cut -f1)"; slug="$(printf '%s\n' "$items" | cut -f2)"
+    [ "$kind" = sheet ] && app="$app#$slug" || app="$app#session/$slug"
+  fi
+  printf '%s\n%s\n' "$msg" "$app"
 }
 on_battery() {
   pmset -g batt 2>/dev/null | head -1 | grep -q "Battery Power"
@@ -59,7 +88,7 @@ cmd_check() {
 }
 
 cmd_run() {
-  local max=5 at="" n left status
+  local max=5 at="" n left status since published notice
   while [ $# -gt 0 ]; do
     case "$1" in
       --max) max="$2"; shift 2 ;;
@@ -83,13 +112,20 @@ cmd_run() {
   open -a "Google Chrome"
   log "$n queued, processing up to $max (screen $(screen_locked && echo locked || echo unlocked))"
   cd "$REPO" || exit 1
+  # what this run publishes = added from now on (a minute back for a clock slightly ahead of the backend's)
+  since="$(date -u -v-1M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)"
   # -u wakes the display, -d keeps it on while Claude works.
   caffeinate -dimsu "$CLAUDE" -p --chrome --model claude-opus-5-5 --permission-mode auto \
     "/reelbook process the queue, at most $max requests, then stop and list the sheet links" </dev/null
   status=$?
   left="$(queued || echo '?')"
   log "claude exit $status, $left still queued"
-  notify "Night run done (exit $status): $n queued before, $left after"
+  if published="$(python3 tools/rb.py list --since "$since" 2>/dev/null)"; then
+    notice="$(night_notice "$status" "$left" "$published")"
+    notify "$(printf '%s\n' "$notice" | sed -n 1p)" "$(printf '%s\n' "$notice" | sed -n 2p)"
+  else
+    notify "Night run done (claude exit $status), $left still queued; rb.py list failed" "${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"
+  fi
 }
 
 cmd_install() {
@@ -135,6 +171,8 @@ cmd_uninstall() {
   echo "Uninstalled."
 }
 
+# sourced (tests/rb-queue.test.py reads night_notice): define the functions only
+[ "${BASH_SOURCE[0]}" = "$0" ] || return 0
 case "${1:-}" in
   check) cmd_check ;;
   run) shift; cmd_run "$@" ;;

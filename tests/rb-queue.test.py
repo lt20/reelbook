@@ -1,8 +1,8 @@
-"""Queue commands of tools/rb.py: claim stamps the claim time, requeue-stuck frees dead runs' requests.
+"""Queue commands of tools/rb.py (claim, requeue-stuck, queue notes, list --since) and the night run notice.
 
 No network: rb.session / rb.rest are replaced by an in-memory fake. Run: python3 -I tests/rb-queue.test.py
 """
-import contextlib, importlib.util, io, pathlib, time, unittest
+import contextlib, importlib.util, io, json, os, pathlib, subprocess, time, unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location("rb", ROOT / "tools" / "rb.py")
@@ -127,6 +127,98 @@ class RequeueStuck(Base):
         for args in (["--hours"], ["--hours", "x"], ["--hours", "0"], ["--yes"]):
             with self.assertRaises(SystemExit, msg=args):
                 self.run_cmd(rb.cmd_requeue_stuck, args)
+
+    def test_a_correction_keeps_its_redo_note(self):
+        fake = self.use([{"id": "fix", "url": "https://ig/fix", "status": "processing", "processed_at": iso(8),
+                          "created_at": iso(9), "note": "Redo: the hands are reversed"}])
+        self.run_cmd(rb.cmd_requeue_stuck, [])
+        self.assertEqual(fake.requests[0]["status"], "queued")
+        self.assertEqual(fake.requests[0]["note"], "Redo: the hands are reversed")
+
+
+class Queue(Base):
+    def test_queue_lines_carry_the_note(self):
+        fake = self.use([{"id": "r", "url": "https://ig/r", "status": "queued", "theme": "strength",
+                          "note": "Redo: correct the angle", "created_at": iso(1)}])
+        out, _ = self.run_cmd(rb.cmd_queue, [])
+        self.assertIn("note", fake.calls[0][3]["select"].split(","))
+        self.assertEqual(json.loads(out.strip())["note"], "Redo: correct the angle")
+
+
+class ListSince(Base):
+    SHEETS = [{"slug": "curl", "kind": "sheet", "theme": "strength", "group": "Upper body", "title": "Curl marteau en 5 étapes"},
+              {"slug": "gsp-floor-angel", "kind": "sheet", "theme": "strength", "group": "Shoulders", "title": "Floor angel"}]
+    SESSIONS = [{"slug": "gsp", "theme": "strength", "title": "GSP shoulders", "items": [{"slug": "gsp-floor-angel", "dose": "30 s"}]}]
+
+    def use_catalogue(self, sessions=SESSIONS):
+        calls = []
+        def rest(cfg, method, path, data=None, prefer=None, params=None, tolerate=()):
+            calls.append((method, path, params or {}))
+            if path == "sessions" and sessions is None: raise rb.RbHTTPError(404, "no table")
+            return [dict(r) for r in (self.SHEETS if path == "sheets" else sessions)]
+        rb.session, rb.rest = (lambda: CFG), rest
+        return calls
+
+    def test_since_filters_on_publication_time_and_folds_a_session_s_sheets(self):
+        calls = self.use_catalogue()
+        out, _ = self.run_cmd(rb.cmd_list, ["--since", "2026-11-03T02:00:00Z"])
+        params = {path: p for _, path, p in calls}
+        self.assertEqual(params["sheets"]["added_at"], "gte.2026-11-03T02:00:00Z")
+        self.assertEqual(params["sessions"]["created_at"], "gte.2026-11-03T02:00:00Z")
+        self.assertIn("Curl marteau en 5 étapes", out)
+        self.assertIn("GSP shoulders", out)
+        self.assertNotIn("Floor angel", out, "the session stands for its exercise sheets")
+
+    def test_plain_list_is_unchanged(self):
+        calls = self.use_catalogue()
+        out, _ = self.run_cmd(rb.cmd_list, [])
+        self.assertNotIn("added_at", calls[0][2])
+        self.assertIn("Floor angel", out)
+
+    def test_backend_without_sessions_table(self):
+        self.use_catalogue(sessions=None)
+        out, err = self.run_cmd(rb.cmd_list, ["--since", "2026-11-03T02:00:00Z"])
+        self.assertIn("Floor angel", out)
+        self.assertIn("no sessions table", err)
+
+    def test_bad_arguments(self):
+        self.use_catalogue()
+        for args in (["--since"], ["--since", "yesterday"], ["--all"]):
+            with self.assertRaises(SystemExit, msg=args):
+                self.run_cmd(rb.cmd_list, args)
+
+
+def night_notice(status, left, listing, app_url=None):
+    """tools/nightly.sh night_notice → (message, url opened when the notice is tapped)."""
+    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": os.environ.get("HOME", "/tmp")}
+    if app_url: env["REELBOOK_APP_URL"] = app_url
+    r = subprocess.run(["bash", "-c", 'src="$1"; shift; source "$src"; night_notice "$@"', "bash", str(ROOT / "tools" / "nightly.sh"),
+                        str(status), str(left), listing], capture_output=True, text=True, env=env, check=True)
+    msg, url = r.stdout.rstrip("\n").split("\n")
+    return msg, url
+
+
+class NightNotice(unittest.TestCase):
+    def line(self, kind, slug, title, group="Upper body"):
+        return f"{'strength':9} {group:20} {kind:8} {slug:32} {title}"
+
+    def test_lists_the_titles_and_opens_the_app(self):
+        listing = "\n".join([self.line("sheet", "curl", "Curl marteau en 5 étapes"), self.line("session2", "gsp", "Backroll")])
+        msg, url = night_notice(0, 0, listing)
+        self.assertEqual(msg, "2 new sheets: Curl marteau en 5 étapes, Backroll")
+        self.assertEqual(url, "https://lt20.github.io/reelbook/")
+
+    def test_one_title_opens_its_page(self):
+        self.assertEqual(night_notice(0, 0, self.line("sheet", "curl", "Curl"), "https://x.test/rb/"),
+                         ("1 new sheet: Curl", "https://x.test/rb/#curl"))
+        self.assertEqual(night_notice(0, 0, self.line("session2", "gsp", "GSP shoulders"))[1],
+                         "https://lt20.github.io/reelbook/#session/gsp")
+
+    def test_nothing_published_and_requests_left(self):
+        msg, url = night_notice(1, 3, "")
+        self.assertEqual(msg, "Night run: nothing published (claude exit 1) · 3 still queued")
+        self.assertEqual(url, "https://lt20.github.io/reelbook/")
+        self.assertEqual(night_notice(0, 2, self.line("sheet", "a", "A"))[0], "1 new sheet: A · 2 still queued")
 
 
 if __name__ == "__main__":
