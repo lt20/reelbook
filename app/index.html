@@ -233,6 +233,33 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 @keyframes qhold{to{opacity:.6}}
 @media (prefers-reduced-motion:reduce){.toast .qbar{animation-name:qhold}}
 @media (prefers-reduced-motion:no-preference){.card img,.step img{transition:transform .25s}.card:hover img,.step figure:hover img{transform:scale(1.02)}}
+/* ---- L3: sheet in use (keep screen on, gesture first, full-screen photos) ---- */
+.top{flex-wrap:wrap;gap:8px 10px}
+.top>a{white-space:nowrap}
+.top .r{flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+.top .wake[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+details.rb-more{margin:0 0 10px}
+details.rb-more>summary,details.rb-why>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;color:var(--accent);font-weight:600;list-style:none}
+details.rb-more>summary::-webkit-details-marker,details.rb-why>summary::-webkit-details-marker{display:none}
+details.rb-more>summary::before,details.rb-why>summary::before{content:"▸";flex:none;width:1em;color:var(--accent)}
+details.rb-more[open]>summary::before,details.rb-why[open]>summary::before{content:"▾"}
+details.rb-more>ol.keys{margin-top:8px}
+details.rb-why{margin-top:22px}
+details.rb-why>summary>h2{margin:0;color:var(--ink)}
+.step img[data-ph]{cursor:zoom-in}
+dialog.ph-dlg{background:#000;color:#fff;border:0;padding:0;margin:0;width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none}
+dialog.ph-dlg:not([open]){display:none}
+dialog.ph-dlg::backdrop{background:#000}
+.ph-strip{display:flex;height:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior:contain;scrollbar-width:none}
+.ph-strip::-webkit-scrollbar{display:none}
+.ph-strip:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+.ph-strip figure{flex:0 0 100%;margin:0;scroll-snap-align:center;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:calc(56px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));box-sizing:border-box}
+.ph-strip img{display:block;width:100%;min-height:0;flex:0 1 auto;max-height:calc(100% - 96px);object-fit:contain}
+.ph-strip figcaption{font-size:16px;line-height:1.35;color:#eee;max-width:640px;margin:0 auto;width:100%}
+.ph-strip figcaption b{font-family:var(--display);font-size:20px;color:#fff;display:block}
+.ph-x{position:fixed;top:calc(8px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));z-index:1;min-width:48px;min-height:48px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.6);color:#fff;font-size:22px;line-height:1;cursor:pointer}
+.ph-x:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.ph-strip{scroll-behavior:smooth}}
 </style>
 </head>
 <body>
@@ -463,14 +490,20 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   <p class="err" id="sd-err" hidden></p>
   <div class="actions"><button class="btn danger" type="button" id="sd-ok">Delete sheet</button><button class="btn ghost" type="button" id="sd-cancel">Keep it</button></div>
 </dialog>
+<!-- L3: full-screen viewer of a sheet's step photos -->
+<dialog class="ph-dlg" id="ph-dlg" aria-label="Photos">
+  <button type="button" class="ph-x" id="ph-close" aria-label="Close the photos">✕</button>
+  <div class="ph-strip" id="ph-strip" tabindex="0" aria-label="Step photos, swipe sideways"></div>
+</dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
 <script src="sessions.js?v=3"></script>
+<script src="sheet.js?v=1"></script>
 <script>
 (() => {
   'use strict';
-  const RS = window.RBSessions;
+  const RS = window.RBSessions, SH = window.RBSheet;
   const CFG = window.REELBOOK || {}, library = CFG.library || [], libById = new Map(library.map(t => [t.id, t]));
   if (!library.length) document.body.insertAdjacentHTML('afterbegin', '<p class="err" style="padding:8px 16px">The app configuration did not load (stale cache?). Reload the page.</p>');
   let themes = [], themeById = new Map();
@@ -481,7 +514,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'}); } catch { return ''; } };
   const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view'];
-  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); };
+  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
 
   // ---------- backend selection ----------
@@ -897,12 +930,16 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
     const {data, error} = await sb.from('sheets').select('html').eq('slug', slug).single();
     if (error || !data) throw new Error('not found');
     const doc = new DOMParser().parseFromString(data.html, 'text/html');
+    // Photos get their signed URL in the parsed document, which loads nothing: imported into the page first,
+    // an <img> fetched its raw src (img/thumb.jpg next to index.html, a 404) before being rewritten.
+    const imgs = doc.querySelectorAll ? [...doc.querySelectorAll('img')] : [];
+    const get = await signAll(imgs.map(i => spath(slug, (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'))));
+    imgs.forEach(i => { const rel = (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'); i.setAttribute('src', get(spath(slug, rel))); i.removeAttribute('loading'); });
+    // L3: gesture first (sheet.js), never at the cost of the sheet: on any error it shows as written.
+    if (SH && doc.querySelectorAll) { const keep = doc.body.cloneNode(true); try { SH.arrange(doc); SH.markPhotos(doc); } catch { doc.documentElement.replaceChild(keep, doc.body); } }
     const frag = document.createDocumentFragment();
     for (const el of [...doc.body.children]) { if (['TITLE', 'LINK', 'STYLE', 'SCRIPT'].includes(el.tagName)) continue; frag.appendChild(document.importNode(el, true)); }
     frag.querySelectorAll('nav.top, script').forEach(n => n.remove());
-    const imgs = [...frag.querySelectorAll('img')];
-    const get = await signAll(imgs.map(i => spath(slug, (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'))));
-    imgs.forEach(i => { const rel = (i.getAttribute('src') || '').replace(/^\.\.\/img\/[^/]+\//, 'img/'); i.setAttribute('src', get(spath(slug, rel))); i.removeAttribute('loading'); });
     // « #x » in a sheet: kept when x is another sheet or a v2 session (how the skill links sheets);
     // otherwise an in-page anchor, which has no route: it stays on this sheet.
     const routable = h => { let x = h.slice(1); try { x = decodeURIComponent(x); } catch {} const ses = RS.sessionSlugOf(x); return bySlug.has(x) || !!(ses && v2BySlug.has(ses)); };
@@ -925,7 +962,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
   // A v2 session (v2 true) moves to another notebook on its own.
   const topNav = (e, v2 = false, bare = false) => {
     const th = themeById.get(e.theme);
-    const btns = bare ? '' : (v2 ? '<button type="button" class="mv" id="ed-open">Edit</button>' : '') + '<button type="button" class="mv" id="mv-open">Move</button>';
+    const btns = bare ? '' : wakeBtn() + (v2 ? '<button type="button" class="mv" id="ed-open">Edit</button>' : '') + '<button type="button" class="mv" id="mv-open">Move</button>';
     return `<nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span class="r"><span>${esc(v2 ? 'Session' : e.group)}</span>${btns}</span></nav>`;
   };
   // « From the session … » on an exercise sheet: the video sessions that list it. A simple sheet can be added to a session.
@@ -1013,6 +1050,57 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
     view.innerHTML = back + html + notesHtml() + del;
     wireNotes(slug);
   };
+
+  // ---------- L3: keep the screen on, full-screen photos ----------
+  // « Keep screen on »: remembered on this device (rb.wake); while on, every sheet or session page holds a
+  // screen wake lock, asked again when the page comes back to the front (the browser drops it when hidden).
+  const WAKE = 'rb.wake';
+  const wakeApi = () => typeof navigator !== 'undefined' && 'wakeLock' in navigator && navigator.wakeLock;
+  const wakeWanted = () => ls.get(WAKE) === '1';
+  let wakeLock = null, wakeAsking = false;
+  function wakeSync() {
+    const api = wakeApi(); if (!api) return;
+    const want = wakeWanted() && !!shown && !view.hidden && document.visibilityState !== 'hidden';
+    if (want && !wakeLock && !wakeAsking) {
+      wakeAsking = true;
+      Promise.resolve().then(() => api.request('screen')).then(lock => {
+        wakeAsking = false; wakeLock = lock;
+        if (lock && lock.addEventListener) lock.addEventListener('release', () => { if (wakeLock === lock) wakeLock = null; });
+        wakeSync(); // left the page or turned off while asking
+      }, () => { wakeAsking = false; });
+    } else if (!want && wakeLock) { const lock = wakeLock; wakeLock = null; Promise.resolve().then(() => lock.release()).catch(() => {}); }
+  }
+  const wakeBtn = () => wakeApi() ? `<button type="button" class="mv wake" id="wake" aria-pressed="${wakeWanted()}">Keep screen on</button>` : '';
+  const toggleWake = () => {
+    if (wakeWanted()) ls.del(WAKE); else ls.set(WAKE, '1');
+    const b = $('wake'); if (b) b.setAttribute('aria-pressed', String(wakeWanted()));
+    wakeSync();
+  };
+  document.addEventListener('visibilitychange', wakeSync);
+
+  // The viewer: the page's step photos side by side on black, from the tapped one; Escape or ✕ closes it and
+  // focus goes back to the tapped photo.
+  const phDlg = $('ph-dlg'), phStrip = $('ph-strip');
+  let phFrom = null;
+  const openPhotos = img => {
+    if (!SH || !phDlg.showModal || !view.querySelectorAll) return;
+    const all = SH.photosOf(view), i = Math.max(0, all.findIndex(p => p.img === img));
+    if (!all.length) return;
+    phFrom = img;
+    phStrip.innerHTML = all.map((p, k) => `<figure><img src="${esc(p.src)}" alt="${esc(p.alt)}"><figcaption>${p.title ? `<b>${esc(p.title)}</b>` : ''}${esc(p.caption)}</figcaption></figure>`).join('');
+    const label = (p, k) => `Photo ${k + 1} of ${all.length}${p.title ? ': ' + p.title : ''}`;
+    [...phStrip.children].forEach((f, k) => { f.setAttribute('role', 'group'); f.setAttribute('aria-label', label(all[k], k)); });
+    phDlg.showModal();
+    phStrip.scrollTo({left: i * phStrip.clientWidth, behavior: 'instant'});
+  };
+  if (phDlg) {
+    $('ph-close').addEventListener('click', () => phDlg.close());
+    phDlg.addEventListener('close', () => { phStrip.innerHTML = ''; const f = phFrom; phFrom = null; if (f && f.isConnected) f.focus(); });
+  }
+  view.addEventListener('keydown', ev => {
+    const img = ev.target && ev.target.closest ? ev.target.closest('[data-ph]') : null;
+    if (img && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openPhotos(img); }
+  });
 
   // ---------- move a sheet, or a v2 session (Notebook menu only) ----------
   const NEW_GROUP = '__new_group__';
@@ -1236,6 +1324,8 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
     const at = sel => ev.target.closest(sel);
     let b;
     if (at('#mv-open')) openMove();
+    else if (at('#wake')) toggleWake();
+    else if ((b = at('[data-ph]'))) openPhotos(b);
     else if (at('#as-open')) openAdd();
     else if (at('#ed-open')) { const s = shownSession(); if (s) { edit = draftOf(s); showSession(s.slug); } }
     else if (at('#sd-open')) openSheetDelete();
