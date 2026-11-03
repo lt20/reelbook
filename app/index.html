@@ -36,8 +36,10 @@
 :root[data-theme="dark"],:root:not([data-theme="light"]) .player{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#a9c45c;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-/* L20: the root takes the iOS text size (Dynamic Type) in a Safari / installed PWA; elsewhere the keyword is ignored, 100 % stays */
-html{font-size:100%;font:-apple-system-body}
+/* L20: on iOS / iPadOS the root takes the system text size (Dynamic Type: 17 px by default), in Safari and the installed
+   PWA. Only there: desktop Safari maps the keyword to the 13 px macOS body size; other browsers ignore it. Elsewhere 100 %. */
+html{font-size:100%}
+@supports (font:-apple-system-body) and (-webkit-touch-callout:none){html{font:-apple-system-body}}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.5;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));padding-block:20px 56px}
 img{max-width:100%}
 a{color:var(--accent)}
