@@ -74,7 +74,7 @@
     "url": "https://www.youtube.com/shorts/PREVIEW0003",
     "platform": "YouTube"
    },
-   "added_at": "2026-10-13T09:00:00Z",
+   "added_at": "now-30h",
    "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Posture · dos · ischios · 2 minutes</p>\n    <h1>Chien tête en bas</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Chien tête en bas\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Mains et pieds au sol, bassin vers le plafond : le corps dessine un V à l'envers.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Une posture de transition qui étire tout l'arrière du corps et soulage le bas du dos.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>5</b><span>respirations</span></div>\n  <div class=\"d\"><b>3</b><span>fois</span></div>\n  <div class=\"d\"><b>libre</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Dos long avant jambes tendues.</b> Plie les genoux si le dos s'arrondit.</li>\n  <li><b>Pousse le sol.</b> Les épaules s'éloignent des oreilles.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À quatre pattes sur le tapis\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À quatre pattes</h3><p>Mains sous les épaules, genoux sous les hanches.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Corps en V inversé\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Le V</h3><p>Décolle les genoux, envoie le bassin haut et loin.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Respire lentement par le nez ; reviens à quatre pattes entre deux tenues.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0003\">Voir la vidéo</a>.</footer>\n</div>\n"
   },
   {
@@ -91,7 +91,7 @@
     "url": "https://www.instagram.com/reel/PREVIEW0004/",
     "platform": "Instagram"
    },
-   "added_at": "2026-10-14T09:00:00Z",
+   "added_at": "now-5h",
    "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Boxe · enchaînement de base</p>\n    <h1>Jab-cross</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Jab-cross\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Le premier enchaînement de la boxe : un jab rapide, puis un cross qui part de la hanche.</p>\n<div class=\"kit\"><span>des bandes</span><span>un sac ou dans le vide</span></div>\n\n<h2>Pourquoi</h2>\n<p>Le jab mesure la distance, le cross porte : les deux ensemble construisent tout le reste.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>rounds</span></div>\n  <div class=\"d\"><b>2 min</b><span>par round</span></div>\n  <div class=\"d\"><b>1 min</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Le menton rentré.</b> L'épaule protège la mâchoire à chaque frappe.</li>\n  <li><b>La hanche tourne.</b> Le pied arrière pivote sur le cross.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Jab bras avant tendu\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Jab</h3><p>Bras avant tendu, poing tourné, l'autre main reste à la joue.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Cross bras arrière tendu\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Cross</h3><p>Pivot du pied arrière, la hanche entraîne le bras.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Ramène chaque poing à la garde par le même chemin ; si la garde tombe, ralentis.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0004/\">Voir la vidéo</a>.</footer>\n</div>\n"
   },
   {
@@ -244,7 +244,7 @@
      "dose": "3 × 1 min"
     }
    ],
-   "created_at": "2026-10-25T18:00:00Z",
+   "created_at": "now-20h",
    "updated_at": "2026-10-25T18:00:00Z"
   }
  ],
@@ -253,6 +253,50 @@
    "slug": "pompes-inclinees",
    "body": "Mardi : 3 × 10 sur la table de la cuisine. Prochaine fois, le banc plus bas.",
    "updated_at": "2026-10-28T19:30:00Z"
+  }
+ ],
+ "practice_log": [
+  {
+   "id": "log-1",
+   "slug": "pompes-inclinees",
+   "done_on": "2026-10-21",
+   "text": "2 × 8 sur la table",
+   "created_at": "2026-10-21T18:10:00Z"
+  },
+  {
+   "id": "log-2",
+   "slug": "pompes-inclinees",
+   "done_on": "2026-10-24",
+   "text": "3 × 8",
+   "created_at": "2026-10-24T18:11:00Z"
+  },
+  {
+   "id": "log-3",
+   "slug": "pompes-inclinees",
+   "done_on": "2026-10-28",
+   "text": "3 × 10, banc bas",
+   "created_at": "2026-10-28T18:12:00Z"
+  },
+  {
+   "id": "log-4",
+   "slug": "chien-tete-en-bas",
+   "done_on": "2026-10-29",
+   "text": "",
+   "created_at": "2026-10-29T18:13:00Z"
+  },
+  {
+   "id": "log-5",
+   "slug": "session/session-gainage-10-min",
+   "done_on": "2026-10-30",
+   "text": "2 tours, planche à 40 s",
+   "created_at": "2026-10-30T18:14:00Z"
+  },
+  {
+   "id": "log-6",
+   "slug": "ancienne-fiche",
+   "done_on": "2026-10-01",
+   "text": "fiche supprimée depuis",
+   "created_at": "2026-10-01T18:15:00Z"
   }
  ],
  "requests": [
