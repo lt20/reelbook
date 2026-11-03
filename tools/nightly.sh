@@ -6,9 +6,10 @@
 #   tools/nightly.sh install [HH:MM]     run every night at HH:MM (default 02:00) via a LaunchAgent
 #   tools/nightly.sh uninstall           remove the LaunchAgent
 #
-# A video only plays in a visible Chrome tab: the run needs Chrome with the Claude in Chrome
-# extension and an unlocked screen. Empty queue, locked screen or Mac on battery = Claude is not
-# started (on battery, macOS sleeps despite caffeinate and the run dies mid-way, 2026-11-01).
+# The run needs Chrome with the Claude in Chrome extension. A locked screen is fine: measured on
+# 2026-11-03, a session of 8 exercises processed with the screen locked all along, 31 sharp photos.
+# Empty queue or Mac on battery = Claude is not started (on battery, macOS sleeps despite
+# caffeinate and the run dies mid-way, 2026-11-01). The screen state is only logged.
 # Every run first puts back in the queue the requests a dead run left « processing » (rb.py requeue-stuck).
 # A Mac asleep at the scheduled time catches up on wake, but only within 3 hours: later, the
 # night is skipped rather than opening tabs in front of you.
@@ -76,14 +77,11 @@ cmd_run() {
     log "rb.py queue failed"; notify "Night run: rb.py queue failed (signed out?)"; exit 1
   fi
   if [ "$n" -eq 0 ]; then log "queue empty"; exit 0; fi
-  if screen_locked; then
-    log "$n queued, screen locked: skipped"; notify "$n video(s) waiting, screen was locked: skipped"; exit 0
-  fi
   if on_battery; then
     log "$n queued, Mac on battery: skipped"; notify "$n video(s) waiting, Mac was on battery: skipped (plug it in)"; exit 0
   fi
   open -a "Google Chrome"
-  log "$n queued, processing up to $max"
+  log "$n queued, processing up to $max (screen $(screen_locked && echo locked || echo unlocked))"
   cd "$REPO" || exit 1
   # -u wakes the display, -d keeps it on while Claude works.
   caffeinate -dimsu "$CLAUDE" -p --chrome --model claude-opus-5-5 --permission-mode auto \
