@@ -115,12 +115,14 @@
     }
     return imgs.length;
   };
-  // The photos of the viewer: every step photo of the page, in order, with the step's caption.
-  const photosOf = page => [...page.querySelectorAll('.step img')].map(img => {
-    const step = img.closest('.step');
+  // The photos of the viewer: every step photo of the page, in order, with the step's caption. A common mistake
+  // (.step.bad, L15) is left out unless `mistakes` is true (the sheet page's viewer); kept, it is flagged `bad` and
+  // its title starts with « ✕ ». The session player's carousel shows the movement only.
+  const photosOf = (page, mistakes = false) => [...page.querySelectorAll('.step img')].map(img => {
+    const step = img.closest('.step'), bad = !!(step && classes(step).includes('bad'));
     const h = step && step.querySelector('h3'), p = step && step.querySelector('p');
-    return {img, src: img.getAttribute('src') || '', alt: img.getAttribute('alt') || '', title: text(h), caption: text(p)};
-  });
+    return {img, src: img.getAttribute('src') || '', alt: img.getAttribute('alt') || '', title: (bad ? '✕ ' : '') + text(h), caption: text(p), bad};
+  }).filter(ph => mistakes || !ph.bad);
 
   // The first key points of a page (L10, session player): the <li> of its ol.keys lists in order (after arrange,
   // the shown ones then those under « +N more »), each as {cue, text}: the bold lead (« <b>Cue.</b> rest ») and

@@ -184,6 +184,10 @@ ol.keys b{font-weight:600}
 .step .palm{position:absolute;right:8px;bottom:8px;background:var(--paper);color:var(--ink);font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
 .step h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.05;margin:8px 0 3px}
 .step p{font-size:15px;line-height:1.35;color:var(--ink);margin:0}
+/* L15: a common mistake (« Common mistakes » after the steps, .step.bad): danger border and a ✕ badge instead of a number */
+.step.bad figure{border:2px solid var(--danger)}
+.step.bad figure::after{content:"✕";position:absolute;left:8px;top:8px;background:var(--danger);color:var(--paper);font-weight:700;font-size:15px;line-height:1;padding:5px 7px;border-radius:6px}
+.step.bad>h3:first-child::before{content:"✕ ";color:var(--danger)}
 .arrow{color:var(--accent);font-weight:700}
 .loop{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:15px}
 footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
@@ -619,7 +623,7 @@ dialog.ph-dlg::backdrop{background:#000}
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
 <script src="sessions.js?v=8"></script>
-<script src="sheet.js?v=2"></script>
+<script src="sheet.js?v=3"></script>
 <script>
 (() => {
   'use strict';
@@ -1702,7 +1706,7 @@ dialog.ph-dlg::backdrop{background:#000}
   // `list`: the photos to show instead of the sheet page's (the session player's carousel, L10).
   const openPhotos = (img, list = null) => {
     if (!SH || !phDlg.showModal || !view.querySelectorAll) return;
-    const all = list || SH.photosOf(view), i = Math.max(0, all.findIndex(p => p.img === img));
+    const all = list || SH.photosOf(view, true), i =Math.max(0, all.findIndex(p => p.img === img));
     if (!all.length) return;
     phFrom = img;
     phStrip.innerHTML = all.map((p, k) => `<figure><img src="${esc(p.src)}" alt="${esc(p.alt)}"><figcaption>${p.title ? `<b>${esc(p.title)}</b>` : ''}${esc(p.caption)}</figcaption></figure>`).join('');
