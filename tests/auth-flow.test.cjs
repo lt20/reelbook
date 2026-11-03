@@ -49,7 +49,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     URL, console,
     setTimeout: fn => { if (tables) queueMicrotask(fn); },
     location: {
-      href: 'https://app.example.test/',
+      href: 'https://app.example.test/reelbook/', origin: 'https://app.example.test', pathname: '/reelbook/',
       get hash() { return currentHash; },
       set hash(v) { currentHash = !v || String(v).startsWith('#') ? String(v || '') : '#' + v; queueMicrotask(() => winListeners.hashchange && winListeners.hashchange()); }
     },
@@ -643,4 +643,28 @@ test('C2: a queue row without a notebook shows no notebook label, and its reason
   assert.match(rows[0], /<small>added 1 Nov<\/small><small class="why">Video unavailable \(private account\)<\/small>/);
   assert.match(rows[0], /needs a look/);
   assert.match(rows[1], /<small>added 2 Nov · Strength<\/small><\/div>/);
+});
+
+test('C5: sign-up asks Supabase to send the confirmation link back to the app, not to localhost', async () => {
+  const page = await app();
+  await page.fire('a-toggle');
+  await page.fire('pick-hosted');
+  page.element('a-email').value = 'new@example.test';
+  page.element('a-pass').value = 'example-password';
+  await page.fire('auth-form', 'submit');
+  const [kind, credentials] = page.clients.at(-1).calls[0];
+  assert.equal(kind, 'up');
+  assert.deepEqual(JSON.parse(JSON.stringify(credentials.options)), {emailRedirectTo: 'https://app.example.test/reelbook/'});
+});
+
+test('C5: a load error on a self-hosted backend says the project may be paused; on the hosted one it does not', async () => {
+  const failing = {sessions: {error: {message: 'Failed to fetch'}, status: 0}};
+  const own = await app({...signedIn, tables: v2Tables(), failing});
+  await settle();
+  assert.equal(own.element('count').textContent,
+    'Could not load your sheets: Failed to fetch. Your Supabase project may be paused: open your Supabase dashboard and restore it.');
+  const hosted = await app({remembered: {mode: 'hosted'}, sessions: {[hostedUrl]: {id: 'u1', email: 'user@example.test'}}, tables: v2Tables(), failing});
+  await settle();
+  assert.equal(hosted.clients.at(-1).url, hostedUrl);
+  assert.equal(hosted.element('count').textContent, 'Could not load your sheets: Failed to fetch');
 });

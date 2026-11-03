@@ -511,7 +511,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
         const {error} = await client.auth.signInWithPassword({email, password}); if (client !== sb) return; if (error) throw error;
         ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
       } else {
-        const {data, error} = await client.auth.signUp({email, password}); if (client !== sb) return; if (error) throw error;
+        const {data, error} = await client.auth.signUp({email, password, options: {emailRedirectTo: location.origin + location.pathname}}); if (client !== sb) return; if (error) throw error;
         ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
         if (!data.session) { setMode('in'); route(); info.textContent = 'Account created. Check your inbox to confirm your email, then sign in.'; info.hidden = false; }
       }
@@ -674,6 +674,9 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
   };
   $('q').addEventListener('input', () => renderHome());
 
+  // A free Supabase project pauses after a week without use: on a self-hosted backend, say how to wake it.
+  const loadErrorText = () => `Could not load your sheets: ${loadError}` + (backend && backend.mode === 'own'
+    ? `${/[.!?]$/.test(loadError) ? '' : '.'} Your Supabase project may be paused: open your Supabase dashboard and restore it.` : '');
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null;
     $('h-crumb').hidden = !t;
@@ -682,7 +685,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     $('h-title').classList.toggle('brand-title', !t);
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t);
-    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? `Could not load your sheets: ${loadError}` : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
+    else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
     const terms = sheets.length ? searchTerms() : [];
     $('results').hidden = !terms.length;
