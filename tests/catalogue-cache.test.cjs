@@ -103,3 +103,36 @@ test('the sign-out prefix covers every backend of that user and no other user', 
   assert.ok(RS.catalogueCacheKey('https://two.example.test', 'user-a').startsWith(prefix));
   assert.ok(!RS.catalogueCacheKey('https://one.example.test', 'user-ab').startsWith(prefix));
 });
+
+test('pass 4: a read overtaken by a local change is neither applied nor saved; it is read again once', async () => {
+  let gen = 0, n = 0;
+  const applied = [], written = [], nets = [deferred(), deferred()];
+  const done = RS.refreshCatalogue({read: async () => null, fetch: () => nets[n++].promise, gen: () => gen,
+    apply: (c, from) => applied.push([from, c.sheets[0].title]), write: async c => { written.push(c.sheets[0].title); }});
+  await tick();
+  gen++; // a sheet deleted while the first read is on its way
+  nets[0].resolve(cat('stale'));
+  await tick();
+  assert.equal(n, 2);
+  assert.deepEqual(applied, []);
+  nets[1].resolve(cat('fresh'));
+  const res = await done; await res.saved;
+  assert.equal(res.source, 'network');
+  assert.deepEqual(applied, [['network', 'fresh']]);
+  assert.deepEqual(written, ['fresh']);
+});
+
+test('pass 4: overtaken twice, nothing is applied nor saved (source local), and the cache is not applied late', async () => {
+  let gen = 0, n = 0;
+  const applied = [], written = [], slow = deferred(), nets = [deferred(), deferred()];
+  const done = RS.refreshCatalogue({read: () => slow.promise, fetch: () => nets[n++].promise, gen: () => gen,
+    apply: (c, from) => applied.push(from), write: async () => { written.push(1); }});
+  await tick();
+  gen++; slow.resolve(cat('old')); nets[0].resolve(cat('a'));
+  await tick();
+  gen++; nets[1].resolve(cat('b'));
+  const res = await done;
+  assert.equal(res.source, 'local');
+  assert.deepEqual(applied, []);
+  assert.deepEqual(written, []);
+});

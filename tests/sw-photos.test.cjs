@@ -64,3 +64,14 @@ test('a deleted sheet drops its photos only', async () => {
   await Promise.all(drop.waits);
   assert.deepEqual(w.photos(), [other]);
 });
+
+test('pass 4: the request to Storage never carries rbv (the token stays), in the fallback too', async () => {
+  const w = worker(async () => response('bytes'));
+  const e = w.dispatch('fetch', get(photo + '?token=a&rbv=1')); await e.answer; await Promise.all(e.waits);
+  assert.deepEqual(w.calls, [photo + '?token=a']);
+  assert.deepEqual(w.photos(), [photo + '?rbv=1']);
+  let first = true;
+  const f = worker(async () => { if (first) { first = false; throw Error('cors'); } return response('opaque'); });
+  const g = f.dispatch('fetch', get(photo + '?token=b&rbv=2')); await g.answer;
+  assert.deepEqual(f.calls, [photo + '?token=b', photo + '?token=b']);
+});

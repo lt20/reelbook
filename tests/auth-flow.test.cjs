@@ -600,3 +600,29 @@ test('C1: a text past its limit that the user did not touch is saved as it is; a
   assert.equal(row.items[0].dose, longDose.slice(0, 60), 'an edited dose is clipped to its limit');
   assert.equal(row.title, title);
 });
+
+// ---------- L19, pass 4: a catalogue read overtaken by a local change ----------
+test('a sheet deleted while the catalogue is being read does not come back, and the saved catalogue drops it', async () => {
+  const RS = require('../app/sessions.js');
+  const tables = v2Tables(), idb = new Map(), key = RS.catalogueCacheKey(ownUrl, 'existing-user');
+  const before = {data: tables.sheets.map(s => ({...s})), error: null}; // what the read in flight will answer
+  idb.set(key, RS.catalogueSnapshot({themes: tables.user_themes, sheets: tables.sheets.filter(s => s.kind !== 'session'),
+    sessions: tables.sessions, sessionsOk: true, notesIndex: new Set(), lastDone: new Map(), practiceOk: true}));
+  let release, reads = 0;
+  const gate = new Promise(r => { release = r; });
+  const hold = (t, ops) => t === 'sheets' && ops.some(o => o[0] === 'order') && reads++ === 0 ? gate : null;
+  const page = await app({...signedIn, tables, hash: '#gsp-angel', idb, hold});
+  await settle();
+  assert.equal(reads, 1, 'the catalogue read is on its way');
+  clickIn(page, 'view', '#sd-open');
+  await page.fire('sd-ok');
+  await settle();
+  assert.deepEqual(writesOf(page)[0], ['delete', 'sheets', null, [['slug', 'gsp-angel']]]);
+  tables.sheets = tables.sheets.filter(s => s.slug !== 'gsp-angel'); // the backend no longer has it
+  release(before); // the read made before the delete answers now
+  await settle();
+  assert.equal(reads, 2, 'read again once');
+  assert.doesNotMatch(page.element('groups').innerHTML, /href="#gsp-angel"/);
+  assert.match(page.element('groups').innerHTML, /href="#curl"/);
+  assert.deepEqual(idb.get(key).sheets.map(s => s.slug).sort(), ['curl', 'gsp-rot']);
+});

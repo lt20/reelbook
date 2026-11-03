@@ -697,8 +697,8 @@ dialog.ph-dlg::backdrop{background:#000}
     return data || [];
   };
   const loadThemes = async () => { themeRows = await readThemes(); setThemes(themeRows); saveCatalogue(); };
-  const addTheme = async row => { const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
-  const removeTheme = async id => { const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
+  const addTheme = async row => { touched(); const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
+  const removeTheme = async id => { touched(); const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
   const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
   // L19, instant start. A key-value store in IndexedDB for the last catalogue and the sheets opened, per backend
@@ -727,7 +727,12 @@ dialog.ph-dlg::backdrop{background:#000}
   // start without network does not bring it back. themeRows: the user_themes rows last read.
   let themeRows = [];
   const cardPaths = () => [...sheets.filter(s => s.thumbnail).map(s => spath(s.slug, s.thumbnail)), ...v2Sessions.filter(s => s.thumbnail).map(s => s.thumbnail)];
+  // localGen: bumped by every local change of the catalogue, before its write goes out (touched) and once it is
+  // applied (saveCatalogue): a catalogue read it overtook is dropped and read again (RS.refreshCatalogue gen).
+  let localGen = 0;
+  const touched = () => { localGen++; };
   const saveCatalogue = () => {
+    touched();
     if (!user || !sb || loading) return;
     idb.set(catKey(), RS.catalogueSnapshot({themes: themeRows, sheets, v1: v1Hidden, sessions: v2Sessions, sessionsOk, notesIndex, lastDone, practiceOk,
       signed: cardPaths().filter(p => signed.has(p)).map(p => [p, signed.get(p).url])}));
@@ -799,10 +804,11 @@ dialog.ph-dlg::backdrop{background:#000}
       fetch: fetchCatalogue,
       apply: (c, from) => { applyCatalogue(c); if (from === 'cache') { fromCache = true; loading = false; route(); } },
       write: c => current() ? idb.set(key, RS.catalogueSnapshot(c)) : null,
-      current
+      current, gen: () => localGen
     });
     if (res.source === 'stale') return;
     loading = false;
+    if (res.source === 'local') saveCatalogue(); // overtaken twice by local changes: what is shown is kept
     if (res.error) {
       if (fromCache) console.warn('Catalogue not refreshed, the last one stays:', (res.error && res.error.message) || res.error);
       else { loadError = (res.error && res.error.message) || 'unknown error'; console.error(res.error); }
@@ -817,7 +823,9 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   // L19: a photo URL carries its sheet's updated_at (rbv), part of the service worker's cache key: a sheet
   // republished with new photos under the same paths gets them, not the cached ones. Paths are <user>/<slug>/...
-  const vurl = (url, v) => url && v ? `${url}${url.includes('?') ? '&' : '?'}rbv=${encodeURIComponent(v)}` : url;
+  // Only under a service worker, which strips it before Storage: with none, the URL goes to Storage as signed.
+  const swOn = () => { try { return !!(navigator.serviceWorker && navigator.serviceWorker.controller); } catch { return false; } };
+  const vurl = (url, v) => url && v && swOn() ? `${url}${url.includes('?') ? '&' : '?'}rbv=${encodeURIComponent(v)}` : url;
   const purl = p => vurl((signed.get(p) || {}).url || '', (bySlug.get(String(p).split('/')[1]) || {}).updated_at);
   const thumb = (slug, rel) => rel ? purl(spath(slug, rel)) : '';
 
@@ -1326,8 +1334,10 @@ dialog.ph-dlg::backdrop{background:#000}
         let ok = body === saved;
         if (!ok) {
           try {
+            // only a note that appears or empties changes the catalogue (notesIndex): typing does not drop its read
+            const flip = !!body !== notesIndex.has(key); if (flip) touched();
             const {error} = await owner.client.from('notes').upsert({slug: key, body}); if (error) throw error;
-            ok = true; saved = body; if (body) notesIndex.add(key); else notesIndex.delete(key); saveCatalogue();
+            ok = true; saved = body; if (flip) { if (body) notesIndex.add(key); else notesIndex.delete(key); saveCatalogue(); }
           } catch {}
         }
         if (sending === body) sending = null;
@@ -1474,7 +1484,7 @@ dialog.ph-dlg::backdrop{background:#000}
     // the field is read-only while the save is on its way: a correction typed then would be dropped once saved
     p.draft = text; p.busy = true; p.err = ''; $('practice-save').disabled = true; $('practice-text').readOnly = true;
     let res;
-    try { res = await owner.client.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
+    try { touched(); res = await owner.client.from('practice_log').insert(row).select('id,slug,done_on,text,created_at'); } catch (e) { res = {error: e}; }
     p.busy = false;
     if (sb !== owner.client || !user || user.id !== owner.uid) return; // signed out, or another account, meanwhile
     const stored = res && (!res.error || res.error.code === '23505');
@@ -1688,8 +1698,8 @@ dialog.ph-dlg::backdrop{background:#000}
     if (theme === s.theme) { mdlg.close(); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
-      const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
-      s.theme = theme;
+      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
+      s.theme = theme; saveCatalogue();
       mdlg.close();
       const top = $('sheet-top');
       if (top && shownSession() === s) top.innerHTML = topNav(s, true) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`;
@@ -1707,8 +1717,8 @@ dialog.ph-dlg::backdrop{background:#000}
     if (theme === e.theme && group === e.group) { mdlg.close(); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
-      const {data, error} = await sb.from('sheets').update({theme, group}).eq('slug', e.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
-      e.theme = theme; e.group = group;
+      touched(); const {data, error} = await sb.from('sheets').update({theme, group}).eq('slug', e.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
+      e.theme = theme; e.group = group; saveCatalogue();
       mdlg.close();
       const top = $('sheet-top');
       if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
@@ -1723,7 +1733,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const takenSlugs = () => new Set([...v2Sessions.map(s => s.slug), ...[...notesIndex].map(RS.sessionSlugOf).filter(Boolean)]);
   const createSession = async (theme, title, slugs) => {
     const row = {slug: RS.uniqueSlug(title, takenSlugs()), theme, title, origin: 'user', items: slugs.map(slug => ({slug, dose: ''}))};
-    const s = oneRow(await sb.from('sessions').insert(row).select(SESSION_COLS));
+    touched(); const s = oneRow(await sb.from('sessions').insert(row).select(SESSION_COLS));
     setSessions([...v2Sessions, s]); saveCatalogue();
     return s;
   };
@@ -1796,7 +1806,7 @@ dialog.ph-dlg::backdrop{background:#000}
     else { add = RS.addItem(s.items, e.slug); if (!add.added) return fail('This sheet is already in that session.'); }
     $('as-submit').disabled = true; err.hidden = true;
     try {
-      if (s) { oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
+      if (s) { touched(); oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
       else s = await createSession(e.theme, title, [e.slug]);
       adlg.close();
       const top = $('sheet-top');
@@ -1813,7 +1823,7 @@ dialog.ph-dlg::backdrop{background:#000}
     if (!row.title) { err.textContent = 'Give the session a title.'; err.hidden = false; $('ed-title').focus(); return; }
     b.disabled = true; err.hidden = true;
     try {
-      oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
+      touched(); oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
       Object.assign(s, row); setSessions(v2Sessions); saveCatalogue(); edit = null;
       showSession(s.slug, 'Saved.');
     } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; }
@@ -1832,8 +1842,8 @@ dialog.ph-dlg::backdrop{background:#000}
     const s = shownSession(), err = $('del-err'), b = $('del-ok'); if (!s) { ddlg.close(); return; }
     b.disabled = true; err.hidden = true;
     try {
-      oneRow(await sb.from('sessions').delete().eq('slug', s.slug).select('slug'));
-      setSessions(v2Sessions.filter(x => x !== s)); saveCatalogue(); edit = null; ddlg.close();
+      touched(); oneRow(await sb.from('sessions').delete().eq('slug', s.slug).select('slug'));
+      setSessions(v2Sessions.filter(x => x.slug !== s.slug)); saveCatalogue(); edit = null; ddlg.close();
       flashHome('Session deleted. Its exercise sheets stay in your notebooks.');
       location.hash = s.theme;
     } catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; }
@@ -1855,7 +1865,7 @@ dialog.ph-dlg::backdrop{background:#000}
   $('sd-ok').addEventListener('click', async () => {
     const e = shownSheet(), err = $('sd-err'), b = $('sd-ok'); if (!e) { sdlg.close(); return; }
     b.disabled = true; err.hidden = true;
-    try { oneRow(await sb.from('sheets').delete().eq('slug', e.slug).select('slug')); }
+    try { touched(); oneRow(await sb.from('sheets').delete().eq('slug', e.slug).select('slug')); }
     catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; return; }
     // The sheet is gone: images and note are best effort (`rb.py delete <slug>` clears what is left).
     try {
@@ -1864,7 +1874,7 @@ dialog.ph-dlg::backdrop{background:#000}
       if (data && data.length) await st.remove(data.map(o => `${dir}/${o.name}`));
     } catch {}
     try { await sb.from('notes').delete().eq('slug', e.slug); notesIndex.delete(e.slug); } catch {}
-    sheets = sheets.filter(x => x !== e); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
+    sheets = sheets.filter(x => x.slug !== e.slug); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
     idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue(); toWorker({type: 'DROP_PHOTOS', path: `${user.id}/${e.slug}/`});
     b.disabled = false; sdlg.close();
     flashHome('Sheet deleted.');

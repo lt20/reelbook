@@ -4,9 +4,9 @@
 //   worker. Every change to a module bumps its ?v= here and in index.html, and VERSION (COORDINATION, pitfalls).
 // - Signed photos from Supabase Storage: cache-first, keyed by their URL without the token (a new token is
 //   signed at each start; the app's rbv parameter, the sheet's updated_at, stays in the key so a republished
-//   photo is fetched again), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE), a deleted sheet's dropped (DROP_PHOTOS).
+//   photo is fetched again; the request to Storage goes without it), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE), a deleted sheet's dropped (DROP_PHOTOS).
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
-const VERSION = 'rb-shell-27';
+const VERSION = 'rb-shell-28';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300;
 const SHELL = ['./', './index.html', './config.js?v=5', './sessions.js?v=7', './sheet.js?v=1', './vendor/supabase.js?v=2', './manifest.webmanifest',
   './fonts/barlow-condensed-600-latin.woff2', './fonts/barlow-condensed-700-latin.woff2', './fonts/source-sans-3-latin.woff2',
@@ -51,15 +51,18 @@ const trim = async c => {
   const keys = await c.keys();
   await Promise.all(keys.slice(0, Math.max(0, keys.length - PHOTO_MAX)).map(k => c.delete(k)));
 };
+// rbv is the app's own parameter: Storage gets the signed URL as it was signed. The fallback keeps the page's mode.
+const noRbv = href => { const u = new URL(href); u.searchParams.delete('rbv'); return u.href; };
+const bare = req => fetch(noRbv(req.url), {mode: req.mode === 'cors' ? 'cors' : 'no-cors', credentials: 'omit'});
 const photo = async e => {
-  const href = e.request.url, url = new URL(href), at = epoch;
+  const href = noRbv(e.request.url), url = new URL(e.request.url), at = epoch;
   url.searchParams.delete('token');
   const key = url.origin + url.pathname + url.search;
   try { const hit = await (await caches.open(PHOTOS)).match(key); if (hit) return hit; } catch {}
   // CORS, so the copy is readable (an opaque one would weigh megabytes in the quota); a storage without CORS
   // headers still gets its photo, uncached.
   let r;
-  try { r = await fetch(href, {mode: 'cors', credentials: 'omit'}); } catch { return fetch(e.request); }
+  try { r = await fetch(href, {mode: 'cors', credentials: 'omit'}); } catch { return bare(e.request); }
   if (keep(r)) {
     const copy = r.clone();
     e.waitUntil(caches.open(PHOTOS).then(async c => { if (at !== epoch) return; await c.put(key, copy); await trim(c); }).catch(() => {}));
@@ -70,7 +73,7 @@ const photo = async e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  if (url.pathname.includes('/storage/v1/object/sign/')) { e.respondWith(photo(e).catch(() => fetch(e.request))); return; }
+  if (url.pathname.includes('/storage/v1/object/sign/')) { e.respondWith(photo(e).catch(() => bare(e.request))); return; }
   if (url.origin !== location.origin) return;
   // Never stuck on a broken cache: any failure goes to the network.
   e.respondWith(shell(e).catch(() => fetch(e.request)));

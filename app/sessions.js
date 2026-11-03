@@ -268,16 +268,26 @@
   // only when it arrives before the fresh read ends. A failed read keeps what is shown and is returned as
   // {source: 'cache' | 'none', error}. current(): false once the user or the backend changed (nothing applied).
   // read() resolves a restored snapshot or null; write(data) saves the fresh one in the background (`saved`).
-  const refreshCatalogue = async ({read, fetch, apply, write, current = () => true}) => {
+  // gen(): the count of local changes (a sheet deleted, a session edited...). A read that a local change overtook
+  // is never applied nor saved (it would bring the change back): it is read again once; overtaken again, what is
+  // shown stays ({source: 'local'}, the app saves it). The cached copy is not applied after a local change either.
+  const LOCAL = {};
+  const refreshCatalogue = async ({read, fetch, apply, write, current = () => true, gen = () => 0}) => {
     let ended = false, shown = false;
-    const fresh = Promise.resolve().then(fetch);
+    const g0 = gen();
+    const fetchFresh = async () => {
+      const first = await fetch(); if (gen() === g0) return first;
+      const g1 = gen(), again = await fetch(); return gen() === g1 ? again : LOCAL;
+    };
+    const fresh = Promise.resolve().then(fetchFresh);
     fresh.then(() => { ended = true; }, () => {});
     const cached = Promise.resolve().then(read).then(snap => {
-      if (snap && !ended && current()) { apply(snap, 'cache'); shown = true; }
+      if (snap && !ended && gen() === g0 && current()) { apply(snap, 'cache'); shown = true; }
     }, () => {});
     let data;
     try { data = await fresh; } catch (error) { await cached; return {source: shown ? 'cache' : 'none', error}; }
     if (!current()) return {source: 'stale'};
+    if (data === LOCAL) return {source: 'local'};
     apply(data, 'network');
     return {source: 'network', saved: Promise.resolve().then(() => write(data)).catch(() => {})}; // not awaited by the app
   };
