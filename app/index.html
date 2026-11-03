@@ -313,6 +313,9 @@ dialog.ph-dlg::backdrop{background:#000}
 .plog ol{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:15px}
 .plog time{color:var(--muted);margin-right:8px;white-space:nowrap}
 .card .m span.done{background:var(--ok-bg);color:var(--ok)}
+/* ---- L8: « To try » shelf on the home page (row and cards as « New ») ---- */
+.totry .tt{display:grid;gap:6px;align-content:start;min-width:0;scroll-snap-align:start}
+.totry .tt .btn{justify-self:start}
 </style>
 </head>
 <body>
@@ -404,6 +407,8 @@ dialog.ph-dlg::backdrop{background:#000}
 
   <!-- L7: sheets and video sessions delivered in the last 72 h, not opened yet on this device -->
   <section class="newsec" id="new-sec" aria-labelledby="new-h" hidden></section>
+  <!-- L8: up to 3 sheets older than 3 days, never practised, chosen once a day -->
+  <section class="newsec totry" id="to-try" aria-labelledby="totry-h" hidden></section>
 
   <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
   <div id="results" hidden></div>
@@ -559,7 +564,7 @@ dialog.ph-dlg::backdrop{background:#000}
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=5"></script>
-<script src="sessions.js?v=4"></script>
+<script src="sessions.js?v=5"></script>
 <script src="sheet.js?v=1"></script>
 <script>
 (() => {
@@ -800,7 +805,8 @@ dialog.ph-dlg::backdrop{background:#000}
   // Home page only, 6 cards, newest first.
   const NEW_MS = 72 * 3600 * 1000, NEW_MAX = 6;
   const seenKey = () => user && user.id ? 'rb.seen.' + user.id : '';
-  const seenKeys = () => { const k = seenKey(); if (!k) return []; try { const a = JSON.parse(ls.get(k) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+  const readList = k => { if (!k) return []; try { const a = JSON.parse(ls.get(k) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+  const seenKeys = () => readList(seenKey());
   const markSeen = key => { const k = seenKey(); if (!k) return; const a = seenKeys().filter(x => x !== key); a.push(key); ls.set(k, JSON.stringify(a.slice(-500))); };
   const isRecent = v => { const t = Date.parse(v || ''); return t > Date.now() - NEW_MS; };
   const renderNew = show => {
@@ -815,6 +821,36 @@ dialog.ph-dlg::backdrop{background:#000}
     $('new-sec').innerHTML = list.length ? '<h2 class="eyebrow" id="new-h">New</h2><div class="newrow" id="new-cards"></div>' : '';
     if (list.length) $('new-cards').innerHTML = list.map(x => x.html).join('');
   };
+  // ---------- L8: « To try » shelf ----------
+  // Up to 3 sheets added more than 3 days ago and never practised (RS.toTry, seeded by today's local date: a new
+  // choice each day). Needs the practice log read (practiceOk): no table, or no answer, hides the shelf. « Not for
+  // me » drops a sheet for good on this device, per account like « New »: rb.dismissed.<user id>, a JSON array of
+  // slugs, trimmed to the sheets that still exist. No streak, no reminder. A home page left open past midnight (or
+  // back to the front the next day) gets the new day's choice, as L6's practice block does. rb.totry.<user id>
+  // ({day, slugs}) is the shelf last shown: the day's choice survives a reload and a « Not for me », and the next
+  // day shows other sheets (RS.toTry `last`).
+  const dismissedKey = () => user && user.id ? 'rb.dismissed.' + user.id : '';
+  const dismissSheet = slug => { const k = dismissedKey(); if (!k) return; ls.set(k, JSON.stringify([...readList(k).filter(x => x !== slug && bySlug.has(x)), slug])); };
+  let shelfOn = false, shelfDay = ''; // shelfOn: the last render could show the shelf; shelfDay: the day it used
+  const renderToTry = show => {
+    shelfOn = show; shelfDay = todayIso();
+    const k = user && user.id ? 'rb.totry.' + user.id : '', today = shelfDay;
+    let last = null; try { last = k ? JSON.parse(ls.get(k) || 'null') : null; } catch {}
+    const list = show && practiceOk ? RS.toTry(sheets, {today, practised: lastDone, dismissed: readList(dismissedKey()), last}) : [];
+    const day = {day: today, slugs: list.map(e => e.slug)};
+    if (k && list.length && JSON.stringify(day) !== JSON.stringify(last)) ls.set(k, JSON.stringify(day));
+    $('to-try').hidden = !list.length;
+    $('to-try').innerHTML = list.length ? '<h2 class="eyebrow" id="totry-h">To try</h2><div class="newrow">'
+      + list.map(e => `<div class="tt">${sheetCard(e)}<button type="button" class="btn ghost sm" data-dismiss="${esc(e.slug)}" aria-label="Not for me: ${esc(e.title)}">Not for me</button></div>`).join('') + '</div>' : '';
+  };
+  $('to-try').addEventListener('click', ev => {
+    const b = ev.target.closest && ev.target.closest('[data-dismiss]');
+    if (!b) return;
+    dismissSheet(b.dataset.dismiss); renderToTry(true);
+  });
+  const shelfNewDay = () => { if (shelfOn && !$('home').hidden && shelfDay !== todayIso()) renderToTry(true); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'hidden') shelfNewDay(); });
+  if (typeof setInterval === 'function') setInterval(shelfNewDay, 60000);
   // ---------- L12: notebook page ----------
   // One horizontal row of cards per group (library order, empty groups hidden), standalone sheets first, then the
   // exercise sheets of a video session after « From sessions ». Sticky chips above jump to a group; « See all N »
@@ -928,6 +964,7 @@ dialog.ph-dlg::backdrop{background:#000}
     if (terms.length) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t); }
     if (!t || terms.length) $('group-chips').hidden = true;
     renderNew(!t && !loading && !loadError && !terms.length);
+    renderToTry(!t && !loading && !loadError && !terms.length);
     document.title = t ? `${one ? one + ' · ' : ''}${t.title} · Reelbook` : 'Reelbook';
   };
 
