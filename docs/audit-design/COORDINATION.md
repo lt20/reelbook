@@ -3,7 +3,7 @@
 Source: the design audit of 3 Nov 2026 (six expert reviews, consolidated plan, private artifact
 https://claude.ai/artifact/NFEons9RCq5bvS2xpFaCM5). First chantier (3 Nov): phases **P0 (fixes), P1 (usable during the
 workout) and P2 (practice loop)**, lots L0–L8. Second chantier (from 3 Nov evening, « enchaîne sur P3 et P4 en
-autonomie »): **P3 (session player) and P4 (scale and finish)**, lots L9–L20.
+autonomie »): **P3 (session player) and P4 (scale and finish)**, lots L9–L20. **All lots merged on 3 Nov.**
 
 ## Protocol (Paul's, adapted to Reelbook — Laurent, 3 Nov 2026: « follow the Paul rules, as autonomous as possible »)
 
@@ -55,24 +55,24 @@ autonomie »): **P3 (session player) and P4 (scale and finish)**, lots L9–L20.
 | L5 | Session navigation and notes autosave | Q5 Q2 | M | yes | L3 | C | `feat/p1-session-nav` | merged #29 |
 | L6 | Practice log (schema + UI) | B1 | L | yes | L5 | D | `feat/p2-practice` | merged #30 |
 | L7 | New arrivals and « Something wrong? » | B2 B4 | M | yes | L4 | C | `feat/p2-arrivals` | merged #28 |
-| L8 | « To try » shelf | B3 | S | yes | L6 L7 | E | `feat/p2-to-try` | in progress |
+| L8 | « To try » shelf | B3 | S | yes | L6 L7 | E | `feat/p2-to-try` | merged #34 |
 
 ### P3 and P4 (second chantier)
 
 | Lot | What | Audit items | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
 |---|---|---|---|---|---|---|---|---|
-| L9 | Structured dose: parser + skill fields | S2 | S | yes | — | F | `feat/p3-dose` | waiting |
-| L10 | Session player: one exercise per screen | S1 | L | yes | L9 | G | `feat/p3-player` | waiting |
-| L11 | Player: sets, rest timer, end of session | S3 S4 | M | yes | L10 | H | `feat/p3-sets` | waiting |
-| L12 | Notebook page in five screens + photo cards | E1 E2 | M | yes | — | F | `feat/p4-notebook` | waiting |
-| L13 | Home recomposed | E3 | S | yes | L12 L8 | G | `feat/p4-home` | waiting |
-| L14 | Full-text search (column + backfill + app) — protected | E4 | M | yes | L13 | H | `feat/p4-search` | waiting |
-| L15 | Skill writing rules | E5 | S | no | L9 | G | `docs/p4-skill-rules` | waiting |
-| L16 | « Technique » template for board sports and fighting — protected (`app/config.js`) | E6 | M | no | L15 | H | `feat/p4-technique` | waiting |
-| L17 | Native navigation: sticky bar, back, scroll restore, ⋯ menu, floating + | E7 | M | yes | L11 L13 L18 | I | `feat/p4-nav` | waiting |
-| L18 | Bottom sheets instead of centred dialogs | E8 | M | no | L11 | I | `feat/p4-sheets` | waiting |
-| L19 | Instant start: service worker, cached catalogue, parallel loads, self-hosted fonts | E9 | M | yes | — | F | `feat/p4-instant` | waiting |
-| L20 | Type scale in rem, tokens, wordmark SVG | E10 | M | no | all others | J | `feat/p4-type` | waiting |
+| L9 | Structured dose: parser + skill fields | S2 | S | yes | — | F | `feat/p3-dose` | merged #36 |
+| L10 | Session player: one exercise per screen | S1 | L | yes | L9 | G | `feat/p3-player` | merged #36 |
+| L11 | Player: sets, rest timer, end of session | S3 S4 | M | yes | L10 | H | `feat/p3-sets` | merged #39 |
+| L12 | Notebook page in five screens + photo cards | E1 E2 | M | yes | — | F | `feat/p4-notebook` | merged #38 |
+| L13 | Home recomposed | E3 | S | yes | L12 L8 | G | `feat/p4-home` | merged #40 |
+| L14 | Full-text search (column + backfill + app) — protected | E4 | M | yes | L13 | H | `feat/p4-search` | merged #40 |
+| L15 | Skill writing rules | E5 | S | no | L9 | G | `docs/p4-skill-rules` | merged #36 |
+| L16 | « Technique » template for board sports and fighting — protected (`app/config.js`) | E6 | M | no | L15 | H | `feat/p4-technique` | merged #41 |
+| L17 | Native navigation: sticky bar, back, scroll restore, ⋯ menu, floating + | E7 | M | yes | L11 L13 L18 | I | `feat/p4-nav` | merged #47 |
+| L18 | Bottom sheets instead of centred dialogs | E8 | M | no | L11 | I | `feat/p4-sheets` | merged #43 |
+| L19 | Instant start: service worker, cached catalogue, parallel loads, self-hosted fonts | E9 | M | yes | — | F | `feat/p4-instant` | merged #37 |
+| L20 | Type scale in rem, tokens, wordmark SVG | E10 | M | no | all others | J | `feat/p4-type` | merged #48 |
 
 Ports: L9 8779, L10 8780 … L20 8790.
 
@@ -151,6 +151,20 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
 - `scripts/codex-acceptance.sh --out` accepts any folder of the repo; should be limited to `tests/` (L0).
 - Screenshots run in Chromium, not WebKit (L0).
 - Queue delete on page close may not leave a real iPhone (supabase-js fetches the token first) (#28).
+- Session edit from a tab left open can overwrite structured dose fields published since: add a freshness check
+  (`updated_at`) before writing (#36, Codex passes 2–3; the same risk existed for title, format and doses).
+- Back, scroll restore and the unsaved-edit prompt are checked by a Playwright script kept outside the repo
+  (`check.cjs` of L17): move such browser checks into `tests/e2e/` (#47).
+- Screenshots: Playwright WebKit is now installed on Laurent's Mac (L20): switch `tests/e2e/shots.mjs` to WebKit.
+
+## Waiting for Laurent (3 Nov evening)
+- Merge PR #45 (`.github`: every `rb-*.test.py` in CI). Green.
+- `db push` of `sheets.search_text` (L14) in the Supabase SQL editor, then `python3 tools/rb.py backfill-search`
+  (`--dry-run` first). Until then search works on metadata and notes.
+- On the iPhone (installed PWA): keyboard over a bottom sheet (L18); root text size 17 px following iOS Text Size
+  (L20); keep screen on (L3); rest timer beep after a locked screen (L11).
+- Applied by default, to confirm: SVG wordmark in Barlow Condensed instead of Helvetica Neue; Strength's colour is
+  now olive (distinct from the link blue); notebook page target revised to ≤ 8 screens (#38).
 - Structured dose: a tab opened before the L9 deploy that saves Edit on a session writes items as `{slug, dose}` and
   erases its structured fields; the free-text dose stays and the parser takes over (#36, Codex pass 2).
 
