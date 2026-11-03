@@ -506,6 +506,9 @@ dialog.ph-dlg::backdrop{background:#000}
   <p class="err" id="sd-err" hidden></p>
   <div class="actions"><button class="btn danger" type="button" id="sd-ok">Delete sheet</button><button class="btn ghost" type="button" id="sd-cancel">Keep it</button></div>
 </dialog>
+<!-- L7: « Something wrong? » queues the video again with a « Redo: » note for the next run -->
+<!-- (its content is written by openReport, fresh for each sheet or session) -->
+<dialog class="dlg" id="report-dlg" aria-labelledby="report-h"></dialog>
 <!-- L3: full-screen viewer of a sheet's step photos -->
 <dialog class="ph-dlg" id="ph-dlg" aria-label="Photos">
   <button type="button" class="ph-x" id="ph-close" aria-label="Close the photos">✕</button>
@@ -866,7 +869,7 @@ dialog.ph-dlg::backdrop{background:#000}
     const fail = d.status === 'error', pill = fail ? '<span class="st fail">Failed</span>' : d.status === 'processing' ? '<span class="st proc">Processing</span>' : '<span class="st">Waiting</span>';
     const id = esc(d.id), err = rowErr.get(String(d.id));
     return `<div class="q"><div class="ico">${platformTag(host)}</div>
-      <div class="t"><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
+      <div class="t">${/^Redo:/.test(d.note || '') ? '<span class="redo">Redo</span>' : ''}<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url)}</a>
       <small>${info.join(' · ')}</small>${fail && d.note ? `<small class="why">${esc(d.note)}</small>` : ''}${err ? `<small class="qerr" role="alert">${esc(err)}</small>` : ''}</div>
       <div class="side">${pill}${fail ? '' : `<button type="button" data-del="${id}" aria-label="Remove from the queue" title="Remove">×</button>`}</div>
       ${fail ? `<div class="qa"><button type="button" data-retry="${id}">Retry</button><button type="button" data-del="${id}">Remove</button></div>` : ''}</div>`;
@@ -1072,7 +1075,7 @@ dialog.ph-dlg::backdrop{background:#000}
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
       ${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(itemCard).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml();
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(itemCard).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
     wireNotes(RS.noteKey(slug));
   };
   const showSheet = async slug => {
@@ -1084,8 +1087,36 @@ dialog.ph-dlg::backdrop{background:#000}
     // Delete sheet: also under a sheet that fails to load.
     const del = '<div class="wrap"><div class="actions" style="margin-top:36px"><button class="btn ghost" type="button" id="sd-open">Delete sheet</button></div></div>';
     let html; try { html = await loadSheet(slug); } catch { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + del; return; }
-    view.innerHTML = back + html + notesHtml() + del;
+    view.innerHTML = back + html + notesHtml() + reportHtml(e) + del;
     wireNotes(slug);
+  };
+
+  // ---------- L7: « Something wrong? » ----------
+  // In its own block under « My notes » of a sheet or session that has a source video: the dialog queues that
+  // video again, in the page's notebook, with the note « Redo: <text> ». The skill reads it as a correction
+  // (same slug, republished over the old sheet). Send stays disabled while the text is blank.
+  const reportHtml = x => httpUrl(((x && x.source) || {}).url) ? '<div class="wrap report"><button type="button" class="link" id="report-open">Something wrong?</button></div>' : '';
+  const rdlg = $('report-dlg');
+  const openReport = () => {
+    const ses = RS.sessionSlugOf(shown || ''), x = ses ? v2BySlug.get(ses) : bySlug.get(shown);
+    const url = x && httpUrl((x.source || {}).url); if (!url) return;
+    rdlg.innerHTML = `<h2 id="report-h">Something wrong?</h2>
+      <label for="report-note">What should Claude fix?</label><textarea id="report-note" maxlength="1000"></textarea>
+      <p class="status" id="report-status" role="status"></p>
+      <div class="actions"><button class="btn" type="button" id="report-send" disabled>Send</button><button class="btn ghost" type="button" id="report-cancel">Cancel</button></div>`;
+    const ta = $('report-note'), send = $('report-send'), st = $('report-status');
+    ta.addEventListener('input', () => { send.disabled = !ta.value.trim(); });
+    $('report-cancel').addEventListener('click', () => rdlg.close());
+    send.addEventListener('click', async () => {
+      const text = ta.value.trim(); if (!text) return;
+      send.disabled = true; st.className = 'status'; st.textContent = 'Sending…';
+      try {
+        const {error} = await sb.from('requests').insert({url, theme: x.theme, note: 'Redo: ' + text}); if (error) throw error;
+        ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; $('report-cancel').textContent = 'Close';
+        refreshQueue();
+      } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
+    });
+    rdlg.showModal(); ta.focus();
   };
 
   // ---------- L3: keep the screen on, full-screen photos ----------
@@ -1366,6 +1397,7 @@ dialog.ph-dlg::backdrop{background:#000}
     else if (at('#as-open')) openAdd();
     else if (at('#ed-open')) { const s = shownSession(); if (s) { edit = draftOf(s); showSession(s.slug); } }
     else if (at('#sd-open')) openSheetDelete();
+    else if (at('#report-open')) openReport();
     else if (!edit) return;
     else if ((b = at('[data-up]'))) reorder(+b.dataset.up, -1);
     else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);

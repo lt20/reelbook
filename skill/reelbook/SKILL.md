@@ -27,10 +27,17 @@ titles follow the template, translated.
 ## 1. Take the queue
 - `python3 tools/rb.py requeue-stuck` first: it puts back in the queue a request left « processing » for
   more than 6 h by a run that died (Mac asleep, crash). Never pass a shorter `--hours`: another run may be at work.
-- `python3 tools/rb.py themes` then `python3 tools/rb.py queue` lists queued requests (`id`, `url`, `theme` hint, `created_at`), or
+- `python3 tools/rb.py themes` then `python3 tools/rb.py queue` lists queued requests (`id`, `url`, `theme` hint, `note`, `created_at`), or
   use the link given as argument. A request carries only a URL: **you decide theme and group**
   after watching the video. The `theme` field is the page the link was pasted from: a hint, not
   an instruction.
+- **A `note` that starts with « Redo: » is a correction** the user asked from the app (« Something
+  wrong? » under a sheet or session): that video is already published. Apply the instruction after
+  « Redo: », and keep the **same slug** so that publishing overwrites the old sheet (a session: the
+  same session slug and the same exercise slugs). Find it in `python3 tools/rb.py list`; the request's
+  `theme` is then the notebook the sheet is in now: keep it, and keep its group. Start from
+  `work/<slug>/` when the earlier run left it, and change only what the note asks. In the
+  end-of-run report, list the sheets redone and what changed in each.
 - `python3 tools/rb.py claim <id>` before starting.
 
 ## 2. Read the video (Chrome, `mcp__claude-in-chrome__*`)
