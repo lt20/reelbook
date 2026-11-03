@@ -79,6 +79,23 @@ test('word start only, punctuation and hyphens count as word breaks, regex chara
   assert.deepEqual(slugs(await search(page, '.*')), []);
 });
 
+test('a note whose text changes is saved in the cached catalogue: the new words are found offline, not the old', async () => {
+  const idb = new Map();
+  const rows = [sheet('move', {title: 'Move', html: '<a href="#">Home</a>'})];
+  const page = await open({idb, dom: true, hash: '#move', tables: tables(rows, [{slug: 'move', body: 'Genoux stables', updated_at: '2026-11-01T10:00:00Z'}])});
+  assert.equal(page.element('n-text').value, 'Genoux stables');
+  page.element('n-text').value = 'Tapis glissant';
+  await page.fire('n-text', 'input');
+  await settle();
+  assert.equal(page.element('n-status').textContent, 'Saved');
+  const [snap] = [...idb.values()];
+  assert.deepEqual(snap.noteBodies, [['move', 'Tapis glissant']]);
+  const offline = {error: {message: 'offline'}, status: 0};
+  const again = await open({idb, tables: tables([]), failing: {sheets: offline, notes: offline, sessions: offline}});
+  assert.match(await search(again, 'tapis'), /in your note/);
+  assert.match(await search(again, 'genoux'), /Nothing matches/);
+});
+
 test('in a notebook the empty state names it and still suggests a body part or a piece of kit', async () => {
   const page = await open({tables: tables([sheet('a', {title: 'Floor'})]), hash: '#strength'});
   assert.match(await search(page, 'zzz'), /Nothing matches « zzz » in this notebook\. Try a body part or a piece of kit\./);

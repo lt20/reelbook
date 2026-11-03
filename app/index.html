@@ -726,6 +726,9 @@ dialog.ph-dlg::backdrop{background:#000}
   // L14: noteBodies, key -> the text of the user's note (searched); noSearchCol: the client whose backend has no
   // sheets.search_text column yet (read once, then the sheets are read without it until the next start).
   let noteBodies = new Map(), noSearchCol = null;
+  // noteEdits: key -> {body, seq}, the note texts saved here, laid over a catalogue read that began before their
+  // save (seq > the read's noteSeq); dropped once a read that began after them is applied.
+  let noteSeq = 0; const noteEdits = new Map();
   // L6, practice log: practiceOk true once the user's practice_log rows are read (false: no table, or no answer, so
   // every practice control and count is hidden); lastDone: key (a sheet slug, or session/<slug>) -> latest done_on.
   let practiceOk = false, lastDone = new Map(), practiceGen = 0; // practiceGen: the last catalogue read, or sign-out
@@ -791,8 +794,10 @@ dialog.ph-dlg::backdrop{background:#000}
   // applied (saveCatalogue): a catalogue read it overtook is dropped and read again (RS.refreshCatalogue gen).
   let localGen = 0;
   const touched = () => { localGen++; };
-  const saveCatalogue = () => {
-    touched();
+  const saveCatalogue = () => { touched(); writeCatalogue(); };
+  // L14: the same write without counting a local change, for a note whose text changed (typing must not drop a
+  // catalogue read on its way: noteEdits lays the new text over it).
+  const writeCatalogue = () => {
     if (!user || !sb || loading) return;
     idb.set(catKey(), snapshot({themes: themeRows, sheets, v1: v1Hidden, sessions: v2Sessions, sessionsOk, notesIndex, noteBodies, lastDone, practiceOk,
       signed: cardPaths().filter(p => signed.has(p)).map(p => [p, signed.get(p).url])}));
@@ -826,6 +831,7 @@ dialog.ph-dlg::backdrop{background:#000}
   };
   // Every read at once (L19), then the photos of the cards; nothing is applied here (RS.refreshCatalogue).
   const fetchCatalogue = async () => {
+    const seq0 = noteSeq;
     const [themeRows, sh, r, notes, last] = await Promise.all([
       readThemes(),
       readSheets(),
@@ -845,7 +851,7 @@ dialog.ph-dlg::backdrop{background:#000}
     await signAll(paths);
     return {themes: themeRows, sheets: list, v1, sessions: rows, sessionsOk: !r.error, sessionsKept: !!sessionsError, sessionsError,
       notesIndex: notes && !notes.error ? new Set((notes.data || []).map(n => n.slug)) : null,
-      noteBodies: notes && !notes.error ? new Map((notes.data || []).map(n => [n.slug, String(n.body || '')])) : null,
+      noteBodies: notes && !notes.error ? new Map((notes.data || []).map(n => [n.slug, String(n.body || '')])) : null, noteSeq: seq0,
       lastDone: last || new Map(), practiceOk: !!last, practiceKept: last === null,
       signed: paths.filter(p => signed.has(p)).map(p => [p, signed.get(p).url])};
   };
@@ -856,7 +862,11 @@ dialog.ph-dlg::backdrop{background:#000}
     for (const sh of [...sheets, ...v2Sessions]) if (!themeById.has(sh.theme)) { const lib = libById.get(sh.theme); const t = {id: sh.theme, title: lib ? lib.title : sh.theme, sub: lib ? lib.sub : '', description: '', groups: lib ? lib.groups : [], color: lib ? lib.color : null, builtin: !!lib, position: 999}; themes.push(t); themeById.set(t.id, t); }
     // A notes or practice log read that failed keeps what was known (cached or earlier); a backend without the
     // practice_log table hides the practice log (readLastDone false).
-    if (c.notesIndex) { notesIndex = c.notesIndex; noteBodies = c.noteBodies || new Map(); } else { c.notesIndex = notesIndex; c.noteBodies = noteBodies; }
+    if (c.notesIndex) {
+      const nb = c.noteBodies || new Map(); // a cached catalogue (no noteSeq) gets every edit laid over it
+      for (const [k, e] of noteEdits) { if (c.noteSeq != null && e.seq <= c.noteSeq) noteEdits.delete(k); else if (e.body) nb.set(k, e.body); else nb.delete(k); }
+      notesIndex = c.notesIndex; noteBodies = c.noteBodies = nb;
+    } else { c.notesIndex = notesIndex; c.noteBodies = noteBodies; }
     if (c.practiceKept) { c.practiceOk = practiceOk; c.lastDone = lastDone; } else { practiceOk = c.practiceOk; lastDone = c.lastDone; }
     // cached URLs (expired or not) until new ones are signed: the service worker answers a photo by its path
     for (const [p, url] of c.signed || []) if (!signed.has(p)) signed.set(p, {url, exp: 0});
@@ -1447,7 +1457,7 @@ dialog.ph-dlg::backdrop{background:#000}
             // only a note that appears or empties changes the catalogue (notesIndex): typing does not drop its read
             const flip = !!body !== notesIndex.has(key); if (flip) touched();
             const {error} = await owner.client.from('notes').upsert({slug: key, body}); if (error) throw error;
-            ok = true; saved = body; if (ours()) { if (body) noteBodies.set(key, body); else noteBodies.delete(key); } if (flip) { if (body) notesIndex.add(key); else notesIndex.delete(key); saveCatalogue(); }
+            ok = true; saved = body; if (ours()) { noteEdits.set(key, {body, seq: ++noteSeq}); if (body) noteBodies.set(key, body); else noteBodies.delete(key); if (!flip) writeCatalogue(); } if (flip) { if (body) notesIndex.add(key); else notesIndex.delete(key); saveCatalogue(); }
           } catch {}
         }
         if (sending === body) sending = null;
@@ -2117,7 +2127,7 @@ dialog.ph-dlg::backdrop{background:#000}
       if (data && data.length && !gone()) await st.remove(data.map(o => `${dir}/${o.name}`));
     } catch {}
     if (gone()) return;
-    try { await client.from('notes').delete().eq('slug', e.slug); if (!gone()) { notesIndex.delete(e.slug); noteBodies.delete(e.slug); } } catch {}
+    try { await client.from('notes').delete().eq('slug', e.slug); if (!gone()) { notesIndex.delete(e.slug); noteBodies.delete(e.slug); noteEdits.delete(e.slug); } } catch {}
     if (gone()) return;
     sheets = sheets.filter(x => x.slug !== e.slug); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
     idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue(); toWorker({type: 'DROP_PHOTOS', path: `${user.id}/${e.slug}/`});
@@ -2226,7 +2236,7 @@ dialog.ph-dlg::backdrop{background:#000}
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity; peeked = false;
-      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = '';
+      resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = '';
     }
     if (!backend) { route(); return; }
     if (!sb) {
@@ -2257,7 +2267,7 @@ dialog.ph-dlg::backdrop{background:#000}
         const changed = (next && next.id) !== (user && user.id);
         if (changed && user) clearUserCache(user.id); // signed out (button, reset, revoked session) or another account
         user = next;
-        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION') route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });
