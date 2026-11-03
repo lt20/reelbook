@@ -23,7 +23,7 @@ test('B4 — At the bottom of a sheet, « Something wrong? » opens « What shou
   await page.fire('report-send'); await settle();
   const call = insert(page);
   assert.ok(call, 'the request was inserted');
-  assert.deepEqual(JSON.parse(JSON.stringify(call[2])), {url, theme: 'strength', note: 'Redo: The hand position is reversed.'});
+  assert.deepEqual(JSON.parse(JSON.stringify(call[2])), {url, theme: 'strength', note: 'Redo: The hand position is reversed.', slug: 'curl'});
   assert.match(page.element('report-status').textContent || page.element('view').innerHTML, /Sent\. Claude will redo this sheet on the next run\./);
 });
 
@@ -33,7 +33,7 @@ test('B4 — A session page reports its source URL and current notebook', async 
   clickView(page, '#report-open');
   page.element('report-note').value = 'Replace the second exercise.';
   await page.fire('report-send'); await settle();
-  assert.deepEqual(JSON.parse(JSON.stringify(insert(page)[2])), {url, theme: 'strength', note: 'Redo: Replace the second exercise.'});
+  assert.deepEqual(JSON.parse(JSON.stringify(insert(page)[2])), {url, theme: 'strength', note: 'Redo: Replace the second exercise.', slug: 'session/backroll'});
 });
 
 test('B4 — « Something wrong? » is hidden when the sheet or session has no source URL', async () => {
