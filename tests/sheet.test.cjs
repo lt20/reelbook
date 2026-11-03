@@ -274,15 +274,17 @@ const fakeWakeLock = () => {
   const log = [];
   return {log, wakeLock: {async request(type) { log.push('request:' + type); const lock = {released: false, addEventListener() {}, async release() { lock.released = true; log.push('release'); }}; return lock; }}};
 };
-const clickWake = page => page.element('view').listeners.click({target: {closest: s => s === '#wake' ? {} : null}});
+// L17: « Keep screen on » is in the page's « ⋯ » menu, and switches there without closing it
+const clickWake = page => page.element('nav-actions').listeners.click({target: {closest: s => s === '#wake' ? {} : null}});
 
-test('without the Screen Wake Lock API there is no « Keep screen on » button, and nothing fails', async () => {
+test('without the Screen Wake Lock API, « Keep screen on » is greyed in the « ⋯ » menu, and nothing fails', async () => {
   for (const hash of ['#angel', '#session/gsp']) {
     const page = await app({...signedIn, tables: tables(), hash, dom: true, stored: {'rb.wake': '1'}});
     await settle();
     assert.equal(page.element('view').hidden, false, hash);
     assert.doesNotMatch(page.element('view').innerHTML, /id="wake"|Keep screen on/, hash);
-    assert.match(page.element('view').innerHTML, /id="mv-open"/, hash);
+    assert.match(page.element('nav-actions').innerHTML, /id="wake" disabled>Keep screen on<small>Not available in this browser<\/small>/, hash);
+    assert.match(page.element('nav-actions').innerHTML, /id="mv-open"/, hash);
   }
 });
 
@@ -290,9 +292,11 @@ test('« Keep screen on » asks for the lock, is remembered, and lets go when le
   const nav = fakeWakeLock();
   const page = await app({...signedIn, tables: tables(), hash: '#angel', dom: true, nav});
   await settle();
-  assert.match(page.element('view').innerHTML, /<button type="button" class="mv wake" id="wake" aria-pressed="false">Keep screen on<\/button>/);
+  assert.match(page.element('nav-actions').innerHTML, /<button type="button" class="nav-it wake" id="wake" aria-pressed="false">Keep screen on<\/button>/);
   assert.deepEqual(nav.log, [], 'off by default');
+  await page.fire('nav-more');
   clickWake(page); await settle();
+  assert.equal(page.element('nav-actions').open, true, 'the menu stays open');
   assert.equal(page.storage.get('rb.wake'), '1');
   assert.deepEqual(nav.log, ['request:screen']);
   page.go('#strength'); await settle();
@@ -300,7 +304,7 @@ test('« Keep screen on » asks for the lock, is remembered, and lets go when le
   assert.deepEqual(nav.log, ['request:screen', 'release']);
   // remembered: the next sheet or session page asks again by itself, with the button pressed
   page.go('#session/gsp'); await settle();
-  assert.match(page.element('view').innerHTML, /id="wake" aria-pressed="true"/);
+  assert.match(page.element('nav-actions').innerHTML, /id="wake" aria-pressed="true"/);
   assert.deepEqual(nav.log, ['request:screen', 'release', 'request:screen']);
   // turned off: released and forgotten
   clickWake(page); await settle();
@@ -313,5 +317,5 @@ test('a refused wake lock leaves the page working', async () => {
   const page = await app({...signedIn, tables: tables(), hash: '#angel', dom: true, nav, stored: {'rb.wake': '1'}});
   await settle();
   assert.equal(page.element('view').hidden, false);
-  assert.match(page.element('view').innerHTML, /id="wake" aria-pressed="true"/);
+  assert.match(page.element('nav-actions').innerHTML, /id="wake" aria-pressed="true"/);
 });

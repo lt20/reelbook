@@ -76,12 +76,12 @@ const reel = 'https://www.instagram.com/reel/DeGBCfjsbTt/';
 
 test('a pasted link is kept until queued, and « + Add a video » asks before dropping it', async () => {
   const page = await app(signedIn);
-  await page.fire('btn-new');
+  await page.fire('add-video-fab');
   assert.equal(page.element('sheet-new').hidden, false);
   page.element('f-url').value = reel;
   await page.fire('f-url', 'input');
   assert.equal(page.storage.get('rb.draft'), reel);
-  await page.fire('btn-new');
+  await page.fire('add-video-fab');
   assert.equal(page.element('sheet-new').hidden, false, 'the form stays open');
   assert.equal(page.element('pending-dlg').open, true);
   assert.equal(page.element('pd-url').textContent, reel, 'the dialog names the pending link');
@@ -103,7 +103,7 @@ test('a link left in the field comes back on the next launch', async () => {
 
 test('discarding from the dialog forgets the link', async () => {
   const page = await app({...signedIn, stored: {'rb.draft': reel}});
-  await page.fire('btn-new');
+  await page.fire('add-video-fab');
   await page.fire('pd-discard');
   assert.equal(page.storage.has('rb.draft'), false);
   assert.equal(page.clients.at(-1).calls.some(c => c[0] === 'insert'), false);
@@ -328,8 +328,12 @@ test('Delete session asks in an app dialog, deletes the row only and refreshes t
 test('Delete sheet asks in an app dialog, deletes the row, its photos and its note, then opens the notebook', async () => {
   const page = await app({...signedIn, tables: v2Tables(), hash: '#gsp-angel'});
   await settle();
-  assert.match(page.element('view').innerHTML, /id="sd-open">Delete sheet</);
-  clickIn(page, 'view', '#sd-open');
+  // L17: Delete sheet is in the page's « ⋯ » menu, which closes before the dialog opens
+  assert.doesNotMatch(page.element('view').innerHTML, /id="sd-open"/);
+  await page.fire('nav-more');
+  assert.match(page.element('nav-actions').innerHTML, /id="sd-open">Delete sheet</);
+  clickIn(page, 'nav-actions', '#sd-open');
+  assert.equal(page.element('nav-actions').open, false);
   assert.equal(page.element('sd-dlg').open, true);
   assert.equal(page.element('sd-name').textContent, 'Floor angel');
   assert.match(page.element('sd-what').textContent, /It leaves the session « GSP shoulders »\./);
@@ -405,8 +409,8 @@ test('a link in a sheet to another sheet or a session is kept; an unknown #ancho
 test('« Add to session » appends the sheet once, says when it is already there, and can create a session', async () => {
   const page = await app({...signedIn, tables: v2Tables(), hash: '#curl'});
   await settle();
-  assert.match(page.element('view').innerHTML, /id="as-open">Add to session</);
-  clickIn(page, 'view', '#as-open');
+  assert.match(page.element('nav-actions').innerHTML, /id="as-open">Add to session</); // L17: in the « ⋯ » menu
+  clickIn(page, 'nav-actions', '#as-open');
   assert.equal(page.element('as-dlg').open, true);
   assert.match(page.element('as-session').innerHTML, /<optgroup label="Strength"><option value="gsp-shoulders">GSP shoulders<\/option><\/optgroup><option value="__new_session__">New session…<\/option>/);
   assert.equal(page.element('as-session').value, 'gsp-shoulders');

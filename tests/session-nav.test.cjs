@@ -29,7 +29,7 @@ test('L5: Next and Previous move through the session; titles are escaped; a shee
   assert.match(view(page), /<a class="prev" href="#session\/flow\/1">← Previous<\/a><a class="next" href="#session\/flow\/3">Next: Three →<\/a>/);
   page.go('#m2'); await settle();
   assert.doesNotMatch(view(page), /class="seat"|class="seq"/, 'the same sheet opened on its own is plain');
-  assert.match(view(page), /href="#strength">← Strength<\/a>/);
+  assert.equal(page.element('nav-back').textContent, '‹ Strength'); // L17: the way back is in the sticky bar
 });
 
 test('L5: « From the session » leaves out the session the sheet is opened from', async () => {
@@ -43,10 +43,10 @@ test('L5: Keep screen on stays on from one exercise to the next', async () => {
   const log = [];
   const nav = {wakeLock: {async request(type) { log.push('request:' + type); return {addEventListener() {}, async release() { log.push('release'); }}; }}};
   const page = await open('#session/flow/1', {nav, stored: {'rb.wake': '1'}});
-  assert.match(page.element('sheet-top').innerHTML, /id="wake" aria-pressed="true"/);
+  assert.match(page.element('nav-actions').innerHTML, /id="wake" aria-pressed="true"/); // L17: in the « ⋯ » menu
   page.go('#session/flow/2'); await settle();
   page.go('#session/flow/1'); await settle();
-  assert.match(page.element('sheet-top').innerHTML, /id="wake" aria-pressed="true"/);
+  assert.match(page.element('nav-actions').innerHTML, /id="wake" aria-pressed="true"/); // L17: in the « ⋯ » menu
   assert.deepEqual(log, ['request:screen'], 'one lock, never released between exercises');
 });
 
