@@ -140,7 +140,7 @@ security (`supabase/schema.sql`):
 | Table / bucket | Holds |
 | --- | --- |
 | `requests` | pasted links: `url`, `status` (queued → processing → done / error), `theme` hint, `slug` |
-| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html` (`kind` and `exercises` are left from the old one-page sessions and only serve their migration, below) |
+| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html`, `search_text` (the sheet's visible text, at most 4 000 characters, that search reads) (`kind` and `exercises` are left from the old one-page sessions and only serve their migration, below) |
 | `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `origin` (`video` or `user`), `thumbnail`, `items` (ordered `{slug, dose}`, each slug a sheet) |
 | `notes` | your personal note per sheet (key: its slug) and per session (key: `session/<slug>`) |
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
@@ -153,6 +153,11 @@ A backend set up before sessions existed has no `sessions` table: re-run `supaba
 (it only adds what is missing); until then the app hides sessions and says so in Settings.
 The practice log came later still: on your own Supabase, re-run `supabase/schema.sql` to create the
 `practice_log` table; until then the app shows no « Done today » and no practice count.
+Search in the text of the sheets came after that: re-run `supabase/schema.sql` to add the
+`sheets.search_text` column, then fill it once for the sheets you already have with
+`python3 tools/rb.py backfill-search` (add `--dry-run` first to see the list; it writes only sheets whose
+`search_text` is empty, and new sheets get it from `rb.py publish`). Until then search reads titles,
+summaries, groups, notebooks, authors and your notes, as before.
 A backend that still holds old one-page sessions (`sheets` rows with `kind = 'session'`, before
 sessions were made of sheets): the app hides them and Settings counts them. Run
 `python3 tools/rb.py requeue-sessions` (add `--dry-run` first to see the list), then `/reelbook`:

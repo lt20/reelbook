@@ -33,6 +33,9 @@ const sheetDocument = {
 // `library`: the built-in notebooks of the app config (window.REELBOOK.library).
 // `nav`: the navigator (none of its APIs by default, e.g. no wakeLock).
 // `idb`: a Map standing for IndexedDB's key-value store (none by default: the app reads the network only).
+// `missing`: ['table.column', ...] columns this backend does not have: a read whose select names one answers
+// PostgREST's 42703 « column … does not exist » (HTTP 400), as a backend before that column's migration.
+// client.selects journals every projection asked, [table, columns], in order.
 // `hold`: (table, ops) -> a promise a read or write waits for before answering (still on its way), or null; a
 // promise resolving to {data, error} answers that instead of the table's rows at that time (a read made earlier).
 // IndexedDB as the app uses it (open, one 'kv' store, get / put; a ranged delete is not supported and fails).
@@ -50,7 +53,7 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = []} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -106,6 +109,13 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
         const query = table => {
           const ops = [];
           const result = () => {
+            const sel = ops.find(o => o[0] === 'select');
+            if (sel) {
+              client.selects.push([table, sel[1]]);
+              const cols = String(sel[1] || '').split(',').map(c => c.trim().replace(/"/g, ''));
+              const gone = missing.find(m => m.startsWith(table + '.') && cols.includes(m.slice(table.length + 1)));
+              if (gone) return {data: null, error: {code: '42703', message: `column ${gone} does not exist`, details: null, hint: null}, status: 400};
+            }
             if (failing[table]) return {data: null, ...failing[table]};
             const eqs = ops.filter(o => o[0] === 'eq').map(o => o.slice(1)), w = ops.find(o => WRITES.includes(o[0]));
             if (w) {
@@ -120,7 +130,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
           const q = new Proxy({}, {get: (_, k) => k === 'then' ? (ok, ko) => Promise.resolve().then(wait).then(v => v || result()).then(ok, ko) : (...a) => { ops.push([k, ...a]); return q; }});
           return q;
         };
-        const client = {url, key, options, calls: [], from: tables ? query : table => ({
+        const client = {url, key, options, calls: [], selects: [], from: tables ? query : table => ({
           async insert(row) { client.calls.push(['insert', table, row]); return {error: null}; }
         }),
           // storage: list answers one photo; list and remove are recorded in client.calls (not in writesOf)

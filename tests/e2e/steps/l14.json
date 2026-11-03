@@ -1,0 +1,14 @@
+[
+  {"name": "l14-01-tapis",
+   "actions": [{"wait": "#portal .thumbs img"}, {"fill": "#q", "value": "tapis"}, {"wait": "#results .card .where >> text=in the sheet"}]},
+  {"name": "l14-02-dos",
+   "actions": [{"wait": "#portal .thumbs img"}, {"fill": "#q", "value": "dos"}, {"wait": "#results .card .where"}]},
+  {"name": "l14-03-note",
+   "actions": [{"wait": "#portal .thumbs img"}, {"fill": "#q", "value": "cuisine"}, {"wait": "#results .card .where >> text=in your note"}]},
+  {"name": "l14-04-empty",
+   "actions": [{"wait": "#portal .thumbs img"}, {"fill": "#q", "value": "trampoline"}, {"wait": "#results >> text=Try a body part or a piece of kit."}]},
+  {"name": "l14-05-column-missing-tapis", "query": "missing=sheets.search_text",
+   "actions": [{"wait": "#portal .thumbs img"}, {"fill": "#q", "value": "tapis"}, {"wait": "#results >> text=Try a body part or a piece of kit."}]},
+  {"name": "l14-06-column-missing-dos", "query": "missing=sheets.search_text",
+   "actions": [{"wait": "#portal .thumbs img"}, {"fill": "#q", "value": "dos"}, {"wait": "#results .card"}]}
+]
