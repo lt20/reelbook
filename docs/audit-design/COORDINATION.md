@@ -110,6 +110,18 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
   harmless in a browser). Suggestion: read `page.element('view').innerHTML` there, as the other L5 tests do; the
   extra line in `showSheet` can then go.
 
+- **L9, three acceptance tests that cannot pass as written** (raised by the L9 agent, for Codex; the code they aim at
+  is in place and covered by `tests/dose.test.cjs` and `tests/rb-sessions.test.py`):
+  1. `l9/dose-parser.test.cjs` « every fixture and Laurent session format… »: every `parseRest` value in the list
+     passes; the last line counts the non-null expectations as 6, but the list holds 7 (30, 60, 90, 60, 90, 30, 90).
+     Fix: `7` (and « 7/13 » in the message).
+  2. `l9/publish.test.cjs`: the stubbed `_read_session` returns the sub-folder as `None`, and `_publish_session`
+     evaluates `sub / "meta.json"` as the argument of the (stubbed) `_check_theme` → `TypeError` before any POST.
+     The real `_read_session` always returns a `Path`. Fix: `[('move', pathlib.Path('/unused/move'), {...})]`.
+  3. `l9/structured-items.test.cjs` « a backend without the sessions table still loads its sheets »: asserts
+     `element('home').hidden === true` on `#strength`, but a notebook page is drawn inside `#home` (`route()` ends in
+     `show('home')`; `#groups` is a child of `#home`), so `home` is visible there by design (`tests/auth-flow.test.cjs`
+     runs the same scenario without that line). Fix: drop the line, or assert `element('view').hidden === true`.
 - **L7, `tests/acceptance/l7/report-correction.test.cjs` (Redo payload)** — settled (3 Nov, coordinator decision
   after Codex review ×3): slug added (`{url, theme, note, slug}`, spec §B4 updated).
 
