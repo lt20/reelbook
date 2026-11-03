@@ -78,7 +78,7 @@ Exercises were not sheets: their content and photos lived only in the session pa
 - Deleting a session keeps its note; slugs are never reused, so the note never shows on another session.
 - Title ≤ 80 characters; renaming keeps the slug. « My notes » is hidden in Edit mode.
 
-## Notes from S4 (#PR_S4)
+## Notes from S4 (#23)
 
 - The app no longer renders v1 sessions: no session or exercise card from `sheets.exercises`, no
   `#<slug>~<anchor>` route nor anchor scroll, no v1 case in Move, Delete sheet, Add to session, the
@@ -102,7 +102,7 @@ Exercises were not sheets: their content and photos lived only in the session pa
 | S1 | Schema + `rb.py` (publish v2, legacy delete, `requeue-sessions`) + skill and templates | `supabase/`, `tools/rb.py`, `skill/`, `templates/`, `docs/own-supabase.md` | nothing | merged (#14) |
 | S2 | App, read side: session page from structure, Sessions section, « in N sessions », « From the session », Move for sessions, legacy fallback, missing-table tolerance | `app/` | #12 merged, S1 schema | merged (#15) |
 | S3 | App, composition: « + New session », « Add to session », Edit mode | `app/` | S2 | merged (#16) |
-| S4 | Cleanup once Laurent has run `requeue-sessions` and the queue is empty: drop v1 rendering, `exercises` column use, `templates/session.html` | `app/`, `templates/`, `skill/`, `tools/`, docs | S1–S3 + migration done | delivered (#PR_S4) |
+| S4 | Cleanup once Laurent has run `requeue-sessions` and the queue is empty: drop v1 rendering, `exercises` column use, `templates/session.html` | `app/`, `templates/`, `skill/`, `tools/`, docs | S1–S3 + migration done | delivered (#23) |
 
 S2 and S3 touch `app/index.html`: one after the other, never stacked.
 
