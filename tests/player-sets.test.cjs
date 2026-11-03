@@ -19,7 +19,7 @@ const stored = page => JSON.parse(page.storage.get('rb.play.u1') || 'null');
 test('set count: the sets of the dose, else one box', () => {
   assert.equal(RS.setCount({sets: 4}), 4);
   for (const it of [{sets: null}, {sets: 0}, {sets: 2.5}, {}, null]) assert.equal(RS.setCount(it), 1);
-  assert.equal(RS.setCount({sets: 99}), 20);
+  assert.equal(RS.setCount({sets: 21}), 21); // every set of the dose gets its box
 });
 
 test('rest timer: rounded up, from the timestamps only, never below zero', () => {
@@ -39,7 +39,7 @@ test('rest timer: rounded up, from the timestamps only, never below zero', () =>
 });
 
 test('checked sets: cleaned, then counted per exercise', () => {
-  assert.deepEqual(RS.cleanChecks({1: [3, 1, 1], 2: [], 3: ['2', 0, 21, 2], x: [1], 9: [1]}, 3), {1: [1, 3], 3: [2]});
+  assert.deepEqual(RS.cleanChecks({1: [3, 1, 1], 2: [], 3: ['2', 0, 21, 2], x: [1], 9: [1]}, 3), {1: [1, 3], 3: [2, 21]});
   assert.deepEqual(RS.cleanChecks(null), {});
   assert.deepEqual(RS.cleanChecks([1, 2]), {});
   assert.deepEqual(RS.playTally({1: [1, 2], 2: [1]}), {exercises: 2, sets: 3});
@@ -52,7 +52,7 @@ test('rb.play.<uid>: a place without checks stays a number, with checks it carri
   await settle();
   assert.deepEqual(stored(page), {arms: 3, legs: 1});
   await page.fire('play-set-2', 'change'); await settle();
-  assert.deepEqual(stored(page), {arms: 3, legs: {n: 1, sets: {1: [2]}}});
+  assert.deepEqual(stored(page), {arms: 3, legs: {n: 1, sets: {1: [2]}, of: {1: 'a'}}});
   await page.fire('play-set-2', 'change'); await settle(); // unchecked again
   assert.deepEqual(stored(page), {arms: 3, legs: 1});
   const old = await app({...signedIn, tables: tables(items), hash: '#session/legs/play', dom: true, stored: {'rb.play.u1': JSON.stringify({legs: 2})}});
@@ -96,4 +96,39 @@ test('end of session: Save to log keeps the session page’s « Done today » in
   page.go('#strength'); await settle();
   page.go('#session/legs'); await settle();
   assert.doesNotMatch(page.element('view').innerHTML, /Session done/);
+});
+
+test('checked sets follow their sheet: a session edited meanwhile drops the checks it moved, and the sets it removed', () => {
+  const items = [{sheet: {slug: 'a'}, sets: 3}, {sheet: {slug: 'b'}, sets: 2}];
+  const checks = {1: [1, 3], 2: [2]};
+  const of = RS.checksOf(checks, items);
+  assert.deepEqual(of, {1: 'a', 2: 'b'});
+  assert.deepEqual(RS.fitChecks(checks, of, items), checks);
+  assert.deepEqual(RS.fitChecks(checks, of, [items[1], items[0]]), {}); // swapped: both lose theirs
+  assert.deepEqual(RS.fitChecks(checks, of, [{sheet: {slug: 'a'}, sets: 2}, items[1]]), {1: [1], 2: [2]}); // 3 sets down to 2
+  assert.deepEqual(RS.fitChecks(checks, undefined, items), {}); // no sheet stored: nothing is trusted
+});
+
+test('rest timer: « no rest » in the format or an item rest_s of 0 starts no countdown', async () => {
+  for (const [first, format] of [[{slug: 'a', dose: '2 × 10'}, 'no rest'], [{slug: 'a', dose: '2 × 10', rest_s: 0}, '30 s rest']]) {
+    const t = tables([first, {slug: 'b', dose: '40 s'}]); t.sessions[0].format = format;
+    const page = await app({...signedIn, tables: t, hash: '#session/legs/play', dom: true});
+    await settle();
+    await page.fire('play-set-1', 'change'); await settle();
+    assert.doesNotMatch(player(page), /id="play-rest"/, format);
+    assert.match(player(page), /id="play-set-1"[^>]*checked/);
+  }
+});
+
+test('sets: a session reordered after a set was checked does not show it on the other exercise', async () => {
+  const t = tables([{slug: 'a', dose: '3 × 10'}, {slug: 'b', dose: '3 × 10'}]);
+  const page = await app({...signedIn, tables: t, hash: '#session/legs/play', dom: true});
+  await settle();
+  await page.fire('play-set-1', 'change'); await settle();
+  const swapped = tables([{slug: 'b', dose: '3 × 10'}, {slug: 'a', dose: '3 × 10'}]);
+  const again = await app({...signedIn, tables: swapped, hash: '#session/legs/play/1', dom: true, stored: Object.fromEntries(page.storage)});
+  await settle();
+  assert.doesNotMatch(player(again), /id="play-set-1"[^>]*checked/);
+  again.go('#session/legs/play/2'); await settle();
+  assert.doesNotMatch(player(again), /id="play-set-1"[^>]*checked/); // its place changed: the check is dropped
 });

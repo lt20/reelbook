@@ -322,8 +322,8 @@
   };
 
   // ---------- player: sets and rest timer (L11) ----------
-  // The check boxes of a resolved item: one per set when its dose has sets, else one (« Done »).
-  const setCount = it => it && Number.isInteger(it.sets) && it.sets > 0 ? Math.min(it.sets, 20) : 1;
+  // The check boxes of a resolved item: one per set when its dose has sets (all of them), else one (« Done »).
+  const setCount = it => it && Number.isInteger(it.sets) && it.sets > 0 ? it.sets : 1;
   // Seconds left of a rest started at `startMs` (Date.now() then) for `seconds`, read on `clock` (Date.now): from
   // the timestamps, never from a count of timer callbacks, so a hidden page or a locked screen shows the right time
   // on return. Rounded up (a fresh 60 s rest reads 60, not 59), never below 0.
@@ -334,15 +334,33 @@
   // « 0:45 », « 1:00 », « 2:05 ».
   const restClock = s => { const n = Math.max(0, Math.floor(Number(s) || 0)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
   // The checked sets of one play ({<exercise n>: [set numbers]}), cleaned: only exercises 1..count, whole set
-  // numbers 1..20, no repeat, sorted.
+  // numbers from 1, no repeat, sorted.
   const cleanChecks = (checks, count) => {
     const out = {};
     if (!checks || typeof checks !== 'object' || Array.isArray(checks)) return out;
     for (const [k, v] of Object.entries(checks)) {
       const n = Number(k);
       if (!Number.isInteger(n) || n < 1 || (count && n > count) || !Array.isArray(v)) continue;
-      const sets = [...new Set(v.filter(x => Number.isInteger(x) && x >= 1 && x <= 20))].sort((a, b) => a - b);
+      const sets = [...new Set(v.filter(x => Number.isInteger(x) && x >= 1))].sort((a, b) => a - b);
       if (sets.length) out[n] = sets;
+    }
+    return out;
+  };
+  // The sheet each checked exercise was ({<exercise n>: slug}), stored with the checks.
+  const checksOf = (checks, items) => {
+    const out = {};
+    for (const n of Object.keys(cleanChecks(checks))) if (items[n - 1]) out[n] = items[n - 1].sheet.slug;
+    return out;
+  };
+  // Stored checks fitted to the session as it is now: an exercise keeps its checks only when the same sheet is still
+  // at that place (exercises moved, removed or replaced meanwhile lose theirs), and only its sets that still exist.
+  const fitChecks = (checks, of, items) => {
+    const out = {}, list = Array.isArray(items) ? items : [], at = of && typeof of === 'object' ? of : {};
+    for (const [n, sets] of Object.entries(cleanChecks(checks, list.length))) {
+      const it = list[n - 1];
+      if (!it || !it.sheet || at[n] !== it.sheet.slug) continue;
+      const kept = sets.filter(k => k <= setCount(it));
+      if (kept.length) out[n] = kept;
     }
     return out;
   };
@@ -355,6 +373,6 @@
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
     catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel,
-    setCount, restRemaining, restClock, cleanChecks, playTally};
+    setCount, restRemaining, restClock, cleanChecks, checksOf, fitChecks, playTally};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1780,13 +1780,16 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const playKey = () => user && user.id ? 'rb.play.' + user.id : '';
   const playStore = () => { try { const o = JSON.parse(ls.get(playKey()) || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch { return {}; } };
   const placeOf = v => Number(v && typeof v === 'object' ? v.n : v) || 0;
-  // `checks`: the sets to keep with the place; undefined keeps the stored ones, null clears them.
+  // `checks`: the sets to keep with the place, with the sheet of each checked exercise (`of`, so that a session
+  // edited meanwhile does not move them: RS.fitChecks); undefined keeps the stored ones, null clears them.
   const keepPlace = (slug, n, checks) => {
     const k = playKey(); if (!k) return;
-    const o = playStore(), was = o[slug]; delete o[slug];
+    const o = playStore(), was = o[slug] && typeof o[slug] === 'object' ? o[slug] : null; delete o[slug];
     if (n) {
+      const items = play && play.kind === 'session' && play.s.slug === slug ? play.items : [];
       const sets = RS.cleanChecks(checks === undefined ? was && was.sets : checks);
-      o[slug] = Object.keys(sets).length ? {n, sets} : n;
+      const of = checks === undefined ? (was && was.of) || {} : RS.checksOf(sets, items);
+      o[slug] = Object.keys(sets).length ? {n, sets, of} : n;
     }
     const keys = Object.keys(o).slice(-PLAY_KEEP);
     if (keys.length) ls.set(k, JSON.stringify(Object.fromEntries(keys.map(x => [x, o[x]])))); else ls.del(k);
@@ -1820,7 +1823,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const playSession = (slug, n) => {
     const s = v2BySlug.get(slug), items = RS.resolveItems(s, bySlug);
     if (!items.length || (n && n > items.length)) return false;
-    const kept = playStore()[slug], at = placeOf(kept), checks = RS.cleanChecks(kept && kept.sets, items.length);
+    const kept = playStore()[slug], at = placeOf(kept), checks = RS.fitChecks(kept && kept.sets, kept && kept.of, items);
     const resume = at >= 1 && at <= items.length && (at > 1 || Object.keys(checks).length > 0);
     stopRest();
     play = {kind: 'session', s, items, n: n || 1, prompt: !n && resume ? at : 0, checks, rest: null};
@@ -1866,7 +1869,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   // ---------- L11: sets, rest timer ----------
   // Under the dose, one round check box per set (« 3 × 10 »: 3), or one « Done » box. Checking a set, but the one that
   // completes the last exercise, starts a rest: the item's rest_s (its own, else read from the session format by
-  // resolveItems), else 60 s. Its countdown takes the dose's place (on the next exercise too), with −15 s, +15 s and
+  // resolveItems; 0: none), else 60 s. Its countdown takes the dose's place (on the next exercise too), with −15 s, +15 s and
   // Skip. It is read from timestamps (RS.restRemaining); the interval only repaints it. At zero: a short beep (Web
   // Audio, made on a tap so iOS lets it play) and a 600 ms flash of the accent colour (none when reduced motion is
   // asked: the beep only). play.rest: {at: Date.now() at the start, s: its seconds}.
@@ -1908,9 +1911,11 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     if (next.length) p.checks[p.n] = next; else delete p.checks[p.n];
     keepPlace(p.s.slug, p.n, p.checks);
     const done = p.n === p.items.length && next.length === RS.setCount(it); // the session's last set
-    const rest = now && !was && !done;
-    if (rest) startRest(Number(it.rest_s) > 0 ? Number(it.rest_s) : 60);
-    else if (done) stopRest();
+    // rest_s 0 (« no rest » in the format, or the item's own 0): no countdown; none stated: 60 s
+    const secs = it.rest_s === 0 ? 0 : Number(it.rest_s) > 0 ? Number(it.rest_s) : 60;
+    const rest = now && !was && !done && secs > 0;
+    if (rest) startRest(secs);
+    else if (done || (now && !was)) stopRest();
     paintAct('play-set-' + k);
     const act = rest ? $('play-act') : null; // the countdown and its buttons in view, above the sticky nav
     if (act && act.scrollIntoView) act.scrollIntoView({block: 'nearest'});
