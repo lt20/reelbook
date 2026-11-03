@@ -62,6 +62,15 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
 - L8: `app/index.html` home.
 
 ## Open questions
+- **L4, `tests/acceptance/l4/queue.test.cjs` (summary row)** — the spec wants the failed count « in danger colour »,
+  the test matches `3 in the queue · 1 failed` as one run of text in `#queue-summary`'s HTML, so `1 failed` cannot
+  sit in its own coloured `<span>`. L4 ships the label in ink with a danger-coloured dot before it. Proposal: accept
+  the dot, or relax the regex to allow a tag around `1 failed` (L4 then colours the count). For Codex.
+- **L4, `tests/harness.cjs` timers** — the harness runs any `setTimeout` at once, so a 5 s `setTimeout` would send the
+  queue delete before the test's « no write yet » assertion. L4 ends the « Removed · Undo » toast on the
+  `animationend` of its 5 s countdown bar instead (plus `pagehide` / page hidden). Measured in the preview: toast
+  visible at 4.5 s, gone and delete sent at 5.5 s; Undo sends nothing. For Codex: fine, or should the harness grow
+  a fake clock?
 - **L5, `tests/acceptance/l5/navigation.test.cjs` « Group · Back »** (raised by the L5 agent, for Codex): the test
   reads `page.element('sheet-top').innerHTML` right after opening a sheet. In the harness that element is a separate
   fake: it only holds what the app writes to `$('sheet-top').innerHTML` itself, never the `<div id="sheet-top">`

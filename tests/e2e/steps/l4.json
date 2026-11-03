@@ -1,0 +1,14 @@
+[
+  {"name": "l4-01-queue-collapsed", "actions": [{"wait": "#queue-toggle >> text=3 in the queue · 1 failed"}, {"scroll": "#queue-sec"}]},
+  {"name": "l4-02-queue-expanded", "full": true, "actions": [{"click": "#queue-toggle"}, {"wait": "#queue >> text=Last run"}, {"wait": "#queue >> text=Processing"}]},
+  {"name": "l4-03-queue-removed-toast", "actions": [{"click": "#queue-toggle"}, {"click": "#queue [data-del=\"req-1\"]"}, {"wait": "#queue-undo >> text=Removed · Undo"}, {"wait": 1500}]},
+  {"name": "l4-04-notebook-session-cards", "hash": "strength", "full": true, "actions": [{"wait": "#home .card .fmt"}]},
+  {"name": "l4-05-delete-sheet-dialog", "hash": "pompes-inclinees",
+   "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"scroll": "#sd-open"}, {"click": "#sd-open"}, {"wait": "#sd-dlg[open]"}],
+   "allow": ["^http 404: .*/img/thumb\\.jpg$"],
+   "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"},
+  {"name": "l4-06-sheet-bottom", "hash": "pompes-inclinees", "full": true,
+   "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"scroll": "bottom"}],
+   "allow": ["^http 404: .*/img/thumb\\.jpg$"],
+   "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"}
+]

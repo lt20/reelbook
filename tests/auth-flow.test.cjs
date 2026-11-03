@@ -514,7 +514,7 @@ test('C2: a queue row without a notebook shows no notebook label, and its reason
   await settle();
   const rows = page.element('queue').innerHTML.split('<div class="q">').slice(1);
   assert.match(rows[0], /<small>added 1 Nov<\/small><small class="why">Video unavailable \(private account\)<\/small>/);
-  assert.match(rows[0], /needs a look/);
+  assert.match(rows[0], /Failed/);
   assert.match(rows[1], /<small>added 2 Nov · Strength<\/small><\/div>/);
 });
 
