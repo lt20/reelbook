@@ -58,6 +58,20 @@ test('key points: the first three of the sheet, bold cue and the rest, also once
   assert.deepEqual(SH.keyPoints(null), []);
 });
 
+test('player: Finish forgets the session in rb.play.<uid>, other sessions stay', async () => {
+  const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(resolve => setImmediate(resolve)); };
+  const tables = {user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}],
+    sheets: [{slug: 'a', kind: 'sheet', theme: 'strength', title: 'A', html: ''}, {slug: 'b', kind: 'sheet', theme: 'strength', title: 'B', html: ''}],
+    sessions: [{slug: 'legs', theme: 'strength', title: 'Legs', items: [{slug: 'a', dose: ''}, {slug: 'b', dose: ''}]}], notes: [], requests: []};
+  const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'u1', email: 'u1@example.test'}}};
+  const page = await app({...signedIn, tables, hash: '#session/legs/play/2', dom: true, stored: {'rb.play.u1': JSON.stringify({arms: 3})}}); await settle();
+  assert.deepEqual(JSON.parse(page.storage.get('rb.play.u1')), {arms: 3, legs: 2});
+  await page.fire('play-finish'); await settle();
+  assert.deepEqual(JSON.parse(page.storage.get('rb.play.u1')), {arms: 3});
+  assert.equal(page.element('player').hidden, true);
+  assert.match(page.element('view').innerHTML, /<h1>Legs<\/h1>/);
+});
+
 test('player: a sheet that fails to load says so in place of its photos and key points', async () => {
   const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(resolve => setImmediate(resolve)); };
   const tables = {user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}],
