@@ -93,6 +93,35 @@ dialog.dlg .u{display:block;font-size:14px;color:var(--muted);overflow-wrap:anyw
 dialog.dlg .actions{display:grid;gap:8px}
 dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
 .picklist{max-height:46dvh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px 10px 10px}
+/* ---- L18: bottom sheets ----
+   A form dialog has a header .sh-h: Cancel (.sh-no) | title | primary action (.sh-ok). From 600 px wide it melts into
+   the centred dialog (display:contents) and its two buttons go back to the bottom, primary first. Under 600 px every
+   dialog.dlg is a sheet at the bottom: full width, one scroll container bounded by the visual viewport (--vvh), lifted
+   above the on-screen keyboard (--kb), the header kept in view. An action sheet (.act) stacks its buttons, the danger
+   one in red on top and the way out apart at the bottom. A sheet with a header has no top padding: its sticky header
+   sits flush at the top edge, whatever the engine does with a scroll container's padding. */
+.sh-h{display:contents}
+.sh-h .sh-ok{order:1}
+.sh-h .sh-no{order:2}
+@media (max-width:599.98px){
+  dialog.dlg,dialog.pick-dlg{position:fixed;inset:auto 0 0 0;margin:0 0 var(--kb,0px);width:100%;max-width:100%;max-height:calc(var(--vvh,100dvh) - env(safe-area-inset-top,0px) - 8px);overflow:auto;overscroll-behavior:contain;border-width:1px 0 0;border-radius:14px 14px 0 0;padding:0 max(16px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left))}
+  dialog.dlg.act{padding-top:20px}
+  dialog.pick-dlg .picklist{max-height:none;overflow:visible}
+  .sh-h{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;position:sticky;top:0;z-index:1;margin:0 -16px;padding:4px 8px;background:var(--paper);border-bottom:1px solid var(--line)}
+  dialog.dlg .sh-h h2{font-size:22px;text-align:center;overflow-wrap:anywhere}
+  .sh-h .btn{background:none;border:0;border-radius:8px;color:var(--accent);font-weight:400;min-height:44px;padding:0 8px}
+  .sh-h .sh-no{justify-self:start;order:0}
+  .sh-h .sh-ok{justify-self:end;order:0;font-weight:700}
+  dialog.dlg.act .actions .btn{width:100%;min-height:50px}
+  dialog.dlg.act .actions .btn:last-child{margin-top:8px}
+  dialog.dlg.act .btn.danger{background:var(--danger-bg)}
+}
+@media (max-width:599.98px) and (prefers-reduced-motion:no-preference){
+  dialog.dlg[open]{animation:sheet-up .24s cubic-bezier(.2,.8,.2,1)}
+  dialog.dlg[open]::backdrop{animation:sheet-fade .24s ease-out}
+}
+@keyframes sheet-up{from{transform:translateY(100%)}}
+@keyframes sheet-fade{from{opacity:0}}
 .picklist h3{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:12px 0 2px}
 .picklist label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:16px;font-weight:400;color:var(--ink);cursor:pointer}
 .picklist input{width:22px;height:22px;flex:none;margin:0}
@@ -502,11 +531,11 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/reelbook</code>.</p>
     <div class="actions"><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
   </form>
-  <dialog class="dlg" id="pending-dlg" aria-labelledby="pd-title">
+  <dialog class="dlg act" id="pending-dlg" aria-labelledby="pd-title">
     <h2 id="pd-title">Not queued yet</h2>
     <p>This video is not in the queue. Leave it out?<span class="u" id="pd-url"></span></p>
     <p class="err" id="pd-err" hidden></p>
-    <div class="actions"><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-discard">Discard the link</button><button class="btn ghost" type="button" id="pd-stay">Keep editing</button></div>
+    <div class="actions"><button class="btn danger" type="button" id="pd-discard">Discard the link</button><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-stay" autofocus>Keep editing</button></div>
   </dialog>
   <div class="flash" id="flash" role="status" hidden></div>
 
@@ -619,51 +648,48 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 <div id="play-flash" class="pl-flash" hidden aria-hidden="true"></div>
 <dialog class="dlg" id="move-dlg" aria-labelledby="mv-title">
   <form id="mv-form" style="display:grid;gap:12px">
-    <h2 id="mv-title">Move this sheet</h2>
+    <div class="sh-h"><button class="btn ghost sh-no" type="button" id="mv-cancel">Cancel</button><h2 id="mv-title">Move this sheet</h2><button class="btn sh-ok" type="submit" id="mv-submit">Move</button></div>
     <p class="u" id="mv-sheet"></p>
     <label>Notebook <select id="mv-theme"></select></label>
     <p class="hint" id="mv-hint" hidden>Its exercises stay where they are.</p>
     <label id="mv-group-l">Group <select id="mv-group"></select></label>
     <label id="mv-new-l" hidden>New group name <input id="mv-new" type="text" maxlength="40" autocomplete="off" placeholder="Shoulders"></label>
     <p class="err" id="mv-err" hidden></p>
-    <div class="actions"><button class="btn" type="submit" id="mv-submit">Move</button><button class="btn ghost" type="button" id="mv-cancel">Cancel</button></div>
   </form>
 </dialog>
 <dialog class="dlg pick-dlg" id="ns-dlg" aria-labelledby="ns-h">
   <form id="ns-form" style="display:grid;gap:12px">
-    <h2 id="ns-h">New session</h2>
+    <div class="sh-h"><button class="btn ghost sh-no" type="button" id="ns-cancel">Cancel</button><h2 id="ns-h">New session</h2><button class="btn sh-ok" type="submit" id="ns-submit">Create session</button></div>
     <label>Title <input id="ns-title" type="text" maxlength="80" autocomplete="off" placeholder="Shoulders, Monday"></label>
     <input id="ns-q" type="search" autocomplete="off" aria-label="Filter the exercises" placeholder="Filter the exercises">
     <p class="hint" id="ns-count"></p>
     <div class="picklist" id="ns-list"></div>
     <p class="err" id="ns-err" hidden></p>
-    <div class="actions"><button class="btn" type="submit" id="ns-submit">Create session</button><button class="btn ghost" type="button" id="ns-cancel">Cancel</button></div>
   </form>
 </dialog>
 <dialog class="dlg" id="as-dlg" aria-labelledby="as-h">
   <form id="as-form" style="display:grid;gap:12px">
-    <h2 id="as-h">Add to a session</h2>
+    <div class="sh-h"><button class="btn ghost sh-no" type="button" id="as-cancel">Cancel</button><h2 id="as-h">Add to a session</h2><button class="btn sh-ok" type="submit" id="as-submit">Add</button></div>
     <p class="u" id="as-sheet"></p>
     <label>Session <select id="as-session"></select></label>
     <label id="as-new-l" hidden>New session title <input id="as-new" type="text" maxlength="80" autocomplete="off" placeholder="Shoulders, Monday"></label>
     <p class="hint" id="as-hint" hidden></p>
     <p class="err" id="as-err" hidden></p>
-    <div class="actions"><button class="btn" type="submit" id="as-submit">Add</button><button class="btn ghost" type="button" id="as-cancel">Cancel</button></div>
   </form>
 </dialog>
 <!-- The « Removed · Undo » toast of a queue removal: the delete is sent when its 5 s bar ends (animationend). -->
 <div class="toast" role="status"><button type="button" id="queue-undo" hidden><span id="queue-toast"></span></button></div>
-<dialog class="dlg" id="del-dlg" aria-labelledby="del-h">
+<dialog class="dlg act" id="del-dlg" aria-labelledby="del-h">
   <h2 id="del-h">Delete this session?</h2>
   <p><b id="del-name"></b><span class="u">Its exercise sheets stay in your notebooks.</span></p>
   <p class="err" id="del-err" hidden></p>
-  <div class="actions"><button class="btn danger" type="button" id="del-ok">Delete session</button><button class="btn ghost" type="button" id="del-cancel">Keep it</button></div>
+  <div class="actions"><button class="btn danger" type="button" id="del-ok">Delete session</button><button class="btn ghost" type="button" id="del-cancel" autofocus>Keep it</button></div>
 </dialog>
-<dialog class="dlg" id="sd-dlg" aria-labelledby="sd-h">
+<dialog class="dlg act" id="sd-dlg" aria-labelledby="sd-h">
   <h2 id="sd-h">Delete this sheet?</h2>
   <p><b id="sd-name"></b><span class="u" id="sd-what"></span></p>
   <p class="err" id="sd-err" hidden></p>
-  <div class="actions"><button class="btn danger" type="button" id="sd-ok">Delete sheet</button><button class="btn ghost" type="button" id="sd-cancel">Keep it</button></div>
+  <div class="actions"><button class="btn danger" type="button" id="sd-ok">Delete sheet</button><button class="btn ghost" type="button" id="sd-cancel" autofocus>Keep it</button></div>
 </dialog>
 <!-- L7: « Something wrong? » queues the video again with a « Redo: » note for the next run -->
 <!-- (its content is written by openReport, fresh for each sheet or session) -->
@@ -698,6 +724,47 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player'];
   const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
+  // ---------- L18: bottom sheets ----------
+  // Every dialog.dlg opens with openSheet and closes with closeSheet (the photo viewer stays a full-screen dialog of
+  // its own). Under 600 px wide the CSS anchors it at the bottom of the screen; wider, it stays a centred dialog.
+  // A tap on the backdrop closes it, unless something was typed, ticked or picked in it since it opened
+  // (sheetSaved clears that once it is sent), or one of its writes is still running (whileBusy: no backdrop, no
+  // Escape, so its result or its error is shown in the sheet). --vvh and --kb follow the visual viewport, so a sheet stays above
+  // the on-screen keyboard. Guarded for the test harness: no showModal / close, no visualViewport, no layout.
+  const sheetWired = new WeakSet(), sheetDirty = new WeakSet(), sheetBusy = new WeakSet();
+  const fitViewport = () => {
+    const vv = window.visualViewport, st = document.documentElement && document.documentElement.style; if (!vv || !st) return;
+    st.setProperty('--vvh', Math.round(vv.height) + 'px');
+    st.setProperty('--kb', Math.max(0, Math.round((window.innerHeight || vv.height) - vv.height - vv.offsetTop)) + 'px');
+  };
+  if (window.visualViewport && window.visualViewport.addEventListener) for (const t of ['resize', 'scroll']) window.visualViewport.addEventListener(t, fitViewport);
+  const closeSheet = dlg => {
+    if (!dlg) return;
+    if (typeof dlg.close === 'function') dlg.close();
+    else { dlg.open = false; if (dlg.removeAttribute) dlg.removeAttribute('open'); }
+  };
+  // A click whose target is the dialog itself landed on its backdrop, or on its own padding (inside its box).
+  const onBackdrop = (dlg, ev) => {
+    if (ev.target !== dlg) return false;
+    const r = dlg.getBoundingClientRect ? dlg.getBoundingClientRect() : null;
+    return !r || ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+  };
+  const openSheet = dlg => {
+    if (!dlg) return;
+    sheetDirty.delete(dlg);
+    if (!sheetWired.has(dlg) && dlg.addEventListener) {
+      sheetWired.add(dlg);
+      dlg.addEventListener('input', () => sheetDirty.add(dlg));
+      dlg.addEventListener('click', ev => { if (!sheetDirty.has(dlg) && !sheetBusy.has(dlg) && onBackdrop(dlg, ev)) closeSheet(dlg); });
+      dlg.addEventListener('cancel', ev => { if (sheetBusy.has(dlg) && ev.preventDefault) ev.preventDefault(); });
+    }
+    fitViewport();
+    if (typeof dlg.showModal === 'function') dlg.showModal();
+    else { dlg.open = true; if (dlg.setAttribute) dlg.setAttribute('open', ''); }
+  };
+  const sheetSaved = dlg => { sheetDirty.delete(dlg); };
+  // A dialog's write handler: the sheet stays open until it ends (called synchronously, so preventDefault works).
+  const whileBusy = (dlg, fn) => async (...a) => { sheetBusy.add(dlg); try { return await fn(...a); } finally { sheetBusy.delete(dlg); } };
 
   // ---------- backend selection ----------
   const hostedOk = !!(CFG.hosted && CFG.hosted.url && CFG.hosted.anonKey);
@@ -1246,16 +1313,16 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const askPending = (next, queueLabel) => {
     afterPending = next;
     $('pd-url').textContent = pendingUrl(); $('pd-queue').textContent = queueLabel || 'Queue it before leaving'; $('pd-err').hidden = true;
-    dlg.showModal();
+    openSheet(dlg);
   };
-  const closePending = () => dlg.close();
+  const closePending = () => closeSheet(dlg);
   $('pd-stay').addEventListener('click', () => { closePending(); $('f-url').focus(); });
   $('pd-discard').addEventListener('click', () => { closePending(); discardDraft(); afterPending(); });
-  $('pd-queue').addEventListener('click', async () => {
+  $('pd-queue').addEventListener('click', whileBusy(dlg, async () => {
     $('pd-queue').disabled = true;
     try { if (await queueLink()) { closePending(); afterPending(); } else { $('pd-err').textContent = $('f-err').textContent; $('pd-err').hidden = false; } }
     finally { $('pd-queue').disabled = false; }
-  });
+  }));
   // « + Add a video » with a link still in the field would drop it: ask first, then open a fresh form.
   btn.addEventListener('click', () => {
     if (pendingUrl()) askPending(() => openForm(true), 'Queue it, then add another');
@@ -1777,23 +1844,23 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const openReport = () => {
     const ses = RS.sessionSlugOf(shown || ''), x = ses ? v2BySlug.get(ses) : bySlug.get(shown);
     const url = x && httpUrl((x.source || {}).url); if (!url) return;
-    rdlg.innerHTML = `<h2 id="report-h">Something wrong?</h2>
+    rdlg.innerHTML = `<div class="sh-h"><button class="btn ghost sh-no" type="button" id="report-cancel">Cancel</button><h2 id="report-h">Something wrong?</h2><button class="btn sh-ok" type="button" id="report-send" disabled>Send</button></div>
       <label for="report-note">What should Claude fix?</label><textarea id="report-note" maxlength="1000"></textarea>
-      <p class="status" id="report-status" role="status"></p>
-      <div class="actions"><button class="btn" type="button" id="report-send" disabled>Send</button><button class="btn ghost" type="button" id="report-cancel">Cancel</button></div>`;
+      <p class="status" id="report-status" role="status"></p>`;
     const ta = $('report-note'), send = $('report-send'), st = $('report-status');
     ta.addEventListener('input', () => { send.disabled = !ta.value.trim(); });
-    $('report-cancel').addEventListener('click', () => rdlg.close());
-    send.addEventListener('click', async () => {
+    $('report-cancel').addEventListener('click', () => closeSheet(rdlg));
+    send.addEventListener('click', whileBusy(rdlg, async () => {
       const text = ta.value.replace(/\s+/g, ' ').trim(); if (!text) return; // one line: see redoLine
       send.disabled = true; st.className = 'status'; st.textContent = 'Sending…';
       try {
         const {error} = await sb.from('requests').insert({url, theme: x.theme, note: 'Redo: ' + text, slug: ses ? RS.noteKey(ses) : x.slug}); if (error) throw error;
-        ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; $('report-cancel').textContent = 'Close';
+        // The dialog may hold a newer report by now (Cancel, reopened): only this one's own sheet is marked sent.
+        ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; if ($('report-note') === ta) { sheetSaved(rdlg); $('report-cancel').textContent = 'Close'; }
         refreshQueue();
       } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
-    });
-    rdlg.showModal(); ta.focus();
+    }));
+    openSheet(rdlg);
   };
 
   // ---------- L3: keep the screen on, full-screen photos ----------
@@ -2171,45 +2238,45 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('mv-theme').innerHTML = themes.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
     $('mv-theme').value = e.theme;
     if (s) { $('mv-new-l').hidden = true; $('mv-new').required = false; } else fillGroups(e.theme, e.group);
-    mdlg.showModal();
+    openSheet(mdlg);
   };
   $('mv-theme').addEventListener('change', () => { if (shownSession()) return; const e = bySlug.get(shown); fillGroups($('mv-theme').value, e ? e.group : ''); });
   $('mv-group').addEventListener('change', () => { syncNewGroup(); if ($('mv-group').value === NEW_GROUP) $('mv-new').focus(); });
-  $('mv-cancel').addEventListener('click', () => mdlg.close());
+  $('mv-cancel').addEventListener('click', () => closeSheet(mdlg));
   // A v2 session: only sessions.theme changes; its exercises stay in their notebooks and groups.
   const moveSession = async s => {
     const theme = $('mv-theme').value, err = $('mv-err');
     if (!themeById.has(theme)) { err.textContent = 'Pick a notebook.'; err.hidden = false; return; }
-    if (theme === s.theme) { mdlg.close(); return; }
+    if (theme === s.theme) { closeSheet(mdlg); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
       touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
       s.theme = theme; saveCatalogue();
-      mdlg.close();
+      closeSheet(mdlg);
       const top = $('sheet-top');
       if (top && shownSession() === s) top.innerHTML = topNav(s, true) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`;
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
   };
-  $('mv-form').addEventListener('submit', async ev => {
+  $('mv-form').addEventListener('submit', whileBusy(mdlg, async ev => {
     ev.preventDefault();
     const s = shownSession(); if (s) { await moveSession(s); return; }
-    const e = bySlug.get(shown); if (!e) { mdlg.close(); return; }
+    const e = bySlug.get(shown); if (!e) { closeSheet(mdlg); return; }
     const theme = $('mv-theme').value, group = ($('mv-group').value === NEW_GROUP ? $('mv-new').value : $('mv-group').value).trim();
     const err = $('mv-err');
     if (!themeById.has(theme)) { err.textContent = 'Pick a notebook.'; err.hidden = false; return; }
     if (!group) { err.textContent = 'Give the new group a name.'; err.hidden = false; $('mv-new').focus(); return; }
-    if (theme === e.theme && group === e.group) { mdlg.close(); return; }
+    if (theme === e.theme && group === e.group) { closeSheet(mdlg); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
       touched(); const {data, error} = await sb.from('sheets').update({theme, group}).eq('slug', e.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
       e.theme = theme; e.group = group; saveCatalogue();
-      mdlg.close();
+      closeSheet(mdlg);
       const top = $('sheet-top');
       if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
-  });
+  }));
 
   // ---------- compose sessions: « + New session », « Add to session », Edit mode, delete ----------
   // Every write checks it changed a row: RLS answers an empty result, not an error, for a row it hides.
@@ -2240,7 +2307,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const openNew = () => {
     if (!currentTheme || !sessionsOk) return;
     picked = []; $('ns-title').value = ''; $('ns-q').value = ''; $('ns-err').hidden = true;
-    renderPick(); ndlg.showModal(); $('ns-title').focus();
+    renderPick(); openSheet(ndlg);
   };
   $('groups').addEventListener('click', ev => { if (ev.target.closest('#ns-open')) openNew(); });
   $('ns-list').addEventListener('change', ev => { const slug = ev.target.dataset && ev.target.dataset.pick; if (slug) { picked = RS.toggle(picked, slug); renderPick(); } });
@@ -2248,8 +2315,8 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   // Enter never creates the session by surprise: from the title it goes to the filter, in the filter it does nothing.
   $('ns-title').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); $('ns-q').focus(); } });
   $('ns-q').addEventListener('keydown', ev => { if (ev.key === 'Enter') ev.preventDefault(); });
-  $('ns-cancel').addEventListener('click', () => ndlg.close());
-  $('ns-form').addEventListener('submit', async ev => {
+  $('ns-cancel').addEventListener('click', () => closeSheet(ndlg));
+  $('ns-form').addEventListener('submit', whileBusy(ndlg, async ev => {
     ev.preventDefault();
     const title = RS.clip($('ns-title').value, RS.MAX.title), err = $('ns-err');
     const fail = (m, el) => { err.textContent = m; err.hidden = false; if (el) el.focus(); };
@@ -2258,10 +2325,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('ns-submit').disabled = true; err.hidden = true;
     try {
       const s = await createSession(currentTheme, title, picked);
-      ndlg.close(); edit = draftOf(s); location.hash = RS.sessionHref(s.slug);
+      closeSheet(ndlg); edit = draftOf(s); location.hash = RS.sessionHref(s.slug);
     } catch { fail('Could not create it right now. Try again in a moment.'); }
     finally { $('ns-submit').disabled = false; }
-  });
+  }));
 
   // « Add to session » (simple sheet page): any session, grouped by notebook, or a new one in the sheet's notebook.
   const NEW_SESSION = '__new_session__';
@@ -2276,13 +2343,13 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('as-session').innerHTML = groups.map(([t, l]) => `<optgroup label="${esc(t.title)}">${l.map(s => `<option value="${esc(s.slug)}">${esc(s.title)}</option>`).join('')}</optgroup>`).join('') + `<option value="${NEW_SESSION}">New session…</option>`;
     const first = (groups.find(([t]) => t.id === e.theme) || groups[0] || [null, []])[1][0];
     $('as-session').value = first ? first.slug : NEW_SESSION;
-    syncNewSession(); adlg.showModal();
+    syncNewSession(); openSheet(adlg);
   };
   $('as-session').addEventListener('change', () => { syncNewSession(); if ($('as-session').value === NEW_SESSION) $('as-new').focus(); });
-  $('as-cancel').addEventListener('click', () => adlg.close());
-  $('as-form').addEventListener('submit', async ev => {
+  $('as-cancel').addEventListener('click', () => closeSheet(adlg));
+  $('as-form').addEventListener('submit', whileBusy(adlg, async ev => {
     ev.preventDefault();
-    const e = bySlug.get(shown), v = $('as-session').value, err = $('as-err'); if (!e) { adlg.close(); return; }
+    const e = bySlug.get(shown), v = $('as-session').value, err = $('as-err'); if (!e) { closeSheet(adlg); return; }
     const fail = (m, el) => { err.textContent = m; err.hidden = false; if (el) el.focus(); };
     const title = RS.clip($('as-new').value, RS.MAX.title);
     let s = v === NEW_SESSION ? null : v2BySlug.get(v), add = null;
@@ -2293,12 +2360,12 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     try {
       if (s) { touched(); oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
       else s = await createSession(e.theme, title, [e.slug]);
-      adlg.close();
+      closeSheet(adlg);
       const top = $('sheet-top');
       if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Added to <a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>.</p>`;
     } catch { fail('Could not add it right now. Try again in a moment.'); }
     finally { $('as-submit').disabled = false; }
-  });
+  }));
 
   // Edit mode: reorder, dose, format, title, remove an item; one update with the items in full.
   const reorder = (i, d) => { edit.items = RS.moveItem(edit.items, i, d); renderRows(`[data-${d < 0 ? 'up' : 'down'}="${i + d}"]`); };
@@ -2321,19 +2388,19 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   });
   // Delete a session: the row only. Its sheets stay; its note is kept, as for a sheet (takenSlugs keeps it unseen).
   const ddlg = $('del-dlg');
-  const openDelete = () => { const s = shownSession(); if (!s) return; $('del-name').textContent = s.title; $('del-err').hidden = true; ddlg.showModal(); };
-  $('del-cancel').addEventListener('click', () => ddlg.close());
-  $('del-ok').addEventListener('click', async () => {
-    const s = shownSession(), err = $('del-err'), b = $('del-ok'); if (!s) { ddlg.close(); return; }
+  const openDelete = () => { const s = shownSession(); if (!s) return; $('del-name').textContent = s.title; $('del-err').hidden = true; openSheet(ddlg); };
+  $('del-cancel').addEventListener('click', () => closeSheet(ddlg));
+  $('del-ok').addEventListener('click', whileBusy(ddlg, async () => {
+    const s = shownSession(), err = $('del-err'), b = $('del-ok'); if (!s) { closeSheet(ddlg); return; }
     b.disabled = true; err.hidden = true;
     try {
       touched(); oneRow(await sb.from('sessions').delete().eq('slug', s.slug).select('slug'));
-      setSessions(v2Sessions.filter(x => x.slug !== s.slug)); saveCatalogue(); edit = null; ddlg.close();
+      setSessions(v2Sessions.filter(x => x.slug !== s.slug)); saveCatalogue(); edit = null; closeSheet(ddlg);
       flashHome('Session deleted. Its exercise sheets stay in your notebooks.');
       location.hash = s.theme;
     } catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; }
     finally { b.disabled = false; }
-  });
+  }));
   // Delete a sheet: the row, then its images and its note. A session that lists it
   // keeps the item, which resolveItems skips: republishing the same video brings the sheet back in it.
   const sdlg = $('sd-dlg');
@@ -2344,11 +2411,11 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('sd-name').textContent = e.title;
     $('sd-what').textContent = 'Its photos' + (notesIndex.has(e.slug) ? ' and your note' : '') + ' go with it.'
       + (ins.length ? ` It leaves ${ins.length > 1 ? 'the sessions' : 'the session'} ${ins.map(s => `« ${s.title} »`).join(', ')}.` : '');
-    $('sd-err').hidden = true; sdlg.showModal();
+    $('sd-err').hidden = true; openSheet(sdlg);
   };
-  $('sd-cancel').addEventListener('click', () => sdlg.close());
-  $('sd-ok').addEventListener('click', async () => {
-    const e = shownSheet(), err = $('sd-err'), b = $('sd-ok'); if (!e) { sdlg.close(); return; }
+  $('sd-cancel').addEventListener('click', () => closeSheet(sdlg));
+  $('sd-ok').addEventListener('click', whileBusy(sdlg, async () => {
+    const e = shownSheet(), err = $('sd-err'), b = $('sd-ok'); if (!e) { closeSheet(sdlg); return; }
     // Signed out or another account after an await: nothing is removed from the catalogue shown, nothing saved.
     const client = sb, uid = user.id, gone = () => sb !== client || !user || user.id !== uid;
     b.disabled = true; err.hidden = true;
@@ -2366,10 +2433,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     if (gone()) return;
     sheets = sheets.filter(x => x.slug !== e.slug); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
     idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue(); toWorker({type: 'DROP_PHOTOS', path: `${user.id}/${e.slug}/`});
-    b.disabled = false; sdlg.close();
+    b.disabled = false; closeSheet(sdlg);
     flashHome('Sheet deleted.');
     location.hash = e.theme;
-  });
+  }));
   view.addEventListener('click', ev => {
     const at = sel => ev.target.closest(sel);
     let b;
