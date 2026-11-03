@@ -12,6 +12,16 @@
   // PGRST205 (table not in the schema cache) or a bare 404, depending on its version.
   const missingTable = (error, status) => !!error && (status === 404 || error.status === 404 || error.code === '42P01' || error.code === 'PGRST205');
 
+  // Old one-page sessions (v1: a `sheets` row with kind 'session') are not shown any more. An older self-hosted
+  // backend may still hold some: the app keeps the other rows and counts these for a hint in Settings
+  // (`rb.py requeue-sessions`, then /reelbook, rebuilds them as v2 sessions). {sheets, v1}.
+  const splitV1 = rows => {
+    const sheets = [];
+    let v1 = 0;
+    for (const r of rows || []) if (r && r.kind === 'session') v1++; else if (r) sheets.push(r);
+    return {sheets, v1};
+  };
+
   const itemsOf = s => (s && Array.isArray(s.items) ? s.items : []).filter(it => it && typeof it.slug === 'string' && it.slug);
 
   // The items of a session, in order, whose sheet still exists: [{sheet, dose, n}], n counted from 1.
@@ -79,7 +89,7 @@
   // What Edit saves: {slug, dose} only, dose trimmed to its limit.
   const cleanItems = items => itemsOf({items}).map(it => ({slug: it.slug, dose: clip(it.dose, MAX.dose)}));
 
-  const api = {ROUTE, sessionHref, sessionSlugOf, missingTable, resolveItems, sessionsBySheet,
+  const api = {ROUTE, sessionHref, sessionSlugOf, missingTable, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

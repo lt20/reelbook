@@ -16,6 +16,14 @@ test('a missing sessions table is recognised, other errors are not', () => {
   assert.equal(RS.missingTable(null, 200), false);
 });
 
+test('old one-page sessions (kind « session ») are set apart and counted, the order of the sheets is kept', () => {
+  const rows = [{slug: 'b', kind: 'sheet'}, {slug: 'old', kind: 'session'}, {slug: 'a'}, null, {slug: 'old2', kind: 'session'}];
+  const {sheets, v1} = RS.splitV1(rows);
+  assert.deepEqual(sheets.map(s => s.slug), ['b', 'a']);
+  assert.equal(v1, 2);
+  assert.deepEqual(RS.splitV1(null), {sheets: [], v1: 0});
+});
+
 test('items keep their order and dose, a deleted sheet is skipped and takes no number', () => {
   const bySlug = new Map([['a', {slug: 'a'}], ['c', {slug: 'c'}]]);
   const s = {items: [{slug: 'c', dose: '30 s'}, {slug: 'b', dose: '1 min'}, null, {dose: 'x'}, {slug: 'a'}]};
