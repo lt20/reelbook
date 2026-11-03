@@ -810,7 +810,8 @@ dialog.ph-dlg::backdrop{background:#000}
       const n = list.length, sessions = v2Sessions.filter(s => s.theme === t.id).length;
       const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (sessions ? ` · ${plural(sessions, 'session')}` : '');
       const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="${esc(e.title)}">`).join('');
-      return `<a class="tcard" href="#${esc(t.id)}" style="--t:${colorOf(t)}">
+      // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
+      return `<a class="tcard" href="#${esc(t.id)}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
         <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
         ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
     }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
