@@ -85,3 +85,13 @@ test('player: a sheet that fails to load says so in place of its photos and key 
   const loaded = await app({...signedIn, tables, hash: '#squat/play', dom: true}); await settle();
   assert.doesNotMatch(loaded.element('play-media').innerHTML, /could not be loaded/);
 });
+
+// The harness has no sheet.js nor a full DOMParser, so the carousel is checked through what playMedia calls.
+test('player: the carousel shows the movement only, never a « Common mistakes » photo (L15)', () => {
+  const raw = parse(template('exercise.html'));
+  assert.deepEqual(SH.photosOf(raw).map(p => p.src), ['img/01-start.jpg', 'img/02-middle.jpg', 'img/03-end.jpg']);
+  assert.ok(SH.photosOf(raw).every(p => !p.bad));
+  const html = fs.readFileSync(path.join(__dirname, '../app/index.html'), 'utf8');
+  assert.match(html, /const photos = SH\.photosOf\(page\),/, 'the player asks for the movement photos only');
+  assert.match(html, /list \|\| SH\.photosOf\(view, true\)/, 'the sheet page viewer keeps the mistakes');
+});

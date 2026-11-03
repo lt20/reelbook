@@ -1,13 +1,15 @@
 <!-- Reelbook sheet template (single exercise).
      This is a body fragment: the app wraps it with its own styles and navigation.
      Images live next to the sheet in img/ and are referenced as img/<file>.jpg.
-     Write the text in the user's language. Keep the section order:
-     Why → Dose → Key points → Sequence → Variation → Source. -->
+     Write the text in the user's language, section titles translated (table in skill/reelbook/SKILL.md).
+     Keep the section order: Why → Dose → Key points → Steps → Common mistakes → Easier / harder → Source.
+     Eyebrow: the fine target and the duration only (« Biceps · 5 min »), never the notebook or the group.
+     Common mistakes and Easier / harder are optional: drop the whole section when the video shows none. -->
 
 <div class="wrap fiche">
 <header>
   <div>
-    <p class="eyebrow">Posture · rear shoulder · 3 minutes</p>
+    <p class="eyebrow">Rear shoulder · 3 min</p>
     <h1>Floor angel</h1>
   </div>
   <img src="img/thumb.jpg" alt="Short description of the photo" width="112" height="112">
@@ -36,7 +38,7 @@
 </div>
 
 <div class="wide">
-<h2>The sequence</h2>
+<h2>Steps</h2>
 <div class="steps">
   <div class="step"><figure><img src="img/01-start.jpg" alt="Describe the position: body, hands, feet" loading="lazy"><span class="k">1</span></figure><h3>Start</h3><p>What to set up before moving.</p></div>
   <div class="step"><figure><img src="img/02-middle.jpg" alt="Describe the position" loading="lazy"><span class="k">2</span><span class="palm">palms up</span></figure><h3>Middle</h3><p>The move itself.</p></div>
@@ -44,12 +46,17 @@
 </div>
 <p class="loop"><span class="arrow">↻</span> How to chain the reps, and the sign that the load is too heavy.</p>
 
-<h2>Variation</h2>
+<h2>Common mistakes</h2>
 <div class="steps">
-  <div class="step"><figure><img src="img/04-variation.jpg" alt="Describe the position" loading="lazy"><span class="k">4</span></figure><h3>Easier / harder</h3><p>One variation shown or named in the reel.</p></div>
+  <div class="step bad"><figure><img src="img/04-mistake.jpg" alt="Mistake: describe the wrong position" loading="lazy"></figure><h3>Lower back arched</h3><p>What goes wrong, and the fix.</p></div>
+</div>
+
+<h2>Easier / harder</h2>
+<div class="steps">
+  <div class="step"><figure><img src="img/05-variation.jpg" alt="Describe the position" loading="lazy"><span class="k">4</span></figure><h3>Easier</h3><p>One variation shown or named in the reel.</p></div>
 </div>
 </div>
 
 <div class="wrap">
-<footer>Photos: frames from the video by Author (Month YYYY), personal use. <a href="https://…source link…">Watch the video</a>.</footer>
+<footer>Photos: frames from the video by Author (Month YYYY), personal use. <a href="https://…source link…">Watch the video</a>. Production notes go here (« The caption is empty: the names are read from the images. »).</footer>
 </div>
