@@ -357,12 +357,15 @@ def cmd_list(args):
     if since and ses:   # a new session's exercise sheets are part of it: the session alone stands for them
         items = {i.get("slug") for r in ses for i in (r.get("items") or []) if isinstance(i, dict)}
         rows = [r for r in rows if r["slug"] not in items]
+    # --since is read by nightly.sh: tab-separated, as a group name may hold spaces (and the word « session »)
+    line = (lambda *f: "\t".join(str(x).replace("\t", " ") for x in f)) if since else \
+        (lambda th, g, k, sl, ti: f"{th:9} {g:20} {k:8} {sl:32} {ti}")
     for r in rows:
-        print(f"{r['theme']:9} {r['group']:20} {r['kind']:8} {r['slug']:32} {r['title']}")
+        print(line(r['theme'], r['group'], r['kind'], r['slug'], r['title']))
     if ses is None:
         print(NO_SESSIONS + " to enable sessions", file=sys.stderr); return
     for r in ses:   # kind "session2": a v2 session (exercise sheets + order); "session" rows above are v1 pages
-        print(f"{r['theme']:9} {str(len(r.get('items') or [])) + ' item(s)':20} {'session2':8} {r['slug']:32} {r['title']}")
+        print(line(r['theme'], str(len(r.get('items') or [])) + ' item(s)', 'session2', r['slug'], r['title']))
 
 def cmd_delete(args):
     if not args: die("usage: rb.py delete <slug>")

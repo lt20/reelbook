@@ -230,8 +230,32 @@ def night_notice(status, left, listing, app_url=None):
 
 
 class NightNotice(unittest.TestCase):
-    def line(self, kind, slug, title, group="Upper body"):
-        return f"{'strength':9} {group:20} {kind:8} {slug:32} {title}"
+    def line(self, kind, slug, title, group="Upper body"):   # as rb.py list --since prints it
+        return "\t".join(["strength", group, kind, slug, title])
+
+    def test_a_group_named_like_a_kind_is_not_misread(self):
+        self.assertEqual(night_notice(0, 0, self.line("sheet", "curl", "Curl", group="Upper body session")),
+                         ("1 new sheet: Curl", "https://lt20.github.io/reelbook/#curl"))
+
+    def test_lines_without_tabs_are_read_word_by_word(self):
+        self.assertEqual(night_notice(0, 0, f"{'strength':9} {'Arms':20} {'sheet':8} {'curl':32} Curl marteau"),
+                         ("1 new sheet: Curl marteau", "https://lt20.github.io/reelbook/#curl"))
+
+    def test_rb_list_since_output_feeds_the_notice(self):
+        calls = []
+        def rest(cfg, method, path, data=None, prefer=None, params=None, tolerate=()):
+            calls.append(path)
+            return [{"slug": "curl", "kind": "sheet", "theme": "strength", "group": "Upper body session", "title": "Curl marteau"}] if path == "sheets" else []
+        saved = (rb.session, rb.rest)
+        rb.session, rb.rest = (lambda: CFG), rest
+        try:
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                rb.cmd_list(["--since", "2026-11-03T02:00:00Z"])
+        finally:
+            rb.session, rb.rest = saved
+        self.assertEqual(out.getvalue(), "strength\tUpper body session\tsheet\tcurl\tCurl marteau\n")
+        self.assertEqual(night_notice(0, 0, out.getvalue())[1], "https://lt20.github.io/reelbook/#curl")
 
     def test_lists_the_titles_and_opens_the_app(self):
         listing = "\n".join([self.line("sheet", "curl", "Curl marteau en 5 étapes"), self.line("session2", "gsp", "Backroll")])

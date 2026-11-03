@@ -43,8 +43,11 @@ notify() {  # notify <message> [<url opened when the notice is tapped>]
 night_notice() {
   local status="$1" left="$2" listing="$3" app="${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"
   local items n titles slug kind msg
-  # rb.py list line: theme, group (may hold spaces), kind, slug, title (the rest)
-  items="$(printf '%s\n' "$listing" | awk '{
+  # rb.py list --since line: theme, group, kind, slug, title, tab-separated (a group may hold spaces and the
+  # word « session »); a line without tabs (older rb.py) is read word by word, the first kind word wins
+  items="$(printf '%s\n' "$listing" | awk '
+  index($0, "\t") { n = split($0, f, "\t"); if (n >= 5) { t = f[5]; for (j = 6; j <= n; j++) t = t " " f[j]; print f[3] "\t" f[4] "\t" t }; next }
+  {
     for (i = 2; i < NF; i++) if ($i == "sheet" || $i == "session" || $i == "session2") {
       t = $(i + 2); for (j = i + 3; j <= NF; j++) t = t " " $j
       print $i "\t" $(i + 1) "\t" t; break
