@@ -229,6 +229,15 @@ dialog.ph-dlg::backdrop{background:#000}
 .ph-x{position:fixed;top:calc(8px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));z-index:1;min-width:48px;min-height:48px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.6);color:#fff;font-size:22px;line-height:1;cursor:pointer}
 .ph-x:focus-visible{outline:3px solid #fff;outline-offset:2px}
 @media (prefers-reduced-motion:no-preference){.ph-strip{scroll-behavior:smooth}}
+/* ---- L5: moving through a session, notes that save themselves ---- */
+.top span.grp{text-transform:none;letter-spacing:normal;font-size:inherit;font-weight:400;color:var(--muted)}
+.seat{display:inline-block;background:var(--tag);color:var(--ink);border-radius:10px;padding:8px 14px;font-size:18px;font-weight:700;margin:0 0 16px}
+.seq{display:flex;gap:10px;margin-top:30px}
+.seq a{min-height:56px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 18px;border-radius:999px;font-weight:600;font-size:16px;text-decoration:none;line-height:1.25}
+.seq .prev{flex:none;border:1px solid var(--line);color:var(--accent)}
+.seq .next{flex:1;min-width:0;background:var(--accent);color:var(--accent-ink)}
+.notes .actions{align-items:center;min-height:44px}
+.notes .nretry{appearance:none;min-height:44px;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 14px var(--body);padding:4px 16px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -839,35 +848,98 @@ dialog.ph-dlg::backdrop{background:#000}
     const seen = new Set(text.split(/[^a-zàâäçéèêëîïôöùûüœ']+/).map(w => w.replace(/^[a-z]'/, '')).filter(w => FR_WORDS.has(w)));
     return seen.size >= 3 ? 'fr' : '';
   };
-  // A v2 session (v2 true) moves to another notebook on its own.
+  // A v2 session (v2 true) moves to another notebook on its own. A sheet's group reads « Group · Back » (L5): in
+  // capitals it looked like a back button. `seat` set: the sheet is opened from a session, its back link goes there.
   const topNav = (e, v2 = false, bare = false) => {
-    const th = themeById.get(e.theme);
+    const th = themeById.get(e.theme), at = !v2 && seat;
     const btns = bare ? '' : wakeBtn() + (v2 ? '<button type="button" class="mv" id="ed-open">Edit</button>' : '') + '<button type="button" class="mv" id="mv-open">Move</button>';
-    return `<nav class="top"><a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a><span class="r"><span>${esc(v2 ? 'Session' : e.group)}</span>${btns}</span></nav>`;
+    const back = at ? `<a href="${RS.sessionHref(esc(at.s.slug))}">← ${esc(at.s.title)}</a>` : `<a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a>`;
+    const label = v2 ? '<span>Session</span>' : e.group ? `<span class="grp">Group · ${esc(e.group)}</span>` : '';
+    return `<nav class="top">${back}<span class="r">${label}${btns}</span></nav>`;
   };
-  // « From the session … » on an exercise sheet: the video sessions that list it. A simple sheet can be added to a session.
+  // « From the session … » on an exercise sheet: the video sessions that list it (but the one it is opened from).
+  // A simple sheet can be added to a session. Opened from a session: « 2/4 · <dose> » on top (no dose, no « · »).
   const sheetTop = e => {
-    const from = (inSessions.get(e.slug) || []).filter(s => s.origin === 'video');
-    return topNav(e) + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '')
+    const from = (inSessions.get(e.slug) || []).filter(s => s.origin === 'video' && !(seat && seat.s === s));
+    const dose = seat ? seat.items[seat.n - 1].dose : '';
+    return topNav(e) + (seat ? `<p class="seat">${seat.n}/${seat.items.length}${dose ? ' · ' + esc(dose) : ''}</p>` : '')
+      + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '')
       + (sessionsOk ? '<p class="acts"><button type="button" class="mv" id="as-open">Add to session</button></p>' : '');
   };
+  // Previous / next at the bottom of a sheet opened from a session; the last exercise leads back to the session.
+  const seatNav = () => {
+    if (!seat) return '';
+    const {s, n, items} = seat, next = items[n], slug = esc(s.slug);
+    return `<div class="wrap"><nav class="seq" aria-label="Exercises of the session">${n > 1 ? `<a class="prev" href="${RS.sessionItemHref(slug, n - 1)}">← Previous</a>` : ''}`
+      + (next ? `<a class="next" href="${RS.sessionItemHref(slug, n + 1)}">Next: ${esc(next.sheet.title)} →</a>` : `<a class="next" href="${RS.sessionHref(slug)}">Back to the session</a>`) + '</nav></div>';
+  };
   const httpUrl = u => typeof u === 'string' && /^https?:\/\//i.test(u) ? u : '';
-  // An item card: the sheet's card with its number in the session and its dose.
-  const itemCard = it => card(it.sheet, `#${esc(it.sheet.slug)}`, thumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: (it.sheet.source || {}).author || ''}, ...(notesIndex.has(it.sheet.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  // An item card: the sheet's card with its number in the session and its dose; it opens the sheet inside the
+  // session (#session/<slug>/<n>: dose banner, previous / next).
+  const itemCard = (it, slug) => card(it.sheet, RS.sessionItemHref(esc(slug), it.n), thumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: (it.sheet.source || {}).author || ''}, ...(notesIndex.has(it.sheet.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // « My notes »: one per sheet (key: its slug) and one per v2 session (key: session/<slug>, RS.noteKey).
   const notesHtml = () => `<div class="wrap"><section class="notes"><h2>My notes <small>only you can see them</small></h2>
-      <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes"></textarea>
-      <div class="actions"><button class="btn" type="button" id="n-save">Save</button><span class="status" id="n-status">Loading…</span></div></section></div>`;
+      <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes" readonly></textarea>
+      <div class="actions"><span class="status" id="n-status" role="status">Loading…</span><button type="button" class="nretry" id="n-retry" hidden>Retry</button></div></section></div>`;
+  // L5: notes save themselves, 800 ms after the last keystroke, and at once when the page is hidden or left
+  // (flushNotes: visibilitychange, pagehide, route change). Writes go one after the other (noteQueue), so an
+  // older text never lands after a newer one; a text equal to the last one saved is not written. A failed save
+  // keeps the text in the field (and in noteDrafts, should the page be left and opened again), shows
+  // « Not saved » and Retry; the next keystroke tries again too.
+  const NOTE_DELAY = 800;
+  let notesNow = null, noteQueue = Promise.resolve();
+  const noteDrafts = new Map(); // note key -> text not saved yet (on its way, or failed)
+  const flushNotes = () => { if (notesNow) notesNow.flush(); };
   const wireNotes = async key => {
-    const ta = $('n-text'), st = $('n-status'), save = $('n-save');
-    save.addEventListener('click', async () => {
-      save.disabled = true; st.textContent = 'Saving…';
-      try { const body = ta.value.trim(); const {error} = await sb.from('notes').upsert({slug: key, body}); if (error) throw error; if (body) notesIndex.add(key); else notesIndex.delete(key); st.textContent = 'Saved.'; }
-      catch { st.textContent = 'Could not save. Try again.'; } finally { save.disabled = false; }
+    flushNotes();
+    const ta = $('n-text'), st = $('n-status'), retry = $('n-retry');
+    let saved = null, typed = false, tick = 0; // saved: the text stored, once read; tick: the last keystroke
+    const me = {};
+    const live = () => notesNow === me;
+    const shownAs = (text, failed) => { if (!live()) return; st.textContent = text; retry.hidden = !failed; };
+    const save = body => {
+      noteDrafts.set(key, body);
+      const run = noteQueue.then(async () => {
+        const done = () => { if (noteDrafts.get(key) === body) noteDrafts.delete(key); if (ta.value.trim() === body) shownAs('Saved', false); };
+        if (body === saved) { done(); return; }
+        try {
+          const {error} = await sb.from('notes').upsert({slug: key, body}); if (error) throw error;
+          saved = body; if (body) notesIndex.add(key); else notesIndex.delete(key);
+          done();
+        } catch { if (ta.value.trim() === body) shownAs('Not saved', true); }
+      });
+      noteQueue = run.catch(() => {});
+    };
+    me.flush = () => {
+      tick++;
+      const body = ta.value.trim();
+      if (!typed || (body === saved && !noteDrafts.has(key))) return;
+      shownAs('Saving…', false); save(body);
+    };
+    notesNow = me;
+    ta.addEventListener('input', () => {
+      typed = true;
+      const t = ++tick;
+      if (ta.value.trim() === saved && !noteDrafts.has(key)) { shownAs('Saved', false); return; }
+      shownAs('Saving…', false);
+      setTimeout(() => { if (live() && t === tick) me.flush(); }, NOTE_DELAY);
     });
-    try { const {data} = await sb.from('notes').select('body,updated_at').eq('slug', key).maybeSingle(); ta.value = data ? data.body : ''; st.textContent = data && data.body ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.'; }
-    catch { st.textContent = 'Could not read the note.'; }
+    retry.addEventListener('click', () => { typed = true; me.flush(); });
+    // a save of this note still on its way (the page was left and opened again) lands before the read
+    await noteQueue;
+    try {
+      const {data} = await sb.from('notes').select('body,updated_at').eq('slug', key).maybeSingle();
+      if (!live()) return;
+      saved = data && typeof data.body === 'string' ? data.body : '';
+      const draft = noteDrafts.get(key);
+      if (draft !== undefined && draft !== saved) { if (!typed) ta.value = draft; typed = true; shownAs('Not saved', true); return; }
+      noteDrafts.delete(key);
+      if (!typed) ta.value = saved;
+      if (ta.value.trim() === saved) shownAs(saved ? 'Saved ' + fmtDate(data.updated_at) : 'No note yet.', false);
+    } catch { shownAs('Could not read the note.', false); } finally { if (live()) ta.readOnly = false; } // read-only while it loads
   };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNotes(); });
+  window.addEventListener('pagehide', flushNotes);
   // Why / key points / source of a video session: read-only, in both modes.
   const sessionInfo = s => {
     const src = s.source || {}, url = httpUrl(src.url);
@@ -880,6 +952,8 @@ dialog.ph-dlg::backdrop{background:#000}
   // Items whose sheet was deleted are not in the draft, so saving drops them. `was` keeps each text as it was
   // when Edit opened: saving clips only the texts the user changed (RS.keepOrClip).
   let edit = null;
+  // L5: the session the shown sheet is opened from, {s, n, items} (n counted from 1 over `items`), else null.
+  let seat = null;
   const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
     items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose, was: it.dose}))});
   const editRows = () => edit.items.map((it, i) => {
@@ -896,7 +970,7 @@ dialog.ph-dlg::backdrop{background:#000}
   const showSession = (slug, flash = '') => {
     const s = v2BySlug.get(slug);
     if (edit && edit.slug !== slug) edit = null;
-    shown = RS.ROUTE + slug; show('view'); document.title = s.title;
+    shown = RS.ROUTE + slug; seat = null; show('view'); document.title = s.title;
     if (edit) {
       view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true, true)}</div>
         <div class="wrap fiche"><div class="edit"><p class="eyebrow">Editing the session</p>
@@ -915,19 +989,25 @@ dialog.ph-dlg::backdrop{background:#000}
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
       ${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(itemCard).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml();
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml();
     wireNotes(RS.noteKey(slug));
   };
-  const showSheet = async slug => {
+  // `at`: {s, n, items} when the sheet is opened from a session (#session/<slug>/<n>), else null.
+  const seatKey = at => at ? at.s.slug + '/' + at.n : '';
+  const showSheet = async (slug, at = null) => {
     const e = bySlug.get(slug);
-    if (shown === slug && !view.hidden) return;
-    shown = slug; show('view');
+    if (shown === slug && seatKey(seat) === seatKey(at) && !view.hidden) return;
+    shown = slug; seat = at; show('view');
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
     const back = `<div class="wrap" id="sheet-top">${sheetTop(e)}</div>`;
     // Delete sheet: also under a sheet that fails to load.
     const del = '<div class="wrap"><div class="actions" style="margin-top:36px"><button class="btn ghost" type="button" id="sd-open">Delete sheet</button></div></div>';
-    let html; try { html = await loadSheet(slug); } catch { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + del; return; }
-    view.innerHTML = back + html + notesHtml() + del;
+    let html; try { html = await loadSheet(slug); } catch { html = null; }
+    if (shown !== slug || seatKey(seat) !== seatKey(at)) return; // left (Next tapped twice) while it loaded
+    if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + del; return; }
+    view.innerHTML = back + html + notesHtml() + seatNav() + del;
+    // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)
+    $('sheet-top').innerHTML = sheetTop(e);
     wireNotes(slug);
   };
 
@@ -1256,12 +1336,20 @@ dialog.ph-dlg::backdrop{background:#000}
     }
     // An unknown token (a removed sheet, an old `#<slug>~<anchor>` link) opens the home page.
     const tok = decodeURIComponent(location.hash.slice(1));
-    if (edit && RS.sessionSlugOf(tok) !== edit.slug) edit = null; // leaving a session page drops its unsaved edits
+    flushNotes(); // notes typed on the page being left are saved now
+    const at = RS.sessionItemOf(tok);
+    if (edit && (at || RS.sessionSlugOf(tok) !== edit.slug)) edit = null; // leaving a session page drops its unsaved edits
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
     if (tok && bySlug.has(tok)) { showSheet(tok); return; }
+    // #session/<slug>/<n>: the n-th exercise of the session; out of range, the session page.
+    if (at && v2BySlug.has(at.slug)) {
+      const s = v2BySlug.get(at.slug), items = RS.resolveItems(s, bySlug), it = items[at.n - 1];
+      if (it) showSheet(it.sheet.slug, {s, n: at.n, items}); else showSession(at.slug);
+      return;
+    }
     const ses = RS.sessionSlugOf(tok); if (ses && v2BySlug.has(ses)) { showSession(ses); return; }
-    shown = null; currentTheme = themeById.has(tok) ? tok : null; view.innerHTML = ''; renderHome(); show('home');
+    shown = null; seat = null; currentTheme = themeById.has(tok) ? tok : null; view.innerHTML = ''; renderHome(); show('home');
   };
   window.addEventListener('hashchange', route);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && user && !$('home').hidden) refreshQueue(); });

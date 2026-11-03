@@ -181,7 +181,8 @@ test('a v2 session page lists its sheets in order with their dose, and moves to 
   assert.match(html, /5 rounds · 60 s rest/);
   assert.match(html, /<li>Slow<\/li><li>Breathe<\/li>/);
   assert.match(html, /href="https:\/\/example.test\/v"/);
-  assert.match(html, /href="#gsp-rot"><span class="k">1<\/span>[\s\S]*?3×10[\s\S]*?href="#gsp-angel"><span class="k">2<\/span>[\s\S]*?30 s/);
+  // L5: an exercise card opens the sheet inside the session, #session/<slug>/<n>
+  assert.match(html, /href="#session\/gsp-shoulders\/1"><span class="k">1<\/span>[\s\S]*?<h3>External rotation<\/h3>[\s\S]*?3×10[\s\S]*?href="#session\/gsp-shoulders\/2"><span class="k">2<\/span>[\s\S]*?<h3>Floor angel<\/h3>[\s\S]*?30 s/);
   assert.doesNotMatch(html, /deleted-sheet|1 min/);
   page.element('view').listeners.click({target: {closest: () => true}});
   assert.equal(page.element('move-dlg').open, true);
@@ -284,7 +285,7 @@ test('Edit reorders, sets doses, format and title, and saves the items in full i
   html = page.element('view').innerHTML;
   assert.match(html, /Saved\./);
   assert.match(html, /<h1>Shoulders, Monday<\/h1>/);
-  assert.match(html, /href="#gsp-angel"><span class="k">1<\/span>[\s\S]*?45 s[\s\S]*?href="#gsp-rot"><span class="k">2<\/span>/);
+  assert.match(html, /href="#session\/gsp-shoulders\/1"><span class="k">1<\/span>[\s\S]*?<h3>Floor angel<\/h3>[\s\S]*?45 s[\s\S]*?href="#session\/gsp-shoulders\/2"><span class="k">2<\/span>[\s\S]*?<h3>External rotation<\/h3>/);
 });
 
 test('Edit: a write that changes no row shows an error and keeps the edits and the saved session as they were', async () => {
@@ -299,7 +300,7 @@ test('Edit: a write that changes no row shows an error and keeps the edits and t
   assert.match(page.element('ed-err').textContent, /Could not save/);
   assert.match(page.element('view').innerHTML, /Editing the session/, 'still in Edit mode');
   clickIn(page, 'view', '#ed-cancel');
-  assert.match(page.element('view').innerHTML, /href="#gsp-rot"><span class="k">1<\/span>/, 'the session is unchanged');
+  assert.match(page.element('view').innerHTML, /href="#session\/gsp-shoulders\/1"><span class="k">1<\/span>[\s\S]*?<h3>External rotation<\/h3>/, 'the session is unchanged');
 });
 
 test('Delete session asks in an app dialog, deletes the row only and refreshes the notebook', async () => {
@@ -453,7 +454,8 @@ test('a v2 session page has its own notes, keyed session/<slug>, and its card sh
   assert.match(page.element('view').innerHTML, /My notes/);
   assert.equal(page.element('n-text').value, 'Felt good');
   page.element('n-text').value = 'Felt better';
-  await page.fire('n-save');
+  await page.fire('n-text', 'input'); // L5: notes save themselves
+  await settle();
   assert.deepEqual(writesOf(page), [['upsert', 'notes', {slug: 'session/gsp-shoulders', body: 'Felt better'}, []]]);
 });
 

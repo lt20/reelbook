@@ -8,6 +8,16 @@ test('the session route never collides with a sheet slug or a notebook id', () =
   for (const tok of ['session', 'session/', 'gsp-shoulders', 'strength', 'settings', '', undefined]) assert.equal(RS.sessionSlugOf(tok), null, String(tok));
 });
 
+test('L5: the exercise route of a session, #session/<slug>/<n>, n counted from 1', () => {
+  assert.equal(RS.sessionItemHref('gsp-shoulders', 2), '#session/gsp-shoulders/2');
+  assert.deepEqual(RS.sessionItemOf('session/gsp-shoulders/2'), {slug: 'gsp-shoulders', n: 2});
+  assert.deepEqual(RS.sessionItemOf('session/gsp-shoulders/12'), {slug: 'gsp-shoulders', n: 12});
+  assert.equal(RS.sessionSlugOf('session/gsp-shoulders/12'), 'gsp-shoulders');
+  for (const tok of ['session/gsp-shoulders', 'session/gsp-shoulders/0', 'session/gsp-shoulders/01', 'session/gsp-shoulders/-1',
+    'session/gsp-shoulders/1.5', 'session/gsp-shoulders/', 'session//2', 'session/a/2/b', 'gsp-shoulders/2', '', undefined]) assert.equal(RS.sessionItemOf(tok), null, String(tok));
+  for (const tok of ['session//2', 'session/a/', 'session/a/0', 'session/a/2/b']) assert.equal(RS.sessionSlugOf(tok), null, tok);
+});
+
 test('a missing sessions table is recognised, other errors are not', () => {
   assert.equal(RS.missingTable({code: 'PGRST205', message: 'Could not find the table'}, 404), true);
   assert.equal(RS.missingTable({code: '42P01', message: 'relation does not exist'}, 400), true);
