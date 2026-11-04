@@ -91,12 +91,13 @@ Ports: L9 8779, L10 8780 … L20 8790.
 |---|---|---|---|---|---|---|---|---|
 | L21 | Notebook identity: cover per notebook (colour + pictogram) — protected (`app/config.js`) | O8 | M | no | — | K | `feat/p5-identity` | merged #53 |
 | L22 | Session headings in the content language (quick version, decision 2) | O6 | S | yes | — | K | `feat/p5-lang` | merged #51 |
-| L23 | Faceted library: structured tags — protected (schema) | O7 | L | yes | — | K | `feat/p5-facets` | to do |
-| L24 | Invitation to install the app | O4 | S | yes | — | L | `feat/p5-install-card` | to do |
+| L23 | Faceted library: structured tags — protected (schema) | O7 | L | yes | — | K | `feat/p5-facets` | merged #52 |
+| L24 | Invitation to install the app | O4 | S | yes | — | L | `feat/p5-install-card` | merged #54 |
 | L25 | Present before signing up | O1 | M | yes | L29 pushed (decision 9) | L | `feat/p5-welcome` | to do |
 | L26 | Installation you can tap | O2 | M | no | L29 pushed (decision 9) | M | `feat/p5-install` | to do |
 | L27 | Demo without an account | O3 | M | yes | decision 11 | L | `feat/p5-demo` | to do |
 | L28 | Capture in one gesture: Paste link, then iOS shortcut — protected (schema + Edge Function) | O5 | L | yes | decision 12 | M | `feat/p5-capture` | to do |
+| L23b | backfill-tags heuristic, second pass (Laurent's dry run, 4 Nov) | O7 | S | no | L23 | M | `fix/p5-tags-heuristic` | to do |
 | L29 | Quotas on the hosted backend + privacy note draft — protected (schema) | decisions 9 10 | M | no | — | M | `feat/p5-quotas` | to do |
 
 Ports: L21 8791 … L28 8798. Wave K touches: L21 home notebook cards + notebook header + `app/config.js` (`icon`) +
