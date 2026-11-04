@@ -1036,7 +1036,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // that has never signed in (no rb.backend stored).
   let mode = 'in', signupBackendChosen = false, authBusy = false, introOpen = !readBackend();
   const setMode = m => { mode = m; $('auth-title').textContent = m === 'in' ? 'Sign in' : 'Create an account'; $('a-submit').textContent = m === 'in' ? 'Sign in' : 'Create account'; $('a-toggle').textContent = m === 'in' ? 'Create an account' : 'I already have an account'; $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-info').hidden = true; $('login-own-form').hidden = true; };
-  const returnToSignin = () => { setMode('in'); signupBackendChosen = false; selectBackend(rememberedBackend(), false); };
+  // « Sign in » asked for explicitly (setup, sign-up form): the form, never the presentation again (L25)
+  const returnToSignin = () => { introOpen = false; setMode('in'); signupBackendChosen = false; selectBackend(rememberedBackend(), false); };
   $('a-toggle').addEventListener('click', () => { if (mode === 'up') returnToSignin(); else { setMode('up'); signupBackendChosen = false; route(); } });
   $('setup-signin').addEventListener('click', ev => { ev.preventDefault(); returnToSignin(); });
   // L25: « Create an account » is the hosted backend (the main path); « Use my own Supabase » stays under the form.
