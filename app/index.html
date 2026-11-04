@@ -580,6 +580,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 .intro-needs{margin-top:var(--s-5)}
 .intro-acts{margin-top:var(--s-5)}
 .intro-acts .btn{min-height:44px}
+.auth-demo{margin:var(--s-2) 0 0}
 .intro-demo{display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);color:var(--accent);font-weight:600}
 .auth-adv{margin-top:var(--s-3)}
 .auth-adv a{display:inline-block;padding:var(--s-2) 0}
@@ -641,7 +642,6 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="actions intro-acts">
       <button class="btn" type="button" id="intro-signup">Create an account</button>
       <button class="btn ghost" type="button" id="intro-signin">Sign in</button>
-      <a class="intro-demo" id="intro-demo" href="#demo" hidden>See a demo</a>
     </div>
   </section>
   <h1 id="auth-title">Sign in</h1>
@@ -666,6 +666,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <p class="err" id="login-own-err" hidden></p>
     <div class="actions"><button class="btn" type="submit">Use this instance</button><button class="btn ghost" type="button" id="login-own-cancel">Cancel</button></div>
   </form>
+  <!-- L25 + L27: the one « See a demo » link, after the presentation's actions and under the sign-in form alike -->
+  <p class="auth-demo"><a class="intro-demo" id="intro-demo" href="#demo" hidden>See a demo</a></p>
 </div>
 
 <!-- ===== Home: portal / theme ===== -->

@@ -88,7 +88,18 @@ test('L25: sign-up with my own Supabase keeps the project only once the account 
   assert.deepEqual(JSON.parse(page.storage.get('rb.backend')), {mode: 'own', url: ownUrl, key: ownKey});
 });
 
-const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'existing-user', email: 'user@example.test'}}};
+test('L25 + L27: one « See a demo » link, outside the presentation, so a returning device on Sign in keeps it', async () => {
+  assert.equal(html.match(/>\s*See a demo\s*<\/a>/g).length, 1);
+  const auth = html.indexOf('id="auth"'), intro = html.indexOf('id="intro"', auth);
+  const introEnd = html.indexOf('</section>', intro), link = html.indexOf('id="intro-demo"', auth);
+  assert.ok(intro > auth && link > introEnd, '#intro-demo is not inside #intro, which Sign in hides');
+  assert.ok(link < html.indexOf('<div id="home"'), '#intro-demo stays in #auth');
+  const page = await app({remembered: {mode: 'hosted'}});
+  assert.equal(page.element('intro').hidden, true);
+  assert.equal(page.element('intro-demo').hidden, false);
+});
+
+const signedIn ={remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'existing-user', email: 'user@example.test'}}};
 const reel = 'https://www.instagram.com/reel/DeGBCfjsbTt/';
 
 test('a pasted link is kept until queued, and « + Add a video » asks before dropping it', async () => {
