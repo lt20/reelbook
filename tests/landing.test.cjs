@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const {app, html} = require('./harness.cjs');
+const {app, html, ownUrl, ownKey} = require('./harness.cjs');
 
 const ROOT = path.join(__dirname, '..');
 const landingJs = fs.readFileSync(path.join(ROOT, 'app/landing.js'), 'utf8');
@@ -209,4 +209,85 @@ test('L30 — the service worker shell has landing.js at the version index.html 
   assert.ok(html.indexOf('landing.js?v=') < html.indexOf('<script>\n'));
   assert.ok(sw.includes(`'./landing.js?v=${v[1]}'`));
   assert.doesNotMatch(sw, /assets\/(?:dance|mma)/, 'the pictures stay out of the shell');
+});
+
+test('L30 — the notes example is read-only: nothing typed there can be lost by a FR / EN switch', () => {
+  const page = landing({language: 'fr'});
+  const ui = page.byId('lp-notesUi');
+  for (const lang of ['fr', 'en']) {
+    page.RBL.setLang(lang);
+    const ta = /<textarea\b[^>]*>/.exec(ui.innerHTML);
+    assert.ok(ta, `${lang}: the example has its note`);
+    assert.match(ta[0], /\breadonly\b/, `${lang}: « ${page.RBL.t('ui.saved')} » is shown, so the note cannot be edited`);
+  }
+  assert.match(html, /#intro \.lp-notes-ui textarea\{[^}]*cursor:default/, 'no text cursor over it');
+});
+
+// Supabase's auth errors (supabase-js 2.x: code, status, English message), as the sign-in / sign-up form shows them
+const AUTH_ERRORS = {
+  in: [
+    [{code: 'invalid_credentials', status: 400, message: 'Invalid login credentials'}, 'E-mail ou mot de passe incorrect.', 'Wrong email or password.'],
+    [{status: 400, message: 'Invalid login credentials'}, 'E-mail ou mot de passe incorrect.', 'Wrong email or password.'],
+    [{code: 'email_not_confirmed', status: 400, message: 'Email not confirmed'}, 'Confirme d’abord ton e-mail avec le lien reçu dans ta boîte, puis connecte-toi.', 'Confirm your email first with the link in your inbox, then sign in.'],
+    [{code: 'over_request_rate_limit', status: 429, message: 'Request rate limit reached'}, 'Trop d’essais : réessaie dans quelques minutes.', 'Too many attempts: try again in a few minutes.'],
+    [{name: 'AuthRetryableFetchError', status: 0, message: 'Failed to fetch'}, 'Le serveur n’a pas répondu : vérifie ta connexion et réessaie.', 'The server did not answer: check your connection and try again.'],
+    [{code: 'some_new_code', status: 400, message: 'Some new English message'}, 'Connexion impossible.', 'Could not sign in.']
+  ],
+  up: [
+    [{code: 'user_already_exists', status: 422, message: 'User already registered'}, 'Un compte existe déjà avec cet e-mail : connecte-toi plutôt.', 'An account already exists with this email: sign in instead.'],
+    [{code: 'weak_password', status: 422, message: 'Password should be at least 6 characters.'}, 'Ce mot de passe est trop faible : choisis-en un plus long.', 'That password is too weak: choose a longer one.'],
+    [{code: 'email_address_invalid', status: 400, message: 'Email address "x@y" is invalid'}, 'Cette adresse e-mail n’est pas valide.', 'That email address is not valid.'],
+    [{code: 'over_email_send_rate_limit', status: 429, message: 'email rate limit exceeded'}, 'Trop d’essais : réessaie dans quelques minutes.', 'Too many attempts: try again in a few minutes.'],
+    [{code: 'signup_disabled', status: 422, message: 'Signups not allowed for this instance'}, 'Ce serveur ne prend pas de nouveaux comptes.', 'This server does not take new accounts.'],
+    [{code: 'unexpected_failure', status: 400, message: 'Some new English message'}, 'Impossible de créer le compte.', 'Could not create the account.']
+  ]
+};
+
+test('L30 — Supabase auth errors are said in the page language: known codes mapped, anything else a generic line', async () => {
+  const warn = console.warn; console.warn = () => {};
+  try {
+    for (const lang of ['fr', 'en']) {
+      for (const authMode of ['in', 'up']) {
+        for (const [error, fr, en] of AUTH_ERRORS[authMode]) {
+          // FR: the real dictionary of landing.js; EN: the app's own English (no landing loaded)
+          const page = await app(lang === 'fr' ? {win: {RBL: landing({language: 'fr'}).RBL}} : {});
+          if (authMode === 'up') await page.fire('intro-signup');
+          const client = page.clients.at(-1);
+          // a network failure rejects (supabase-js throws AuthRetryableFetchError); the others answer {error}
+          const fail = error.status === 0 ? async () => { throw Object.assign(new Error(error.message), error); } : async () => ({data: {}, error});
+          if (authMode === 'up') client.auth.signUp = fail; else client.auth.signInWithPassword = fail;
+          page.element('a-email').value = 'user@example.test';
+          page.element('a-pass').value = 'example-password';
+          await page.fire('auth-form', 'submit');
+          const err = page.element('a-err'), what = `${lang} ${authMode} ${error.code || error.message}`;
+          assert.equal(err.hidden, false, `${what}: shown`);
+          assert.equal(err.textContent, lang === 'fr' ? fr : en, what);
+          if (lang === 'fr') assert.notEqual(err.textContent, error.message, 'never Supabase’s English on the French form');
+        }
+      }
+    }
+  } finally { console.warn = warn; }
+});
+
+test('L30 — installation « On my own Supabase » + « Create my notebook »: the project form, then the sign-up goes on', async () => {
+  const page = await app();
+  assert.equal(page.element('intro').hidden, false, 'a new visitor is on the landing');
+  page.element('lp-host-own').checked = true;
+  await page.fire('intro-signup');
+  assert.equal(page.element('auth').hidden, true, 'the landing, inside #auth, is gone');
+  assert.equal(page.element('setup').hidden, false, 'the setup screen');
+  assert.equal(page.element('own-form').hidden, false, 'with the project form open');
+  assert.equal(page.storage.get('rb.backend'), undefined);
+  page.element('own-url').value = ownUrl;
+  page.element('own-key').value = ownKey;
+  await page.fire('own-form', 'submit');
+  assert.equal(page.clients.at(-1).url, ownUrl);
+  assert.equal(page.element('auth').hidden, false);
+  assert.equal(page.element('auth-title').textContent, 'Create an account', 'the sign-up goes on, on that project');
+  assert.equal(page.storage.get('rb.backend'), undefined, 'the project is kept once the account exists');
+  page.element('a-email').value = 'new@example.test';
+  page.element('a-pass').value = 'example-password';
+  await page.fire('auth-form', 'submit');
+  assert.deepEqual(page.clients.at(-1).calls.map(c => c[0]), ['up']);
+  assert.deepEqual(JSON.parse(page.storage.get('rb.backend')), {mode: 'own', url: ownUrl, key: ownKey});
 });

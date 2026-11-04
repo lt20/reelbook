@@ -734,7 +734,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-notes-ui .lp-r{display:flex;flex-direction:column;gap:16px;min-width:0}
 #intro .lp-notes-ui .lp-t{font:700 32px/1 var(--display)}
 #intro .lp-notes-ui label{font-weight:700;font-size:15px}
-#intro .lp-notes-ui textarea{font:400 18px/1.55 var(--body);color:var(--ink);border:0;border-radius:12px;background:#fff6d6;padding:16px 18px;min-height:150px;resize:none;width:100%}
+#intro .lp-notes-ui textarea{font:400 18px/1.55 var(--body);color:var(--ink);border:0;border-radius:12px;background:#fff6d6;padding:16px 18px;min-height:150px;resize:none;width:100%;cursor:default}
 #intro .lp-notes-ui .lp-saved{font-size:14px;color:#1f6b3a;font-weight:600}
 #intro .lp-orig{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--ground);text-decoration:none;color:var(--ink)}
 #intro .lp-orig .lp-play{width:44px;height:44px;border-radius:50%;background:var(--ink);display:grid;place-items:center;flex:none}
@@ -1502,6 +1502,20 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   $('intro-signin').addEventListener('click', () => { introOpen = false; setMode('in'); route(); $('a-email').focus(); });
   // « See a demo » appears once the demo notebook exists (L27 adds its view).
   $('intro-demo').hidden = !views.includes('demo');
+  // L30: Supabase words its auth errors in English. The form says the known ones in the page's language (by the
+  // error code of supabase-js 2.x, else by the message older servers send), any other one as a generic line.
+  const authError = (e, authMode) => {
+    const code = String((e && e.code) || ''), msg = String((e && e.message) || ''), status = e && e.status;
+    if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) return T('a.e.creds', 'Wrong email or password.');
+    if (code === 'user_already_exists' || code === 'email_exists' || /already (registered|been registered|exists)/i.test(msg)) return T('a.e.exists', 'An account already exists with this email: sign in instead.');
+    if (code === 'email_not_confirmed' || /email not confirmed/i.test(msg)) return T('a.e.confirm', 'Confirm your email first with the link in your inbox, then sign in.');
+    if (code === 'weak_password' || /password should|password is (too )?(weak|short)/i.test(msg)) return T('a.e.weak', 'That password is too weak: choose a longer one.');
+    if (code === 'email_address_invalid' || /invalid format|validate email|email address .*invalid/i.test(msg)) return T('a.e.email', 'That email address is not valid.');
+    if (status === 429 || /rate_limit/.test(code) || /rate limit|too many/i.test(msg)) return T('a.e.rate', 'Too many attempts: try again in a few minutes.');
+    if (code === 'signup_disabled' || /signups? (are )?not allowed|signups? disabled/i.test(msg)) return T('a.e.closed', 'This server does not take new accounts.');
+    if ((e && e.name === 'AuthRetryableFetchError') || status === 0 || status >= 500 || /failed to fetch|network|load failed/i.test(msg)) return T('a.e.offline', 'The server did not answer: check your connection and try again.');
+    return authMode === 'up' ? T('a.e.up', 'Could not create the account.') : T('a.fail', 'Could not sign in.');
+  };
   $('auth-form').addEventListener('submit', async ev => {
     ev.preventDefault();
     const err = $('a-err'), info = $('a-info'); err.hidden = true; info.hidden = true; authBusy = true; $('a-submit').disabled = true;
@@ -1515,7 +1529,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
         ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
         if (!data.session) { setMode('in'); route(); info.textContent = T('a.created', 'Account created. Check your inbox to confirm your email, then sign in.'); info.hidden = false; }
       }
-    } catch (e) { if (client === sb) { err.textContent = e.message || T('a.fail', 'Could not sign in.'); err.hidden = false; } }
+    } catch (e) { if (client === sb) { console.warn('Auth failed:', (e && (e.code || e.message)) || e); err.textContent = authError(e, authMode); err.hidden = false; } }
     finally { authBusy = false; $('a-submit').disabled = !backend; }
   });
   $('s-signout').addEventListener('click', async () => { if (await signOutHere()) location.hash = ''; });

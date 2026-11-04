@@ -218,7 +218,13 @@
       'a.ownh': 'Connecter ta propre instance', 'a.ownp': 'Indique une fois sur cet appareil les informations de ton projet Supabase. Guide d’installation :',
       'a.url': 'URL du projet', 'a.key': 'Clé anon', 'a.useown': 'Utiliser cette instance', 'a.cancel': 'Annuler', 'a.demo': 'Voir une démo',
       'a.created': 'Compte créé. Confirme ton e-mail avec le lien reçu dans ta boîte, puis connecte-toi.',
-      'a.fail': 'Connexion impossible.', 'a.badUrl': 'Cette URL n’est pas valide.', 'a.badProto': 'Indique une URL de projet en http ou https.',
+      'a.fail': 'Connexion impossible.', 'a.e.up': 'Impossible de créer le compte.',
+      'a.e.creds': 'E-mail ou mot de passe incorrect.', 'a.e.exists': 'Un compte existe déjà avec cet e-mail : connecte-toi plutôt.',
+      'a.e.confirm': 'Confirme d’abord ton e-mail avec le lien reçu dans ta boîte, puis connecte-toi.',
+      'a.e.weak': 'Ce mot de passe est trop faible : choisis-en un plus long.', 'a.e.email': 'Cette adresse e-mail n’est pas valide.',
+      'a.e.rate': 'Trop d’essais : réessaie dans quelques minutes.', 'a.e.closed': 'Ce serveur ne prend pas de nouveaux comptes.',
+      'a.e.offline': 'Le serveur n’a pas répondu : vérifie ta connexion et réessaie.',
+      'a.badUrl': 'Cette URL n’est pas valide.', 'a.badProto': 'Indique une URL de projet en http ou https.',
       'a.badKey': 'Cela ne ressemble pas à une clé anon.',
       's.h1': 'Tes vidéos, en fiches',
       's.lead': 'Colle les vidéos que tu veux garder (Instagram, TikTok, YouTube, Facebook) : un geste, une technique, une recette. Claude Code fait de chacune une fiche avec photos et points clés, rangée dans tes carnets.',
@@ -255,7 +261,13 @@
       'a.ownh': 'Connect your own instance', 'a.ownp': 'Enter your Supabase project details once on this device. Setup guide:',
       'a.url': 'Project URL', 'a.key': 'Anon key', 'a.useown': 'Use this instance', 'a.cancel': 'Cancel', 'a.demo': 'See a demo',
       'a.created': 'Account created. Check your inbox to confirm your email, then sign in.',
-      'a.fail': 'Could not sign in.', 'a.badUrl': 'That URL is not valid.', 'a.badProto': 'Use an http or https project URL.',
+      'a.fail': 'Could not sign in.', 'a.e.up': 'Could not create the account.',
+      'a.e.creds': 'Wrong email or password.', 'a.e.exists': 'An account already exists with this email: sign in instead.',
+      'a.e.confirm': 'Confirm your email first with the link in your inbox, then sign in.',
+      'a.e.weak': 'That password is too weak: choose a longer one.', 'a.e.email': 'That email address is not valid.',
+      'a.e.rate': 'Too many attempts: try again in a few minutes.', 'a.e.closed': 'This server does not take new accounts.',
+      'a.e.offline': 'The server did not answer: check your connection and try again.',
+      'a.badUrl': 'That URL is not valid.', 'a.badProto': 'Use an http or https project URL.',
       'a.badKey': 'That does not look like an anon key.',
       's.h1': 'Your videos, as sheets',
       's.lead': 'Paste the videos you want to keep (Instagram, TikTok, YouTube, Facebook): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.',
@@ -480,7 +492,7 @@
     const n = e.note;
     setHtml('lp-notesUi', '<div class="lp-ph">' + frame(n.frame) + '<b>' + (n.frame + 1) + ' · ' + tr(n.step) + '</b></div>' +
       '<div class="lp-r"><span class="lp-t">' + tr(e.title) + '</span>' +
-      '<label for="lp-noteTa">' + t('ui.notes') + '</label><textarea id="lp-noteTa">' + tr(n.text) + '</textarea>' +
+      '<label for="lp-noteTa">' + t('ui.notes') + '</label><textarea id="lp-noteTa" readonly>' + tr(n.text) + '</textarea>' +
       '<span class="lp-saved">' + t('ui.saved') + '</span>' +
       '<a class="lp-orig" href="#"><span class="lp-play"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg></span><span><b>' + t('ui.orig') + '</b><small>' + tr(n.who) + '</small></span></a>' +
       '<div class="lp-count"><b>' + n.n + '</b><span>' + tr(n.done) + '</span></div></div>');
