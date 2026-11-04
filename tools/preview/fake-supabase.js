@@ -8,6 +8,8 @@
 //                                   (?missing=sheets.search_text): a read selecting that column answers
 //                                   42703 « column … does not exist » (HTTP 400), and the rows lose it
 //   ?empty=sheets,sessions,...      those tables start with no row (an empty account: ?empty=all)
+//   ?quota                          my_quota() answers (L29: the usage line of Settings); without it, PGRST202
+//   ?quota=full                     and a new link is refused: « quota: 10 links per day » (P0001, HTTP 400)
 // Storage: a signed URL for <user id>/<slug>/<rel> is the local file files/<slug>/<rel>.
 (function () {
   const D = window.__FAKE || {};
@@ -64,6 +66,10 @@
         return {data: null, status: 400, statusText: 'Bad Request', error: {code: '42703', details: null, hint: null,
           message: `column ${this.t}.${asked} does not exist`}};
       }
+      if (this.t === 'requests' && this.op === 'insert' && params.get('quota') === 'full') {
+        return {data: null, status: 400, statusText: 'Bad Request', error: {code: 'P0001', details: null,
+          hint: 'The count starts again at midnight UTC. For more, ask whoever runs this backend.', message: 'quota: 10 links per day'}};
+      }
       const rows = D[this.t] = D[this.t] || [];
       for (const r of rows) for (const c of gone) delete r[c];
       const fresh = r => Object.assign((DEFAULTS[this.t] || (() => ({})))(), clone(r));
@@ -107,7 +113,10 @@
       const session = () => (signedIn ? {user: U, access_token: 'fake'} : null);
       return {
         from: t => new Query(t),
-        rpc: async name => ({data: null, status: 404, error: {code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache (preview)`}}),
+        rpc: async name => name === 'my_quota' && params.has('quota')
+          ? {data: {requests_today: params.get('quota') === 'full' ? 10 : (D.requests || []).filter(r => String(r.created_at || '').slice(0, 10) === now().slice(0, 10)).length,
+              max_requests_per_day: 10, sheets: (D.sheets || []).length, max_sheets: 300, storage_bytes: 80 * 1048576, max_storage_mb: 200}, error: null, status: 200}
+          : {data: null, status: 404, error: {code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache (preview)`}},
         storage: {
           from: () => ({
             createSignedUrls: async paths => ({data: paths.map(p => ({path: p, signedUrl: local(p), error: null})), error: null}),
