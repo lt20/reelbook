@@ -93,12 +93,12 @@ Ports: L9 8779, L10 8780 … L20 8790.
 | L22 | Session headings in the content language (quick version, decision 2) | O6 | S | yes | — | K | `feat/p5-lang` | merged #51 |
 | L23 | Faceted library: structured tags — protected (schema) | O7 | L | yes | — | K | `feat/p5-facets` | merged #52 |
 | L24 | Invitation to install the app | O4 | S | yes | — | L | `feat/p5-install-card` | merged #54 |
-| L25 | Present before signing up | O1 | M | yes | L29 pushed (decision 9) | L | `feat/p5-welcome` | to do |
-| L26 | Installation you can tap | O2 | M | no | L29 pushed (decision 9) | M | `feat/p5-install` | to do |
-| L27 | Demo without an account | O3 | M | yes | decision 11 | L | `feat/p5-demo` | to do |
-| L28 | Capture in one gesture: Paste link, then iOS shortcut — protected (schema + Edge Function) | O5 | L | yes | decision 12 | M | `feat/p5-capture` | to do |
-| L23b | backfill-tags heuristic, second pass (Laurent's dry run, 4 Nov) | O7 | S | no | L23 | M | `fix/p5-tags-heuristic` | to do |
-| L29 | Quotas on the hosted backend + privacy note draft — protected (schema) | decisions 9 10 | M | no | — | M | `feat/p5-quotas` | to do |
+| L25 | Present before signing up | O1 | M | yes | L29 pushed (decision 9) | L | `feat/p5-welcome` | PR #58 ready, waits for the L29 SQL |
+| L26 | Installation you can tap | O2 | M | no | L29 pushed (decision 9) | M | `feat/p5-install` | PR #61 ready, waits for the L29 SQL |
+| L27 | Demo without an account | O3 | M | yes | decision 11 | L | `feat/p5-demo` | merged #56 |
+| L28 | Capture in one gesture: Paste link, then iOS shortcut — protected (schema + Edge Function) | O5 | L | yes | decision 12 | M | `feat/p5-capture` | merged #63 (step B: deploy by Laurent) |
+| L23b | backfill-tags heuristic, second pass (Laurent's dry run, 4 Nov) | O7 | S | no | L23 | M | `fix/p5-tags-heuristic` | merged #60 |
+| L29 | Quotas on the hosted backend + privacy note draft — protected (schema) | decisions 9 10 | M | no | — | M | `feat/p5-quotas` | merged #59 (SQL by Laurent) |
 
 Ports: L21 8791 … L28 8798. Wave K touches: L21 home notebook cards + notebook header + `app/config.js` (`icon`) +
 `app/icons.svg`; L22 session page + player headings + `app/sessions.js`; L23 search view + `app/config.js`
@@ -206,6 +206,21 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
   now olive (distinct from the link blue); notebook page target revised to ≤ 8 screens (#38).
 - Structured dose: a tab opened before the L9 deploy that saves Edit on a session writes items as `{slug, dose}` and
   erases its structured fields; the free-text dose stays and the parser takes over (#36, Codex pass 2).
+
+## Waiting for Laurent (P5, 4 Nov)
+- SQL in one run (Supabase SQL editor): `search_text` + `tags` columns, then the L29 quotas with the override row of his
+  own account (`<ton user id>` three times). Then L25 (#58) and L26 (#61) merge. When L25 merges: its acceptance test
+  `tests/acceptance/l25/presentation.test.cjs` l.108 expects `intro-demo` hidden, true until L27 — now merged, so the
+  line flips to `false` (coordinator decision, separate commit), and only one « See a demo » link stays (L27 put one
+  under « Sign in »).
+- Tags: `rb.py backfill-search` (if its dry run finds sheets), then `rb.py backfill-tags` (only tags sheets without
+  tags: run it once search_text is filled).
+- L28 step B: `supabase functions deploy add-link --no-verify-jwt --project-ref <ref>`, then the SQL of #63
+  (`capture_tokens`); business test in #63.
+- `docs/privacy.md`: draft, not linked; placeholders (legal entity, region, contact) to fill and validate (decision 10).
+- Demo: film 4 exercises + 1 session, swap `app/demo/` (README there) — decision 11.
+- iPhone: delete a queue row and close the app at once → the row stays gone (D2, keepalive DELETE).
+- `install.ps1` never run (no Windows here): one real try before relying on it (L26).
 
 ## Known pitfalls
 - **Every change to `app/sessions.js` or `app/sheet.js` bumps its `?v=` in `index.html` and in `SHELL` of `app/sw.js`,
