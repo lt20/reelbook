@@ -22,8 +22,9 @@ const files = (over = {}) => {
 const click = (page, id) => page.element('demo').listeners.click({preventDefault() {}, target: {closest: sel => sel === '#' + id ? {} : null}});
 
 test('L27 — the demo home lists the sheets and the session from catalogue.json, all inside the demo', async () => {
-  const {fetch, asked} = files();
-  const page = await app({hash: '#demo', tables: {}, fetch});
+  const {fetch, asked} = files(), posted = [];
+  const serviceWorker = {register: async () => ({}), ready: Promise.resolve({active: {postMessage: m => posted.push(m)}})};
+  const page = await app({hash: '#demo', tables: {}, fetch, nav: {serviceWorker}});
   await settle();
   const html = page.element('demo').innerHTML;
   const cat = JSON.parse(fs.readFileSync(path.join(demoDir, 'catalogue.json'), 'utf8'));
@@ -31,9 +32,14 @@ test('L27 — the demo home lists the sheets and the session from catalogue.json
   for (const s of cat.sessions) assert.match(html, new RegExp(`href="#demo/session/${s.slug}"`), s.slug);
   assert.match(html, /src="demo\/goblet-squat\/img\/thumb\.svg"/);
   assert.ok(asked.length > 1 && asked.every(u => u.startsWith('demo/')), 'only the demo files are fetched');
-  // the first visit fetches every sheet and its photos, for the service worker to keep
-  for (const e of cat.sheets) assert.ok(asked.includes(`demo/${e.slug}/index.html`), e.slug);
-  assert.ok(asked.includes('demo/water-start/img/04-pulled.svg'));
+  // the first visit hands the service worker every demo file to keep (sw.js, KEEP_DEMO), absolute URLs
+  assert.equal(posted.length, 1);
+  assert.equal(posted[0].type, 'KEEP_DEMO');
+  const base = 'https://app.example.test/reelbook/demo/';
+  assert.ok(posted[0].urls.includes(base + 'catalogue.json'));
+  for (const e of cat.sheets) assert.ok(posted[0].urls.includes(`${base}${e.slug}/index.html`), e.slug);
+  assert.ok(posted[0].urls.includes(base + 'water-start/img/04-pulled.svg'));
+  assert.ok(posted[0].urls.every(u => u.startsWith(base)));
   assert.equal(page.clients.length, 0);
 });
 

@@ -2951,14 +2951,22 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (!demoPages.has(slug)) demoPages.set(slug, demoGet(`${slug}/index.html`).catch(e => { demoPages.delete(slug); throw e; }));
     return demoPages.get(slug);
   };
-  // First visit: every sheet and its photos, fetched once in the background (the service worker keeps them).
-  const demoWarm = c => {
-    for (const e of c.sheets) demoSource(e.slug).then(src => {
-      for (const m of String(src).matchAll(/\bsrc="(img\/[\w.-]+)"/g)) fetch(demoFile(`${e.slug}/${m[1]}`)).catch(() => {});
-    }).catch(() => {});
+  // First visit: every sheet read in the background, then the list of all demo files (catalogue, sheets, photos)
+  // goes to the service worker, which keeps them in its demo cache (sw.js, KEEP_DEMO): the page may not be under
+  // its control yet on a first visit, so its own fetches would not be kept.
+  const demoWarm = async c => {
+    const sw = (() => { try { return navigator.serviceWorker; } catch { return null; } })();
+    if (!sw || !sw.ready) return;
+    const files = ['catalogue.json'], abs = p => new URL(demoFile(p), location.href).href;
+    await Promise.all(c.sheets.map(e => demoSource(e.slug).then(src => {
+      files.push(`${e.slug}/index.html`);
+      for (const m of String(src).matchAll(/\bsrc="(img\/[\w.-]+)"/g)) files.push(`${e.slug}/${m[1]}`);
+    }, () => {})));
+    for (const x of [...c.sheets.map(e => e.thumbnail && `${e.slug}/${e.thumbnail}`), ...c.sessions.map(s => s.thumbnail)]) if (x) files.push(x);
+    try { const reg = await sw.ready; if (reg && reg.active) reg.active.postMessage({type: 'KEEP_DEMO', urls: [...new Set(files)].map(abs)}); } catch {}
   };
   const demoLoad = () => demoLoading || (demoLoading = (typeof fetch === 'function' ? demoGet('catalogue.json', true) : Promise.reject(new Error('no fetch')))
-    .then(c => { demoCat = demoCheck(c); demoWarm(demoCat); return demoCat; }, e => { demoLoading = null; throw e; }));
+    .then(c => { demoCat = demoCheck(c); demoWarm(demoCat).catch(() => {}); return demoCat; }, e => { demoLoading = null; throw e; }));
   // The banner leads to sign-up; with an account on this device (signed in, or a session kept for the remembered
   // backend, which the demo does not start), back to that account's notebooks.
   const demoKnown = () => !!(user || (backend && storedUser()));
