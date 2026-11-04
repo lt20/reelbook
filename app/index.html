@@ -953,7 +953,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   $('a-own').addEventListener('click', ev => { ev.preventDefault(); $('login-own-err').hidden = true; $('login-own-form').hidden = false; $('login-own-url').focus(); });
   $('login-own-cancel').addEventListener('click', () => { $('login-own-form').hidden = true; });
   $('a-hosted').addEventListener('click', ev => { ev.preventDefault(); $('login-own-form').hidden = true; selectBackend(hostedBackend()); });
-  $('s-reset').addEventListener('click', async () => { if (sb) await sb.auth.signOut(); ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
+  $('s-reset').addEventListener('click', async () => { if (!await signOutHere({force: true})) return; ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
 
   // ---------- auth ----------
   let mode = 'in', signupBackendChosen = false, authBusy = false;
@@ -977,7 +977,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     } catch (e) { if (client === sb) { err.textContent = e.message || 'Could not sign in.'; err.hidden = false; } }
     finally { authBusy = false; $('a-submit').disabled = !backend; }
   });
-  $('s-signout').addEventListener('click', async () => { await sb.auth.signOut(); location.hash = ''; });
+  $('s-signout').addEventListener('click', async () => { if (await signOutHere()) location.hash = ''; });
 
   // ---------- data ----------
   // v2Sessions: rows of the `sessions` table; inSessions: sheet slug -> those sessions; sessionsOk: false when the backend has no such table.
@@ -1024,7 +1024,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const loadThemes = async () => { themeRows = await readThemes(); setThemes(themeRows); saveCatalogue(); };
   const addTheme = async row => { touched(); const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { touched(); const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
-  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
+  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at,updated_at';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
   // L19, instant start. A key-value store in IndexedDB for the last catalogue and the sheets opened, per backend
   // and user (RS.catalogueCacheKey). None (private mode, an old browser, the test harness): reads give null and
@@ -1841,6 +1841,38 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   let notesNow = null;
   const noteQueues = new Map(); // '<user id>|<note key>' -> its last write (a stuck write never holds up another note or account)
   const flushNotes = () => { if (notesNow) notesNow.flush(); };
+  // Debt #30: signing out (Settings: Sign out, or another backend) leaves no note draft of the account on the device.
+  // The note being typed is saved first and this account's note writes are waited for (5 s at most); a draft still
+  // not stored then (offline, a failed save) is deleted only once the user agrees, else nothing changes. Drafts go
+  // only once the sign-out succeeded (Sign out refused by the server: still signed in, nothing deleted; another
+  // backend goes on anyway: the user agreed). One that appears meanwhile (another tab) is asked about again. A session
+  // revoked elsewhere keeps its drafts: they come back at the next sign-in of the same account.
+  const draftKeysOf = uid => {
+    const pre = 'rb.draft.' + uid + '.', out = [];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre)) out.push(k); } } catch {}
+    return out;
+  };
+  const signOutHere = async ({force = false} = {}) => {
+    if (!sb) return true;
+    const uid = user ? user.id : '';
+    if (uid) {
+      flushNotes();
+      // no typing meanwhile: a text typed now would make a draft after the clean-up (given back on No)
+      const ta = notesNow ? $('n-text') : null, ro = ta ? ta.readOnly : false; if (ta) ta.readOnly = true;
+      const runs = [...noteQueues].filter(([k]) => k.startsWith(uid + '|')).map(([, run]) => run);
+      if (runs.length) await Promise.race([Promise.all(runs), new Promise(ok => setTimeout(ok, 5000))]);
+      const left = draftKeysOf(uid), n = left.length;
+      if (n && typeof window.confirm === 'function' && !window.confirm(`${n === 1 ? 'A note is' : n + ' notes are'} not saved yet. Sign out and delete ${n === 1 ? 'it' : 'them'} from this device?`)) { if (ta) ta.readOnly = ro; return false; }
+      const res = await sb.auth.signOut().catch(error => ({error}));
+      if (res && res.error && !force) { console.warn('Sign-out failed:', res.error.message || res.error); if (ta) ta.readOnly = ro; return false; }
+      left.forEach(ls.del);
+      const late = draftKeysOf(uid); // typed while the sign-out was on its way (another tab): asked, never dropped silently
+      if (late.length && (typeof window.confirm !== 'function' || window.confirm('A note typed during sign-out is not saved. Delete it from this device?'))) late.forEach(ls.del);
+      return true;
+    }
+    await sb.auth.signOut().catch(() => {});
+    return true;
+  };
   const wireNotes = async key => {
     flushNotes();
     const ta = $('n-text'), st = $('n-status'), retry = $('n-retry');
@@ -2058,7 +2090,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   let edit = null;
   // L5: the session the shown sheet is opened from, {s, n, items} (n counted from 1 over `items`), else null.
   let seat = null;
-  const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
+  // at: the version the edit starts from (sessions.updated_at), the condition of its write (saveEdit)
+  const draftOf = s => ({slug: s.slug, at: s.updated_at || null, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
     items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose, was: it.dose, given: it.given}))});
   const editRows = () => edit.items.map((it, i) => {
     const sh = bySlug.get(it.slug), t = esc(sh ? sh.title : it.slug);
@@ -2545,8 +2578,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (theme === s.theme) { closeSheet(mdlg); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
-      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
-      s.theme = theme; saveCatalogue();
+      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug,updated_at'); if (error || !data || !data.length) throw error || new Error('no row');
+      s.theme = theme; stamp(s, data[0]); saveCatalogue();
       closeSheet(mdlg);
       const top = $('sheet-top');
       if (top && shownSession() === s) top.innerHTML = `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`; syncNav();
@@ -2576,6 +2609,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // ---------- compose sessions: « + New session », « Add to session », Edit mode, delete ----------
   // Every write checks it changed a row: RLS answers an empty result, not an error, for a row it hides.
   const oneRow = ({data, error}) => { if (error || !data || !data.length) throw error || new Error('no row'); return data[0]; };
+  // A session written from this tab takes the updated_at the write gave it: its next Edit starts from there (#36).
+  const stamp = (s, r) => { if (r && r.updated_at) s.updated_at = r.updated_at; };
   // Slugs a new session must not take: the user's sessions, and notes left by deleted sessions.
   const takenSlugs = () => new Set([...v2Sessions.map(s => s.slug), ...[...notesIndex].map(RS.sessionSlugOf).filter(Boolean)]);
   const createSession = async (theme, title, slugs) => {
@@ -2653,7 +2688,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     else { add = RS.addItem(s.items, e.slug); if (!add.added) return fail('This sheet is already in that session.'); }
     $('as-submit').disabled = true; err.hidden = true;
     try {
-      if (s) { touched(); oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
+      if (s) { touched(); const r = oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug,updated_at')); s.items = add.items; stamp(s, r); setSessions(v2Sessions); saveCatalogue(); }
       else s = await createSession(e.theme, title, [e.slug]);
       closeSheet(adlg);
       const top = $('sheet-top');
@@ -2669,11 +2704,41 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const row = {title: RS.keepOrClip(edit.title, edit.was.title, RS.MAX.title), format: RS.keepOrClip(edit.format, edit.was.format, RS.MAX.format), items: RS.cleanItems(edit.items)};
     if (!row.title) { err.textContent = 'Give the session a title.'; err.hidden = false; $('ed-title').focus(); return; }
     b.disabled = true; err.hidden = true;
+    const ed = edit;
     try {
-      touched(); oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
-      Object.assign(s, row); setSessions(v2Sessions); saveCatalogue(); edit = null;
+      // Debt #36: written only over the version the edit was opened on (updated_at unchanged): a tab left open never
+      // overwrites what was published or saved since. No version known (a catalogue cached before): written as before.
+      let q = sb.from('sessions').update(row).eq('slug', s.slug);
+      if (ed.at) q = q.eq('updated_at', ed.at);
+      touched(); const {data, error} = await q.select('slug,updated_at'); if (error) throw error;
+      if (!data || !data.length) {
+        if (!ed.at) throw new Error('no row');
+        if (edit !== ed) return;
+        // nothing written; the edits stay on screen (to copy) until Reload opens the new version
+        err.innerHTML = 'This session changed since you opened it. Reload to see the new version. <button class="btn ghost" type="button" id="ed-reload">Reload</button>';
+        err.hidden = false; return;
+      }
+      Object.assign(s, row); stamp(s, data[0]); setSessions(v2Sessions); saveCatalogue(); if (edit === ed) edit = null;
       showSession(s.slug, 'Saved.');
     } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; }
+  };
+  // Reload (after a refused save): the session as stored now, opened in Edit again; deleted meanwhile: its notebook.
+  const reloadEdit = async () => {
+    const ed = edit, err = $('ed-err'), b = $('ed-reload'); if (b) b.disabled = true;
+    try {
+      const {data, error} = await sb.from('sessions').select(SESSION_COLS).eq('slug', ed.slug).maybeSingle(); if (error) throw error;
+      if (edit !== ed) return;
+      const s = v2BySlug.get(ed.slug); touched();
+      if (!data || !s) {
+        setSessions(v2Sessions.filter(x => x.slug !== ed.slug)); saveCatalogue(); edit = null;
+        flashHome('This session was deleted meanwhile.'); location.hash = s ? s.theme : ''; return;
+      }
+      if (data.thumbnail) await signAll([data.thumbnail]).catch(() => {});
+      if (edit !== ed) return;
+      Object.assign(s, data); setSessions(v2Sessions); saveCatalogue();
+      edit = draftOf(s); showSession(s.slug);
+      const top = $('sheet-top'); if (top) top.innerHTML = '<p class="flash" role="status">This is the new version. Your changes were not saved.</p>';
+    } catch { if (edit === ed) { err.innerHTML = 'Could not reload it right now. Try again in a moment. <button class="btn ghost" type="button" id="ed-reload">Reload</button>'; err.hidden = false; } }
   };
   view.addEventListener('input', ev => {
     const t = ev.target; if (!edit || !t) return;
@@ -2752,6 +2817,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);
     else if ((b = at('[data-out]'))) { edit.items = RS.removeItem(edit.items, +b.dataset.out); renderRows(); }
     else if (at('#ed-save')) saveEdit();
+    else if (at('#ed-reload')) reloadEdit();
     else if (at('#ed-cancel')) { const slug = edit.slug; edit = null; showSession(slug); }
     else if (at('#ed-delete')) openDelete();
   };
