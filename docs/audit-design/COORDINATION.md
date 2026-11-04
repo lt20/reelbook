@@ -52,6 +52,26 @@ Third chantier (4 Nov, Laurent « go !! » on P5): **P5 (opening to tinkerers)**
 12. (4 Nov) Capture (L28) in two steps: « Paste link » (app only) merges as usual; the iOS shortcut (table +
     Edge Function) is a protected PR that Laurent deploys (`db push` + `supabase functions deploy add-link`).
 
+### Decisions of P6 (4 Nov afternoon, « OK recos » on the 8 questions of the launch plan, with Laurent's precisions)
+Source: plan https://claude.ai/artifact/SPyeG8Xg4DzE3LU9QFyFWt and landing mockup
+https://claude.ai/artifact/Jg6DhMxSeteiuse9VBp3o9 (copies in `docs/audit-design/mockups/p6-*.html`, images not
+committed: third-party frames).
+
+13. Language: FR/EN on the landing, sign-up, `#setup` and `#welcome` now (browser language, then the user's choice,
+    remembered). The rest of the app stays English (L35 later). Reopens decision 2 for those screens only.
+14. Hosting is asked explicitly at step 1 of the installation: two cards, Reelbook hosted preselected.
+15. Beta open to all, **50 seats**, 10 sign-ups per day; project-wide caps 10 GB of photos and 300 videos per day;
+    per-account limits unchanged (L29). **The counter starts at 14 taken (14/50)** — Laurent, 4 Nov. Applied by
+    default, to confirm: 14 is an offset counted inside the 50 (so the beta is full after 36 real sign-ups).
+16. Seats shown (« 14 places prises sur 50 »).
+17. Daily alert by ntfy sent by the database itself (pg_cron + pg_net), thresholds 70 % and 90 %.
+18. Inactive accounts: nothing is deleted; reconsider at 80 % full.
+19. Landing pictures: in the app (public repo, decision 4) the MMA example stays drawn until Laurent films; the dance
+    example uses Laurent's generated images (`app/assets/dance/`, fictional, never credited as TikTok frames).
+20. **After the 50th sign-up: a waiting list** (first name + email) that Laurent can read and export — Laurent, 4 Nov.
+    Personal data: the consent sentence and the privacy note paragraph are **to be validated by Laurent** (legal);
+    the PR that shows the form stays draft until then.
+
 ## Lots
 
 | Lot | What | Audit items | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
@@ -121,6 +141,23 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
 - L6: `supabase/schema.sql`, `app/index.html` (catalogue, sheet/session top, cards, home counter), `README.md` (schema note).
 - L7: `app/index.html` home, sheet/session bottom, `tools/nightly.sh`, `tools/rb.py`, `skill/reelbook/SKILL.md`, `tests/rb-*.py`.
 - L8: `app/index.html` home.
+
+### P6 (fourth chantier, 4 Nov): first launch
+
+| Lot | What | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
+|---|---|---|---|---|---|---|---|
+| L32 | Beta locks 2 3 4 + waiting list in the database — protected (schema) | M | no | — | N | `feat/p6-beta-locks` | to do |
+| L30 | Bilingual landing (mockup v2) + FR/EN for sign-up, `#setup`, `#welcome` | L | no | — | N | `feat/p6-landing` | to do |
+| L33 | Daily ntfy alert from the database — protected (schema) | S | no | L32 merged | O | `feat/p6-alert` | to do |
+| L31 | Hosting cards, seats, full state with the waiting-list form, refusal messages; `docs/hosted.md`, README | M | no | L30, L32 merged; consent text validated (decision 20) | O | `feat/p6-hosting` | to do |
+| L34 | iPhone captures FR/EN + business test for Laurent (local base, up to the 51st sign-up and the waiting list) | S | no | L31 | P | `test/p6-launch` | to do |
+| L35 | Later: whole app in French | L | — | decision 13 | — | — | later |
+
+Specs: `docs/audit-design/lots/L30.md` … `L34.md`. Ports: L30 8800, L31 8801, L32 8802, L33 8803, L34 8804.
+Files: L32 and L33 `supabase/schema.sql`, `tests/*schema*.cjs`, `docs/privacy.md`, `README.md` (schema note) — one
+after the other. L30 `app/index.html` (welcome/intro, auth, setup copy, new landing), `app/assets/**`, `app/sw.js`
+(shell list). L31 `app/index.html` (setup step 1, auth), `docs/hosted.md`, `README.md`. Another session has open
+PRs #70 (skill) and #71 (`app/index.html`, New row): expect a small merge in `app/index.html`.
 
 ## Open questions
 _(P0–P2 questions below were settled by the coordinator's arbitration comments in each PR: L4 dot before « 1 failed »

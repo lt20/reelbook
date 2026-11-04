@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reelbook premier lancement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Plan : le système de Reelbook (papier, bleu, corail, Barlow Condensed), une seule audace : la pellicule de nuit
+   qui raconte le parcours d'une vidéo jusqu'au carnet. Le reste est calme : texte, téléphones, tableaux. */
+:root{
+  --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd; --line-strong:#8f8a80;
+  --accent:#1f4fa3; --accent-ink:#fff; --tag:#e4eaf6; --coral:#c54b38; --coral-bg:#f8e4df;
+  --ok:#1f6b3a; --ok-bg:#e1f0e6; --warn:#8a5a12; --warn-bg:#f6ead3; --fight:#b4432f;
+  --night:#0e1730; --night-2:#16213f; --night-line:#2b3c6b; --night-ink:#e9ecf5; --night-muted:#9aa6c4; --spark:#ef6a52; --sky:#8fb0ee;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --phone-bg:var(--bg);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15171a; --paper:#1e2126; --ink:#eceae4; --muted:#a3a8b0; --line:#363a41; --line-strong:#6b7079;
+  --accent:#7fa6ea; --accent-ink:#0f1a30; --tag:#243149; --coral:#ef8a76; --coral-bg:#3b2320;
+  --ok:#8fd3a6; --ok-bg:#1d3326; --warn:#f0c77a; --warn-bg:#3a2f18; --fight:#e58a78; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15171a; --paper:#1e2126; --ink:#eceae4; --muted:#a3a8b0; --line:#363a41; --line-strong:#6b7079;
+  --accent:#7fa6ea; --accent-ink:#0f1a30; --tag:#243149; --coral:#ef8a76; --coral-bg:#3b2320;
+  --ok:#8fd3a6; --ok-bg:#1d3326; --warn:#f0c77a; --warn-bg:#3a2f18; --fight:#e58a78; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:400 17px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1;text-wrap:balance;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.prose{max-width:68ch}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- En-tête ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:26px;color:var(--accent);letter-spacing:.01em}
+.brand svg{width:30px;height:30px}
+.brand small{font:600 13px/1 var(--body);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
+.seg{display:inline-flex;border:1.5px solid var(--line-strong);border-radius:999px;padding:3px;gap:2px;background:var(--paper)}
+.seg button{font:700 13px/1 var(--body);letter-spacing:.06em;border:0;background:none;color:var(--muted);padding:7px 12px;border-radius:999px;cursor:pointer;min-height:32px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg-label{font-size:13px;color:var(--muted);margin-right:8px}
+
+.hero{padding:44px 0 28px}
+.eyebrow{font:700 13px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin:0 0 14px}
+.hero h1{font-size:clamp(46px,8.4vw,104px);font-weight:800;text-transform:uppercase;letter-spacing:-.01em;line-height:.88}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero .lead{font-size:20px;color:var(--muted);margin:22px 0 0;max-width:60ch}
+.answer{margin-top:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.answer div{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:14px 16px}
+.answer div.c{border-left-color:var(--coral)}
+.answer b{display:block;font-family:var(--display);font-size:21px;margin-bottom:4px}
+.answer p{margin:0;font-size:15.5px;color:var(--muted)}
+
+/* ---------- Pellicule ---------- */
+.reel{background:var(--night);color:var(--night-ink);margin:18px 0 0;position:relative}
+.reel-head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;padding:30px 0 6px}
+.reel-head h2{font-size:clamp(30px,4.2vw,46px);text-transform:uppercase;letter-spacing:.01em}
+.reel-head h2 span{color:var(--spark)}
+.reel-head p{margin:0;color:var(--night-muted);font-size:15px;max-width:44ch}
+.film-scroll{overflow-x:auto;padding:0 0 26px;scrollbar-color:var(--night-line) transparent}
+.film{position:relative;display:grid;grid-template-columns:repeat(5,minmax(196px,1fr));gap:0;min-width:1000px;padding:26px 0;
+  --holes:radial-gradient(circle at 50% 50%, var(--night) 0 4.5px, transparent 5px);}
+.film::before,.film::after{content:"";position:absolute;left:0;right:0;height:26px;background:#060c1d;
+  background-image:linear-gradient(90deg,transparent 0 6px,transparent 6px),repeating-linear-gradient(90deg,transparent 0 9px,#2a3556 9px 21px,transparent 21px 30px);
+  background-size:auto,30px 10px;background-position:0 0,0 8px;background-repeat:no-repeat,repeat-x;border-radius:2px}
+.film::before{top:0}.film::after{bottom:0}
+.frame{position:relative;padding:14px 12px 16px;border-left:1px solid var(--night-line);display:flex;flex-direction:column;gap:8px}
+.frame:first-child{border-left:0}
+.frame .ill{background:var(--night-2);border:1px solid var(--night-line);border-radius:10px;aspect-ratio:16/15;display:grid;place-items:center;overflow:hidden;transition:border-color .3s}
+.frame .ill svg{width:100%;height:100%;display:block}
+.frame .k{font:500 11px/1 var(--mono);color:var(--spark);letter-spacing:.04em}
+.frame h3{font-size:24px;font-weight:700;text-transform:uppercase;letter-spacing:.01em}
+.frame p{margin:0;font-size:14.5px;line-height:1.4;color:var(--night-muted)}
+.frame p code{font:500 12.5px var(--mono);color:var(--night-ink);background:#0a1126;padding:1px 4px;border-radius:4px}
+.frame .alt{font-size:12.5px;color:var(--night-muted);border-top:1px dashed var(--night-line);padding-top:7px;margin-top:auto}
+.playhead{position:absolute;top:3px;height:20px;width:3px;border-radius:2px;z-index:2;background:var(--spark);left:0;box-shadow:0 0 14px 2px rgba(239,106,82,.55);pointer-events:none;animation:play 12s linear infinite}
+.playhead::before{content:"";position:absolute;bottom:-9px;left:-5.5px;border:7px solid transparent;border-top:8px solid var(--spark)}
+@keyframes play{from{left:0}to{left:100%}}
+.frame{animation:lit 12s linear infinite}
+.frame:nth-child(2){animation-delay:-9.6s}.frame:nth-child(3){animation-delay:-7.2s}.frame:nth-child(4){animation-delay:-4.8s}.frame:nth-child(5){animation-delay:-2.4s}
+@keyframes lit{0%,19%{background:rgba(239,106,82,.07)}20%,100%{background:transparent}}
+/* animations internes aux images */
+.tap{transform-origin:center;transform-box:fill-box;animation:tap 2.4s ease-out infinite}
+@keyframes tap{0%{opacity:.9;transform:scale(.4)}70%,100%{opacity:0;transform:scale(1.8)}}
+.prog{animation:prog 6s linear infinite;transform-box:fill-box;transform-origin:left}
+@keyframes prog{from{transform:scaleX(.05)}to{transform:scaleX(1)}}
+.blink{animation:blink 1.1s steps(1) infinite}@keyframes blink{50%{opacity:0}}
+.tw{animation:tw 3s ease-in-out infinite}.tw:nth-of-type(2n){animation-delay:-1.5s}@keyframes tw{50%{opacity:.25}}
+.pop{animation:pop 6s ease-out infinite;opacity:.3}
+@keyframes pop{0%{opacity:.3}8%,85%{opacity:1}100%{opacity:.3}}
+.check{stroke-dasharray:30;animation:draw 6s ease-out infinite}@keyframes draw{0%,40%{stroke-dashoffset:30}60%,100%{stroke-dashoffset:0}}
+
+/* ---------- Sections ---------- */
+section.s{padding:64px 0 8px}
+.sh{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;align-items:baseline;margin-bottom:22px}
+.sh .n{font:800 64px/0.8 var(--display);color:var(--line-strong);grid-row:1/3}
+.sh h2{font-size:clamp(32px,4vw,46px);text-transform:uppercase}
+.sh p{margin:0;color:var(--muted);max-width:70ch}
+
+/* ---------- Téléphones ---------- */
+.phones{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px 22px;align-items:start;justify-items:center}
+.ph-wrap{width:100%;max-width:330px;display:flex;flex-direction:column;gap:12px}
+.ph-cap{display:flex;gap:10px;align-items:baseline}
+.ph-cap b{font:700 13px/1 var(--mono);color:var(--coral)}
+.ph-cap span{font:700 19px/1.1 var(--display);text-transform:uppercase}
+.phone{border:9px solid #111318;border-radius:40px;background:var(--phone-bg);overflow:hidden;box-shadow:0 1px 0 #2a2d34 inset,0 22px 40px -22px rgba(20,25,40,.45);position:relative}
+.sbar{display:flex;justify-content:space-between;align-items:center;padding:10px 22px 4px;font:600 12.5px/1 var(--body)}
+.sbar .isl{width:84px;height:22px;background:#111318;border-radius:20px}
+.scr{padding:10px 18px 22px;display:flex;flex-direction:column;gap:14px;font-size:15px}
+.scr .row{display:flex;justify-content:space-between;align-items:center}
+.wm{display:flex;align-items:center;gap:7px;font:700 22px/1 var(--display);color:var(--accent)}
+.wm svg{width:24px;height:24px}
+.seg.sm button{padding:5px 9px;font-size:11.5px;min-height:28px}
+.pill{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;font:700 12px/1 var(--body);letter-spacing:.03em;color:var(--coral);background:var(--coral-bg);padding:6px 10px;border-radius:999px}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--coral);animation:blink 1.6s steps(1) infinite}
+.scr h1{font-size:38px;font-weight:800;text-transform:uppercase;line-height:.9;letter-spacing:-.005em}
+.scr h2{font-size:28px;text-transform:uppercase}
+.scr .lead{margin:0;color:var(--muted);font-size:15px;line-height:1.45}
+.hint{font-size:13px;color:var(--muted);margin:0;line-height:1.4}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font:700 16px/1 var(--body);cursor:pointer;width:100%;padding:0 14px}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line-strong)}
+.btn.sm{min-height:36px;font-size:13.5px;width:auto}
+.btn.coral{background:var(--coral);color:#fff}
+.link{color:var(--accent);font-weight:600;font-size:14.5px;text-align:center;min-height:36px;display:flex;align-items:center;justify-content:center}
+
+/* mini-pellicule dans l'app */
+.mini{background:var(--night);border-radius:16px;padding:12px;display:grid;gap:0;position:relative;color:var(--night-ink)}
+.mini .st{display:grid;grid-template-columns:76px 1fr;gap:12px;align-items:center;padding:7px 0;position:relative}
+.mini .st + .st{border-top:1px dashed var(--night-line)}
+.mini .th{background:var(--night-2);border:1px solid var(--night-line);border-radius:8px;aspect-ratio:16/13;overflow:hidden}
+.mini .th svg{width:100%;height:100%;display:block}
+.mini b{font:700 17px/1.05 var(--display);text-transform:uppercase;display:block}
+.mini small{display:block;font-size:12px;color:var(--night-muted);margin-top:3px;line-height:1.3}
+.mini .st b::before{content:attr(data-n);color:var(--spark);margin-right:6px}
+.mini .dot{position:absolute;left:3px;top:14px;width:8px;height:8px;border-radius:50%;background:var(--spark);box-shadow:0 0 10px 2px rgba(239,106,82,.7);animation:down 8s ease-in-out infinite}
+@keyframes down{0%{top:14px}25%{top:30%}50%{top:55%}75%{top:80%}100%{top:94%}}
+
+/* installation */
+.step{display:grid;grid-template-columns:30px 1fr;gap:4px 12px}
+.step .bn{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:700 16px/1 var(--display)}
+.step .bn.done{background:var(--ok);color:#fff}
+.step h3{font-size:22px;text-transform:uppercase;align-self:center}
+.step .body{grid-column:2;display:flex;flex-direction:column;gap:10px}
+.rail{border-left:2px solid var(--line);margin-left:14px;padding-left:24px;margin-top:-6px;padding-top:2px}
+.card{border:1.5px solid var(--line);border-radius:14px;padding:12px;background:var(--paper);display:grid;gap:5px;text-align:left}
+.card.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--tag)}
+.card .t{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card b{font:700 18px/1.1 var(--display);text-transform:uppercase}
+.badge{font:700 10.5px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:6px;background:var(--tag);color:var(--accent);white-space:nowrap}
+.badge.muted{background:transparent;border:1px solid var(--line-strong);color:var(--muted)}
+.card p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.38}
+.seats{display:flex;align-items:center;gap:8px;font:600 12.5px/1 var(--body);color:var(--coral)}
+.seats .bar{flex:1;height:5px;border-radius:5px;background:var(--line);overflow:hidden}
+.seats .bar i{display:block;height:100%;width:26%;background:var(--coral)}
+.field{display:grid;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.field span{border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;background:var(--paper);color:var(--ink);font-weight:400;font-size:14.5px}
+.needs{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:14px}
+.needs li{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start}
+.needs li::before{content:"";width:16px;height:16px;border-radius:5px;border:1.5px solid var(--line-strong);margin-top:2px}
+pre.cmd{margin:0;background:#11151d;color:#e6e9ef;border-radius:10px;padding:10px 11px;font:500 11.5px/1.45 var(--mono);white-space:pre-wrap;word-break:break-all}
+pre.cmd .p{color:#ef8a76}
+.toggle{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--paper)}
+.sw{width:42px;height:25px;border-radius:20px;background:var(--ok);position:relative;flex:none}
+.sw::after{content:"";position:absolute;right:3px;top:3px;width:19px;height:19px;border-radius:50%;background:#fff}
+
+/* au quotidien */
+.day{display:grid;gap:12px}
+.dline{display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:start}
+.dline .ic{width:42px;height:42px;border-radius:12px;background:var(--tag);color:var(--accent);display:grid;place-items:center}
+.dline .ic svg{width:24px;height:24px}
+.dline b{font:700 18px/1.1 var(--display);text-transform:uppercase;display:block}
+.dline p{margin:2px 0 0;font-size:13.5px;color:var(--muted);line-height:1.38}
+.dline code{font:500 12px var(--mono);background:var(--tag);color:var(--accent);padding:1px 4px;border-radius:4px}
+.qchip{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font:600 12px/1 var(--body);background:var(--warn-bg);color:var(--warn);padding:5px 8px;border-radius:999px}
+.sheet{border:1px solid var(--line);border-radius:14px;background:var(--paper);overflow:hidden;margin-top:6px}
+.sheet .strip{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:var(--line)}
+.sheet .strip div{background:#e9e5dc;aspect-ratio:3/4;position:relative}
+:root[data-theme="dark"] .sheet .strip div{background:#2a2e35}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .sheet .strip div{background:#2a2e35}}
+.sheet .strip svg{width:100%;height:100%;display:block;color:var(--ink)}
+.sheet .strip i{position:absolute;left:3px;top:2px;font:700 9px/1 var(--mono);color:var(--muted);font-style:normal}
+.sheet .in{padding:9px 11px 11px;display:grid;gap:4px}
+.sheet .meta{font:700 10.5px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--fight)}
+.sheet .ti{font:700 19px/1.05 var(--display)}
+.sheet .kp{font-size:12.5px;color:var(--muted);line-height:1.35;border-left:3px solid var(--fight);padding-left:7px}
+
+/* états limites */
+.state{border-radius:14px;padding:13px;display:grid;gap:7px;border:1px solid var(--line);background:var(--paper)}
+.state b{font:700 19px/1.1 var(--display);text-transform:uppercase}
+.state p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.4}
+.state.warn{background:var(--warn-bg);border-color:transparent}.state.warn b{color:var(--warn)}
+.state.full{border:1.5px dashed var(--coral)}
+.state .acts{display:flex;gap:8px;flex-wrap:wrap}
+.toast{background:var(--ink);color:var(--bg);border-radius:12px;padding:11px 12px;font-size:13.5px;line-height:1.38;display:grid;gap:3px}
+.toast b{font:700 15px/1.1 var(--body)}
+.disabled{opacity:.55}
+.note{font-size:13.5px;color:var(--muted);line-height:1.45;border-top:1px solid var(--line);padding-top:10px}
+.note b{color:var(--ink)}
+
+/* ---------- Plan ---------- */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.box h3{font-size:24px;text-transform:uppercase;margin-bottom:10px}
+.box ol,.box ul{margin:0;padding-left:20px;display:grid;gap:7px}
+.box p{margin:0 0 8px}
+.box .tag{display:inline-block;font:700 11px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:6px;margin-bottom:10px}
+.tag.now{background:var(--warn-bg);color:var(--warn)}.tag.next{background:var(--ok-bg);color:var(--ok)}
+
+.locks{display:grid;gap:10px;counter-reset:lk}
+.lock{display:grid;grid-template-columns:62px 1fr auto;gap:16px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.lock .lv{font:800 40px/0.9 var(--display);color:var(--accent)}
+.lock.zero{border:2px solid var(--coral)}.lock.zero .lv{color:var(--coral)}
+.lock b{font:700 21px/1.1 var(--display);text-transform:uppercase;display:block}
+.lock p{margin:3px 0 0;font-size:15px;color:var(--muted)}
+.lock .st{font:700 11px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:6px;white-space:nowrap}
+.st.ok{background:var(--ok-bg);color:var(--ok)}.st.new{background:var(--tag);color:var(--accent)}.st.you{background:var(--coral-bg);color:var(--coral)}
+@media (max-width:560px){.lock{grid-template-columns:44px 1fr}.lock .st{grid-column:2;justify-self:start}.lock .lv{font-size:32px}}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:15px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:700 12px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td small{display:block;color:var(--muted);font-size:13px}
+.verdict{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.verdict div{border-radius:14px;padding:14px 16px}
+.verdict .g{background:var(--ok-bg)}.verdict .w{background:var(--warn-bg)}
+.verdict b{font:700 20px/1.1 var(--display);text-transform:uppercase;display:block;margin-bottom:4px}
+.verdict .g b{color:var(--ok)}.verdict .w b{color:var(--warn)}
+.verdict p{margin:0;font-size:15px}
+
+.lots{display:grid;gap:10px}
+.lot{display:grid;grid-template-columns:70px 1fr auto;gap:16px;align-items:start;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+.lot .id{font:800 26px/1 var(--display);color:var(--accent)}
+.lot b{font:700 20px/1.1 var(--display);text-transform:uppercase;display:block}
+.lot p{margin:4px 0 0;font-size:14.5px;color:var(--muted)}
+.lot .meta{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.lot .meta span{font:700 11px/1 var(--body);letter-spacing:.05em;text-transform:uppercase;padding:5px 7px;border-radius:6px;background:var(--bg);border:1px solid var(--line);white-space:nowrap}
+.lot .meta .prot{background:var(--coral-bg);color:var(--coral);border-color:transparent}
+.lot.later{opacity:.75;border-style:dashed}
+@media (max-width:560px){.lot{grid-template-columns:1fr}.lot .meta{justify-content:flex-start}}
+
+.decide{display:grid;gap:10px;counter-reset:q}
+.q{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:15px 18px;display:grid;grid-template-columns:40px 1fr;gap:4px 14px}
+.q .qn{font:800 34px/0.9 var(--display);color:var(--coral);grid-row:1/4}
+.q b{font-size:16.5px}
+.q .reco{font-size:15px}
+.q .reco::before{content:"Reco · ";font-weight:700;color:var(--ok)}
+.q .alt{font-size:14px;color:var(--muted)}
+.callout{margin-top:14px;border:2px solid var(--coral);border-radius:14px;padding:14px 18px;background:var(--coral-bg)}
+.callout b{color:var(--coral);font-family:var(--display);font-size:20px;text-transform:uppercase;display:block;margin-bottom:4px}
+.callout p{margin:0}
+footer{padding:48px 0 60px;color:var(--muted);font-size:14px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+  .playhead{display:none}.pop{opacity:1}.check{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg>reelbook<small>plan + maquette · 4 nov. 2026</small></div>
+    
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">Premier lancement · refonte de l'intro (L25) et de #welcome</p>
+    <h1>Premier<br>lancement,<br>le <em>plan</em>.</h1>
+    <p class="lead">La page d'accueil a sa propre maquette (lien ci-dessous). Ici : où l'on demande l'hébergement, les cinq verrous de la bêta gratuite chiffrés sur tes mesures, les lots et les questions à trancher.</p>
+    <div class="answer">
+      <div><b>Hébergement : où on le demande</b><p>Aujourd'hui, nulle part : « Create an account » part sur ton Supabase, le lien « Use my own Supabase » est caché sous le formulaire. Proposé : à l'étape 1 de l'installation, deux cartes, Reelbook présélectionné.</p></div>
+      <div class="c"><b>Facture : le vrai verrou</b><p>L'IA ne te coûte rien (chacun utilise son abonnement Claude). Le seul risque est Supabase. Le plafond de dépenses de l'org garantit l'absence de dépassement facturé : à vérifier par toi en premier.</p></div>
+      <div><b>8 questions à trancher</b><p>En bas de page, chacune avec sa reco. « OK recos » suffit pour lancer les 5 lots.</p></div>
+    </div>
+  </header>
+</div>
+
+<div class="wrap">
+<section class="s" aria-labelledby="m-h">
+  <div class="sh"><span class="n">1</span><h2 id="m-h">La page d'accueil</h2><p>Refaite le 4 novembre après ton retour : la promesse parle de ce que l'utilisateur y gagne, et le skill est expliqué tel que tu le décris.</p></div>
+  <div class="callout" style="border-color:var(--accent);background:var(--tag)"><b style="color:var(--accent)">Maquette v2 : <a href="https://claude.ai/artifact/Jg6DhMxSeteiuse9VBp3o9">Reelbook accueil v2</a></b><p>Une vraie page, bilingue (FR/EN, détecté depuis le navigateur), à ouvrir sur ordinateur et sur téléphone. Elle s'articule ainsi : la promesse et une fiche réelle qu'on fait défiler image par image, trois bénéfices (tout au même endroit, retrouvable, des séances), le schéma du skill, l'installation, puis le quotidien.</p></div>
+</section>
+
+<!-- ===== Hébergement ===== -->
+<section class="s" aria-labelledby="h-h">
+  <div class="sh"><span class="n">2</span><h2 id="h-h">Le choix de l'hébergement</h2><p>Ta question : à quel moment on demande. Réponse courte : aujourd'hui jamais en clair, demain à l'étape 1 de l'installation.</p></div>
+  <div class="two">
+    <div class="box"><span class="tag now">Aujourd'hui (L25, mergé #58)</span><h3>Implicite</h3>
+      <ol><li>L'intro propose « Create an account » et « Sign in ».</li><li>« Create an account » sélectionne d'office le backend hébergé : ton projet <code>reelbook</code>.</li><li>« Use my own Supabase » est un petit lien sous le formulaire. L'écran à deux cartes (<code>#setup</code>) n'est plus atteint depuis l'intro.</li></ol>
+      <p style="margin-top:10px;color:var(--muted);font-size:15px">Conséquence : un nouveau venu ne sait pas que ses fiches vivent chez toi, ni qu'il a une limite.</p></div>
+    <div class="box"><span class="tag next">Proposé</span><h3>Explicite, à l'étape 1</h3>
+      <ol><li>Deux cartes au-dessus du formulaire d'inscription : « Chez Reelbook » (présélectionné, limites écrites dessus) et « Sur mon Supabase » (avancé).</li><li>Les places restantes s'affichent sur la carte. À zéro, la carte se grise et la seconde devient le chemin (écran D).</li><li>« Sign in » ne demande rien : il retrouve le backend mémorisé, comme aujourd'hui.</li><li>Settings garde « Change backend ».</li></ol></div>
+  </div>
+</section>
+
+<!-- ===== Garde-fous ===== -->
+<section class="s" aria-labelledby="g-h">
+  <div class="sh"><span class="n">3</span><h2 id="g-h">Les garde-fous de la bêta</h2><p>Cinq verrous, du plus fort au plus fin. Le verrou 0 seul empêche une facture surprise ; les autres empêchent d'atteindre les limites de ton offre, au-delà desquelles Supabase restreint le service.</p></div>
+  <div class="locks">
+    <div class="lock zero"><span class="lv">0</span><div><b>Plafond de dépenses de l'org</b><p>Le « spend cap » de l'offre Pro, actif par défaut : au-delà des quotas inclus, Supabase restreint au lieu de facturer. Il ne couvre pas le calcul (compute) de chaque projet, déjà payé pour <code>reelbook</code> depuis le 06/10.</p></div><span class="st you">À vérifier par toi</span></div>
+    <div class="lock"><span class="lv">1</span><div><b>Par compte</b><p>10 vidéos par jour, 300 fiches, 200 Mo de photos. La base refuse, quel que soit le client.</p></div><span class="st ok">Existe (L29)</span></div>
+    <div class="lock"><span class="lv">2</span><div><b>Places bêta</b><p>50 comptes au plus, 10 inscriptions par jour au plus (contre une vague de robots). La base refuse l'inscription suivante ; une fonction publique donne les places restantes à l'app.</p></div><span class="st new">Nouveau</span></div>
+    <div class="lock"><span class="lv">3</span><div><b>Plafonds globaux</b><p>10 Go de photos et 300 vidéos par jour pour tout le projet, ajoutés aux contrôles existants. Ton compte et les lignes d'exception en sont exclus.</p></div><span class="st new">Nouveau</span></div>
+    <div class="lock"><span class="lv">4</span><div><b>Interrupteur</b><p>Une ligne de réglages : inscriptions fermées, envois en pause. Une commande SQL pour couper, une pour rouvrir. La lecture des fiches continue.</p></div><span class="st new">Nouveau</span></div>
+    <div class="lock"><span class="lv">5</span><div><b>Alerte</b><p>Chaque jour à 8 h, la base compare l'usage aux plafonds et t'envoie une notification ntfy à 70 % puis à 90 %. Fonctionne Mac éteint.</p></div><span class="st new">Nouveau</span></div>
+  </div>
+
+  <h3 style="font-size:28px;text-transform:uppercase;margin:34px 0 12px">Le pire cas, chiffré</h3>
+  <p class="prose" style="margin:0 0 14px;color:var(--muted)">Mesures du 04/11 : 113 fiches en ligne pour 65 Mo de photos, soit 0,58 Mo par fiche ; HTML moyen de 7,7 Ko (45 fiches de <code>work/</code>). Quotas Pro tirés de sources tierces de 2026, qui divergent sur le trafic sortant : à relire sur la page de tarifs de Supabase.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Ressource</th><th>Aujourd'hui (mesuré)</th><th>Bêta pleine, chaque compte au maximum</th><th>Inclus dans Pro (toute l'org)</th></tr></thead>
+    <tbody>
+      <tr><td><b>Photos</b></td><td class="r">65 Mo</td><td class="r">50 × 200 Mo = 10 Go<small>borné par les verrous 1 et 3</small></td><td class="r">100 Go<small>partagés par tes 4 projets</small></td></tr>
+      <tr><td><b>Base de données</b></td><td class="r">≈ 1 Mo de HTML</td><td class="r">50 × 300 × 7,7 Ko ≈ 116 Mo</td><td class="r">8 Go</td></tr>
+      <tr><td><b>Trafic sortant</b><small>photos vues dans l'app</small></td><td class="r">0,58 Mo par fiche ouverte</td><td class="r">50 × 40 fiches/jour × 30 j ≈ 35 Go/mois<small>hypothèse haute, non bornée par les verrous</small></td><td class="r">200 à 250 Go/mois</td></tr>
+      <tr><td><b>Comptes actifs</b></td><td class="r">1</td><td class="r">50</td><td class="r">100 000</td></tr>
+      <tr><td><b>Claude (IA)</b></td><td class="r">0 €</td><td class="r">0 €<small>chacun tourne sur son abonnement</small></td><td class="r">—</td></tr>
+    </tbody>
+  </table></div>
+  <div class="verdict">
+    <div class="g"><b>Plafond de dépenses actif</b><p>Coût en plus de ce que tu payes déjà : 0 €. Le pire cas reste à un tiers du trafic inclus et à un dixième du stockage.</p></div>
+    <div class="w"><b>Plafond désactivé</b><p>Le seul poste non borné est le trafic sortant : un script qui télécharge en boucle. À 0,09 $/Go, 300 € demandent environ 3,5 To d'abus. Improbable, mais seul le verrou 0 l'empêche.</p></div>
+  </div>
+</section>
+
+<!-- ===== Lots ===== -->
+<section class="s" aria-labelledby="l-h">
+  <div class="sh"><span class="n">4</span><h2 id="l-h">Le plan de livraison</h2><p>Orchestration comme pour P5 : un agent par lot, en worktree, PR draft, revue Codex. Les lots protégés (schéma) attendent ton <code>db push</code> ; L30 et L31 ne mergent qu'après, pour ne pas annoncer des places que la base ne compte pas encore.</p></div>
+  <div class="lots">
+    <div class="lot"><span class="id">L32</span><div><b>Verrous 2, 3, 4 dans la base</b><p>Table de réglages à une ligne (places, plafonds, interrupteurs), refus à l'inscription, plafonds globaux dans les déclencheurs existants, fonction publique des places restantes. Migration additive, exemptions pour ton compte.</p></div><div class="meta"><span>M</span><span class="prot">Protégé · db push par toi</span></div></div>
+    <div class="lot"><span class="id">L33</span><div><b>Alerte quotidienne ntfy</b><p>Tâche planifiée dans la base (pg_cron + pg_net), seuils 70 % et 90 %, sujet ntfy dédié rangé hors de portée des clients.</p></div><div class="meta"><span>S</span><span class="prot">Protégé · db push par toi</span></div></div>
+    <div class="lot"><span class="id">L30</span><div><b>Accueil bilingue et schéma</b><p>Nouvelle page d'accueil (maquette v2) : lecteur de fiche, bénéfices, schéma du skill, installation, quotidien ; dictionnaire FR/EN pour l'accueil, l'inscription, <code>#setup</code> et <code>#welcome</code>, détection de la langue du navigateur, choix mémorisé, animations respectant le mouvement réduit.</p></div><div class="meta"><span>L</span><span>App</span><span>après L32</span></div></div>
+    <div class="lot"><span class="id">L31</span><div><b>Cartes d'hébergement et états limites</b><p>Étape 1 à deux cartes, places restantes, écran D et les messages de refus en FR/EN. Mise à jour de <code>docs/hosted.md</code> et du README.</p></div><div class="meta"><span>M</span><span>App + doc</span><span>après L32</span></div></div>
+    <div class="lot"><span class="id">L34</span><div><b>Captures et test métier</b><p>Captures iPhone FR et EN (tests/e2e), puis un test métier pour toi : inscription d'un compte de test jusqu'au refus de la 51e place sur une base locale, étapes et valeur attendue écrites dans Notion.</p></div><div class="meta"><span>S</span><span>Vérif</span></div></div>
+    <div class="lot later"><span class="id">L35</span><div><b>Plus tard : toute l'app en français</b><p>Carnets, fiches, réglages, file : environ 3 400 lignes de <code>index.html</code> à passer au dictionnaire. Attend ta décision (question 1).</p></div><div class="meta"><span>L</span><span>À trancher</span></div></div>
+  </div>
+</section>
+
+<!-- ===== À trancher ===== -->
+<section class="s" aria-labelledby="q-h">
+  <div class="sh"><span class="n">5</span><h2 id="q-h">À trancher (8)</h2><p>« OK recos » valide les huit d'un coup.</p></div>
+  <div class="decide">
+    <div class="q"><span class="qn">1</span><b>Langue : jusqu'où le français ?</b><span class="reco">FR/EN sur l'accueil, l'inscription et l'installation maintenant, détecté puis mémorisé ; le reste de l'app reste en anglais (L35 plus tard). Rouvre ta décision 2 du 03/11, à ta demande.</span><span class="alt">Autre : toute l'app tout de suite (lot L, plusieurs jours).</span></div>
+    <div class="q"><span class="qn">2</span><b>Où demander l'hébergement ?</b><span class="reco">À l'étape 1 de l'installation, deux cartes, Reelbook présélectionné.</span><span class="alt">Autre : garder le lien discret sous le formulaire (état actuel).</span></div>
+    <div class="q"><span class="qn">3</span><b>Accès à la bêta</b><span class="reco">Ouvert à tous jusqu'à 50 places, sans liste d'attente.</span><span class="alt">Autres : code d'invitation que tu distribues ; liste d'attente (collecte d'e-mails, donc un texte RGPD à écrire).</span></div>
+    <div class="q"><span class="qn">4</span><b>Les chiffres</b><span class="reco">50 comptes · 10 inscriptions par jour · 10 Go de photos et 300 vidéos par jour pour tout le projet · limites par compte inchangées.</span><span class="alt">Autre : 20 comptes pour une première vague plus serrée.</span></div>
+    <div class="q"><span class="qn">5</span><b>Afficher les places restantes ?</b><span class="reco">Oui, sur l'accueil et sur la carte (« 37 places sur 50 ») : honnête, et ça donne envie de s'inscrire.</span><span class="alt">Autre : n'afficher que « Bêta gratuite », et « complète » le moment venu.</span></div>
+    <div class="q"><span class="qn">6</span><b>Canal de l'alerte</b><span class="reco">ntfy envoyé par la base elle-même (marche Mac éteint).</span><span class="alt">Autre : contrôle dans <code>nightly.sh</code> sur ton Mac, sans extension à activer.</span></div>
+    <div class="q"><span class="qn">7</span><b>Comptes inactifs</b><span class="reco">Ne rien supprimer : tu libères une place à la main si besoin ; on en reparle à 80 % de remplissage.</span><span class="alt">Autre : purge auto après 60 jours sans activité (suppression de données, texte légal à prévoir).</span></div>
+    <div class="q"><span class="qn">8</span><b>Les photos de l'accueil</b><span class="reco">La maquette montre les captures du reel de Natan Levy (ta fiche). Avant la mise en ligne, tu filmes une technique et on remplace les photos, comme pour la démo (décision 11).</span><span class="alt">Autre : un schéma dessiné, sans photo réelle (moins convaincant).</span></div>
+  </div>
+  <div class="callout"><b>Point : action pour toi, sans décision</b><p>Vérifier que le plafond de dépenses (spend cap) est actif sur l'org Side_projects. C'est le verrou 0, et c'est le seul qui protège du trafic sortant.</p></div>
+</section>
+
+<footer>Reelbook · plan et maquette, rien n'est codé. Rédigé le 4 novembre 2026 à partir de <code>app/index.html</code> (intro L25, #welcome), <code>supabase/schema.sql</code> (quotas L29) et des mesures de <code>work/</code>.</footer>
+</div>
+
+</body>
+</html>
