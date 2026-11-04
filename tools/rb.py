@@ -11,8 +11,11 @@
                                 its line also has redo_of, {"sheets": [slugs], "sessions": [slugs]} published
                                 from that URL (source.url), the slugs to publish over
     rb.py claim <id>            mark a request as processing (processed_at = claim time until done/error)
-    rb.py publish <dir>         sheet folder: upload <dir>/img/* and upsert the sheet (<dir>/meta.json + <dir>/index.html)
-                                session folder: publish each exercise sheet sub-folder, then upsert the session
+    rb.py publish <dir> [--request <id>]
+                                sheet folder: upload <dir>/img/* and upsert the sheet (<dir>/meta.json + <dir>/index.html)
+                                session folder: publish each exercise sheet sub-folder, then upsert the session.
+                                A backend with quotas (L29) may refuse a new sheet or photo: the limit is said in plain
+                                words and, with --request, that request goes to error with the same message
     rb.py done <id> --slug S    close a request once its sheet or session is published
     rb.py error <id> --note T   flag a request that could not be processed (a « Redo: » note keeps its first
                                 line, T goes after it: Retry in the app queues the correction again)
@@ -218,14 +221,16 @@ def cmd_done(args):
     if len(args) < 3 or args[1] != "--slug": die("usage: rb.py done <id> --slug <slug>")
     _patch_request(session(), args[0], {"status": "done", "slug": args[2], "processed_at": now()})
 
-def cmd_error(args):
-    if len(args) < 3 or args[1] != "--note": die("usage: rb.py error <id> --note <text>")
-    cfg, note = session(), " ".join(args[2:])
+def _error_request(cfg, rid, note):
     # a correction keeps its « Redo: … » line first: the app shows the error, and Retry queues the instruction again
-    was = rest(cfg, "GET", "requests", params={"id": f"eq.{args[0]}", "select": "note"}) or []
+    was = rest(cfg, "GET", "requests", params={"id": f"eq.{rid}", "select": "note"}) or []
     redo = str((was[0].get("note") if was else "") or "").split("\n")[0]
     if redo.startswith("Redo:"): note = f"{redo}\n{note}"
-    _patch_request(cfg, args[0], {"status": "error", "note": note, "processed_at": now()})
+    _patch_request(cfg, rid, {"status": "error", "note": note, "processed_at": now()})
+
+def cmd_error(args):
+    if len(args) < 3 or args[1] != "--note": die("usage: rb.py error <id> --note <text>")
+    _error_request(session(), args[0], " ".join(args[2:]))
 
 def now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -414,6 +419,43 @@ def _check_durations(cfg, sheets):
         if m["slug"] in old: print(f"rb: warning: {msg}; published anyway, the sheet existed before this rule", file=sys.stderr)
         else: die(msg)
 
+# ---------------------------------------------------------------------------
+# Quotas (L29): a shared backend limits each account (supabase/schema.sql, « Quotas per account »). The database
+# refuses with « quota: 300 sheets » or « quota: 200 MB of photos » (SQL P0001); a storage server that hides the
+# message behind a bare refusal is read through my_quota().
+# ---------------------------------------------------------------------------
+
+QUOTA_RE = re.compile(r"quota: ([^\"\\\n]+)")
+REQUEST_ID = None   # set by `publish --request <id>`: the request a quota refusal flags
+
+def _quota_in(body):
+    """The limit named by a quota refusal (« 300 sheets »), or None."""
+    m = QUOTA_RE.search(str(body or ""))
+    return m.group(1).strip().rstrip(".") if m else None
+
+def _photo_quota_reached(cfg):
+    """« 200 MB of photos » when my_quota() says the account's photos fill its limit; None otherwise (or no quotas)."""
+    try:
+        q = rest(cfg, "POST", "rpc/my_quota", {}, tolerate=(400, 401, 403, 404))
+    except RbHTTPError:
+        return None
+    if not isinstance(q, dict) or not isinstance(q.get("max_storage_mb"), int): return None
+    return f"{q['max_storage_mb']} MB of photos" if (q.get("storage_bytes") or 0) >= q["max_storage_mb"] * 1048576 else None
+
+def quota_message(limit):
+    """What the user reads when a limit refuses a publish: which limit, what to do, how to ask for more."""
+    what = ("The count starts again at midnight UTC." if limit.endswith("per day") else
+            "Delete sheets you no longer need (`rb.py delete <slug>`) to make room.")
+    return (f"quota reached on this backend: {limit} for this account. {what} For a higher limit, ask whoever runs this "
+            "backend (the hosted one: open an issue at https://github.com/lt20/reelbook/issues). On your own Supabase "
+            "project, lift it with one insert: see « Limits on a shared backend » in the README.")
+
+def _quota_stop(cfg, limit):
+    msg = quota_message(limit)
+    if REQUEST_ID:
+        _error_request(cfg, REQUEST_ID, msg)
+    die(msg)
+
 def _publish_sheet(cfg, d, meta):
     slug = meta["slug"]
     n, img_d = 0, d / "img"
@@ -422,7 +464,13 @@ def _publish_sheet(cfg, d, meta):
             if f.suffix.lower() not in IMG_EXT: continue
             ctype = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
             path = f"{cfg['user_id']}/{slug}/img/{f.name}"
-            http("POST", f"{cfg['url']}/storage/v1/object/sheets/{path}", hdr(cfg, {"Content-Type": ctype, "x-upsert": "true"}), f.read_bytes(), raw=True)
+            url = f"{cfg['url']}/storage/v1/object/sheets/{path}"
+            try:
+                http("POST", url, hdr(cfg, {"Content-Type": ctype, "x-upsert": "true"}), f.read_bytes(), raw=True, tolerate=(400, 403, 500))
+            except RbHTTPError as e:
+                limit = _quota_in(e.body) or (_photo_quota_reached(cfg) if e.code in (400, 403) else None)
+                if limit: _quota_stop(cfg, limit)
+                die(f"POST {url} → {e.code}: {e.body}")
             n += 1
     row = {"slug": slug, "kind": "sheet", "theme": meta["theme"], "group": meta["group"], "title": meta["title"],
            "summary": meta.get("summary", ""), "duration": meta.get("duration", ""), "thumbnail": meta.get("thumbnail", "img/thumb.jpg"),
@@ -436,6 +484,8 @@ def _publish_sheet(cfg, d, meta):
             out = post(row, (400,))
             break
         except RbHTTPError as e:
+            limit = _quota_in(e.body)
+            if limit: _quota_stop(cfg, limit)
             # a backend not migrated yet (PostgREST PGRST204, unknown column): the sheet still goes out without it
             col = next((c for c in OPTIONAL_COLUMNS if c in row and _no_column(e, c)), None)
             if not col: die(f"POST sheets → {e}")
@@ -531,7 +581,13 @@ def _publish_session(d, meta):
     _drop_v1_sessions(cfg, (meta.get("source") or {}).get("url"))
 
 def cmd_publish(args):
-    if not args: die("usage: rb.py publish <dir>")
+    global REQUEST_ID
+    args = list(args)
+    if "--request" in args:
+        i = args.index("--request")
+        if i + 1 >= len(args): die("usage: rb.py publish <dir> [--request <id>]")
+        REQUEST_ID = args[i + 1]; del args[i:i + 2]
+    if len(args) != 1: die("usage: rb.py publish <dir> [--request <id>]")
     d = pathlib.Path(args[0])
     meta_p = d / "meta.json"
     if not meta_p.exists(): die(f"{d} needs meta.json")
