@@ -372,9 +372,28 @@
     return {exercises: lists.length, sets: lists.reduce((a, l) => a + l.length, 0)};
   };
 
+  // ---------- content language (L1 for sheets, L22 for sessions) ----------
+  // The interface stays English; only the headings the app draws inside a session follow its language. A text is
+  // French when it holds at least three distinct common French words (« l' », « d' »… stripped), else English.
+  const FR_WORDS = new Set(['le', 'la', 'les', 'des', 'du', 'un', 'une', 'et', 'avec', 'pour', 'dans', 'sur', 'est', 'au', 'aux', 'sans', 'puis', 'vers']);
+  const isFrench = text => new Set(String(text || '').toLowerCase().split(/[^a-zàâäçéèêëîïôöùûüœ']+/)
+    .map(w => w.replace(/^[a-z]'/, '')).filter(w => FR_WORDS.has(w))).size >= 3;
+  // A session's language, from its own text: title, why, key points, format.
+  const sessionLang = s => {
+    const o = s || {}, kp = Array.isArray(o.key_points) ? o.key_points.filter(k => typeof k === 'string') : [];
+    return isFrench([o.title, o.why, ...kp, o.format].filter(v => typeof v === 'string').join(' \n ')) ? 'fr' : 'en';
+  };
+  // The headings drawn inside a session page and the player, by language; an unknown language reads English.
+  const HEADINGS = {fr: {'Why': 'Pourquoi', 'Key points': 'Points clés', 'Format': 'Format', 'Exercises': 'Exercices', 'Dose': 'Dose', 'Rest': 'Repos', 'Sets': 'Séries'}};
+  const sessionHeading = (heading, lang) => {
+    const d = Object.prototype.hasOwnProperty.call(HEADINGS, lang) ? HEADINGS[lang] : null;
+    return d && Object.prototype.hasOwnProperty.call(d, heading) ? d[heading] : heading;
+  };
+
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
     catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel,
-    setCount, restRemaining, restClock, cleanChecks, checksOf, fitChecks, playTally};
+    setCount, restRemaining, restClock, cleanChecks, checksOf, fitChecks, playTally,
+    isFrench, sessionLang, sessionHeading};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

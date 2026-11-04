@@ -206,6 +206,8 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .lead{font-size:var(--fs-md);margin:0 0 14px;max-width:34em}
 .kit{display:flex;gap:var(--s-2);flex-wrap:wrap;margin:0 0 28px}
 .kit span{background:var(--tag);color:var(--ink);border-radius:var(--r-pill);padding:var(--s-1) var(--s-3);font-size:var(--fs-sm);font-weight:600}
+.kit-k{font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:var(--s-1)}
+.vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 blockquote{margin:var(--s-3) 0 0;padding:10px 14px;border-left:3px solid var(--accent);color:var(--muted);font-style:italic}
 blockquote cite{display:block;font-style:normal;font-size:var(--fs-xs);margin-top:var(--s-1)}
 .dose{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 var(--s-2)}
@@ -461,6 +463,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 .pl-one input:checked+span::before{content:"✓ "}
 .pl-set input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .pl-restk{margin:0;font:700 var(--fs-md)/1.1 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.pl-restk.pl-dosek{color:var(--muted)}
 .pl-dose.pl-rest{font-size:6rem;color:var(--accent);margin:0 0 var(--s-2)}
 .pl-restb{display:flex;gap:var(--s-2);margin:0 0 14px}
 .pl-restb .btn{flex:1;min-height:52px;padding:10px var(--s-2);font-size:var(--fs-md);border-radius:14px}
@@ -792,7 +795,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=7"></script>
-<script src="sessions.js?v=9"></script>
+<script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
 <script>
 (() => {
@@ -1147,7 +1150,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}
       <img src="${esc(thumbUrl)}" alt="" loading="lazy">
       <div class="b"><h3>${esc(e.title)}</h3>${extra && extra.where && extra.where.length ? `<p class="where">${esc(extra.where.join(' · '))}</p>` : ''}<p>${esc(e.summary)}</p>${extra && extra.fmt ? `<p class="fmt">${esc(extra.fmt)}</p>` : ''}
-      <div class="m">${(extra && extra.meta || []).slice(0, 2).map(m => `<span class="${esc(m.cls || '')}">${esc(m.txt)}</span>`).join('')}</div></div></a>`;
+      <div class="m">${(extra && extra.meta || []).slice(0, 2).map(m => `<span class="${esc(m.cls || '')}">${m.sr ? `<i class="vh"${langAttr(m.lang)}>${esc(m.sr)}</i> ` : ''}${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
   // The « + Add a notebook » card: its examples are the first three library notebooks not added yet; with none
   // left, no count and no examples, only the custom notebook.
@@ -1614,15 +1617,13 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     cache.set(slug, out); idb.set(key, out); return out;
   };
   // The language of a sheet, for screen readers and hyphenation (the app around it is English): the sheet's own
-  // <html lang> if it has one, else French when its text holds at least three distinct common French words,
-  // else none (the page's « en » applies).
-  const FR_WORDS = new Set(['le', 'la', 'les', 'des', 'du', 'un', 'une', 'et', 'avec', 'pour', 'dans', 'sur', 'est', 'au', 'aux', 'sans', 'puis', 'vers']);
+  // <html lang> if it has one, else French when its text holds at least three distinct common French words
+  // (RS.isFrench, shared with sessions, L22), else none (the page's « en » applies).
   const sheetLang = html => {
     const src = String(html || ''), m = src.match(/<html\b[^>]*?\blang\s*=\s*["']?([A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)/i);
     if (m) return m[1];
     const text = src.replace(/<(style|script)\b[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]*>/g, ' ').toLowerCase();
-    const seen = new Set(text.split(/[^a-zàâäçéèêëîïôöùûüœ']+/).map(w => w.replace(/^[a-z]'/, '')).filter(w => FR_WORDS.has(w)));
-    return seen.size >= 3 ? 'fr' : '';
+    return RS.isFrench(text) ? 'fr' : '';
   };
   // A sheet's group reads « Group · Back » (L5): in capitals it looked like a back button. L17: the way back is in
   // #nav-bar and the page's actions (Move, Add to session, Edit, Keep screen on…) in its « ⋯ » menu; a sheet opened
@@ -1650,7 +1651,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const httpUrl = u => typeof u === 'string' && /^https?:\/\//i.test(u) ? u : '';
   // An item card: the sheet's card with its number in the session and its dose; it opens the sheet inside the
   // session (#session/<slug>/<n>: dose banner, previous / next).
-  const itemCard = (it, slug) => card(it.sheet, RS.sessionItemHref(esc(slug), it.n), thumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: (it.sheet.source || {}).author || ''}, ...doneTag(it.sheet.slug), ...(notesIndex.has(it.sheet.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
+  const itemCard = (it, slug, lang) => card(it.sheet, RS.sessionItemHref(esc(slug), it.n), thumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose', sr: RS.sessionHeading('Dose', lang), lang}, {txt: (it.sheet.source || {}).author || ''}, ...doneTag(it.sheet.slug), ...(notesIndex.has(it.sheet.slug) ? [{txt: 'note', cls: 'note'}] : [])].filter(m => m.txt)});
   // « My notes »: one per sheet (key: its slug) and one per v2 session (key: session/<slug>, RS.noteKey).
   const notesHtml = () => `<div class="wrap"><section class="notes"><h2>My notes <small>only you can see them</small></h2>
       <textarea id="n-text" placeholder="What you want to remember: how it felt, the load, the variation that suits you…" aria-label="My notes" readonly></textarea>
@@ -1864,12 +1865,17 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (!$('home').hidden) renderHome(); // left for the home page while it was saving: its counter and cards count it
   };
 
+  // L22: the headings the app draws inside a session (Why, Key points, Format, Exercises, Dose; Rest, Sets in the
+  // player) follow the session's language (RS.sessionLang), and its content blocks carry lang="fr" (screen readers,
+  // hyphenation); buttons, menus and hints stay English, the interface. langAttr: '' for English, the page's own;
+  // inLang wraps some html in a <div lang> block only when the language is not English.
+  const langAttr = lang => lang && lang !== 'en' ? ` lang="${esc(lang)}"` : '';
+  const inLang = (lang, h) => langAttr(lang) && h ? `<div${langAttr(lang)}>${h}</div>` : h;
   // Why / key points / source of a video session: read-only, in both modes.
   const sessionInfo = s => {
-    const src = s.source || {}, url = httpUrl(src.url);
+    const src = s.source || {}, url = httpUrl(src.url), lang = RS.sessionLang(s), H = h => esc(RS.sessionHeading(h, lang));
     const kp = (Array.isArray(s.key_points) ? s.key_points : []).filter(k => typeof k === 'string' && k.trim());
-    return `${s.why ? `<h2>Why</h2><p class="lead">${esc(s.why)}</p>` : ''}
-      ${kp.length ? `<h2>Key points</h2><ol class="keys">${kp.map(k => `<li>${esc(k)}</li>`).join('')}</ol>` : ''}
+    return `${inLang(lang, `${s.why ? `<h2>${H('Why')}</h2><p class="lead">${esc(s.why)}</p>` : ''}${kp.length ? `<h2>${H('Key points')}</h2><ol class="keys">${kp.map(k => `<li>${esc(k)}</li>`).join('')}</ol>` : ''}`)}
       ${url || src.author ? `<p class="src">Video${src.author ? ` by ${esc(src.author)}` : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">Watch the video</a>` : ''}</p>` : ''}`;
   };
   // Edit mode of the shown v2 session (user and video alike): a draft saved in one update, items in full.
@@ -1909,12 +1915,12 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       return;
     }
     if (ended && ended.slug === slug) { showEnd(s); return; }
-    const items = RS.resolveItems(s, bySlug), img = v2Thumb(s);
+    const items = RS.resolveItems(s, bySlug), img = v2Thumb(s), lang = RS.sessionLang(s), L = langAttr(lang), H = h => esc(RS.sessionHeading(h, lang));
     view.innerHTML = `<div class="wrap" id="sheet-top">${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
-      <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
-      ${items.length ? startBtn() : ''}${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
+      <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1${L}>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
+      ${items.length ? startBtn() : ''}${practiceBox()}${s.format ? `<div class="kit"${L}><span><b class="kit-k">${H('Format')}</b> ${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap ⋯ then Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
+      <div class="wide">${inLang(lang, `<h2>${H('Exercises')} <span class="n">${items.length}</span></h2>`)}${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug, lang)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap ⋯ then Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
     if (items.length) wireStart(RS.playHref(esc(slug)));
     wireNotes(RS.noteKey(slug));
     readPractice(RS.noteKey(slug));
@@ -2141,16 +2147,20 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const playAct = () => {
     const p = play, session = !!p && p.kind === 'session', it = session ? p.items[p.n - 1] : null;
     const big = RS.doseLabel(it), free = it ? it.dose.trim() : '';
+    // L22: the session's language for Dose / Rest / Sets and its content (lang="fr"); the buttons and the set boxes
+    // (« Set 2 of 3 », « Done ») are the interface, English (lang="en" inside a French block).
+    const lang = session ? RS.sessionLang(p.s) : 'en', L = langAttr(lang), H = h => esc(RS.sessionHeading(h, lang));
+    const en = L ? ' lang="en"' : '';
     const same = (a, b) => a.toLowerCase().replace(/\s*[x×]\s*/g, ' × ').replace(/\s+/g, ' ') === b.toLowerCase().replace(/\s+/g, ' ');
     const dose = session && p.rest
-      ? `<p class="pl-restk">Rest</p><p class="pl-dose pl-rest" id="play-rest" role="timer">${RS.restClock(RS.restRemaining(p.rest.at, p.rest.s))}</p>`
-        + '<p class="pl-restb"><button type="button" class="btn ghost" id="play-rest-minus">−15 s</button><button type="button" class="btn ghost" id="play-rest-plus">+15 s</button><button type="button" class="btn" id="play-rest-skip">Skip</button></p>'
-      : (big || free ? `<p class="pl-dose">${esc(big || free)}</p>` : '') + (big && free && !same(free, big) ? `<p class="pl-free">${esc(free)}</p>` : '');
+      ? inLang(lang, `<p class="pl-restk">${H('Rest')}</p><p class="pl-dose pl-rest" id="play-rest" role="timer">${RS.restClock(RS.restRemaining(p.rest.at, p.rest.s))}</p>`)
+        + `<p class="pl-restb"${en}><button type="button" class="btn ghost" id="play-rest-minus">−15 s</button><button type="button" class="btn ghost" id="play-rest-plus">+15 s</button><button type="button" class="btn" id="play-rest-skip">Skip</button></p>`
+      : inLang(lang, (session && (big || free) ? `<p class="pl-restk pl-dosek">${H('Dose')}</p>` : '') + (big || free ? `<p class="pl-dose">${esc(big || free)}</p>` : '') + (big && free && !same(free, big) ? `<p class="pl-free">${esc(free)}</p>` : ''));
     if (!session) return dose;
     const count = RS.setCount(it), on = p.checks[p.n] || [];
-    const box = k => `<label class="pl-set${count > 1 ? '' : ' pl-one'}"><input type="checkbox" class="play-set" id="play-set-${k}"${on.includes(k) ? ' checked' : ''}`
+    const box = k => `<label class="pl-set${count > 1 ? '' : ' pl-one'}"${en}><input type="checkbox" class="play-set" id="play-set-${k}"${on.includes(k) ? ' checked' : ''}`
       + `${count > 1 ? ` aria-label="Set ${k} of ${count}"` : ''}><span${count > 1 ? ' aria-hidden="true"' : ''}>${count > 1 ? k : 'Done'}</span></label>`;
-    return dose + `<div class="pl-sets" role="group" aria-label="Sets">${Array.from({length: count}, (_, i) => box(i + 1)).join('')}</div>`;
+    return dose + `<div class="pl-sets" role="group" aria-label="${H('Sets')}"${L}>${Array.from({length: count}, (_, i) => box(i + 1)).join('')}</div>`;
   };
   const paintAct = focusId => {
     if (!play || playerEl.hidden) return;
@@ -2242,7 +2252,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // « Save to log » (a practice_log row for session/<slug>, the « Done today » write). « Close »: the session page.
   const showEnd = s => {
     const e = ended, log = practiceOk;
-    view.innerHTML = `<div class="wrap fiche pl-end"><p class="end-k" id="end-done" tabindex="-1">Session done</p><h1>${esc(s.title)}</h1>`
+    view.innerHTML = `<div class="wrap fiche pl-end"><p class="end-k" id="end-done" tabindex="-1">Session done</p>${inLang(RS.sessionLang(s), `<h1>${esc(s.title)}</h1>`)}`
       + `<p class="end-sum">${esc(e.summary)}</p>`
       + (log ? `<label class="pr-row">Practice log<input id="end-log-text" type="text" value="${esc(e.draft)}" maxlength="${LOG_MAX}" autocomplete="off" enterkeyhint="done" placeholder="12 kg, 3x10…"${e.busy ? ' readonly' : ''}></label>`
         + (e.err ? `<p class="err" role="alert">${esc(e.err)}</p>` : '') : '')
