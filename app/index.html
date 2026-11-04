@@ -318,6 +318,20 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 .report{margin-top:14px}
 .report .link{appearance:none;background:transparent;border:0;padding:10px 0;min-height:44px;color:var(--muted);font:600 var(--fs-sm) var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 #report-dlg textarea{min-height:110px}
+/* ---- L23: facet chips under the search field (all notebooks), each opens a bottom sheet of values + counts ---- */
+.facets{display:flex;gap:var(--s-2);overflow-x:auto;scrollbar-width:none;margin:-8px -16px 18px;padding:0 var(--s-4);-webkit-overflow-scrolling:touch}
+.facets::-webkit-scrollbar{display:none}
+.facets button{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);color:var(--ink);font:600 var(--fs-sm) var(--body);white-space:nowrap;cursor:pointer}
+.facets button::after{content:"";width:6px;height:6px;margin-left:8px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg);opacity:.6}
+.facets button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.fopts{display:grid;gap:2px;margin:var(--s-2) 0}
+.fopts button{display:flex;align-items:center;gap:var(--s-3);min-height:48px;padding:0 var(--s-3);border:0;border-radius:var(--r-sm);background:none;color:var(--ink);font:400 var(--fs-base) var(--body);text-align:left;cursor:pointer}
+.fopts button span{flex:1;text-transform:capitalize}
+.fopts button b{font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+.fopts button::before{content:"";flex:none;width:20px;height:20px;border:1.5px solid var(--line-strong);border-radius:5px;box-sizing:border-box}
+.fopts button[aria-pressed="true"]{font-weight:600}
+.fopts button[aria-pressed="true"]::before{border-color:var(--accent);background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 10 3.5 3.5L15 7'/%3E%3C/svg%3E") center/16px no-repeat}
+@media (hover:hover){.fopts button:hover{background:var(--tag)}}
 /* ---- L12: notebook page — sticky group chips, one row of cards per group, « See all » grid ---- */
 .group-chips{position:sticky;top:0;z-index:5;display:flex;gap:var(--s-2);overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:var(--s-3) -16px 0;padding:var(--s-2) var(--s-4);background:var(--bg);-webkit-overflow-scrolling:touch}
 .group-chips::-webkit-scrollbar{display:none}
@@ -540,6 +554,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 #nav-bar.nb.titled #nav-ico{opacity:1}
 @media (prefers-reduced-motion:no-preference){#nav-ico{transition:opacity .15s}#nav-bar.nb{transition:border-color .2s,background-color .2s}}
 @media (prefers-reduced-motion:reduce){#nav-bar,#nav-title{transition:none}}
+/* L24: invitation to install the app, a quiet card at the top of the home page (browser tab only) */
+.install{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s-2) var(--s-3);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-3) var(--s-3) var(--s-3) var(--s-4);margin:0 0 var(--s-4)}
+.install .ic-share{flex:none;width:1.375rem;height:1.375rem;color:var(--accent)}
+.install p{flex:1 1 12rem;margin:0;font-size:var(--fs-sm);line-height:1.4}
+.install .acts{display:flex;gap:var(--s-2);margin-left:auto}
 </style>
 </head>
 <body>
@@ -627,8 +646,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="actions"><button class="btn danger" type="button" id="pd-discard">Discard the link</button><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-stay" autofocus>Keep editing</button></div>
   </dialog>
   <div class="flash" id="flash" role="status" hidden></div>
+  <!-- L24: « install the app », filled by renderInstall -->
+  <section class="install" id="install-card" aria-label="Install the app" hidden></section>
 
   <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
+  <div class="facets" id="facets" role="group" aria-label="Filter by tag" hidden><button type="button" id="facet-zone" aria-haspopup="dialog">Zone</button><button type="button" id="facet-gear" aria-haspopup="dialog">Gear</button><button type="button" id="facet-time" aria-haspopup="dialog">Time</button><button type="button" id="facet-type" aria-haspopup="dialog">Type</button></div>
   <div id="results" hidden></div>
   <!-- L7: sheets and video sessions delivered in the last 72 h, not opened yet on this device -->
   <section class="newsec" id="new-sec" aria-labelledby="new-h" hidden></section>
@@ -770,6 +792,12 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 </dialog>
 <!-- The « Removed · Undo » toast of a queue removal: the delete is sent when its 5 s bar ends (animationend). -->
 <div class="toast" role="status"><button type="button" id="queue-undo" hidden><span id="queue-toast"></span></button></div>
+<dialog class="dlg act" id="facet-dlg" aria-labelledby="facet-h">
+  <h2 id="facet-h">Zone</h2>
+  <p class="hint" id="facet-hint">Across all your notebooks. Pick several: a sheet matches any of them.</p>
+  <div class="fopts" id="facet-options"></div>
+  <div class="actions"><button class="btn" type="button" id="facet-done">Done</button><button class="btn ghost" type="button" id="facet-clear">Clear</button></div>
+</dialog>
 <dialog class="dlg act" id="del-dlg" aria-labelledby="del-h">
   <h2 id="del-h">Delete this session?</h2>
   <p><b id="del-name"></b><span class="u">Its exercise sheets stay in your notebooks.</span></p>
@@ -794,7 +822,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 </dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
-<script src="config.js?v=7"></script>
+<script src="config.js?v=8"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
 <script>
@@ -942,9 +970,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // v2Sessions: rows of the `sessions` table; inSessions: sheet slug -> those sessions; sessionsOk: false when the backend has no such table.
   let v2Sessions = [], v2BySlug = new Map(), inSessions = new Map(), sessionsOk = true, v1Hidden = 0;
   let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null, loading = false, loadError = '';
-  // L14: noteBodies, key -> the text of the user's note (searched); noSearchCol: the client whose backend has no
-  // sheets.search_text column yet (read once, then the sheets are read without it until the next start).
-  let noteBodies = new Map(), noSearchCol = null;
+  // L14: noteBodies, key -> the text of the user's note (searched). colsGone: the optional sheets columns
+  // (search_text L14, tags L23) this client's backend does not have yet (each answers one 42703, then the sheets
+  // are read without it until the next start).
+  let noteBodies = new Map(), colsGone = {client: null, cols: new Set()};
   // noteEdits: key -> {body, seq}, the note texts saved here, laid over a catalogue read that began before their
   // save (seq > the read's noteSeq); dropped once a read that began after them is applied.
   let noteSeq = 0; const noteEdits = new Map();
@@ -1030,18 +1059,21 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (c) c.noteBodies = new Map(Array.isArray(s.noteBodies) ? s.noteBodies.filter(Array.isArray) : []);
     return c;
   };
-  // L14: the sheets with their search text; a backend without the column (schema not pushed yet) answers 42703,
-  // and the sheets are read as before, without an error.
+  // L14 / L23: the sheets with their search text and their tags; a backend without one of those columns (schema
+  // not pushed yet) answers 42703, and the sheets are read again without it, without an error.
   const SHEET_COLS = 'slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at,updated_at';
-  const noColumn = (e, col) => !!e && (e.code === '42703' || e.code === 'PGRST204') && String(e.message || '').includes(col);
+  const OPT_COLS = ['search_text', 'tags'];
+  const noColumn = (e, col) => !!e && (e.code === '42703' || e.code === 'PGRST204') && new RegExp('\\b' + col + '\\b').test(String(e.message || ''));
   const readSheets = async () => {
     const client = sb;
-    if (noSearchCol !== client) {
-      const r = await client.from('sheets').select(SHEET_COLS + ',search_text').order('title');
-      if (!noColumn(r.error, 'search_text')) return r;
-      noSearchCol = client;
+    if (colsGone.client !== client) colsGone = {client, cols: new Set()};
+    for (;;) {
+      const extra = OPT_COLS.filter(c => !colsGone.cols.has(c));
+      const r = await client.from('sheets').select([SHEET_COLS, ...extra].join(',')).order('title');
+      const gone = extra.find(c => noColumn(r.error, c));
+      if (!gone) return r;
+      colsGone.cols.add(gone);
     }
-    return client.from('sheets').select(SHEET_COLS).order('title');
   };
   // Sign-out: the user's cached catalogue and sheets, and the photos the service worker kept.
   const toWorker = msg => { try { if (navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage(msg)).catch(() => {}); } catch {} };
@@ -1352,16 +1384,95 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     }
     return [...(inSheet ? ['in the sheet'] : []), ...(inNote ? ['in your note'] : [])];
   };
-  const renderSearch = (terms, t) => {
+  // ---------- L23: facets ----------
+  // Tags of a sheet (sheets.tags: {zone: [], gear: [], minutes, type}, written by rb.py); the chips under the field
+  // filter all notebooks, AND across facets, OR inside one, with the text query. Sheets without tags (and sessions)
+  // only match when no facet is chosen. The choice lives in the hash (#search?zone=shoulders,knees&gear=band): Back
+  // restores the previous one. The chips show on the home page when at least one sheet has tags (none on a backend
+  // without the column). Vocabulary order from app/config.js; the time buckets fall back to the same as there.
+  const FACETS = CFG.facets || {}, FACET_KEYS = ['zone', 'gear', 'time', 'type'];
+  const FACET_LABEL = {zone: 'Zone', gear: 'Gear', time: 'Time', type: 'Type'};
+  const TIME = Array.isArray(FACETS.time) ? FACETS.time : [['< 5', 0, 5], ['5–10', 5, 10], ['10–20', 10, 20], ['20+', 20, null]];
+  const noFacets = () => ({zone: [], gear: [], time: [], type: []});
+  let facetSel = noFacets(), facetOpen = null, facetMoved = false;
+  const bucketOf = m => { if (typeof m !== 'number' || !isFinite(m)) return ''; const b = TIME.find(([, lo, hi]) => m >= lo && (hi == null || m < hi)); return b ? b[0] : ''; };
+  const facetValues = (e, k) => {
+    const g = e.tags; if (!g || typeof g !== 'object' || Array.isArray(g)) return [];
+    if (k === 'time') { const b = bucketOf(g.minutes); return b ? [b] : []; }
+    if (k === 'type') return g.type && typeof g.type === 'string' ? [g.type] : [];
+    return Array.isArray(g[k]) ? g[k].filter(v => typeof v === 'string' && v) : [];
+  };
+  const facetsHere = t => !t && sheets.some(e => FACET_KEYS.some(k => facetValues(e, k).length));
+  const facetsOn = () => FACET_KEYS.some(k => facetSel[k].length);
+  const facetMatch = e => FACET_KEYS.every(k => !facetSel[k].length || facetValues(e, k).some(v => facetSel[k].includes(v)));
+  const facetText = (k, v) => k === 'time' ? v + ' min' : v;
+  const attrEsc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  const facetHash = sel => { const q = FACET_KEYS.filter(k => sel[k].length).map(k => k + '=' + sel[k].map(encodeURIComponent).join(',')).join('&'); return q ? 'search?' + q : ''; };
+  const readFacetHash = () => {
+    const raw = String(location.hash || '').replace(/^#/, ''), sel = noFacets();
+    if (!/^search\?/.test(raw)) return sel;
+    for (const pair of raw.slice(7).split('&')) {
+      const [k, v = ''] = pair.split('=');
+      if (!FACET_KEYS.includes(k)) continue; // never an inherited key (#search?constructor=x)
+      for (const x of v.split(',')) { let d = ''; try { d = decodeURIComponent(x); } catch {} if (d && !sel[k].includes(d)) sel[k].push(d); }
+    }
+    return sel;
+  };
+  const paintFacets = show => {
+    $('facets').hidden = !show;
+    for (const k of FACET_KEYS) {
+      const c = $('facet-' + k), on = facetSel[k];
+      c.textContent = on.length ? `${FACET_LABEL[k]}: ${facetText(k, on[0])}${on.length > 1 ? ` +${on.length - 1}` : ''}` : FACET_LABEL[k];
+      c.classList.toggle('on', !!on.length);
+      c.setAttribute('aria-label', on.length ? `${FACET_LABEL[k]}, ${on.map(v => facetText(k, v)).join(', ')} chosen` : `${FACET_LABEL[k]}, any`);
+    }
+  };
+  // The values present in the catalogue (all notebooks), vocabulary order first, each with its number of sheets; a
+  // chosen value no sheet holds any more (an old link) stays listed so it can be unticked.
+  const paintFacetOptions = () => {
+    const k = facetOpen; if (!k) return;
+    const counts = new Map();
+    for (const e of sheets) for (const v of new Set(facetValues(e, k))) counts.set(v, (counts.get(v) || 0) + 1);
+    for (const v of facetSel[k]) if (!counts.has(v)) counts.set(v, 0);
+    const order = k === 'time' ? TIME.map(b => b[0]) : FACETS[k] || [], rank = v => { const i = order.indexOf(v); return i < 0 ? order.length : i; };
+    const vals = [...counts.keys()].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    $('facet-h').textContent = FACET_LABEL[k];
+    $('facet-clear').hidden = !facetSel[k].length;
+    $('facet-options').innerHTML = vals.length
+      ? vals.map(v => `<button type="button" data-facet-value="${attrEsc(v)}" aria-pressed="${facetSel[k].includes(v)}"><span>${esc(facetText(k, v))}</span><b>${counts.get(v)}</b></button>`).join('')
+      : `<p class="hint">No sheet has a ${FACET_LABEL[k].toLowerCase()} tag yet.</p>`;
+  };
+  // A new choice: shown at once, then written in the hash. The first change of a sheet opening is a new history
+  // entry, the next ones replace it (Back undoes the whole sheet, not each tick).
+  const setFacets = sel => {
+    facetSel = sel; paintFacetOptions();
+    const h = facetHash(sel);
+    if (facetMoved && typeof location.replace === 'function') {
+      const st = entry(); replacing = {i: navIndex == null ? 0 : navIndex, prev: st ? st.prev : null};
+      location.replace('#' + h);
+    } else { facetMoved = true; location.hash = h; }
+  };
+  const facetDlg = $('facet-dlg');
+  for (const k of FACET_KEYS) $('facet-' + k).addEventListener('click', () => { facetOpen = k; facetMoved = false; paintFacetOptions(); openSheet(facetDlg); });
+  $('facet-options').addEventListener('click', ev => {
+    const b = ev.target && ev.target.closest ? ev.target.closest('[data-facet-value]') : null, k = facetOpen;
+    if (!b || !k) return;
+    const v = b.dataset.facetValue, on = facetSel[k];
+    setFacets({...facetSel, [k]: on.includes(v) ? on.filter(x => x !== v) : [...on, v]});
+  });
+  $('facet-clear').addEventListener('click', () => { if (facetOpen && facetSel[facetOpen].length) setFacets({...facetSel, [facetOpen]: []}); });
+  $('facet-done').addEventListener('click', () => closeSheet(facetDlg));
+  const renderSearch = (terms, t, facets = false) => {
     const res = terms.map(wordStart), found = [];
     for (const e of sheets) {
       if (t && e.theme !== t.id) continue;
+      if (facets && !facetMatch(e)) continue;
       const nb = (themeById.get(e.theme) || {}).title || '', author = (e.source || {}).author || '';
       const pre = t ? [] : [{txt: nb}];
       const where = matchWhere(res, [e.title, e.summary, e.group, nb, author], textOf(e), noteBodies.get(e.slug));
       if (where) found.push({rank: where.length ? 1 : 0, html: sheetCard(e, pre, where)});
     }
-    for (const s of v2Sessions) {
+    for (const s of facets ? [] : v2Sessions) { // a session has no tags
       if (t && s.theme !== t.id) continue;
       const nb = (themeById.get(s.theme) || {}).title || '';
       const where = matchWhere(res, [s.title, s.format, nb, (s.source || {}).author || ''], '', noteBodies.get(RS.noteKey(s.slug)));
@@ -1369,7 +1480,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     }
     const cards = found.filter(c => !c.rank).concat(found.filter(c => c.rank)).map(c => c.html);
     $('results').innerHTML = cards.length ? `<div class="grid">${cards.join('')}</div>`
-      : `<p class="empty">Nothing matches « ${esc($('q').value.trim())} »${t ? ' in this notebook' : ''}. Try a body part or a piece of kit.</p>`;
+      : !terms.length ? '<p class="empty">No sheet has all these tags. Untick one, or pick another value.</p>'
+      : `<p class="empty">Nothing matches « ${esc($('q').value.trim())} »${t ? ' in this notebook' : facets ? ' with these tags' : ''}. Try a body part or a piece of kit.</p>`;
     return plural(cards.length, 'result');
   };
   $('q').addEventListener('input', () => renderHome());
@@ -1379,6 +1491,46 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     ? `${/[.!?]$/.test(loadError) ? '' : '.'} Your Supabase project may be paused: open your Supabase dashboard and restore it.` : '');
   // L6: the sheets and sessions practised at least once that still exist.
   const practisedCount = () => [...lastDone.keys()].filter(k => bySlug.has(k) || v2BySlug.has(RS.sessionSlugOf(k))).length;
+  // ---------- L24: invitation to install the app ----------
+  // A quiet card at the top of the home page while the app runs in a browser tab, for a signed-in user whose catalogue
+  // loaded with at least one sheet. iOS Safari: how to do it (Share, then Add to Home Screen). Chromium: an « Install »
+  // button once the browser fires beforeinstallprompt. Other browsers: nothing. « Not now » hides it for 30 days on this
+  // device (rb.install.dismissed, an ISO date; device-level, not per user). Inside #home, so never on the auth screen, a
+  // sheet or the player. Guarded for the test harness: no matchMedia, no beforeinstallprompt.
+  const INSTALL_KEY = 'rb.install.dismissed', INSTALL_SNOOZE = 30 * 24 * 60 * 60 * 1000;
+  const SHARE_GLYPH = '<svg class="ic-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M8.5 10H6.5a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5h-2"/></svg>';
+  // installFailed: prompt() was refused (the event is spent): the card says to use the browser menu instead
+  // installDismissed: « Not now » tapped on this page (holds even when localStorage refuses the write)
+  let installPrompt = null, installFailed = false, installDismissed = false, installShown = '';
+  const runsInstalled = () => navigator.standalone === true || !!(typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
+  // iPhone / iPod / iPad (iPadOS asks for the desktop site: a Mac with a touch screen), Safari only (not Chrome, Firefox, Edge, Opera on iOS)
+  const iosSafari = () => {
+    const ua = String(navigator.userAgent || '');
+    return (/iP(hone|od|ad)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) && /Version\/[\d.]+.*Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+  };
+  const installSnoozed = () => { const t = Date.parse(ls.get(INSTALL_KEY) || ''); return Number.isFinite(t) && Date.now() - t < INSTALL_SNOOZE; };
+  const renderInstall = () => {
+    const card = $('install-card'), how = installPrompt ? 'prompt' : installFailed ? 'failed' : iosSafari() ? 'ios' : '';
+    const on = !!how && !!user && !currentTheme && !loading && !loadError && sheets.length > 0 && !runsInstalled() && !installDismissed && !installSnoozed();
+    if (!on) { card.hidden = true; card.innerHTML = ''; installShown = ''; return; }
+    if (installShown !== how) {
+      installShown = how;
+      const notNow = '<button class="btn ghost sm" type="button" id="install-not-now">Not now</button>';
+      card.innerHTML = how === 'ios' ? `${SHARE_GLYPH}<p>Install Reelbook: tap Share, then Add to Home Screen</p><div class="acts">${notNow}</div>`
+        : how === 'failed' ? `<p role="status">The install window did not open. Install Reelbook from your browser menu instead.</p><div class="acts">${notNow}</div>`
+        : `<p>Install Reelbook on this device: it opens full screen, like an app.</p><div class="acts">${notNow}<button class="btn sm" type="button" id="install-go">Install</button></div>`;
+      $('install-not-now').addEventListener('click', () => { installDismissed = true; ls.set(INSTALL_KEY, new Date().toISOString()); renderInstall(); });
+      if (how === 'prompt') $('install-go').addEventListener('click', async () => {
+        const p = installPrompt; installPrompt = null; // a prompt event is used once
+        try { if (p) { await p.prompt(); await p.userChoice; } } catch (e) { console.warn('Install prompt refused:', (e && e.message) || e); installFailed = true; }
+        renderInstall();
+      });
+    }
+    card.hidden = false;
+  };
+  window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); installPrompt = ev; installFailed = false; renderInstall(); });
+  window.addEventListener('appinstalled', () => { installPrompt = null; installFailed = false; renderInstall(); });
+
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
     $('h-eyebrow').hidden = !t;
@@ -1391,13 +1543,15 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (t) $('count').textContent = renderGroups(t, one);
     else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${practiceOk ? `${practisedCount()} practised · ${n} saved` : plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
-    const terms = sheets.length ? searchTerms() : [];
-    $('results').hidden = !terms.length;
-    if (terms.length) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t); }
-    if (!t || terms.length) $('group-chips').hidden = true;
-    renderNew(!t && !loading && !loadError && !terms.length);
-    renderToTry(!t && !loading && !loadError && !terms.length);
+    const terms = sheets.length ? searchTerms() : [], fac = facetsHere(t), faceted = fac && facetsOn(), searching = terms.length || faceted;
+    paintFacets(fac);
+    $('results').hidden = !searching;
+    if (searching) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t, faceted); }
+    if (!t || searching) $('group-chips').hidden = true;
+    renderNew(!t && !loading && !loadError && !searching);
+    renderToTry(!t && !loading && !loadError && !searching);
     document.title = t ? `${one ? one + ' · ' : ''}${t.title} · Reelbook` : 'Reelbook';
+    renderInstall();
     syncNav();
   };
 
@@ -2638,6 +2792,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if ($('home').hidden) return null;
     // A notebook page; while the catalogue loads or cannot be read, any route but home's is taken for one.
     const tok = navHere || '', cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
+    if (/^search\?/.test(tok)) return null; // L23: the home page with facets chosen
     const t = themeById.get(nb) || (nb && (loading || loadError || !themes.length) ? libById.get(nb) || {id: nb, title: nb} : null);
     if (!t) return null;
     const one = currentTheme === t.id ? groupOf(t) : null;
@@ -2783,6 +2938,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
     const from = currentTheme === nb && $('home').hidden === false ? groupOf(themeById.get(nb)) : null;
     shown = null; seat = null; chipPinned = ''; currentTheme = themeById.has(nb) ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
+    facetSel = readFacetHash(); // L23: #search?zone=…&gear=… (any other page: none chosen)
     view.innerHTML = ''; renderHome(); show('home');
     if (!settleScroll() && from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
   };
