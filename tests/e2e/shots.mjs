@@ -4,11 +4,13 @@
 //   node tests/e2e/shots.mjs --base http://127.0.0.1:8770/ --out <dir> [--dark] [--steps <file.json>] [--only <name>]
 //
 // Steps (default tests/e2e/steps/smoke.json): a JSON array of
-//   {name, hash?, query?, actions?: [...], full?, settle?, allow?: ["<regex>", …]}
+//   {name, hash?, query?, viewport?, actions?: [...], full?, settle?, allow?: ["<regex>", …]}
 // - name: the screenshot is <out>/<name>.png; hash / query: added to --base (« #strength », « noauth »);
 // - actions, in order, each object with one verb:
 //     {"click": "<selector>"}  {"fill": "<selector>", "value": "…"}  {"press": "Enter", "selector"?: "…"}
 //     {"wait": 500 | "<selector>"}  {"scroll": "bottom" | "top" | <y px> | "<selector>"}
+// - viewport: {width, height} instead of the iPhone 14's 390 × 664 (a wider window, or a short one standing for
+//   the on-screen keyboard), the rest of the device kept;
 // - full: full-page screenshot; settle: ms to wait after load (default 700);
 // - allow: errors this step tolerates (regex on the error line), for a known app bug only, with
 //   the reason in a `why` field next to it; they are listed under `tolerated` in report.json.
@@ -95,7 +97,7 @@ async function main() {
     for (const step of steps) {
       const url = stepUrl(opts.base, step);
       const errors = [];
-      const ctx = await browser.newContext({ ...devices['iPhone 14'], colorScheme: opts.dark ? 'dark' : 'light' });
+      const ctx = await browser.newContext({ ...devices['iPhone 14'], ...(step.viewport ? { viewport: step.viewport } : {}), colorScheme: opts.dark ? 'dark' : 'light' });
       const page = await ctx.newPage();
       page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
       // « Failed to load resource » in the console carries no URL: the response / requestfailed

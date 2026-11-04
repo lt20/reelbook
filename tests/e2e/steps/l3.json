@@ -9,7 +9,7 @@
   {"name": "l3-04-viewer-closed-by-escape", "hash": "pompes-inclinees",
    "actions": [{"click": "#view .steps .step:nth-child(2) img[data-ph]"}, {"wait": "#ph-dlg[open]"}, {"press": "Escape"}, {"wait": "#view .steps .step:nth-child(2) img[data-ph]:focus"}]},
   {"name": "l3-05-wake-on", "hash": "pompes-inclinees",
-   "actions": [{"wait": "#wake"}, {"click": "#wake"}, {"wait": "#wake[aria-pressed=\"true\"]"}]},
+   "actions": [{"wait": "#nav-more"}, {"click": "#nav-more"}, {"wait": "#wake"}, {"click": "#wake"}, {"wait": "#wake[aria-pressed=\"true\"]"}]},
   {"name": "l3-06-session-top-bar", "hash": "session/session-gainage-10-min",
-   "actions": [{"wait": "#view h1 >> text=Gainage en 10 minutes"}, {"wait": "#wake"}]}
+   "actions": [{"wait": "#view h1 >> text=Gainage en 10 minutes"}, {"wait": "#nav-more"}, {"click": "#nav-more"}, {"wait": "#wake"}]}
 ]

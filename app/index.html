@@ -21,188 +21,230 @@
   --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd; --line-strong:#8f8a80;
   --accent:#1f4fa3; --accent-ink:#ffffff; --tag:#e4eaf6; --warn:#8a5a12; --warn-bg:#f6ead3; --ok:#1f6b3a; --ok-bg:#e1f0e6;
   --danger:#b42318; --danger-bg:#fef3f2;
-  --p0:#1f4fa3; --p1:#3f8f5f; --p2:#b4432f; --p3:#1d7a8c; --p4:#c2651d; --p5:#b23a6e; --p6:#8a6a12; --p7:#6b4fa3;
+  --p0:#5f7d1a; --p1:#3f8f5f; --p2:#b4432f; --p3:#1d7a8c; --p4:#c2651d; --p5:#b23a6e; --p6:#8a6a12; --p7:#6b4fa3;
+  --brand-coral:#c54b38;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
+  /* L20: type scale in rem (1rem = the system text size: 17 px on iOS by default, 16 px elsewhere), radii, spacing */
+  --fs-xs:.8125rem; --fs-sm:.875rem; --fs-base:1rem; --fs-md:1.25rem; --fs-lg:1.375rem; --fs-xl:1.75rem; --fs-2xl:2.25rem;
+  --fs-display:clamp(2.75rem,12vw,4rem);
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
-:root[data-theme="dark"],:root:not([data-theme="light"]) .player{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#7fa6ea;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#a9c45c;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}}
+:root[data-theme="dark"],:root:not([data-theme="light"]) .player{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--p0:#a9c45c;--p1:#7fc79b;--p2:#e58a78;--p3:#6fc3d4;--p4:#f0a35e;--p5:#ea86b4;--p6:#e0c060;--p7:#b59cf0;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));padding-block:20px 56px}
+/* L20: on iOS / iPadOS the root takes the system text size (Dynamic Type: 17 px by default), in Safari and the installed
+   PWA. Only there: desktop Safari maps the keyword to the 13 px macOS body size; other browsers ignore it. Elsewhere 100 %. */
+html{font-size:100%}
+@supports (font:-apple-system-body) and (-webkit-touch-callout:none){html{font:-apple-system-body}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.5;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));padding-block:20px 56px}
 img{max-width:100%}
 a{color:var(--accent)}
 a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,.card:focus-visible,.tcard:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .wrap{max-width:640px;margin:0 auto}
 .wide{max-width:980px;margin:0 auto}
-.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 6px;font-weight:600}
-.brand{display:flex;align-items:center;gap:10px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:32px;font-weight:800;line-height:1.1;letter-spacing:-.055em;margin:0 0 20px;text-decoration:none}
+.eyebrow{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 6px;font-weight:600}
+.brand{display:flex;align-items:center;gap:var(--s-3);margin:0 0 20px}
 .brand img{display:block;width:40px;height:40px;flex:none}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand img,:root:not([data-theme="light"]) #brand-wordmark img{content:url("icons/reelbook-mark-light.svg")}}
+.brand img.wm{width:auto;height:26px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brand img,:root:not([data-theme="light"]) #brand-wordmark img{content:url("icons/reelbook-mark-light.svg")}:root:not([data-theme="light"]) .brand img.wm{content:url("icons/reelbook-wordmark-light.svg")}:root:not([data-theme="light"]) #home:not(.nb) #brand-wordmark h1{background-image:url("icons/reelbook-wordmark-light.svg")}}
 :root[data-theme="dark"] .brand img,:root[data-theme="dark"] #brand-wordmark img{content:url("icons/reelbook-mark-light.svg")}
-h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,12vw,64px);line-height:.95;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
-h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1;margin:30px 0 10px;text-transform:uppercase;letter-spacing:.02em}
-h2 small{font-family:var(--body);font-weight:600;font-size:13px;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px}
-h2 .n{font-family:var(--body);font-size:14px;color:var(--muted);font-weight:600;margin-left:6px;vertical-align:middle}
+:root[data-theme="dark"] .brand img.wm{content:url("icons/reelbook-wordmark-light.svg")}
+:root[data-theme="dark"] #home:not(.nb) #brand-wordmark h1{background-image:url("icons/reelbook-wordmark-light.svg")}
+h1{font-family:var(--display);font-weight:700;font-size:var(--fs-display);line-height:.95;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+h2{font-family:var(--display);font-weight:700;font-size:var(--fs-lg);line-height:1;margin:30px 0 10px;text-transform:uppercase;letter-spacing:.02em}
+h2 small{font-family:var(--body);font-weight:600;font-size:var(--fs-xs);text-transform:none;letter-spacing:0;color:var(--muted);margin-left:var(--s-2)}
+h2 .n{font-family:var(--body);font-size:var(--fs-sm);color:var(--muted);font-weight:600;margin-left:6px;vertical-align:middle}
 p{margin:0 0 10px}
-.btn{appearance:none;font:600 16px var(--body);color:var(--accent-ink);background:var(--accent);border:0;border-radius:999px;padding:10px 18px;cursor:pointer}
+.btn{appearance:none;font:600 var(--fs-base) var(--body);color:var(--accent-ink);background:var(--accent);border:0;border-radius:var(--r-pill);padding:10px 18px;cursor:pointer}
 .btn:disabled{opacity:.55;cursor:default}
 .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
-.btn.sm{font-size:14px;padding:7px 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
-.hint{font-size:14px;color:var(--muted);margin:0}
-.err{color:var(--warn);font-size:14px;margin:0}
-.flash{background:var(--ok-bg);color:var(--ok);border-radius:8px;padding:10px 12px;font-size:15px;margin-bottom:16px}
+.btn.sm{font-size:var(--fs-sm);padding:7px 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.hint{font-size:var(--fs-sm);color:var(--muted);margin:0}
+.err{color:var(--warn);font-size:var(--fs-sm);margin:0}
+.flash{background:var(--ok-bg);color:var(--ok);border-radius:var(--r-sm);padding:10px var(--s-3);font-size:var(--fs-base);margin-bottom:var(--s-4)}
 .search{margin:0 0 18px}
-.search input{border-radius:999px;padding:10px 16px 10px 40px;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='6'/%3E%3Cpath d='m12.5 12.5 4 4'/%3E%3C/svg%3E") 14px center no-repeat}
-.empty{color:var(--muted);font-size:15px;border:1px dashed var(--line);border-radius:10px;padding:14px}
+.search input{border-radius:var(--r-pill);padding:10px var(--s-4) 10px 40px;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='6'/%3E%3Cpath d='m12.5 12.5 4 4'/%3E%3C/svg%3E") 14px center no-repeat}
+.empty{color:var(--muted);font-size:var(--fs-base);border:1px dashed var(--line);border-radius:10px;padding:14px}
 .loading{color:var(--muted);padding:40px 0;text-align:center}
-label{display:grid;gap:4px;font-size:14px;font-weight:600;color:var(--muted)}
-input,textarea,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
+label{display:grid;gap:var(--s-1);font-size:var(--fs-sm);font-weight:600;color:var(--muted)}
+/* never under 16 px: iOS zooms into a smaller field */
+input,textarea,select{font:max(16px,1rem) var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:10px var(--s-3);width:100%;min-width:0}
 textarea{line-height:1.5;min-height:120px;resize:vertical}
 .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
-pre{font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
+code{font:var(--fs-sm) ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+pre{font:var(--fs-xs)/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px var(--s-3);margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
 /* ---- header ---- */
-.crumb{font-size:14px;margin:0 0 6px}.crumb a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
-.topbar{display:flex;justify-content:flex-end;gap:12px;font-size:14px;margin-bottom:8px}
-.topbar a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
+.crumb{font-size:var(--fs-sm);margin:0 0 6px}.crumb a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);margin:-11px -8px}
+.topbar{display:flex;justify-content:flex-end;gap:var(--s-3);font-size:var(--fs-sm);margin-bottom:var(--s-2)}
+.topbar a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);margin:-11px -8px}
 /* ---- panels (setup, auth, settings) ---- */
 .panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px;margin-top:14px;min-width:0}
 .panel>*{min-width:0}
-.panel ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.panel ul{margin:0;padding-left:20px;display:grid;gap:var(--s-1)}
 .panel h2{margin:0}
 .choice{display:grid;gap:10px}
-.choice button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;display:grid;gap:4px}
-.choice button b{font-family:var(--display);font-size:22px;line-height:1}
-.choice button span{font-size:14px;color:var(--muted)}
+.choice button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:14px var(--s-4);cursor:pointer;display:grid;gap:var(--s-1)}
+.choice button b{font-family:var(--display);font-size:var(--fs-lg);line-height:1}
+.choice button span{font-size:var(--fs-sm);color:var(--muted)}
 .choice button:disabled{opacity:.5;cursor:default}
 /* ---- add sheet ---- */
-.sheet{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:22px;display:grid;gap:12px}
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:var(--s-4);margin-bottom:22px;display:grid;gap:var(--s-3)}
 .sheet h2{margin:0}
-.addrow{display:flex;gap:8px;align-items:center}
+.addrow{display:flex;gap:var(--s-2);align-items:center}
 .addrow input{flex:1}
 .addrow .btn{flex:none}
 .sheet .actions{justify-content:flex-end}
-dialog.dlg{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(440px,calc(100vw - 32px));display:grid;gap:12px}
+dialog.dlg{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(440px,calc(100vw - 32px));display:grid;gap:var(--s-3)}
 dialog.dlg:not([open]){display:none}
 dialog.dlg::backdrop{background:rgba(0,0,0,.45)}
 dialog.dlg h2{margin:0}
 dialog.dlg p{margin:0}
-dialog.dlg .u{display:block;font-size:14px;color:var(--muted);overflow-wrap:anywhere}
-dialog.dlg .actions{display:grid;gap:8px}
+dialog.dlg .u{display:block;font-size:var(--fs-sm);color:var(--muted);overflow-wrap:anywhere}
+dialog.dlg .actions{display:grid;gap:var(--s-2)}
 dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
-.picklist{max-height:46dvh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px 10px 10px}
-.picklist h3{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:12px 0 2px}
-.picklist label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:16px;font-weight:400;color:var(--ink);cursor:pointer}
+.picklist{max-height:46dvh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:var(--s-1) 10px 10px}
+/* ---- L18: bottom sheets ----
+   A form dialog has a header .sh-h: Cancel (.sh-no) | title | primary action (.sh-ok). From 600 px wide it melts into
+   the centred dialog (display:contents) and its two buttons go back to the bottom, primary first. Under 600 px every
+   dialog.dlg is a sheet at the bottom: full width, one scroll container bounded by the visual viewport (--vvh), lifted
+   above the on-screen keyboard (--kb), the header kept in view. An action sheet (.act) stacks its buttons, the danger
+   one in red on top and the way out apart at the bottom. A sheet with a header has no top padding: its sticky header
+   sits flush at the top edge, whatever the engine does with a scroll container's padding. */
+.sh-h{display:contents}
+.sh-h .sh-ok{order:1}
+.sh-h .sh-no{order:2}
+@media (max-width:599.98px){
+  dialog.dlg,dialog.pick-dlg{position:fixed;inset:auto 0 0 0;margin:0 0 var(--kb,0px);width:100%;max-width:100%;max-height:calc(var(--vvh,100dvh) - env(safe-area-inset-top,0px) - 8px);overflow:auto;overscroll-behavior:contain;border-width:1px 0 0;border-radius:14px 14px 0 0;padding:0 max(16px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left))}
+  dialog.dlg.act{padding-top:20px}
+  dialog.pick-dlg .picklist{max-height:none;overflow:visible}
+  .sh-h{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--s-1);position:sticky;top:0;z-index:1;margin:0 -16px;padding:var(--s-1) var(--s-2);background:var(--paper);border-bottom:1px solid var(--line)}
+  dialog.dlg .sh-h h2{font-size:var(--fs-lg);text-align:center;overflow-wrap:anywhere}
+  .sh-h .btn{background:none;border:0;border-radius:var(--r-sm);color:var(--accent);font-weight:400;min-height:44px;padding:0 var(--s-2)}
+  .sh-h .sh-no{justify-self:start;order:0}
+  .sh-h .sh-ok{justify-self:end;order:0;font-weight:700}
+  dialog.dlg.act .actions .btn{width:100%;min-height:50px}
+  dialog.dlg.act .actions .btn:last-child{margin-top:var(--s-2)}
+  dialog.dlg.act .btn.danger{background:var(--danger-bg)}
+}
+@media (max-width:599.98px) and (prefers-reduced-motion:no-preference){
+  dialog.dlg[open]{animation:sheet-up .24s cubic-bezier(.2,.8,.2,1)}
+  dialog.dlg[open]::backdrop{animation:sheet-fade .24s ease-out}
+}
+@keyframes sheet-up{from{transform:translateY(100%)}}
+@keyframes sheet-fade{from{opacity:0}}
+.picklist h3{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:var(--s-3) 0 2px}
+.picklist label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:var(--fs-base);font-weight:400;color:var(--ink);cursor:pointer}
 .picklist input{width:22px;height:22px;flex:none;margin:0}
 .picklist .o{min-width:24px;font-family:var(--display);font-weight:700;color:var(--accent);text-align:right}
 .btn.danger{background:transparent;color:var(--danger)}
 /* ---- portal ---- */
-.portal{display:grid;gap:14px;margin-top:4px}
+.portal{display:grid;gap:14px;margin-top:var(--s-1)}
 @media (min-width:720px){.portal{grid-template-columns:repeat(3,1fr)}}
-.tcard{display:grid;gap:10px;align-content:start;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;color:inherit;text-decoration:none;border-top:6px solid var(--t,var(--accent))}
+.tcard{display:grid;gap:10px;align-content:start;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px var(--s-4);color:inherit;text-decoration:none;border-top:6px solid var(--t,var(--accent))}
 .tcard .eyebrow{margin:0}
-.tcard h2{font-size:38px;margin:0;text-transform:none;letter-spacing:-.01em;color:var(--t,var(--accent))}
-.tcard p{margin:0;font-size:15px;color:var(--muted)}
-.tcard .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
-.tcard .thumbs img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;max-width:100%;background:var(--tag)}
-.tcard .empty{margin:4px 0 0;padding:12px;font-size:14px}
+.tcard h2{font-size:var(--fs-2xl);margin:0;text-transform:none;letter-spacing:-.01em;color:var(--t,var(--accent))}
+.tcard p{margin:0;font-size:var(--fs-base);color:var(--muted)}
+.tcard .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:var(--s-1)}
+.tcard .thumbs img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:var(--r-sm);max-width:100%;background:var(--tag)}
+.tcard .empty{margin:var(--s-1) 0 0;padding:var(--s-3);font-size:var(--fs-sm)}
 .tcard.add{border-top-color:var(--line);border-style:dashed;cursor:pointer;font:inherit;text-align:left;background:transparent}
-.tcard.add h2{color:var(--muted);font-size:30px}
+.tcard.add h2{color:var(--muted);font-size:var(--fs-xl)}
 .picker{margin-top:14px}
-.picker .lib{display:grid;grid-template-columns:1fr;gap:8px}
+.picker .lib{display:grid;grid-template-columns:1fr;gap:var(--s-2)}
 @media (min-width:720px){.picker .lib{grid-template-columns:1fr 1fr}}
-.picker .lib button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:grid;gap:2px;border-left:5px solid var(--t,var(--line))}
-.picker .lib button b{font-family:var(--display);font-size:20px;line-height:1}
-.picker .lib button span{font-size:13px;color:var(--muted)}
-.nblist{display:grid;gap:8px}
-.nblist div{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;border-left:5px solid var(--t,var(--line))}
+.picker .lib button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px var(--s-3);cursor:pointer;display:grid;gap:2px;border-left:5px solid var(--t,var(--line))}
+.picker .lib button b{font-family:var(--display);font-size:var(--fs-md);line-height:1}
+.picker .lib button span{font-size:var(--fs-xs);color:var(--muted)}
+.nblist{display:grid;gap:var(--s-2)}
+.nblist div{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:var(--s-2) var(--s-3);border-left:5px solid var(--t,var(--line))}
 .nblist small{color:var(--muted);display:block}
-.howto{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+.howto{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px var(--s-4)}
 .howto h2{margin:0 0 10px}
-.howto ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:15px;line-height:1.45}
-.howto li>strong{font-family:var(--display);font-size:18px;letter-spacing:.01em;text-transform:uppercase;display:block}
-.howto .tip{margin:12px 0 0;font-size:14px;color:var(--muted)}
+.howto ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:var(--fs-base);line-height:1.45}
+.howto li>strong{font-family:var(--display);font-size:var(--fs-md);letter-spacing:.01em;text-transform:uppercase;display:block}
+.howto .tip{margin:var(--s-3) 0 0;font-size:var(--fs-sm);color:var(--muted)}
 /* ---- cards ---- */
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
-@media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr)}}
-.card{display:block;color:inherit;text-decoration:none;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+/* L20: as many 9.5rem columns as fit: two on a 375 px phone at the default text size (17 px root on iOS: 2 × 161.5 + 12 ≤ 343), one from a larger text size */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(9.5rem,100%),1fr));gap:14px var(--s-3)}
+.card{display:block;color:inherit;text-decoration:none;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
 /* L12: one photo format on every card, 4:5, framed on the upper third (burned-in subtitles sit lower) */
 .card img{display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;object-position:50% 30%;max-width:100%;background:var(--tag)}
-.card .b{padding:10px 12px 12px}
-.card h3{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.05;margin:0 0 4px}
-.card p{margin:0;font-size:14px;line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card .m{font-size:12px;color:var(--muted);margin-top:8px;display:flex;gap:6px;flex-wrap:nowrap;min-width:0}
-.card .m span{flex:0 1 auto;display:block;min-width:0;margin:0;background:var(--tag);color:var(--ink);border-radius:999px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .b{padding:10px var(--s-3) var(--s-3)}
+.card h3{font-family:var(--display);font-weight:700;font-size:var(--fs-lg);line-height:1.05;margin:0 0 var(--s-1)}
+.card p{margin:0;font-size:var(--fs-sm);line-height:1.35;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .m{font-size:var(--fs-xs);color:var(--muted);margin-top:var(--s-2);display:flex;gap:6px;flex-wrap:nowrap;min-width:0}
+.card .m span{flex:0 1 auto;display:block;min-width:0;margin:0;background:var(--tag);color:var(--ink);border-radius:var(--r-pill);padding:2px var(--s-2);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .m span.note{background:var(--ok-bg);color:var(--ok)}
 .card .m span.session,.card .m span.dose{background:var(--accent);color:var(--accent-ink)}
 .card{position:relative}
-.card>.k{position:absolute;left:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:16px;line-height:1;padding:5px 8px 4px;border-radius:6px}
-.from,.src{font-size:15px;color:var(--muted);margin:0 0 16px}
+.card>.k{position:absolute;left:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:var(--fs-base);line-height:1;padding:5px var(--s-2) var(--s-1);border-radius:6px}
+.from,.src{font-size:var(--fs-base);color:var(--muted);margin:0 0 var(--s-4)}
 .card.big img{object-position:50% 30%}
 /* ---- queue ---- */
-.queue{display:grid;gap:8px}
-.q{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;min-width:0}
-.q .ico{width:36px;height:36px;border-radius:8px;background:var(--tag);display:grid;place-items:center;font-family:var(--display);font-weight:700;color:var(--accent)}
+.queue{display:grid;gap:var(--s-2)}
+.q{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:10px var(--s-3);min-width:0}
+.q .ico{width:36px;height:36px;border-radius:var(--r-sm);background:var(--tag);display:grid;place-items:center;font-family:var(--display);font-weight:700;color:var(--accent)}
 .q .t{min-width:0}
-.q .t a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
-.q .t small{color:var(--muted);font-size:13px}
+.q .t a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-sm)}
+.q .t small{color:var(--muted);font-size:var(--fs-xs)}
 .q .t small.why{display:block}
-.q .st{font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;background:var(--tag);color:var(--ink);white-space:nowrap}
-.q button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;min-width:44px;min-height:44px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px}
+.q .st{font-size:var(--fs-xs);font-weight:600;border-radius:var(--r-pill);padding:3px 9px;background:var(--tag);color:var(--ink);white-space:nowrap}
+.q button{appearance:none;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:var(--fs-md);min-width:44px;min-height:44px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r-sm)}
 /* ---- sheet page (styles used by templates/sheet.html and templates/exercise.html) ---- */
-.top{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-bottom:18px}
-.top a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 8px;margin:-11px -8px}
-.top span{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:600}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-sm);margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);margin:-11px -8px}
+.top span{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:var(--fs-xs);font-weight:600}
 .top .r{display:flex;align-items:center;gap:10px}
-.top .mv,.acts .mv{min-height:44px;appearance:none;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 13px var(--body);text-transform:none;letter-spacing:normal;padding:4px 12px;cursor:pointer}
-.fiche header{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;margin-bottom:8px}
-.fiche header img{width:112px;height:112px;object-fit:cover;object-position:50% 20%;border-radius:12px;border:1px solid var(--line)}
+.top .mv,.acts .mv{min-height:44px;appearance:none;background:transparent;border:1px solid var(--line);border-radius:var(--r-pill);color:var(--accent);font:600 var(--fs-xs) var(--body);text-transform:none;letter-spacing:normal;padding:var(--s-1) var(--s-3);cursor:pointer}
+.fiche header{display:grid;grid-template-columns:1fr auto;gap:var(--s-4);align-items:end;margin-bottom:var(--s-2)}
+.fiche header img{width:112px;height:112px;object-fit:cover;object-position:50% 20%;border-radius:var(--r-md);border:1px solid var(--line)}
 .fiche h1{margin-bottom:6px}
-.lead{font-size:19px;margin:0 0 14px;max-width:34em}
-.kit{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 28px}
-.kit span{background:var(--tag);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600}
-blockquote{margin:12px 0 0;padding:10px 14px;border-left:3px solid var(--accent);color:var(--muted);font-style:italic}
-blockquote cite{display:block;font-style:normal;font-size:13px;margin-top:4px}
-.dose{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 8px}
+.lead{font-size:var(--fs-md);margin:0 0 14px;max-width:34em}
+.kit{display:flex;gap:var(--s-2);flex-wrap:wrap;margin:0 0 28px}
+.kit span{background:var(--tag);color:var(--ink);border-radius:var(--r-pill);padding:var(--s-1) var(--s-3);font-size:var(--fs-sm);font-weight:600}
+blockquote{margin:var(--s-3) 0 0;padding:10px 14px;border-left:3px solid var(--accent);color:var(--muted);font-style:italic}
+blockquote cite{display:block;font-style:normal;font-size:var(--fs-xs);margin-top:var(--s-1)}
+.dose{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 var(--s-2)}
 @media (max-width:460px){.dose{grid-template-columns:1fr 1fr}.dose .d:last-child{grid-column:1/-1}}
-.dose .d{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
-.dose b{font-family:var(--display);font-size:34px;line-height:1;display:block;color:var(--accent);font-variant-numeric:tabular-nums;margin-bottom:4px}
-.dose span{font-size:14px;color:var(--muted)}
-.note{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:14px;margin:0}
+.dose .d{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:var(--s-3) 14px;min-width:0}
+.dose b{font-family:var(--display);font-size:var(--fs-2xl);line-height:1;display:block;color:var(--accent);font-variant-numeric:tabular-nums;margin-bottom:var(--s-1)}
+.dose span{font-size:var(--fs-sm);color:var(--muted)}
+.note{background:var(--warn-bg);color:var(--warn);border-radius:var(--r-sm);padding:var(--s-2) var(--s-3);font-size:var(--fs-sm);margin:0}
 ol.keys{margin:0;padding-left:0;list-style:none;counter-reset:k}
 ol.keys li{position:relative;padding-left:40px;margin-bottom:10px;counter-increment:k}
-ol.keys li::before{content:counter(k);position:absolute;left:0;top:1px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:17px;display:grid;place-items:center}
+ol.keys li::before{content:counter(k);position:absolute;left:0;top:1px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:var(--fs-base);display:grid;place-items:center}
 ol.keys b{font-weight:600}
-.steps{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;margin-top:6px}
-@media (min-width:720px){.steps{grid-template-columns:repeat(3,1fr)}}
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(9.5rem,100%),1fr));gap:14px var(--s-3);margin-top:6px}
 .step{min-width:0}
 .step figure{margin:0;position:relative;border-radius:10px;overflow:hidden;background:var(--paper);border:1px solid var(--line)}
 .step img{display:block;width:100%;height:auto;max-width:100%}
-.step .k{position:absolute;left:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:16px;line-height:1;padding:5px 8px 4px;border-radius:6px}
-.step .palm{position:absolute;right:8px;bottom:8px;background:var(--paper);color:var(--ink);font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
-.step h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.05;margin:8px 0 3px}
-.step p{font-size:15px;line-height:1.35;color:var(--ink);margin:0}
+.step .k{position:absolute;left:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--display);font-weight:700;font-size:var(--fs-base);line-height:1;padding:5px var(--s-2) var(--s-1);border-radius:6px}
+.step .palm{position:absolute;right:8px;bottom:8px;background:var(--paper);color:var(--ink);font-size:var(--fs-xs);font-weight:600;padding:3px var(--s-2);border-radius:var(--r-pill);border:1px solid var(--line)}
+.step h3{font-family:var(--display);font-weight:700;font-size:var(--fs-md);line-height:1.05;margin:var(--s-2) 0 3px}
+.step p{font-size:var(--fs-base);line-height:1.35;color:var(--ink);margin:0}
 /* L15: a common mistake (« Common mistakes » after the steps, .step.bad): danger border and a ✕ badge instead of a number */
 .step.bad figure{border:2px solid var(--danger)}
-.step.bad figure::after{content:"✕";position:absolute;left:8px;top:8px;background:var(--danger);color:var(--paper);font-weight:700;font-size:15px;line-height:1;padding:5px 7px;border-radius:6px}
+.step.bad figure::after{content:"✕";position:absolute;left:8px;top:8px;background:var(--danger);color:var(--paper);font-weight:700;font-size:var(--fs-base);line-height:1;padding:5px 7px;border-radius:6px}
 .step.bad>h3:first-child::before{content:"✕ ";color:var(--danger)}
 /* L16: technique sheets (templates/technique.html): prerequisites, conditions grid, roles, go / no-go box, safety box */
 ul.prereq{margin:0;padding-left:22px}
 ul.prereq li{margin-bottom:6px}
-.cond{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 8px}
+.cond{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 var(--s-2)}
 @media (max-width:460px){.cond{grid-template-columns:1fr 1fr}.cond .c:last-child:nth-child(odd){grid-column:1/-1}}
-.cond .c{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
-.cond b{font-family:var(--display);font-size:28px;line-height:1;display:block;color:var(--ink);font-variant-numeric:tabular-nums;margin-bottom:4px}
-.cond span{font-size:14px;color:var(--muted)}
+.cond .c{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:var(--s-3) 14px;min-width:0}
+.cond b{font-family:var(--display);font-size:var(--fs-xl);line-height:1;display:block;color:var(--ink);font-variant-numeric:tabular-nums;margin-bottom:var(--s-1)}
+.cond span{font-size:var(--fs-sm);color:var(--muted)}
 .roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.roles .r{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
-.roles h3,.gonogo h3{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.05;margin:0 0 6px;text-transform:uppercase;letter-spacing:.02em}
-.roles p{font-size:15px;line-height:1.35;margin:0}
+.roles .r{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:var(--s-3) 14px;min-width:0}
+.roles h3,.gonogo h3{font-family:var(--display);font-weight:700;font-size:var(--fs-md);line-height:1.05;margin:0 0 6px;text-transform:uppercase;letter-spacing:.02em}
+.roles p{font-size:var(--fs-base);line-height:1.35;margin:0}
 .gonogo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media (max-width:460px){.gonogo{grid-template-columns:1fr}}
-.gonogo>div{border-radius:10px;padding:12px 14px;min-width:0;border:2px solid}
+.gonogo>div{border-radius:10px;padding:var(--s-3) 14px;min-width:0;border:2px solid}
 .gonogo .go{background:var(--ok-bg);border-color:var(--ok)}
 .gonogo .nogo{background:var(--danger-bg);border-color:var(--danger)}
 .gonogo .go h3{color:var(--ok)}
@@ -210,25 +252,25 @@ ul.prereq li{margin-bottom:6px}
 .gonogo .go h3::before{content:"✓ "}
 .gonogo .nogo h3::before{content:"✕ "}
 .gonogo ul,.safety ul{margin:0;padding-left:20px}
-.gonogo li,.safety li{font-size:15px;line-height:1.35;margin-bottom:4px;color:var(--ink)}
-.safety{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:8px;padding:12px 14px}
+.gonogo li,.safety li{font-size:var(--fs-base);line-height:1.35;margin-bottom:var(--s-1);color:var(--ink)}
+.safety{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:var(--r-sm);padding:var(--s-3) 14px}
 .arrow{color:var(--accent);font-weight:700}
-.loop{margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:15px}
-footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
-.notes{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:30px;display:grid;gap:10px}
+.loop{margin-top:14px;padding:var(--s-3) 14px;border:1px dashed var(--line);border-radius:10px;font-size:var(--fs-base)}
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:var(--fs-xs);color:var(--muted)}
+.notes{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:var(--s-4);margin-top:30px;display:grid;gap:10px}
 .notes h2{margin:0}
-.notes .status{font-size:14px;color:var(--muted)}
+.notes .status{font-size:var(--fs-sm);color:var(--muted)}
 /* ---- session composition ---- */
-.acts{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 var(--s-4)}
 .sh2{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .sh2 .btn{min-height:44px;min-width:44px;margin-top:20px}
-.edit{display:grid;gap:12px}
-.edit .row{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
-.edit .row .k{font-family:var(--display);font-weight:700;font-size:20px;color:var(--accent)}
+.edit{display:grid;gap:var(--s-3)}
+.edit .row{display:grid;grid-template-columns:auto 1fr;gap:var(--s-2) 10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px var(--s-3);min-width:0}
+.edit .row .k{font-family:var(--display);font-weight:700;font-size:var(--fs-md);color:var(--accent)}
 .edit .row b{min-width:0;overflow-wrap:anywhere}
-.edit .row .ctl{grid-column:1/-1;display:flex;gap:8px;align-items:center;min-width:0}
+.edit .row .ctl{grid-column:1/-1;display:flex;gap:var(--s-2);align-items:center;min-width:0}
 .edit .row .ctl input{flex:1}
-.edit .ib{appearance:none;flex:none;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--accent);font:600 15px var(--body);cursor:pointer;padding:0 10px}
+.edit .ib{appearance:none;flex:none;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--accent);font:600 var(--fs-base) var(--body);cursor:pointer;padding:0 10px}
 .edit .ib:disabled{opacity:.35;cursor:default}
 /* ---- L4: queue states, toast, tap targets, danger colour, session format ---- */
 a,button,summary,.card,.tcard{-webkit-tap-highlight-color:transparent}
@@ -238,13 +280,13 @@ button:not(:disabled):active,.btn:not(:disabled):active,.topbar a:active,.top a:
 .btn.danger:not(:disabled):hover{background:var(--danger-bg)}
 dialog.dlg .btn.danger{border:1px solid var(--danger)}
 #del-dlg .err,#sd-dlg .err{color:var(--danger)}
-#sd-open,#ed-delete{color:var(--danger);border-color:transparent}
-.card .fmt{font-size:13px;line-height:1.35;color:var(--muted);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#ed-delete{color:var(--danger);border-color:transparent}
+.card .fmt{font-size:var(--fs-xs);line-height:1.35;color:var(--muted);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* L14: a search result found in the sheet's text or in the note says where, under its title */
-.card .where{font-size:13px;font-weight:600;color:var(--accent);margin:0 0 4px;-webkit-line-clamp:1}
+.card .where{font-size:var(--fs-xs);font-weight:600;color:var(--accent);margin:0 0 var(--s-1);-webkit-line-clamp:1}
 /* end L14 */
-.qsum{margin:24px 0 10px}
-.qsum button{appearance:none;width:100%;min-height:44px;display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--ink);font:600 15px var(--body);text-align:left;cursor:pointer}
+.qsum{margin:var(--s-5) 0 10px}
+.qsum button{appearance:none;width:100%;min-height:44px;display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:var(--s-2) var(--s-3);color:var(--ink);font:600 var(--fs-base) var(--body);text-align:left;cursor:pointer}
 .qsum .lbl{flex:1;min-width:0}
 .qsum .dot{width:10px;height:10px;border-radius:50%;background:var(--danger);flex:none}
 .qsum .chev{width:9px;height:9px;flex:none;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-2px) rotate(45deg)}
@@ -252,59 +294,59 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 .q .st.proc{background:var(--accent);color:var(--accent-ink)}
 .q .st.fail{background:var(--danger-bg);color:var(--danger)}
 .q .side{display:flex;align-items:center;gap:2px}
-.q .qa{grid-column:2/-1;display:flex;gap:8px;margin:-4px 0 -6px -10px}
-.q .qa button{font:600 15px var(--body);color:var(--accent)}
+.q .qa{grid-column:2/-1;display:flex;gap:var(--s-2);margin:-4px 0 -6px -10px}
+.q .qa button{font:600 var(--fs-base) var(--body);color:var(--accent)}
 .q .qa button[data-del]{color:var(--muted)}
 .q .t small.qerr{display:block;color:var(--danger)}
-.qpc{font-size:14px;color:var(--muted);margin:2px 0 14px}
+.qpc{font-size:var(--fs-sm);color:var(--muted);margin:2px 0 14px}
 .toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:10}
-.toast button{appearance:none;position:relative;overflow:hidden;min-height:44px;display:flex;align-items:center;border:0;border-radius:999px;padding:10px 20px;background:var(--ink);color:var(--paper);font:600 15px var(--body);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
+.toast button{appearance:none;position:relative;overflow:hidden;min-height:44px;display:flex;align-items:center;border:0;border-radius:var(--r-pill);padding:10px 20px;background:var(--ink);color:var(--paper);font:600 var(--fs-base) var(--body);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
 .toast .qbar{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--paper);opacity:.6;transform-origin:left;animation:qbar 5s linear forwards}
 @keyframes qbar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @keyframes qhold{to{opacity:.6}}
 @media (prefers-reduced-motion:reduce){.toast .qbar{animation-name:qhold}}
 @media (prefers-reduced-motion:no-preference){.card img,.step img{transition:transform .25s}.card:hover img,.step figure:hover img{transform:scale(1.02)}}
 /* ---- L7: « New » row on the home page, « Something wrong? », Redo in the queue ---- */
-.newsec{margin:20px 0 4px}
-.newsec h2{margin:0 0 8px}
-.newrow{display:grid;grid-auto-flow:column;grid-auto-columns:min(72%,260px);gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 2px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch}
+.newsec{margin:20px 0 var(--s-1)}
+.newsec h2{margin:0 0 var(--s-2)}
+.newrow{display:grid;grid-auto-flow:column;grid-auto-columns:min(72%,260px);gap:var(--s-3);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 2px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch}
 .newrow .card{scroll-snap-align:start}
-.newrow .card h3{font-size:19px}
+.newrow .card h3{font-size:var(--fs-md)}
 .newrow .card p{-webkit-line-clamp:2}
 .report{margin-top:14px}
-.report .link{appearance:none;background:transparent;border:0;padding:10px 0;min-height:44px;color:var(--muted);font:600 14px var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.report .link{appearance:none;background:transparent;border:0;padding:10px 0;min-height:44px;color:var(--muted);font:600 var(--fs-sm) var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 #report-dlg textarea{min-height:110px}
 /* ---- L12: notebook page — sticky group chips, one row of cards per group, « See all » grid ---- */
-.group-chips{position:sticky;top:0;z-index:5;display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:12px -16px 0;padding:8px 16px;background:var(--bg);-webkit-overflow-scrolling:touch}
+.group-chips{position:sticky;top:0;z-index:5;display:flex;gap:var(--s-2);overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:var(--s-3) -16px 0;padding:var(--s-2) var(--s-4);background:var(--bg);-webkit-overflow-scrolling:touch}
 .group-chips::-webkit-scrollbar{display:none}
-.group-chips a{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);text-decoration:none;font:600 14px var(--body);white-space:nowrap}
+.group-chips a{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);color:var(--ink);text-decoration:none;font:600 var(--fs-sm) var(--body);white-space:nowrap}
 .group-chips a.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 #groups section{scroll-margin-top:64px}
-#groups section>h2,#groups .sh2 h2{font-size:24px;margin:22px 0 8px}
+#groups section>h2,#groups .sh2 h2{font-size:var(--fs-lg);margin:22px 0 var(--s-2)}
 #groups .sh2 .btn{margin-top:14px}
-.group-row{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:2px 16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.group-row{display:flex;gap:var(--s-3);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 16px;margin:0 -16px;padding:2px var(--s-4) 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .group-row::-webkit-scrollbar{display:none}
 .group-row .card{flex:none;width:min(44%,220px);scroll-snap-align:start}
-.group-row .card h3{font-size:19px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.group-row .card h3{font-size:var(--fs-md);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card .m span:first-child{flex-shrink:0}
-.group-row .from-ses{flex:none;margin:0;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-right:2px solid var(--line);padding-left:6px}
-.grid .from-ses{grid-column:1/-1;margin:6px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.see-all{flex:none;width:min(30%,140px);display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed var(--line-strong);border-radius:12px;color:var(--ink);font-weight:600;font-size:15px;text-decoration:none;scroll-snap-align:end}
+.group-row .from-ses{flex:none;margin:0;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-size:var(--fs-xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-right:2px solid var(--line);padding-left:6px}
+.grid .from-ses{grid-column:1/-1;margin:6px 0 0;padding-top:10px;border-top:1px solid var(--line);font-size:var(--fs-xs);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.see-all{flex:none;width:min(30%,140px);display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed var(--line-strong);border-radius:var(--r-md);color:var(--ink);font-weight:600;font-size:var(--fs-base);text-decoration:none;scroll-snap-align:end}
 .see-all:active{opacity:.6}
 #report-status:empty{display:none}
 #report-status.err{color:var(--danger)}
-.q .redo{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;margin-bottom:2px;background:var(--accent);color:var(--accent-ink)}
+.q .redo{display:inline-block;font-size:var(--fs-xs);font-weight:600;border-radius:var(--r-pill);padding:1px var(--s-2);margin-bottom:2px;background:var(--accent);color:var(--accent-ink)}
 /* ---- L3: sheet in use (keep screen on, gesture first, full-screen photos) ---- */
-.top{flex-wrap:wrap;gap:8px 10px}
+.top{flex-wrap:wrap;gap:var(--s-2) 10px}
 .top>a{white-space:nowrap}
 .top .r{flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
 .top .wake[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 details.rb-more{margin:0 0 10px}
-details.rb-more>summary,details.rb-why>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;color:var(--accent);font-weight:600;list-style:none}
+details.rb-more>summary,details.rb-why>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:var(--s-2);color:var(--accent);font-weight:600;list-style:none}
 details.rb-more>summary::-webkit-details-marker,details.rb-why>summary::-webkit-details-marker{display:none}
 details.rb-more>summary::before,details.rb-why>summary::before{content:"▸";flex:none;width:1em;color:var(--accent)}
 details.rb-more[open]>summary::before,details.rb-why[open]>summary::before{content:"▾"}
-details.rb-more>ol.keys{margin-top:8px}
+details.rb-more>ol.keys{margin-top:var(--s-2)}
 details.rb-why{margin-top:22px}
 details.rb-why>summary>h2{margin:0;color:var(--ink)}
 .step img[data-ph]{cursor:zoom-in}
@@ -314,126 +356,170 @@ dialog.ph-dlg::backdrop{background:#000}
 .ph-strip{display:flex;height:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior:contain;scrollbar-width:none}
 .ph-strip::-webkit-scrollbar{display:none}
 .ph-strip:focus-visible{outline:3px solid #fff;outline-offset:-3px}
-.ph-strip figure{flex:0 0 100%;margin:0;scroll-snap-align:center;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:calc(56px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));box-sizing:border-box}
+.ph-strip figure{flex:0 0 100%;margin:0;scroll-snap-align:center;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;gap:var(--s-3);padding:calc(56px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));box-sizing:border-box}
 .ph-strip img{display:block;width:100%;min-height:0;flex:0 1 auto;max-height:calc(100% - 96px);object-fit:contain}
-.ph-strip figcaption{font-size:16px;line-height:1.35;color:#eee;max-width:640px;margin:0 auto;width:100%}
-.ph-strip figcaption b{font-family:var(--display);font-size:20px;color:#fff;display:block}
-.ph-x{position:fixed;top:calc(8px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));z-index:1;min-width:48px;min-height:48px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.6);color:#fff;font-size:22px;line-height:1;cursor:pointer}
+.ph-strip figcaption{font-size:var(--fs-base);line-height:1.35;color:#eee;max-width:640px;margin:0 auto;width:100%}
+.ph-strip figcaption b{font-family:var(--display);font-size:var(--fs-md);color:#fff;display:block}
+.ph-x{position:fixed;top:calc(8px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));z-index:1;min-width:48px;min-height:48px;border-radius:var(--r-pill);border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.6);color:#fff;font-size:var(--fs-lg);line-height:1;cursor:pointer}
 .ph-x:focus-visible{outline:3px solid #fff;outline-offset:2px}
 @media (prefers-reduced-motion:no-preference){.ph-strip{scroll-behavior:smooth}}
 /* ---- L5: moving through a session, notes that save themselves ---- */
-.top span.grp{text-transform:none;letter-spacing:normal;font-size:14px;font-weight:400;color:var(--muted)}
-.seat{display:inline-block;background:var(--tag);color:var(--ink);border-radius:10px;padding:8px 14px;font-size:18px;font-weight:700;margin:0 0 16px}
+.top span.grp{text-transform:none;letter-spacing:normal;font-size:var(--fs-sm);font-weight:400;color:var(--muted)}
+.seat{display:inline-block;background:var(--tag);color:var(--ink);border-radius:10px;padding:var(--s-2) 14px;font-size:var(--fs-md);font-weight:700;margin:0 0 var(--s-4)}
 .seq{display:flex;gap:10px;margin-top:30px}
-.seq a{min-height:56px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 18px;border-radius:999px;font-weight:600;font-size:16px;text-decoration:none;line-height:1.25}
+.seq a{min-height:56px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;padding:var(--s-2) 18px;border-radius:var(--r-pill);font-weight:600;font-size:var(--fs-base);text-decoration:none;line-height:1.25}
 .seq .prev{flex:none;border:1px solid var(--line);color:var(--accent)}
 .seq .next{flex:1;min-width:0;background:var(--accent);color:var(--accent-ink)}
 .notes .actions{align-items:center;min-height:44px}
-.notes .nretry{appearance:none;min-height:44px;background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--accent);font:600 14px var(--body);padding:4px 16px;cursor:pointer}
+.notes .nretry{appearance:none;min-height:44px;background:transparent;border:1px solid var(--line);border-radius:var(--r-pill);color:var(--accent);font:600 var(--fs-sm) var(--body);padding:var(--s-1) var(--s-4);cursor:pointer}
 /* ---- L6: practice log ---- */
-.practice{display:grid;gap:8px;margin:0 0 18px}
+.practice{display:grid;gap:var(--s-2);margin:0 0 18px}
 .practice:empty{display:none}
 .practice .btn.done{background:var(--ok-bg);color:var(--ok)}
-.practice .pr-row{display:flex;gap:8px;align-items:center}
+.practice .pr-row{display:flex;gap:var(--s-2);align-items:center}
 .practice .pr-row input{flex:1;min-height:44px;box-sizing:border-box}
 .practice .err{color:var(--danger)}
-.practice .pr-last{margin:0;font-size:15px;color:var(--muted)}
+.practice .pr-last{margin:0;font-size:var(--fs-base);color:var(--muted)}
 .plog:empty{display:none}
-.plog h3{margin:4px 0 6px;font-size:16px}
-.plog ol{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:15px}
-.plog time{color:var(--muted);margin-right:8px;white-space:nowrap}
+.plog h3{margin:var(--s-1) 0 6px;font-size:var(--fs-base)}
+.plog ol{list-style:none;margin:0;padding:0;display:grid;gap:var(--s-1);font-size:var(--fs-base)}
+.plog time{color:var(--muted);margin-right:var(--s-2);white-space:nowrap}
 .card .m span.done{background:var(--ok-bg);color:var(--ok)}
 /* ---- L8: « To try » shelf on the home page (row and cards as « New ») ---- */
 .totry .tt{display:grid;gap:6px;align-content:start;min-width:0;scroll-snap-align:start}
 .totry .tt .btn{justify-self:start}
 /* ---- L13: home recomposed — compact brand bar, small counter, narrower « New » / « To try » cards ---- */
 #brand-bar{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:0 0 2px}
-#brand-wordmark{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1}
+#brand-wordmark{display:flex;align-items:center;gap:var(--s-2);flex:1 1 auto;min-width:0;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1}
 #brand-wordmark img{display:block;width:28px;height:28px;flex:none}
 #brand-wordmark h1{font:inherit;letter-spacing:inherit;color:inherit;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#brand-bar .set{text-decoration:none;font-size:14px;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
+/* L20: on the home page the title is the SVG wordmark (the text « Reelbook » stays for screen readers and search) */
+#home:not(.nb) #brand-wordmark h1{flex:none;width:81px;height:19px;text-indent:100%;color:transparent;background:url("icons/reelbook-wordmark.svg") 0 50%/contain no-repeat}
+#brand-bar .set{text-decoration:none;font-size:var(--fs-sm);font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-1)}
 #brand-bar .set:active{opacity:.6}
 /* 320 px wide (iPhone SE 1st gen, zoomed display): tighter gaps keep the bar on one line */
-@media (max-width:359px){#brand-bar{column-gap:6px}#brand-wordmark{gap:6px}#brand-bar #btn-new{padding:7px 10px}#brand-bar .set{padding:0 2px}}
+@media (max-width:359px){#brand-bar{column-gap:6px}#brand-wordmark{gap:6px}#brand-bar .set{padding:0 2px}}
+/* #count and #brand-wordmark stay in px: tests/acceptance/l13 reads those px sizes */
 #count{font-size:13px;color:var(--muted);margin:0 0 14px}
 /* a notebook page: the title on its own line, large; « + Add a video » and Settings under it */
-#home.nb #brand-wordmark{flex-basis:100%;color:var(--ink);font-family:var(--display);font-size:clamp(44px,12vw,64px);font-weight:700;letter-spacing:-.01em;text-transform:none;line-height:.95}
+#home.nb #brand-wordmark{flex-basis:100%;color:var(--ink);font-family:var(--display);font-size:var(--fs-display);font-weight:700;letter-spacing:-.01em;text-transform:none;line-height:.95}
 #home.nb #brand-wordmark img{display:none}
-#home.nb #brand-wordmark h1{white-space:normal;text-wrap:balance}
+/* L20: a notebook page keeps its colour: a 6 px band over the eyebrow, the eyebrow in the colour (darkened towards the ink for small text) */
+#home.nb #h-eyebrow{border-top:6px solid var(--t,var(--accent));padding-top:var(--s-3);color:color-mix(in srgb,var(--t,var(--accent)) 75%,var(--ink))}
+#home.nb #brand-wordmark h1{white-space:normal;text-wrap:balance;overflow:visible;overflow-wrap:anywhere} /* L20: overflow visible, the line-height .95 clipped the « g » of « Strength »; a long word breaks instead of overflowing */
 #home.nb #brand-bar .set{margin-left:auto}
-#home.nb #count{font-size:14px;margin-top:4px}
+#home.nb #count{font-size:var(--fs-sm);margin-top:var(--s-1)}
 #home .newsec{margin:0 0 10px}
-.newrow{grid-auto-columns:min(44%,220px);margin:0 -16px;padding:2px 16px 10px;scroll-padding:0 16px;scrollbar-width:none}
+.newrow{grid-auto-columns:min(44%,220px);margin:0 -16px;padding:2px var(--s-4) 10px;scroll-padding:0 16px;scrollbar-width:none}
 .newrow::-webkit-scrollbar{display:none}
-.newrow .card h3{font-size:19px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.qsum{margin:16px 0 10px}
+.newrow .card h3{font-size:var(--fs-md);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qsum{margin:var(--s-4) 0 10px}
 .totry .tt{grid-template-rows:1fr auto}
 /* ---- L10: session player, one exercise per screen (dark unless the light theme is chosen: its tokens are set
    with :root[data-theme="dark"] near the top) ---- */
-.pl-start{margin:14px 0 4px}
-.pl-start .btn{min-height:52px;padding:12px 32px;font-size:18px}
+.pl-start{margin:14px 0 var(--s-1)}
+.pl-start .btn{min-height:52px;padding:var(--s-3) var(--s-6);font-size:var(--fs-md)}
 .player{position:fixed;inset:0;z-index:10;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
 .player .pl{max-width:560px;min-height:100%;margin:0 auto;display:flex;flex-direction:column}
-.pl-top{display:flex;align-items:flex-start;gap:12px;padding:10px 16px 12px 12px}
-.pl-x{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
-.pl-n{margin:0;font:700 18px/1.1 var(--display);color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
-.pl-t{font-size:clamp(28px,8vw,38px);line-height:1;margin:2px 0 0;outline:none;overflow-wrap:anywhere}
-.pl-top>div{min-width:0;padding-top:4px}
+.pl-top{display:flex;align-items:flex-start;gap:var(--s-3);padding:10px var(--s-4) var(--s-3) var(--s-3)}
+.pl-x{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:var(--fs-lg);line-height:1;cursor:pointer}
+.pl-n{margin:0;font:700 var(--fs-md)/1.1 var(--display);color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.pl-t{font-size:clamp(1.75rem,8vw,2.375rem);line-height:1;margin:2px 0 0;outline:none;overflow-wrap:anywhere}
+.pl-top>div{min-width:0;padding-top:var(--s-1)}
 .pl-car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
 .pl-car::-webkit-scrollbar{display:none}
 .pl-car figure{flex:0 0 100%;margin:0;scroll-snap-align:center;scroll-snap-stop:always;display:flex;justify-content:center}
 /* 4:5 at full width, narrower on a short screen so the dose stays in view */
 .pl-car img{display:block;width:auto;max-width:100%;height:min(calc(min(100vw,560px) * 1.25),46vh);height:min(calc(min(100vw,560px) * 1.25),46dvh);aspect-ratio:4/5;object-fit:cover;background:var(--paper);cursor:zoom-in}
-.pl-dots{display:flex;justify-content:center;gap:8px;margin:10px 0 0}
-.pl-media .empty{margin:0 16px}
+.pl-dots{display:flex;justify-content:center;gap:var(--s-2);margin:10px 0 0}
+.pl-media .empty{margin:0 var(--s-4)}
 .pl-dots span{width:8px;height:8px;border-radius:50%;background:var(--line-strong)}
 .pl-dots span.on{background:var(--ink)}
-.pl-body{flex:1;padding:14px 16px 20px;touch-action:pan-y}
-.pl-dose{font-family:var(--display);font-weight:700;font-size:64px;line-height:1;margin:0 0 8px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.pl-free{font-size:17px;color:var(--muted);margin:0 0 12px}
-.pl-keys{margin:14px 0 0;padding:0;list-style:none;counter-reset:k;display:grid;gap:12px}
-.pl-keys li{counter-increment:k;display:grid;grid-template-columns:32px 1fr;gap:10px;font-size:18px;line-height:1.35}
-.pl-keys li::before{content:counter(k);font:700 22px/1.1 var(--display);color:var(--accent)}
+.pl-body{flex:1;padding:14px var(--s-4) 20px;touch-action:pan-y}
+/* the dose stays 64 px (tests/acceptance/l10 reads a px size of 56 or more); it already fills the screen width */
+.pl-dose{font-family:var(--display);font-weight:700;font-size:64px;line-height:1;margin:0 0 var(--s-2);letter-spacing:-.01em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pl-free{font-size:var(--fs-base);color:var(--muted);margin:0 0 var(--s-3)}
+.pl-keys{margin:14px 0 0;padding:0;list-style:none;counter-reset:k;display:grid;gap:var(--s-3)}
+.pl-keys li{counter-increment:k;display:grid;grid-template-columns:32px 1fr;gap:10px;font-size:var(--fs-md);line-height:1.35}
+.pl-keys li::before{content:counter(k);font:700 var(--fs-lg)/1.1 var(--display);color:var(--accent)}
 .pl-keys b{display:block}
-.pl-resume{display:grid;gap:12px;padding:16px}
+.pl-resume{display:grid;gap:var(--s-3);padding:var(--s-4)}
 .pl-nav{position:sticky;bottom:0;display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
-.pl-nav .btn,.pl-resume .btn{flex:1;min-height:64px;font-size:19px;border-radius:16px}
+.pl-nav .btn,.pl-resume .btn{flex:1;min-height:64px;font-size:var(--fs-md);border-radius:var(--r-lg)}
 .pl-nav .btn.ghost{color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.pl-car{scroll-behavior:smooth}}
 @media (prefers-reduced-motion: reduce){.player,.player *{transition:none!important;animation:none!important}}
 /* ---- L11: player sets (round check boxes), rest timer, flash at zero, end of session ---- */
 .pl-act{scroll-margin-bottom:104px}
-.pl-sets{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 4px}
+.pl-sets{display:flex;flex-wrap:wrap;gap:var(--s-3);margin:var(--s-2) 0 var(--s-1)}
 label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointer}
 .pl-set input{appearance:none;-webkit-appearance:none;grid-area:1/1;margin:0;width:56px;height:56px;border-radius:50%;border:2px solid var(--line-strong);background:transparent;cursor:pointer}
-.pl-set span{grid-area:1/1;pointer-events:none;font:700 24px/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.pl-set span{grid-area:1/1;pointer-events:none;font:700 var(--fs-lg)/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
 .pl-one input{width:148px;border-radius:28px}
 .pl-set input:checked{background:var(--accent);border-color:var(--accent)}
 .pl-set input:checked+span{color:var(--accent-ink)}
 .pl-one input:checked+span::before{content:"✓ "}
 .pl-set input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-.pl-restk{margin:0;font:700 18px/1.1 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
-.pl-dose.pl-rest{font-size:96px;color:var(--accent);margin:0 0 8px}
-.pl-restb{display:flex;gap:8px;margin:0 0 14px}
-.pl-restb .btn{flex:1;min-height:52px;padding:10px 8px;font-size:18px;border-radius:14px}
+.pl-restk{margin:0;font:700 var(--fs-md)/1.1 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.pl-dose.pl-rest{font-size:6rem;color:var(--accent);margin:0 0 var(--s-2)}
+.pl-restb{display:flex;gap:var(--s-2);margin:0 0 14px}
+.pl-restb .btn{flex:1;min-height:52px;padding:10px var(--s-2);font-size:var(--fs-md);border-radius:14px}
 .pl-restb .btn.ghost{color:var(--ink)}
 .pl-flash{position:fixed;inset:0;z-index:12;background:var(--accent);pointer-events:none;animation:pl-flash .6s ease-out forwards}
 @keyframes pl-flash{from{opacity:.9}to{opacity:0}}
-.pl-end .end-k{margin:28px 0 8px;font:700 22px/1 var(--display);text-transform:uppercase;letter-spacing:.06em;color:var(--ok);outline:none}
+.pl-end .end-k{margin:28px 0 var(--s-2);font:700 var(--fs-lg)/1 var(--display);text-transform:uppercase;letter-spacing:.06em;color:var(--ok);outline:none}
 .pl-end .end-k::before{content:"✓ "}
-.pl-end .end-sum{margin:8px 0 20px;font:700 40px/1.05 var(--display);font-variant-numeric:tabular-nums}
-.pl-end .pr-row{margin:0 0 8px}
+.pl-end .end-sum{margin:var(--s-2) 0 20px;font:700 var(--fs-2xl)/1.05 var(--display);font-variant-numeric:tabular-nums}
+.pl-end .pr-row{margin:0 0 var(--s-2)}
 .pl-end .pr-row input{width:100%;min-height:48px;box-sizing:border-box}
-.pl-end .err{color:var(--danger);margin:0 0 8px}
-.pl-end .actions{margin-top:12px}
-.pl-end .actions .btn{min-height:52px;padding:12px 28px;font-size:17px}
+.pl-end .err{color:var(--danger);margin:0 0 var(--s-2)}
+.pl-end .actions{margin-top:var(--s-3)}
+.pl-end .actions .btn{min-height:52px;padding:var(--s-3) 28px;font-size:var(--fs-base)}
+/* ---- L17: native navigation — sticky bar (back, compact title, « ⋯ » menu), floating « + Add a video » ----
+   The bar is 44 px under the status bar (its own safe-area padding), flush with the top and sides of the screen over
+   the page's padding; it gets a hairline once the page title has gone under it. A notebook's group chips stick
+   right under it. The floating button sits above the home indicator; the page leaves room for it at the bottom. */
+#nav-bar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:2px;height:calc(44px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) max(4px,env(safe-area-inset-right)) 0 max(4px,env(safe-area-inset-left));margin:calc(-20px - env(safe-area-inset-top,0px)) calc(-1 * max(16px,env(safe-area-inset-right))) 14px calc(-1 * max(16px,env(safe-area-inset-left)));background:var(--bg);border-bottom:1px solid transparent;transition:border-color .2s}
+#nav-back{min-height:44px;min-width:44px;flex:0 1 auto;padding:0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--accent);font:600 var(--fs-base)/44px var(--body);text-decoration:none}
+#nav-title{flex:1 1 0;min-width:0;text-align:center;font:700 var(--fs-base)/44px var(--body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .15s}
+#nav-more{min-width:44px;min-height:44px;flex:none;margin-left:auto;padding:0 6px;appearance:none;background:none;border:0;border-radius:var(--r-pill);color:var(--accent);font:700 var(--fs-lg)/1 var(--body);cursor:pointer}
+#nav-bar.titled{border-bottom-color:var(--line)}
+#nav-bar.titled #nav-title{opacity:1}
+#nav-bar.titled #nav-back{max-width:38%}
+#nav-back:active,#nav-more:active{opacity:.6}
+.group-chips{top:calc(44px + env(safe-area-inset-top,0px))}
+#groups section{scroll-margin-top:calc(108px + env(safe-area-inset-top,0px))}
+#add-video-fab{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:7;display:grid;place-items:center;width:56px;height:56px;padding:0;border:0;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:0;box-shadow:0 6px 16px rgba(0,0,0,.28);cursor:pointer}
+#add-video-fab::before{content:"+";font:300 var(--fs-2xl)/1 var(--body);margin-top:-3px}
+#add-video-fab:active{transform:scale(.94)}
+body.fab{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+/* the « ⋯ » menu: the page's title, then one row per action (a greyed one says why), Close apart at the bottom */
+dialog.nav-menu{padding-top:var(--s-4)}
+dialog.nav-menu h2{font:600 var(--fs-base) var(--body);text-transform:none;letter-spacing:normal;color:var(--muted);text-align:center;margin:0 0 10px;overflow-wrap:anywhere}
+.nav-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--paper)}
+.nav-it{appearance:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0 var(--s-3);min-height:50px;padding:10px var(--s-4);border:0;border-top:1px solid var(--line);background:none;color:var(--accent);font:600 var(--fs-base) var(--body);text-align:left;cursor:pointer}
+.nav-it:first-child{border-top:0}
+.nav-it small{flex-basis:100%;font-size:var(--fs-xs);font-weight:400;color:var(--muted)}
+.nav-it:disabled{color:var(--muted);cursor:default}
+.nav-it.danger{color:var(--danger)}
+.nav-it.wake::after{content:"Off";font-weight:400;color:var(--muted)}
+.nav-it.wake[aria-pressed="true"]::after{content:"On";font-weight:700;color:var(--ok)}
+.nav-it:not(:disabled):active{background:var(--tag)}
+dialog.nav-menu .actions{margin-top:var(--s-3)}
 </style>
 </head>
 <body>
 
+<!-- ===== L17: sticky navigation bar (every signed-in page but home and the player) ===== -->
+<header id="nav-bar" hidden>
+  <a id="nav-back" href="#">‹ Reelbook</a>
+  <span id="nav-title" aria-hidden="true"></span>
+  <button type="button" id="nav-more" aria-label="Page actions" aria-haspopup="dialog" aria-controls="nav-actions">⋯</button>
+</header>
+
 <!-- ===== Sign-up: pick a backend ===== -->
 <div id="setup" class="wrap" hidden>
-  <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><span>reelbook</span></p>
+  <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
   <h1>Your videos, as sheets</h1>
   <p class="lead">Paste the videos you want to keep (Instagram, TikTok, YouTube, Facebook): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
   <div class="panel">
@@ -457,7 +543,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 
 <!-- ===== Auth ===== -->
 <div id="auth" class="wrap" hidden>
-  <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><span>reelbook</span></p>
+  <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
   <h1 id="auth-title">Sign in</h1>
   <form class="panel" id="auth-form">
     <label>Email <input id="a-email" type="email" autocomplete="email" required></label>
@@ -482,12 +568,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 
 <!-- ===== Home: portal / theme ===== -->
 <div id="home" class="wide" hidden>
-  <!-- L13: a notebook page keeps its crumb and eyebrow above the bar; the home page shows neither -->
-  <p class="crumb" id="h-crumb" hidden><a href="#">← Reelbook</a></p>
+  <!-- L13: a notebook page keeps its eyebrow above the bar; the home page does not (L17: the way back is in #nav-bar) -->
   <p class="eyebrow" id="h-eyebrow" hidden>Find it fast, when you need it</p>
   <header id="brand-bar">
     <div id="brand-wordmark"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><h1 id="h-title">Reelbook</h1></div>
-    <button class="btn sm" id="btn-new" type="button" aria-expanded="false" aria-controls="sheet-new">+ Add a video</button>
     <a class="set" href="#settings">Settings</a>
   </header>
   <p class="cnt" id="count" aria-live="polite"></p>
@@ -502,11 +586,11 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/reelbook</code>.</p>
     <div class="actions"><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
   </form>
-  <dialog class="dlg" id="pending-dlg" aria-labelledby="pd-title">
+  <dialog class="dlg act" id="pending-dlg" aria-labelledby="pd-title">
     <h2 id="pd-title">Not queued yet</h2>
     <p>This video is not in the queue. Leave it out?<span class="u" id="pd-url"></span></p>
     <p class="err" id="pd-err" hidden></p>
-    <div class="actions"><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-discard">Discard the link</button><button class="btn ghost" type="button" id="pd-stay">Keep editing</button></div>
+    <div class="actions"><button class="btn danger" type="button" id="pd-discard">Discard the link</button><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-stay" autofocus>Keep editing</button></div>
   </dialog>
   <div class="flash" id="flash" role="status" hidden></div>
 
@@ -549,6 +633,9 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   <footer>Sheets are built from videos for personal use. Every sheet credits its author.</footer>
 </div>
 
+<!-- L17: « + Add a video », floating, on the home and notebook pages (on a notebook, the link is filed there) -->
+<button type="button" id="add-video-fab" aria-label="Add a video" aria-expanded="false" aria-controls="sheet-new" hidden>+ Add a video</button>
+
 <!-- ===== Welcome (after sign-up, and from "Setup guide") ===== -->
 <div id="welcome" class="wrap" hidden>
   <p class="eyebrow">Welcome to Reelbook</p>
@@ -585,7 +672,6 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 
 <!-- ===== Settings ===== -->
 <div id="settings" class="wrap" hidden>
-  <p class="crumb"><a href="#">← Reelbook</a></p>
   <h1>Settings</h1>
   <div class="panel">
     <h2>Account</h2>
@@ -619,52 +705,51 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
 <div id="play-flash" class="pl-flash" hidden aria-hidden="true"></div>
 <dialog class="dlg" id="move-dlg" aria-labelledby="mv-title">
   <form id="mv-form" style="display:grid;gap:12px">
-    <h2 id="mv-title">Move this sheet</h2>
+    <div class="sh-h"><button class="btn ghost sh-no" type="button" id="mv-cancel">Cancel</button><h2 id="mv-title">Move this sheet</h2><button class="btn sh-ok" type="submit" id="mv-submit">Move</button></div>
     <p class="u" id="mv-sheet"></p>
     <label>Notebook <select id="mv-theme"></select></label>
     <p class="hint" id="mv-hint" hidden>Its exercises stay where they are.</p>
     <label id="mv-group-l">Group <select id="mv-group"></select></label>
     <label id="mv-new-l" hidden>New group name <input id="mv-new" type="text" maxlength="40" autocomplete="off" placeholder="Shoulders"></label>
     <p class="err" id="mv-err" hidden></p>
-    <div class="actions"><button class="btn" type="submit" id="mv-submit">Move</button><button class="btn ghost" type="button" id="mv-cancel">Cancel</button></div>
   </form>
 </dialog>
 <dialog class="dlg pick-dlg" id="ns-dlg" aria-labelledby="ns-h">
   <form id="ns-form" style="display:grid;gap:12px">
-    <h2 id="ns-h">New session</h2>
+    <div class="sh-h"><button class="btn ghost sh-no" type="button" id="ns-cancel">Cancel</button><h2 id="ns-h">New session</h2><button class="btn sh-ok" type="submit" id="ns-submit">Create session</button></div>
     <label>Title <input id="ns-title" type="text" maxlength="80" autocomplete="off" placeholder="Shoulders, Monday"></label>
     <input id="ns-q" type="search" autocomplete="off" aria-label="Filter the exercises" placeholder="Filter the exercises">
     <p class="hint" id="ns-count"></p>
     <div class="picklist" id="ns-list"></div>
     <p class="err" id="ns-err" hidden></p>
-    <div class="actions"><button class="btn" type="submit" id="ns-submit">Create session</button><button class="btn ghost" type="button" id="ns-cancel">Cancel</button></div>
   </form>
 </dialog>
 <dialog class="dlg" id="as-dlg" aria-labelledby="as-h">
   <form id="as-form" style="display:grid;gap:12px">
-    <h2 id="as-h">Add to a session</h2>
+    <div class="sh-h"><button class="btn ghost sh-no" type="button" id="as-cancel">Cancel</button><h2 id="as-h">Add to a session</h2><button class="btn sh-ok" type="submit" id="as-submit">Add</button></div>
     <p class="u" id="as-sheet"></p>
     <label>Session <select id="as-session"></select></label>
     <label id="as-new-l" hidden>New session title <input id="as-new" type="text" maxlength="80" autocomplete="off" placeholder="Shoulders, Monday"></label>
     <p class="hint" id="as-hint" hidden></p>
     <p class="err" id="as-err" hidden></p>
-    <div class="actions"><button class="btn" type="submit" id="as-submit">Add</button><button class="btn ghost" type="button" id="as-cancel">Cancel</button></div>
   </form>
 </dialog>
 <!-- The « Removed · Undo » toast of a queue removal: the delete is sent when its 5 s bar ends (animationend). -->
 <div class="toast" role="status"><button type="button" id="queue-undo" hidden><span id="queue-toast"></span></button></div>
-<dialog class="dlg" id="del-dlg" aria-labelledby="del-h">
+<dialog class="dlg act" id="del-dlg" aria-labelledby="del-h">
   <h2 id="del-h">Delete this session?</h2>
   <p><b id="del-name"></b><span class="u">Its exercise sheets stay in your notebooks.</span></p>
   <p class="err" id="del-err" hidden></p>
-  <div class="actions"><button class="btn danger" type="button" id="del-ok">Delete session</button><button class="btn ghost" type="button" id="del-cancel">Keep it</button></div>
+  <div class="actions"><button class="btn danger" type="button" id="del-ok">Delete session</button><button class="btn ghost" type="button" id="del-cancel" autofocus>Keep it</button></div>
 </dialog>
-<dialog class="dlg" id="sd-dlg" aria-labelledby="sd-h">
+<dialog class="dlg act" id="sd-dlg" aria-labelledby="sd-h">
   <h2 id="sd-h">Delete this sheet?</h2>
   <p><b id="sd-name"></b><span class="u" id="sd-what"></span></p>
   <p class="err" id="sd-err" hidden></p>
-  <div class="actions"><button class="btn danger" type="button" id="sd-ok">Delete sheet</button><button class="btn ghost" type="button" id="sd-cancel">Keep it</button></div>
+  <div class="actions"><button class="btn danger" type="button" id="sd-ok">Delete sheet</button><button class="btn ghost" type="button" id="sd-cancel" autofocus>Keep it</button></div>
 </dialog>
+<!-- L17: the page's actions, from « ⋯ » in #nav-bar (its content is written by paintMenu, for the page shown) -->
+<dialog class="dlg nav-menu" id="nav-actions" aria-labelledby="nav-actions-h"></dialog>
 <!-- L7: « Something wrong? » queues the video again with a « Redo: » note for the next run -->
 <!-- (its content is written by openReport, fresh for each sheet or session) -->
 <dialog class="dlg" id="report-dlg" aria-labelledby="report-h"></dialog>
@@ -696,8 +781,53 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
   const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player'];
-  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); };
+  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); syncNav(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
+  // ---------- L18: bottom sheets ----------
+  // Every dialog.dlg opens with openSheet and closes with closeSheet (the photo viewer stays a full-screen dialog of
+  // its own). Under 600 px wide the CSS anchors it at the bottom of the screen; wider, it stays a centred dialog.
+  // A tap on the backdrop closes it, unless something was typed, ticked or picked in it since it opened
+  // (sheetSaved clears that once it is sent), or one of its writes is still running (whileBusy: no backdrop, no
+  // Escape, so its result or its error is shown in the sheet). --vvh and --kb follow the visual viewport, so a sheet stays above
+  // the on-screen keyboard. Guarded for the test harness: no showModal / close, no visualViewport, no layout.
+  const sheetWired = new WeakSet(), sheetDirty = new WeakSet(), sheetBusy = new WeakSet();
+  const fitViewport = () => {
+    const vv = window.visualViewport, st = document.documentElement && document.documentElement.style; if (!vv || !st) return;
+    st.setProperty('--vvh', Math.round(vv.height) + 'px');
+    st.setProperty('--kb', Math.max(0, Math.round((window.innerHeight || vv.height) - vv.height - vv.offsetTop)) + 'px');
+  };
+  if (window.visualViewport && window.visualViewport.addEventListener) for (const t of ['resize', 'scroll']) window.visualViewport.addEventListener(t, fitViewport);
+  const closeSheet = dlg => {
+    if (!dlg) return;
+    if (typeof dlg.close === 'function') dlg.close();
+    else { dlg.open = false; if (dlg.removeAttribute) dlg.removeAttribute('open'); }
+  };
+  // A click whose target is the dialog itself landed on its backdrop, or on its own padding (inside its box).
+  const onBackdrop = (dlg, ev) => {
+    if (ev.target !== dlg) return false;
+    const r = dlg.getBoundingClientRect ? dlg.getBoundingClientRect() : null;
+    return !r || ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+  };
+  // Wired once, at its first opening; a sheet with click handlers of its own can be wired before them (L17: the
+  // harness keeps one listener per event type, the last one added).
+  const wireSheet = dlg => {
+    if (sheetWired.has(dlg) || !dlg.addEventListener) return;
+    sheetWired.add(dlg);
+    dlg.addEventListener('input', () => sheetDirty.add(dlg));
+    dlg.addEventListener('click', ev => { if (!sheetDirty.has(dlg) && !sheetBusy.has(dlg) && onBackdrop(dlg, ev)) closeSheet(dlg); });
+    dlg.addEventListener('cancel', ev => { if (sheetBusy.has(dlg) && ev.preventDefault) ev.preventDefault(); });
+  };
+  const openSheet = dlg => {
+    if (!dlg) return;
+    sheetDirty.delete(dlg);
+    wireSheet(dlg);
+    fitViewport();
+    if (typeof dlg.showModal === 'function') dlg.showModal();
+    else { dlg.open = true; if (dlg.setAttribute) dlg.setAttribute('open', ''); }
+  };
+  const sheetSaved = dlg => { sheetDirty.delete(dlg); };
+  // A dialog's write handler: the sheet stays open until it ends (called synchronously, so preventDefault works).
+  const whileBusy = (dlg, fn) => async (...a) => { sheetBusy.add(dlg); try { return await fn(...a); } finally { sheetBusy.delete(dlg); } };
 
   // ---------- backend selection ----------
   const hostedOk = !!(CFG.hosted && CFG.hosted.url && CFG.hosted.anonKey);
@@ -1213,11 +1343,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const practisedCount = () => [...lastDone.keys()].filter(k => bySlug.has(k) || v2BySlug.has(RS.sessionSlugOf(k))).length;
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
-    $('h-crumb').hidden = !t;
-    $('h-crumb').innerHTML = one ? `<a href="#${esc(t.id)}">← ${esc(t.title)}</a>` : '<a href="#">← Reelbook</a>'; // L12: a group grid goes back to its notebook
     $('h-eyebrow').hidden = !t;
     $('h-title').textContent = t ? t.title : 'Reelbook';
     $('home').classList.toggle('nb', !!t); // L13: a notebook page shows its title large, without the mark
+    $('home').setAttribute('style', t ? `--t:${colorOf(t)}` : ''); // L20: its colour on the band over the title
     // L13: « How it works » leaves the home page once the account has 5 sheets (the guide stays in Settings)
     $('portal').hidden = !!t; $('groups').hidden = !t; $('howto').hidden = !!t || loading || sheets.length >= 5; $('queue-sec').hidden = !!t || !queueCount; if (t) $('picker').hidden = true;
     if (t) $('count').textContent = renderGroups(t, one);
@@ -1230,11 +1359,25 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     renderNew(!t && !loading && !loadError && !terms.length);
     renderToTry(!t && !loading && !loadError && !terms.length);
     document.title = t ? `${one ? one + ' · ' : ''}${t.title} · Reelbook` : 'Reelbook';
+    syncNav();
   };
 
   // ---------- queue ----------
-  const sheetForm = $('sheet-new'), btn = $('btn-new');
-  const openForm = v => { sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (v) $('f-url').focus(); };
+  // L17: « + Add a video » is the floating button (#add-video-fab); from a notebook page the link is filed there.
+  const sheetForm = $('sheet-new'), btn = $('add-video-fab');
+  // The hint names the notebook queueLink files the link in (the page shown when it is sent): painted again on
+  // every page (syncNav), as the form stays open from one page to the next.
+  const HINT = 'The sheet is built on your next Claude Code run: <code>/reelbook</code>.';
+  const paintHint = () => {
+    const t = currentTheme && themeById.get(currentTheme);
+    $('f-hint').innerHTML = (t ? `It goes to ${esc(t.title)}; the group is decided when the video is analysed. ` : 'Notebook and group are decided when the video is analysed. ') + HINT;
+  };
+  const openForm = v => {
+    sheetForm.hidden = !v; btn.setAttribute('aria-expanded', String(v)); if (!v) return;
+    paintHint();
+    if (sheetForm.scrollIntoView) sheetForm.scrollIntoView({block: 'center'});
+    $('f-url').focus();
+  };
   // A pasted link survives a closed tab or a killed PWA: it is kept until queued or discarded.
   const DRAFT = 'rb.draft';
   const pendingUrl = () => !$('home').hidden && !sheetForm.hidden ? $('f-url').value.trim() : '';
@@ -1246,16 +1389,16 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const askPending = (next, queueLabel) => {
     afterPending = next;
     $('pd-url').textContent = pendingUrl(); $('pd-queue').textContent = queueLabel || 'Queue it before leaving'; $('pd-err').hidden = true;
-    dlg.showModal();
+    openSheet(dlg);
   };
-  const closePending = () => dlg.close();
+  const closePending = () => closeSheet(dlg);
   $('pd-stay').addEventListener('click', () => { closePending(); $('f-url').focus(); });
   $('pd-discard').addEventListener('click', () => { closePending(); discardDraft(); afterPending(); });
-  $('pd-queue').addEventListener('click', async () => {
+  $('pd-queue').addEventListener('click', whileBusy(dlg, async () => {
     $('pd-queue').disabled = true;
     try { if (await queueLink()) { closePending(); afterPending(); } else { $('pd-err').textContent = $('f-err').textContent; $('pd-err').hidden = false; } }
     finally { $('pd-queue').disabled = false; }
-  });
+  }));
   // « + Add a video » with a link still in the field would drop it: ask first, then open a fresh form.
   btn.addEventListener('click', () => {
     if (pendingUrl()) askPending(() => openForm(true), 'Queue it, then add another');
@@ -1264,7 +1407,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   $('f-cancel').addEventListener('click', () => { discardDraft(); openForm(false); });
   document.addEventListener('click', ev => {
     const a = ev.target.closest && ev.target.closest('a[href^="#"]');
-    if (!a || !pendingUrl() || a.closest('dialog')) return;
+    if (!a || !pendingUrl() || a.closest('dialog') || a.id === 'nav-back') return; // L17: Back asks on its own
     ev.preventDefault();
     askPending(() => { location.hash = a.hash; });
   }, true);
@@ -1445,23 +1588,21 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const seen = new Set(text.split(/[^a-zàâäçéèêëîïôöùûüœ']+/).map(w => w.replace(/^[a-z]'/, '')).filter(w => FR_WORDS.has(w)));
     return seen.size >= 3 ? 'fr' : '';
   };
-  // A v2 session (v2 true) moves to another notebook on its own. A sheet's group reads « Group · Back » (L5): in
-  // capitals it looked like a back button. `seat` set: the sheet is opened from a session, its back link goes there.
-  const topNav = (e, v2 = false, bare = false) => {
-    const th = themeById.get(e.theme), at = !v2 && seat;
-    const btns = bare ? '' : wakeBtn() + (v2 ? '<button type="button" class="mv" id="ed-open">Edit</button>' : '') + '<button type="button" class="mv" id="mv-open">Move</button>';
-    const back = at ? `<a href="${RS.sessionHref(esc(at.s.slug))}">← ${esc(at.s.title)}</a>` : `<a href="#${esc(th ? th.id : '')}">← ${esc(th ? th.title : 'Reelbook')}</a>`;
-    const label = v2 ? '<span>Session</span>' : e.group ? `<span class="grp">Group · ${esc(e.group)}</span>` : '';
-    return `<nav class="top">${back}<span class="r">${label}${btns}</span></nav>`;
+  // A sheet's group reads « Group · Back » (L5): in capitals it looked like a back button. L17: the way back is in
+  // #nav-bar and the page's actions (Move, Add to session, Edit, Keep screen on…) in its « ⋯ » menu; a sheet opened
+  // from a session keeps its link to the session here too (L5).
+  const topNav = e => {
+    const back = seat ? `<a href="${RS.sessionHref(esc(seat.s.slug))}">← ${esc(seat.s.title)}</a>` : '';
+    const label = e.group ? `<span class="grp">Group · ${esc(e.group)}</span>` : '';
+    return back || label ? `<p class="top">${back}${label}</p>` : '';
   };
   // « From the session … » on an exercise sheet: the video sessions that list it (but the one it is opened from).
-  // A simple sheet can be added to a session. Opened from a session: « 2/4 · <dose> » on top (no dose, no « · »).
+  // Opened from a session: « 2/4 · <dose> » on top (no dose, no « · »).
   const sheetTop = e => {
     const from = (inSessions.get(e.slug) || []).filter(s => s.origin === 'video' && !(seat && seat.s === s));
     const dose = seat ? seat.items[seat.n - 1].dose : '';
     return topNav(e) + (seat ? `<p class="seat">${seat.n}/${seat.items.length}${dose ? ' · ' + esc(dose) : ''}</p>` : '')
-      + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '')
-      + (sessionsOk ? '<p class="acts"><button type="button" class="mv" id="as-open">Add to session</button></p>' : '');
+      + (from.length ? `<p class="from">From the session ${from.map(s => `<a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>`).join(', ')}</p>` : '');
   };
   // Previous / next at the bottom of a sheet opened from a session; the last exercise leads back to the session.
   const seatNav = () => {
@@ -1719,7 +1860,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     if (edit && edit.slug !== slug) edit = null;
     shown = RS.ROUTE + slug; seat = null; show('view'); document.title = s.title; markSeen(RS.noteKey(slug));
     if (edit) {
-      view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true, true)}</div>
+      view.innerHTML = `<div class="wrap" id="sheet-top"></div>
         <div class="wrap fiche"><div class="edit"><p class="eyebrow">Editing the session</p>
         <label>Title <input id="ed-title" type="text" maxlength="${RS.MAX.title}" value="${esc(edit.title)}" autocomplete="off"></label>
         <label>Format <input id="ed-format" type="text" maxlength="${RS.MAX.format}" value="${esc(edit.format)}" autocomplete="off" placeholder="5 rounds · 60 s rest"></label>
@@ -1733,14 +1874,15 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     }
     if (ended && ended.slug === slug) { showEnd(s); return; }
     const items = RS.resolveItems(s, bySlug), img = v2Thumb(s);
-    view.innerHTML = `<div class="wrap" id="sheet-top">${topNav(s, true)}${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
+    view.innerHTML = `<div class="wrap" id="sheet-top">${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
       ${items.length ? startBtn() : ''}${practiceBox()}${s.format ? `<div class="kit"><span>${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2>${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap ⋯ then Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
     if (items.length) wireStart(RS.playHref(esc(slug)));
     wireNotes(RS.noteKey(slug));
     readPractice(RS.noteKey(slug));
+    settleScroll();
   };
   // `at`: {s, n, items} when the sheet is opened from a session (#session/<slug>/<n>), else null.
   // sheetLoad: the last sheet asked for; an older load that ends later (A, B, then A again) is dropped.
@@ -1753,18 +1895,18 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const load = ++sheetLoad;
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
     const back = `<div class="wrap" id="sheet-top">${sheetTop(e)}</div>`;
-    // Delete sheet: also under a sheet that fails to load.
-    const del = '<div class="wrap"><div class="actions" style="margin-top:36px"><button class="btn ghost" type="button" id="sd-open">Delete sheet</button></div></div>';
+    // Delete sheet (L17: in the « ⋯ » menu) stays there under a sheet that fails to load.
     let html; try { html = await loadSheet(slug); } catch { html = null; }
     if (load !== sheetLoad || shown !== slug) return; // left (Next tapped twice, another page) while it loaded
-    if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav() + del; return; }
-    view.innerHTML = back + underTitle(html, startBtn() + practiceBox(), e.title) + notesHtml() + reportHtml(e) + seatNav() + del;
+    if (html === null) { view.innerHTML = back + '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' + seatNav(); return; }
+    view.innerHTML = back + underTitle(html, startBtn() + practiceBox(), e.title) + notesHtml() + reportHtml(e) + seatNav();
     markSeen(slug); // only once shown: a sheet that fails to load stays « New »
     // the top bar, set again on its own like after Move or Add to session (tests/acceptance/l5 reads #sheet-top)
     $('sheet-top').innerHTML = sheetTop(e);
     wireStart(seat ? RS.playHref(esc(seat.s.slug), seat.n) : RS.sheetPlayHref(esc(slug)));
     wireNotes(slug);
     readPractice(slug);
+    watchTitle(); settleScroll();
   };
 
   // ---------- L7: « Something wrong? » ----------
@@ -1777,23 +1919,23 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const openReport = () => {
     const ses = RS.sessionSlugOf(shown || ''), x = ses ? v2BySlug.get(ses) : bySlug.get(shown);
     const url = x && httpUrl((x.source || {}).url); if (!url) return;
-    rdlg.innerHTML = `<h2 id="report-h">Something wrong?</h2>
+    rdlg.innerHTML = `<div class="sh-h"><button class="btn ghost sh-no" type="button" id="report-cancel">Cancel</button><h2 id="report-h">Something wrong?</h2><button class="btn sh-ok" type="button" id="report-send" disabled>Send</button></div>
       <label for="report-note">What should Claude fix?</label><textarea id="report-note" maxlength="1000"></textarea>
-      <p class="status" id="report-status" role="status"></p>
-      <div class="actions"><button class="btn" type="button" id="report-send" disabled>Send</button><button class="btn ghost" type="button" id="report-cancel">Cancel</button></div>`;
+      <p class="status" id="report-status" role="status"></p>`;
     const ta = $('report-note'), send = $('report-send'), st = $('report-status');
     ta.addEventListener('input', () => { send.disabled = !ta.value.trim(); });
-    $('report-cancel').addEventListener('click', () => rdlg.close());
-    send.addEventListener('click', async () => {
+    $('report-cancel').addEventListener('click', () => closeSheet(rdlg));
+    send.addEventListener('click', whileBusy(rdlg, async () => {
       const text = ta.value.replace(/\s+/g, ' ').trim(); if (!text) return; // one line: see redoLine
       send.disabled = true; st.className = 'status'; st.textContent = 'Sending…';
       try {
         const {error} = await sb.from('requests').insert({url, theme: x.theme, note: 'Redo: ' + text, slug: ses ? RS.noteKey(ses) : x.slug}); if (error) throw error;
-        ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; $('report-cancel').textContent = 'Close';
+        // The dialog may hold a newer report by now (Cancel, reopened): only this one's own sheet is marked sent.
+        ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; if ($('report-note') === ta) { sheetSaved(rdlg); $('report-cancel').textContent = 'Close'; }
         refreshQueue();
       } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
-    });
-    rdlg.showModal(); ta.focus();
+    }));
+    openSheet(rdlg);
   };
 
   // ---------- L3: keep the screen on, full-screen photos ----------
@@ -2171,45 +2313,45 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('mv-theme').innerHTML = themes.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
     $('mv-theme').value = e.theme;
     if (s) { $('mv-new-l').hidden = true; $('mv-new').required = false; } else fillGroups(e.theme, e.group);
-    mdlg.showModal();
+    openSheet(mdlg);
   };
   $('mv-theme').addEventListener('change', () => { if (shownSession()) return; const e = bySlug.get(shown); fillGroups($('mv-theme').value, e ? e.group : ''); });
   $('mv-group').addEventListener('change', () => { syncNewGroup(); if ($('mv-group').value === NEW_GROUP) $('mv-new').focus(); });
-  $('mv-cancel').addEventListener('click', () => mdlg.close());
+  $('mv-cancel').addEventListener('click', () => closeSheet(mdlg));
   // A v2 session: only sessions.theme changes; its exercises stay in their notebooks and groups.
   const moveSession = async s => {
     const theme = $('mv-theme').value, err = $('mv-err');
     if (!themeById.has(theme)) { err.textContent = 'Pick a notebook.'; err.hidden = false; return; }
-    if (theme === s.theme) { mdlg.close(); return; }
+    if (theme === s.theme) { closeSheet(mdlg); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
       touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
       s.theme = theme; saveCatalogue();
-      mdlg.close();
+      closeSheet(mdlg);
       const top = $('sheet-top');
-      if (top && shownSession() === s) top.innerHTML = topNav(s, true) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`;
+      if (top && shownSession() === s) top.innerHTML = `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`; syncNav();
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
   };
-  $('mv-form').addEventListener('submit', async ev => {
+  $('mv-form').addEventListener('submit', whileBusy(mdlg, async ev => {
     ev.preventDefault();
     const s = shownSession(); if (s) { await moveSession(s); return; }
-    const e = bySlug.get(shown); if (!e) { mdlg.close(); return; }
+    const e = bySlug.get(shown); if (!e) { closeSheet(mdlg); return; }
     const theme = $('mv-theme').value, group = ($('mv-group').value === NEW_GROUP ? $('mv-new').value : $('mv-group').value).trim();
     const err = $('mv-err');
     if (!themeById.has(theme)) { err.textContent = 'Pick a notebook.'; err.hidden = false; return; }
     if (!group) { err.textContent = 'Give the new group a name.'; err.hidden = false; $('mv-new').focus(); return; }
-    if (theme === e.theme && group === e.group) { mdlg.close(); return; }
+    if (theme === e.theme && group === e.group) { closeSheet(mdlg); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
       touched(); const {data, error} = await sb.from('sheets').update({theme, group}).eq('slug', e.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
       e.theme = theme; e.group = group; saveCatalogue();
-      mdlg.close();
+      closeSheet(mdlg);
       const top = $('sheet-top');
-      if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`;
+      if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`; syncNav();
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
     finally { $('mv-submit').disabled = false; }
-  });
+  }));
 
   // ---------- compose sessions: « + New session », « Add to session », Edit mode, delete ----------
   // Every write checks it changed a row: RLS answers an empty result, not an error, for a row it hides.
@@ -2240,7 +2382,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   const openNew = () => {
     if (!currentTheme || !sessionsOk) return;
     picked = []; $('ns-title').value = ''; $('ns-q').value = ''; $('ns-err').hidden = true;
-    renderPick(); ndlg.showModal(); $('ns-title').focus();
+    renderPick(); openSheet(ndlg);
   };
   $('groups').addEventListener('click', ev => { if (ev.target.closest('#ns-open')) openNew(); });
   $('ns-list').addEventListener('change', ev => { const slug = ev.target.dataset && ev.target.dataset.pick; if (slug) { picked = RS.toggle(picked, slug); renderPick(); } });
@@ -2248,8 +2390,8 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   // Enter never creates the session by surprise: from the title it goes to the filter, in the filter it does nothing.
   $('ns-title').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); $('ns-q').focus(); } });
   $('ns-q').addEventListener('keydown', ev => { if (ev.key === 'Enter') ev.preventDefault(); });
-  $('ns-cancel').addEventListener('click', () => ndlg.close());
-  $('ns-form').addEventListener('submit', async ev => {
+  $('ns-cancel').addEventListener('click', () => closeSheet(ndlg));
+  $('ns-form').addEventListener('submit', whileBusy(ndlg, async ev => {
     ev.preventDefault();
     const title = RS.clip($('ns-title').value, RS.MAX.title), err = $('ns-err');
     const fail = (m, el) => { err.textContent = m; err.hidden = false; if (el) el.focus(); };
@@ -2258,10 +2400,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('ns-submit').disabled = true; err.hidden = true;
     try {
       const s = await createSession(currentTheme, title, picked);
-      ndlg.close(); edit = draftOf(s); location.hash = RS.sessionHref(s.slug);
+      closeSheet(ndlg); edit = draftOf(s); location.hash = RS.sessionHref(s.slug);
     } catch { fail('Could not create it right now. Try again in a moment.'); }
     finally { $('ns-submit').disabled = false; }
-  });
+  }));
 
   // « Add to session » (simple sheet page): any session, grouped by notebook, or a new one in the sheet's notebook.
   const NEW_SESSION = '__new_session__';
@@ -2276,13 +2418,13 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('as-session').innerHTML = groups.map(([t, l]) => `<optgroup label="${esc(t.title)}">${l.map(s => `<option value="${esc(s.slug)}">${esc(s.title)}</option>`).join('')}</optgroup>`).join('') + `<option value="${NEW_SESSION}">New session…</option>`;
     const first = (groups.find(([t]) => t.id === e.theme) || groups[0] || [null, []])[1][0];
     $('as-session').value = first ? first.slug : NEW_SESSION;
-    syncNewSession(); adlg.showModal();
+    syncNewSession(); openSheet(adlg);
   };
   $('as-session').addEventListener('change', () => { syncNewSession(); if ($('as-session').value === NEW_SESSION) $('as-new').focus(); });
-  $('as-cancel').addEventListener('click', () => adlg.close());
-  $('as-form').addEventListener('submit', async ev => {
+  $('as-cancel').addEventListener('click', () => closeSheet(adlg));
+  $('as-form').addEventListener('submit', whileBusy(adlg, async ev => {
     ev.preventDefault();
-    const e = bySlug.get(shown), v = $('as-session').value, err = $('as-err'); if (!e) { adlg.close(); return; }
+    const e = bySlug.get(shown), v = $('as-session').value, err = $('as-err'); if (!e) { closeSheet(adlg); return; }
     const fail = (m, el) => { err.textContent = m; err.hidden = false; if (el) el.focus(); };
     const title = RS.clip($('as-new').value, RS.MAX.title);
     let s = v === NEW_SESSION ? null : v2BySlug.get(v), add = null;
@@ -2293,12 +2435,12 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     try {
       if (s) { touched(); oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
       else s = await createSession(e.theme, title, [e.slug]);
-      adlg.close();
+      closeSheet(adlg);
       const top = $('sheet-top');
       if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Added to <a href="${RS.sessionHref(esc(s.slug))}">${esc(s.title)}</a>.</p>`;
     } catch { fail('Could not add it right now. Try again in a moment.'); }
     finally { $('as-submit').disabled = false; }
-  });
+  }));
 
   // Edit mode: reorder, dose, format, title, remove an item; one update with the items in full.
   const reorder = (i, d) => { edit.items = RS.moveItem(edit.items, i, d); renderRows(`[data-${d < 0 ? 'up' : 'down'}="${i + d}"]`); };
@@ -2321,19 +2463,19 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   });
   // Delete a session: the row only. Its sheets stay; its note is kept, as for a sheet (takenSlugs keeps it unseen).
   const ddlg = $('del-dlg');
-  const openDelete = () => { const s = shownSession(); if (!s) return; $('del-name').textContent = s.title; $('del-err').hidden = true; ddlg.showModal(); };
-  $('del-cancel').addEventListener('click', () => ddlg.close());
-  $('del-ok').addEventListener('click', async () => {
-    const s = shownSession(), err = $('del-err'), b = $('del-ok'); if (!s) { ddlg.close(); return; }
+  const openDelete = () => { const s = shownSession(); if (!s) return; $('del-name').textContent = s.title; $('del-err').hidden = true; openSheet(ddlg); };
+  $('del-cancel').addEventListener('click', () => closeSheet(ddlg));
+  $('del-ok').addEventListener('click', whileBusy(ddlg, async () => {
+    const s = shownSession(), err = $('del-err'), b = $('del-ok'); if (!s) { closeSheet(ddlg); return; }
     b.disabled = true; err.hidden = true;
     try {
       touched(); oneRow(await sb.from('sessions').delete().eq('slug', s.slug).select('slug'));
-      setSessions(v2Sessions.filter(x => x.slug !== s.slug)); saveCatalogue(); edit = null; ddlg.close();
+      setSessions(v2Sessions.filter(x => x.slug !== s.slug)); saveCatalogue(); edit = null; closeSheet(ddlg);
       flashHome('Session deleted. Its exercise sheets stay in your notebooks.');
       location.hash = s.theme;
     } catch { err.textContent = 'Could not delete it right now. Try again in a moment.'; err.hidden = false; }
     finally { b.disabled = false; }
-  });
+  }));
   // Delete a sheet: the row, then its images and its note. A session that lists it
   // keeps the item, which resolveItems skips: republishing the same video brings the sheet back in it.
   const sdlg = $('sd-dlg');
@@ -2344,11 +2486,11 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     $('sd-name').textContent = e.title;
     $('sd-what').textContent = 'Its photos' + (notesIndex.has(e.slug) ? ' and your note' : '') + ' go with it.'
       + (ins.length ? ` It leaves ${ins.length > 1 ? 'the sessions' : 'the session'} ${ins.map(s => `« ${s.title} »`).join(', ')}.` : '');
-    $('sd-err').hidden = true; sdlg.showModal();
+    $('sd-err').hidden = true; openSheet(sdlg);
   };
-  $('sd-cancel').addEventListener('click', () => sdlg.close());
-  $('sd-ok').addEventListener('click', async () => {
-    const e = shownSheet(), err = $('sd-err'), b = $('sd-ok'); if (!e) { sdlg.close(); return; }
+  $('sd-cancel').addEventListener('click', () => closeSheet(sdlg));
+  $('sd-ok').addEventListener('click', whileBusy(sdlg, async () => {
+    const e = shownSheet(), err = $('sd-err'), b = $('sd-ok'); if (!e) { closeSheet(sdlg); return; }
     // Signed out or another account after an await: nothing is removed from the catalogue shown, nothing saved.
     const client = sb, uid = user.id, gone = () => sb !== client || !user || user.id !== uid;
     b.disabled = true; err.hidden = true;
@@ -2366,11 +2508,13 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     if (gone()) return;
     sheets = sheets.filter(x => x.slug !== e.slug); bySlug.delete(e.slug); cache.delete(e.slug); shown = null;
     idb.drop(catKey() + '|sheet|' + e.slug); saveCatalogue(); toWorker({type: 'DROP_PHOTOS', path: `${user.id}/${e.slug}/`});
-    b.disabled = false; sdlg.close();
+    b.disabled = false; closeSheet(sdlg);
     flashHome('Sheet deleted.');
     location.hash = e.theme;
-  });
-  view.addEventListener('click', ev => {
+  }));
+  // The page's buttons, and those of its « ⋯ » menu (L17: Move, Add to session, Edit, Keep screen on, Something
+  // wrong?, Delete moved there, ids unchanged).
+  const pageAction = ev => {
     const at = sel => ev.target.closest(sel);
     let b;
     if (at('#mv-open')) openMove();
@@ -2379,9 +2523,10 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     else if (at('#as-open')) openAdd();
     else if (at('#ed-open')) { const s = shownSession(); if (s) { edit = draftOf(s); showSession(s.slug); } }
     else if (at('#sd-open')) openSheetDelete();
+    else if (at('#ses-delete')) openDelete();
     else if (at('#practice-done')) openPractice();
     else if (at('#practice-save')) savePractice();
-    else if (at('#report-open')) openReport();
+    else if (at('#report-open') || at('#nav-report')) openReport();
     else if (!edit) return;
     else if ((b = at('[data-up]'))) reorder(+b.dataset.up, -1);
     else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);
@@ -2389,7 +2534,8 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     else if (at('#ed-save')) saveEdit();
     else if (at('#ed-cancel')) { const slug = edit.slug; edit = null; showSession(slug); }
     else if (at('#ed-delete')) openDelete();
-  });
+  };
+  view.addEventListener('click', pageAction);
 
   // ---------- settings ----------
   const cliCmd = () => backend ? `python3 tools/rb.py login --url ${backend.url} --key ${backend.key}` : '';
@@ -2416,6 +2562,138 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
   $('nblist').addEventListener('click', async ev => { const b = ev.target.closest('[data-rm]'); if (!b) return; b.disabled = true; try { await removeTheme(b.dataset.rm); renderSettings(); } catch { b.disabled = false; } });
   $('settings').addEventListener('click', copyHandler($('settings')));
 
+  // ---------- L17: native navigation ----------
+  // #nav-bar sticks on top of every signed-in page but home and the player: « ‹ <parent> » on the left, the page
+  // title in the middle once its <h1> has scrolled under the bar, « ⋯ » (the page's actions, a bottom sheet) on the
+  // right. Back goes up to the parent: history.back() when the entry before this one is the parent (an installed
+  // PWA's edge swipe then does the same), else location.replace(parent). Each history entry carries {rb, i, prev}
+  // (its index, and the route of the entry before it). The scroll position of each route is kept (scrollAt) and
+  // put back when its page is shown again from history or by Back, or drawn again in place. Guarded for the test
+  // harness: no history, no IntersectionObserver, no confirm.
+  const navBar = $('nav-bar'), navBack = $('nav-back'), navTitle = $('nav-title'), navMore = $('nav-more'), navMenu = $('nav-actions');
+  navMore.textContent = '⋯'; btn.textContent = '+ Add a video'; // as in the markup (the harness does not read it)
+  const hist = () => typeof history !== 'undefined' && history && history.replaceState ? history : null;
+  const entry = () => { const H = hist(); return H && H.state && H.state.rb ? H.state : null; };
+  try { if (hist() && 'scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch {}
+  const scrollAt = new Map();
+  let navHere = null, navIndex = null, replacing = null, navRestore = null, bounce = null;
+  // The page shown: its title, the route and name of its parent, whether it has a « ⋯ » menu; null: no bar.
+  const navPage = () => {
+    if (!user || !$('player').hidden) return null;
+    const nbUp = id => { const th = themeById.get(id); return th ? [th.id, th.title] : ['', 'Reelbook']; };
+    if (!$('settings').hidden) return {title: 'Settings', up: ['', 'Reelbook']};
+    if (!$('welcome').hidden) return {title: 'How it works', up: ['', 'Reelbook']};
+    if (!view.hidden && shown) {
+      const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown);
+      if (s) return {title: s.title, up: nbUp(s.theme), menu: !edit};
+      if (!e) return null;
+      return {title: e.title, up: seat ? [RS.ROUTE + seat.s.slug, seat.s.title] : nbUp(e.theme), menu: true};
+    }
+    if ($('home').hidden) return null;
+    // A notebook page; while the catalogue loads or cannot be read, any route but home's is taken for one.
+    const tok = navHere || '', cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
+    const t = themeById.get(nb) || (nb && (loading || loadError || !themes.length) ? libById.get(nb) || {id: nb, title: nb} : null);
+    if (!t) return null;
+    const one = currentTheme === t.id ? groupOf(t) : null;
+    return one ? {title: one, up: [t.id, t.title]} : {title: t.title, up: ['', 'Reelbook']};
+  };
+  // The « ⋯ » menu of a sheet or session page. An action this page cannot do stays listed, greyed, with the reason.
+  const menuHtml = () => {
+    if (view.hidden || !shown || edit) return '';
+    const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown), x = s || e;
+    if (!x) return '';
+    const it = (id, label, cls = '', why = '') => `<button type="button" class="nav-it${cls}" id="${id}"${why ? ' disabled' : ''}>${label}${why ? `<small>${why}</small>` : ''}</button>`;
+    const wake = wakeApi() ? `<button type="button" class="nav-it wake" id="wake" aria-pressed="${wakeWanted()}">Keep screen on</button>` : it('wake', 'Keep screen on', '', 'Not available in this browser');
+    return `<h2 id="nav-actions-h">${esc(x.title)}</h2><div class="nav-list">`
+      + (s ? it('ed-open', 'Edit') : '') + it('mv-open', 'Move') + (e && sessionsOk ? it('as-open', 'Add to session') : '') + wake
+      + it('nav-report', 'Something wrong?', '', httpUrl((x.source || {}).url) ? '' : 'No source video')
+      + it(s ? 'ses-delete' : 'sd-open', s ? 'Delete session' : 'Delete sheet', ' danger') + '</div>'
+      + '<div class="actions"><button class="btn ghost" type="button" id="nav-close">Close</button></div>';
+  };
+  const paintMenu = () => { navMenu.innerHTML = menuHtml(); };
+  // The compact title shows once the page's <h1> is under the bar (without IntersectionObserver: always).
+  let titleSeen = null;
+  const watchTitle = () => {
+    if (titleSeen) { titleSeen.disconnect(); titleSeen = null; }
+    const page = views.map($).find(v => !v.hidden), h1 = !navBar.hidden && page && page.querySelector ? page.querySelector('h1') : null;
+    if (typeof IntersectionObserver !== 'function') { navBar.classList.toggle('titled', !!h1); return; }
+    navBar.classList.toggle('titled', false);
+    if (!h1) return;
+    titleSeen = new IntersectionObserver(([en]) => navBar.classList.toggle('titled', !en.isIntersecting && en.boundingClientRect.top < 1),
+      {rootMargin: `-${navBar.offsetHeight || 44}px 0px 0px 0px`});
+    titleSeen.observe(h1);
+  };
+  const syncNav = () => {
+    const p = navPage();
+    navBar.hidden = !p;
+    btn.hidden = !(user && !$('home').hidden); // home and notebook pages
+    if (document.body.classList) document.body.classList.toggle('fab', !btn.hidden);
+    if (p) {
+      navBack.textContent = '‹ ' + p.up[1]; navBack.setAttribute('href', '#' + p.up[0]); navBack.setAttribute('aria-label', 'Back to ' + p.up[1]);
+      navTitle.textContent = p.title; navMore.hidden = !p.menu;
+    }
+    paintMenu(); paintHint();
+    Promise.resolve().then(watchTitle);
+  };
+  // Leaving a session edit with unsaved changes asks first (window.confirm: synchronous, so a swipe can be undone).
+  const editDirty = () => {
+    const s = edit && v2BySlug.get(edit.slug); if (!s) return false;
+    const o = draftOf(s), pairs = d => JSON.stringify(d.items.map(it => [it.slug, it.dose]));
+    return edit.title !== o.title || edit.format !== o.format || pairs(edit) !== pairs(o);
+  };
+  const discardOk = () => typeof window.confirm !== 'function' || window.confirm('Discard your changes?');
+  // A swipe or a link away from a session edit, kept: back to the edit page without drawing it again.
+  const undoLeave = () => {
+    const H = hist(), st = entry(); bounce = navHere;
+    if (H && st && st.i < navIndex) H.forward();
+    else if (H && (!st || st.i > navIndex)) H.back();
+    else { bounce = null; location.hash = navHere; }
+  };
+  // Called by route() for every page: the route left keeps its scroll; a new history entry gets its marks.
+  const navArrive = tok => {
+    const H = hist(), st = entry();
+    if (navHere !== null) scrollAt.set(navHere, window.scrollY || 0);
+    if (navHere !== tok && navMenu.open) closeSheet(navMenu);
+    let back = navHere === tok;
+    if (st) { back = true; navIndex = st.i; }
+    else if (H) {
+      const r = replacing; replacing = null;
+      navIndex = r ? r.i : navIndex == null ? 0 : navIndex + 1;
+      try { H.replaceState({...(H.state || {}), rb: 1, i: navIndex, prev: r ? r.prev : navHere}, ''); } catch {}
+      if (r) back = true;
+    }
+    navRestore = back && scrollAt.has(tok) ? scrollAt.get(tok) : null;
+    navHere = tok;
+  };
+  // After a page is drawn: back where it was, if it is shown again. True when a position was put back.
+  function settleScroll() {
+    const y = navRestore; navRestore = null;
+    if (y == null) return false;
+    window.scrollTo(0, y); return true;
+  }
+  const goUp = () => {
+    const p = navPage(); if (!p) return;
+    if (edit && editDirty() && !discardOk()) return;
+    edit = null;
+    const H = hist(), st = entry(), up = p.up[0];
+    if (H && st && st.prev === up && H.length > 1) { H.back(); return; }
+    replacing = {i: navIndex == null ? 0 : navIndex, prev: st ? st.prev : null};
+    if (typeof location.replace === 'function') location.replace('#' + up); else location.hash = up;
+  };
+  // A link still in « Add a video » (a notebook page): asked first, as for any link; Back waits for the answer.
+  navBack.addEventListener('click', ev => {
+    ev.preventDefault();
+    if (pendingUrl()) askPending(goUp); else goUp();
+  });
+  navMore.addEventListener('click', () => { paintMenu(); if (!navMenu.open) openSheet(navMenu); });
+  const MENU = ['#ed-open', '#mv-open', '#as-open', '#wake', '#nav-report', '#sd-open', '#ses-delete', '#nav-close'];
+  wireSheet(navMenu);
+  navMenu.addEventListener('click', ev => {
+    const hit = ev.target.closest ? MENU.find(sel => ev.target.closest(sel)) : null; if (!hit) return;
+    if (hit !== '#wake') closeSheet(navMenu); // Keep screen on switches in place
+    if (hit !== '#nav-close') pageAction(ev);
+  });
+
   // ---------- routing ----------
   const route = () => {
     if (!user) {
@@ -2431,7 +2709,12 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const tok = decodeURIComponent(location.hash.slice(1));
     flushNotes(); // notes typed on the page being left are saved now
     const at = RS.sessionItemOf(tok);
-    if (edit && (at || RS.sessionSlugOf(tok) !== edit.slug)) edit = null; // leaving a session page drops its unsaved edits
+    if (bounce !== null) { const b = bounce; bounce = null; if (tok === b) return; } // L17: back on the kept edit
+    if (edit && (at || RS.sessionSlugOf(tok) !== edit.slug)) { // leaving a session page drops its unsaved edits
+      if (editDirty() && !discardOk()) { undoLeave(); return; }
+      edit = null;
+    }
+    navArrive(tok);
     if (ended && tok !== RS.ROUTE + ended.slug) ended = null; // L11: another page drops the end screen
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
@@ -2452,7 +2735,7 @@ label.pl-set{display:inline-grid;place-items:center;gap:0;margin:0;cursor:pointe
     const from = currentTheme === nb && $('home').hidden === false ? groupOf(themeById.get(nb)) : null;
     shown = null; seat = null; chipPinned = ''; currentTheme = themeById.has(nb) ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
     view.innerHTML = ''; renderHome(); show('home');
-    if (from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
+    if (!settleScroll() && from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
   };
   window.addEventListener('hashchange', route);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && user && !$('home').hidden) refreshQueue(); });

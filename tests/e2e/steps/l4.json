@@ -4,7 +4,7 @@
   {"name": "l4-03-queue-removed-toast", "actions": [{"click": "#queue-toggle"}, {"click": "#queue [data-del=\"req-1\"]"}, {"wait": "#queue-undo >> text=Removed · Undo"}, {"wait": 1500}]},
   {"name": "l4-04-notebook-session-cards", "hash": "strength", "full": true, "actions": [{"wait": "#home .card .fmt"}]},
   {"name": "l4-05-delete-sheet-dialog", "hash": "pompes-inclinees",
-   "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"scroll": "#sd-open"}, {"click": "#sd-open"}, {"wait": "#sd-dlg[open]"}],
+   "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"wait": "#nav-more"}, {"click": "#nav-more"}, {"click": "#sd-open"}, {"wait": "#sd-dlg[open]"}],
    "allow": ["^http 404: .*/img/thumb\\.jpg$"],
    "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"},
   {"name": "l4-06-sheet-bottom", "hash": "pompes-inclinees", "full": true,
