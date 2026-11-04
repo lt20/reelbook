@@ -1,0 +1,6 @@
+[
+  {"name": "l29-01-settings-usage", "hash": "settings", "query": "quota", "actions": [{"wait": "#s-usage"}]},
+  {"name": "l29-02-settings-no-quota", "hash": "settings", "actions": [{"wait": "#s-user"}, {"wait": 300}]},
+  {"name": "l29-03-add-video-quota", "query": "quota=full",
+   "actions": [{"wait": "#portal >> text=Strength"}, {"click": "#add-video-fab"}, {"fill": "#f-url", "value": "https://www.instagram.com/reel/DeGBCfjsbTt/"}, {"click": "#f-submit"}, {"wait": "#f-err"}]}
+]

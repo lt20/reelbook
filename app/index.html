@@ -165,6 +165,8 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .howto{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px var(--s-4)}
 .howto h2{margin:0 0 10px}
 .howto ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:var(--fs-base);line-height:1.45}
+.sc-steps{margin:0 0 var(--s-3);padding-left:22px;display:grid;gap:10px;line-height:1.45}
+.sc-steps pre{margin:6px 0 4px}.sc-steps .actions{display:flex;margin:0 0 6px}
 .howto li>strong{font-family:var(--display);font-size:var(--fs-md);letter-spacing:.01em;text-transform:uppercase;display:block}
 .howto .tip{margin:var(--s-3) 0 0;font-size:var(--fs-sm);color:var(--muted)}
 /* ---- cards ---- */
@@ -646,7 +648,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="addrow"><input id="f-url" type="url" inputmode="url" enterkeyhint="go" autocomplete="off" placeholder="https://…" required><button class="btn" type="submit" id="f-submit">Queue it</button></div>
     <p class="err" id="f-err" hidden></p>
     <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/reelbook</code>.</p>
-    <div class="actions"><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
+    <div class="actions"><button class="btn ghost sm" type="button" id="paste-link">Paste link</button><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
   </form>
   <dialog class="dlg act" id="pending-dlg" aria-labelledby="pd-title">
     <h2 id="pd-title">Not queued yet</h2>
@@ -742,6 +744,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <h2>Account</h2>
     <p id="s-user"></p>
     <p class="hint">Backend: <span id="s-backend"></span></p>
+    <!-- L29: what the account uses against its limits (my_quota); hidden on a backend without quotas -->
+    <p class="hint" id="s-usage" hidden></p>
     <p class="hint" id="s-sessions" hidden>Re-run <code>supabase/schema.sql</code> to enable sessions.</p>
     <p class="hint" id="s-v1" hidden></p>
     <div class="actions"><button class="btn ghost" type="button" id="s-signout">Sign out</button><button class="btn ghost" type="button" id="s-reset">Change backend</button></div>
@@ -761,6 +765,33 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-cli">Copy</button><span class="hint" data-copied="s-cli"></span></div>
     <p class="hint">The computer keeps its own session in <code>~/.config/reelbook/</code>; signing out here does not sign it out.</p>
   </div>
+  <!-- L28: the iPhone shortcut's key (capture_tokens, Edge Function add-link); hidden on a backend without that table -->
+  <section class="panel" id="shortcut-section" aria-labelledby="shortcut-h" hidden>
+    <h2 id="shortcut-h">iPhone shortcut</h2>
+    <p class="hint">Send a video to your queue from the Share Sheet of Instagram, TikTok, YouTube or Safari, without opening Reelbook. The shortcut uses a key that can add links to your queue, nothing else.</p>
+    <div id="shortcut-none">
+      <label for="shortcut-label">Name of the key</label>
+      <div class="addrow"><input id="shortcut-label" type="text" maxlength="60" autocomplete="off" placeholder="iPhone"><button class="btn" type="button" id="shortcut-create">Create a key</button></div>
+    </div>
+    <div id="shortcut-active" hidden>
+      <p id="shortcut-info"></p>
+      <div class="actions"><button class="btn ghost sm" type="button" id="shortcut-revoke">Revoke the key</button></div>
+    </div>
+    <div id="shortcut-new" hidden>
+      <p><b>Copy the key now: it is shown only once.</b></p>
+      <pre id="shortcut-token"></pre>
+      <div class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-token">Copy</button><span class="hint" data-copied="shortcut-token"></span></div>
+    </div>
+    <p class="err" id="shortcut-err" hidden></p>
+    <p><b>Build the shortcut once</b> <span class="hint">· in the Shortcuts app on the iPhone.</span></p>
+    <ol class="sc-steps">
+      <li>Tap <b>+</b> for a new shortcut and name it <b>Add to Reelbook</b>. In its details (ⓘ), turn on <b>Show in Share Sheet</b>.</li>
+      <li>Add the action <b>Get URLs</b> from <b>Shortcut Input</b>.</li>
+      <li>Add the action <b>Get contents of URL</b> with this URL:<pre id="shortcut-url"></pre><span class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-url">Copy</button><span class="hint" data-copied="shortcut-url"></span></span>Tap <b>Show More</b>: Method <b>POST</b>; Headers: add <code>Authorization</code> with the key as its value (it starts with <code>Bearer</code>); Request Body <b>JSON</b>: add a text field <code>url</code> set to <b>URLs</b>.</li>
+      <li>Add the action <b>Show Notification</b> with <b>Contents of URL</b>: it reads « Queued in Reelbook. », or why not.</li>
+    </ol>
+    <p class="hint">Then, in Instagram or TikTok: Share › Add to Reelbook. A lost phone, or a key shared by mistake: revoke it here, create a new one and paste it in the shortcut.</p>
+  </section>
 </div>
 
 <!-- ===== Sheet view ===== -->
@@ -918,6 +949,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   let backend = rememberedBackend();
   let sb = null;
+  // D2: {client, token, exp} of the session supabase-js last gave (onAuthStateChange), for a request that cannot wait.
+  let authNow = null;
   const backendLabel = () => backend ? (backend.mode === 'hosted' ? (CFG.hosted.name || 'Reelbook hosted') : backend.url.replace(/^https?:\/\//, '')) : 'No backend selected';
   const selectBackend = (next, remember = true) => { backend = next; if (remember && next) ls.set('rb.backend', JSON.stringify(next.mode === 'hosted' ? {mode: 'hosted'} : next)); boot(); };
   const ownBackend = (urlInput, keyInput) => {
@@ -951,7 +984,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   $('a-own').addEventListener('click', ev => { ev.preventDefault(); $('login-own-err').hidden = true; $('login-own-form').hidden = false; $('login-own-url').focus(); });
   $('login-own-cancel').addEventListener('click', () => { $('login-own-form').hidden = true; });
   $('a-hosted').addEventListener('click', ev => { ev.preventDefault(); $('login-own-form').hidden = true; selectBackend(hostedBackend()); });
-  $('s-reset').addEventListener('click', async () => { if (sb) await sb.auth.signOut(); ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
+  $('s-reset').addEventListener('click', async () => { if (!await signOutHere({force: true})) return; ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
 
   // ---------- auth ----------
   let mode = 'in', signupBackendChosen = false, authBusy = false;
@@ -975,7 +1008,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     } catch (e) { if (client === sb) { err.textContent = e.message || 'Could not sign in.'; err.hidden = false; } }
     finally { authBusy = false; $('a-submit').disabled = !backend; }
   });
-  $('s-signout').addEventListener('click', async () => { await sb.auth.signOut(); location.hash = ''; });
+  $('s-signout').addEventListener('click', async () => { if (await signOutHere()) location.hash = ''; });
 
   // ---------- data ----------
   // v2Sessions: rows of the `sessions` table; inSessions: sheet slug -> those sessions; sessionsOk: false when the backend has no such table.
@@ -1022,7 +1055,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const loadThemes = async () => { themeRows = await readThemes(); setThemes(themeRows); saveCatalogue(); };
   const addTheme = async row => { touched(); const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { touched(); const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
-  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
+  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at,updated_at';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
   // L19, instant start. A key-value store in IndexedDB for the last catalogue and the sheets opened, per backend
   // and user (RS.catalogueCacheKey). None (private mode, an old browser, the test harness): reads give null and
@@ -1581,6 +1614,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     paintHint();
     if (sheetForm.scrollIntoView) sheetForm.scrollIntoView({block: 'center'});
     $('f-url').focus();
+    if (!$('f-url').value.trim()) prefill();
   };
   // A pasted link survives a closed tab or a killed PWA: it is kept until queued or discarded.
   const DRAFT = 'rb.draft';
@@ -1588,6 +1622,38 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const discardDraft = () => { sheetForm.reset(); ls.del(DRAFT); $('f-err').hidden = true; };
   if (ls.get(DRAFT)) { $('f-url').value = ls.get(DRAFT); sheetForm.hidden = false; btn.setAttribute('aria-expanded', 'true'); $('f-err').textContent = 'This link is not queued yet.'; $('f-err').hidden = false; }
   $('f-url').addEventListener('input', () => { const v = $('f-url').value.trim(); if (v) ls.set(DRAFT, v); else ls.del(DRAFT); });
+  // L28: « Paste link » reads the clipboard into the field; + opening an empty form tries it too, permission
+  // permitting (on iOS, the system's Paste bubble), and says nothing when it gets no supported link. Nothing is
+  // sent without a tap on Queue it. Paste link tapped within 2 s of the opening uses the read the opening started
+  // (iOS would ask twice), unless that read failed.
+  let openRead = null;
+  const readClip = () => {
+    const cb = typeof navigator !== 'undefined' && navigator ? navigator.clipboard : null;
+    try { return cb && cb.readText ? Promise.resolve(cb.readText()) : Promise.reject(new Error('no clipboard')); } catch (e) { return Promise.reject(e); }
+  };
+  // The first supported link in a text (an app's share text may wrap it in words), as written; null if none.
+  const linkIn = text => {
+    for (const [m] of String(text || '').matchAll(/https?:\/\/[^\s<>"']+/gi)) {
+      const raw = m.replace(/[).,;!?]+$/, '');
+      try { if (okHost(new URL(raw).hostname)) return raw; } catch {}
+    }
+    return null;
+  };
+  // Pre-filled, the link is kept like a typed one (rb.draft): a PWA closed before Queue it finds it again.
+  const prefill = () => {
+    const read = {at: Date.now(), failed: false, p: readClip()}; openRead = read;
+    read.p.then(text => { const link = linkIn(text); if (link && !sheetForm.hidden && !$('f-url').value.trim()) { $('f-url').value = link; ls.set(DRAFT, link); } }, () => { read.failed = true; });
+  };
+  $('paste-link').addEventListener('click', async () => {
+    const err = $('f-err'), fail = msg => { err.textContent = msg; err.hidden = false; };
+    const read = openRead, before = $('f-url').value; openRead = null;
+    let text;
+    try { text = await (read && !read.failed && Date.now() - read.at < 2000 ? read.p : readClip()); } catch { return fail('Reelbook could not read the clipboard. Paste the link in the field.'); }
+    if ($('f-url').value !== before) return; // typed meanwhile (iOS waits for the Paste bubble): what was typed wins
+    const link = linkIn(text);
+    if (!link) return fail(String(text || '').trim() ? 'The clipboard holds no Instagram, TikTok, YouTube or Facebook link.' : 'The clipboard is empty. Copy the video\'s link first.');
+    $('f-url').value = link; ls.set(DRAFT, link); err.hidden = true; $('f-url').focus();
+  });
   const dlg = $('pending-dlg');
   let afterPending = null;
   const askPending = (next, queueLabel) => {
@@ -1622,13 +1688,16 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // remembers it open); a failed request can be retried; a removal waits for the « Removed · Undo » toast to end.
   let queueCount = 0, queueRows = [], lastRun = null, pendingDel = null;
   const deleting = new Set(); // ids whose DELETE is in flight: kept out of every read until it answers
+  // D2: id -> queueGen when its DELETE answered. A read sent before that answer may still hold the row: it stays out
+  // of such reads, and is forgotten by the first read sent after the answer.
+  const removed = new Map();
   // queueGen: bumped by every read and every write; a read that answers after a newer one, or after a write, is dropped.
   // queueEpoch: bumped on an account or backend change; a write answering after it touches nothing.
   let queueGen = 0, queueEpoch = 0;
   // Another account or backend: forget the previous queue before any read (a failed read keeps what is shown).
   const resetQueue = () => {
     commitDel(); // a removal waiting on its toast is sent with the previous client, not dropped
-    queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear();
+    queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear(); removed.clear();
     $('queue-undo').hidden = true; queueCount = 0; $('queue-sec').hidden = true; $('queue-summary').innerHTML = ''; $('queue').innerHTML = '';
   };
   const rowErr = new Map(), DAY = 86400000, QOPEN = 'rb.queueOpen';
@@ -1677,14 +1746,28 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       ]);
       // a failed read keeps what is shown: an empty list is only believed from a successful read
       if (list.error || gen !== queueGen) return;
-      queueRows = (list.data || []).filter(d => d.status !== 'done' && !deleting.has(String(d.id)) && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
+      const gone = id => deleting.has(id) || (removed.has(id) && gen <= removed.get(id)) || (pendingDel && String(pendingDel.row.id) === id);
+      queueRows = (list.data || []).filter(d => d.status !== 'done' && !gone(String(d.id)));
+      for (const [id, g] of removed) if (gen > g) removed.delete(id);
       if (!last.error) lastRun = (last.data && last.data.processed_at) || null;
       renderQueue();
     } catch {}
   };
-  // A removal is sent when the toast's bar ends, when the page is left or hidden, or when another row is removed.
-  // If the delete fails, the row comes back where it was, with the reason.
-  const commitDel = () => {
+  // D2, a removal sent as the page goes away: supabase-js reads its session (and may refresh the token) before its
+  // request leaves, which a closing iPhone page may never reach. With the access token supabase-js last gave
+  // (authNow, still valid), the DELETE goes to PostgREST at once, keepalive; else null and supabase-js sends it.
+  const leaveDelete = id => {
+    const a = authNow;
+    if (!a || a.client !== sb || !backend || typeof fetch !== 'function' || !(a.exp * 1000 > Date.now() + 30000)) return null;
+    try {
+      return fetch(`${String(backend.url).replace(/\/+$/, '')}/rest/v1/requests?id=eq.${encodeURIComponent(id)}`, {
+        method: 'DELETE', keepalive: true, headers: {apikey: backend.key, Authorization: `Bearer ${a.token}`}
+      }).then(r => ({error: r && r.ok ? null : {}}));
+    } catch { return null; }
+  };
+  // A removal is sent when the toast's bar ends, when the page is left or hidden (leaving), or when another row is
+  // removed. If the delete fails, the row comes back where it was, with the reason.
+  const commitDel = (leaving = false) => {
     if (!pendingDel) return;
     const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
     const key = String(row.id), epoch = queueEpoch; deleting.add(key); queueGen++;
@@ -1694,7 +1777,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       if (!queueRows.some(d => String(d.id) === String(row.id))) queueRows.splice(Math.min(i, queueRows.length), 0, row);
       rowErr.set(String(row.id), `Could not remove it: ${(e && e.message) || 'try again in a moment.'}`); renderQueue();
     };
-    sb.from('requests').delete().eq('id', row.id).then(r => { if (r && r.error) restore(r.error); else deleting.delete(key); }, restore);
+    const sent = (leaving === true && leaveDelete(row.id)) || sb.from('requests').delete().eq('id', row.id);
+    sent.then(r => {
+      if (r && r.error) { restore(r.error); return; }
+      if (epoch === queueEpoch) { deleting.delete(key); removed.set(key, queueGen); }
+    }, restore);
   };
   $('queue').addEventListener('click', async ev => {
     const r = ev.target.closest('[data-retry]');
@@ -1724,11 +1811,18 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
     queueRows.splice(Math.min(i, queueRows.length), 0, row); renderQueue();
   });
-  $('queue-undo').addEventListener('animationend', commitDel);
-  window.addEventListener('pagehide', commitDel);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(); });
+  $('queue-undo').addEventListener('animationend', () => commitDel());
+  window.addEventListener('pagehide', () => commitDel(true));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(true); });
   // iOS Safari applies :active (the pressed state) only once the page listens to touchstart.
   document.addEventListener('touchstart', () => {}, {passive: true});
+  // L29: a backend with quotas refuses a link past the account's limit (« quota: 10 links per day », SQL P0001): said
+  // in plain words instead of the generic error. null for any other error.
+  const quotaText = e => {
+    const m = /^quota: (.+)$/.exec(String((e && e.message) || '').trim()); if (!m) return null;
+    return /per day$/.test(m[1]) ? `Limit reached: ${m[1]} on this backend. You can add more tomorrow (the count starts again at midnight UTC).`
+      : `Limit reached: ${m[1]} on this backend.`;
+  };
   const queueLink = async () => {
     const err = $('f-err'); err.hidden = true;
     const fail = msg => { err.textContent = msg; err.hidden = false; return false; };
@@ -1741,7 +1835,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       discardDraft(); openForm(false); refreshQueue();
       const f = $('flash'); f.textContent = currentTheme ? 'Queued. It shows in the queue on the home page. The sheet will be built on your next Claude Code run.' : 'Queued. The sheet will be built on your next Claude Code run.'; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000);
       return true;
-    } catch { return fail('Could not save it right now. Try again in a moment.'); }
+    } catch (e) { return fail(quotaText(e) || 'Could not save it right now. Try again in a moment.'); }
     finally { $('f-submit').disabled = false; }
   };
   sheetForm.addEventListener('submit', ev => { ev.preventDefault(); queueLink(); });
@@ -1832,6 +1926,38 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   let notesNow = null;
   const noteQueues = new Map(); // '<user id>|<note key>' -> its last write (a stuck write never holds up another note or account)
   const flushNotes = () => { if (notesNow) notesNow.flush(); };
+  // Debt #30: signing out (Settings: Sign out, or another backend) leaves no note draft of the account on the device.
+  // The note being typed is saved first and this account's note writes are waited for (5 s at most); a draft still
+  // not stored then (offline, a failed save) is deleted only once the user agrees, else nothing changes. Drafts go
+  // only once the sign-out succeeded (Sign out refused by the server: still signed in, nothing deleted; another
+  // backend goes on anyway: the user agreed). One that appears meanwhile (another tab) is asked about again. A session
+  // revoked elsewhere keeps its drafts: they come back at the next sign-in of the same account.
+  const draftKeysOf = uid => {
+    const pre = 'rb.draft.' + uid + '.', out = [];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre)) out.push(k); } } catch {}
+    return out;
+  };
+  const signOutHere = async ({force = false} = {}) => {
+    if (!sb) return true;
+    const uid = user ? user.id : '';
+    if (uid) {
+      flushNotes();
+      // no typing meanwhile: a text typed now would make a draft after the clean-up (given back on No)
+      const ta = notesNow ? $('n-text') : null, ro = ta ? ta.readOnly : false; if (ta) ta.readOnly = true;
+      const runs = [...noteQueues].filter(([k]) => k.startsWith(uid + '|')).map(([, run]) => run);
+      if (runs.length) await Promise.race([Promise.all(runs), new Promise(ok => setTimeout(ok, 5000))]);
+      const left = draftKeysOf(uid), n = left.length;
+      if (n && typeof window.confirm === 'function' && !window.confirm(`${n === 1 ? 'A note is' : n + ' notes are'} not saved yet. Sign out and delete ${n === 1 ? 'it' : 'them'} from this device?`)) { if (ta) ta.readOnly = ro; return false; }
+      const res = await sb.auth.signOut().catch(error => ({error}));
+      if (res && res.error && !force) { console.warn('Sign-out failed:', res.error.message || res.error); if (ta) ta.readOnly = ro; return false; }
+      left.forEach(ls.del);
+      const late = draftKeysOf(uid); // typed while the sign-out was on its way (another tab): asked, never dropped silently
+      if (late.length && (typeof window.confirm !== 'function' || window.confirm('A note typed during sign-out is not saved. Delete it from this device?'))) late.forEach(ls.del);
+      return true;
+    }
+    await sb.auth.signOut().catch(() => {});
+    return true;
+  };
   const wireNotes = async key => {
     flushNotes();
     const ta = $('n-text'), st = $('n-status'), retry = $('n-retry');
@@ -1982,8 +2108,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   // Saved: the row joins the page's entries and the latest date of its key (cards, home counter). Not saved: what is
   // in the field stays there with « Not saved. Try again. »; nothing reads as done.
-  // A try carries its own id: Save again on the same text, the same day, sends the same row, so a row stored whose answer was lost
-  // comes back as a duplicate key (23505) and counts as saved, never as a second entry.
+  // A try carries its own id: Save again on the same text sends the same row, so a row stored whose answer was lost
+  // comes back as a duplicate key (23505) and counts as saved, never as a second entry. D2: its day too is the one of
+  // the first Save, so a retry past midnight is still the same row (#32).
   const newId = () => {
     const c = typeof crypto !== 'undefined' ? crypto : null;
     if (c && c.randomUUID) return c.randomUUID();
@@ -1991,8 +2118,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const h = b.map(x => x.toString(16).padStart(2, '0')).join('');
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
   };
-  // A try: {id, slug, done_on, text}, the same one again for the same text the same day (see above).
-  const logAttempt = (prev, key, text) => prev && prev.text === text && prev.done_on === todayIso() ? prev : {id: newId(), slug: key, done_on: todayIso(), text};
+  // A try: {id, slug, done_on, text}, the same one again for the same text, whatever the time (see above).
+  const logAttempt = (prev, key, text) => prev && prev.text === text && prev.slug === key ? prev : {id: newId(), slug: key, done_on: todayIso(), text};
   // The write behind « Done today » and the player's « Save to log » (L11): one practice_log row (a catalogue change:
   // localGen). {entry} once stored, {} when not saved, null when signed out or another account meanwhile.
   const insertPractice = async row => {
@@ -2049,7 +2176,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   let edit = null;
   // L5: the session the shown sheet is opened from, {s, n, items} (n counted from 1 over `items`), else null.
   let seat = null;
-  const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
+  // at: the version the edit starts from (sessions.updated_at), the condition of its write (saveEdit)
+  const draftOf = s => ({slug: s.slug, at: s.updated_at || null, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
     items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose, was: it.dose, given: it.given}))});
   const editRows = () => edit.items.map((it, i) => {
     const sh = bySlug.get(it.slug), t = esc(sh ? sh.title : it.slug);
@@ -2140,7 +2268,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
         // The dialog may hold a newer report by now (Cancel, reopened): only this one's own sheet is marked sent.
         ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; if ($('report-note') === ta) { sheetSaved(rdlg); $('report-cancel').textContent = 'Close'; }
         refreshQueue();
-      } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
+      } catch (e) { st.className = 'status err'; st.textContent = quotaText(e) || 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
     }));
     openSheet(rdlg);
   };
@@ -2536,8 +2664,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (theme === s.theme) { closeSheet(mdlg); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
-      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
-      s.theme = theme; saveCatalogue();
+      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug,updated_at'); if (error || !data || !data.length) throw error || new Error('no row');
+      s.theme = theme; stamp(s, data[0]); saveCatalogue();
       closeSheet(mdlg);
       const top = $('sheet-top');
       if (top && shownSession() === s) top.innerHTML = `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`; syncNav();
@@ -2567,6 +2695,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // ---------- compose sessions: « + New session », « Add to session », Edit mode, delete ----------
   // Every write checks it changed a row: RLS answers an empty result, not an error, for a row it hides.
   const oneRow = ({data, error}) => { if (error || !data || !data.length) throw error || new Error('no row'); return data[0]; };
+  // A session written from this tab takes the updated_at the write gave it: its next Edit starts from there (#36).
+  const stamp = (s, r) => { if (r && r.updated_at) s.updated_at = r.updated_at; };
   // Slugs a new session must not take: the user's sessions, and notes left by deleted sessions.
   const takenSlugs = () => new Set([...v2Sessions.map(s => s.slug), ...[...notesIndex].map(RS.sessionSlugOf).filter(Boolean)]);
   const createSession = async (theme, title, slugs) => {
@@ -2644,7 +2774,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     else { add = RS.addItem(s.items, e.slug); if (!add.added) return fail('This sheet is already in that session.'); }
     $('as-submit').disabled = true; err.hidden = true;
     try {
-      if (s) { touched(); oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
+      if (s) { touched(); const r = oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug,updated_at')); s.items = add.items; stamp(s, r); setSessions(v2Sessions); saveCatalogue(); }
       else s = await createSession(e.theme, title, [e.slug]);
       closeSheet(adlg);
       const top = $('sheet-top');
@@ -2660,11 +2790,41 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const row = {title: RS.keepOrClip(edit.title, edit.was.title, RS.MAX.title), format: RS.keepOrClip(edit.format, edit.was.format, RS.MAX.format), items: RS.cleanItems(edit.items)};
     if (!row.title) { err.textContent = 'Give the session a title.'; err.hidden = false; $('ed-title').focus(); return; }
     b.disabled = true; err.hidden = true;
+    const ed = edit;
     try {
-      touched(); oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
-      Object.assign(s, row); setSessions(v2Sessions); saveCatalogue(); edit = null;
+      // Debt #36: written only over the version the edit was opened on (updated_at unchanged): a tab left open never
+      // overwrites what was published or saved since. No version known (a catalogue cached before): written as before.
+      let q = sb.from('sessions').update(row).eq('slug', s.slug);
+      if (ed.at) q = q.eq('updated_at', ed.at);
+      touched(); const {data, error} = await q.select('slug,updated_at'); if (error) throw error;
+      if (!data || !data.length) {
+        if (!ed.at) throw new Error('no row');
+        if (edit !== ed) return;
+        // nothing written; the edits stay on screen (to copy) until Reload opens the new version
+        err.innerHTML = 'This session changed since you opened it. Reload to see the new version. <button class="btn ghost" type="button" id="ed-reload">Reload</button>';
+        err.hidden = false; return;
+      }
+      Object.assign(s, row); stamp(s, data[0]); setSessions(v2Sessions); saveCatalogue(); if (edit === ed) edit = null;
       showSession(s.slug, 'Saved.');
     } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; }
+  };
+  // Reload (after a refused save): the session as stored now, opened in Edit again; deleted meanwhile: its notebook.
+  const reloadEdit = async () => {
+    const ed = edit, err = $('ed-err'), b = $('ed-reload'); if (b) b.disabled = true;
+    try {
+      const {data, error} = await sb.from('sessions').select(SESSION_COLS).eq('slug', ed.slug).maybeSingle(); if (error) throw error;
+      if (edit !== ed) return;
+      const s = v2BySlug.get(ed.slug); touched();
+      if (!data || !s) {
+        setSessions(v2Sessions.filter(x => x.slug !== ed.slug)); saveCatalogue(); edit = null;
+        flashHome('This session was deleted meanwhile.'); location.hash = s ? s.theme : ''; return;
+      }
+      if (data.thumbnail) await signAll([data.thumbnail]).catch(() => {});
+      if (edit !== ed) return;
+      Object.assign(s, data); setSessions(v2Sessions); saveCatalogue();
+      edit = draftOf(s); showSession(s.slug);
+      const top = $('sheet-top'); if (top) top.innerHTML = '<p class="flash" role="status">This is the new version. Your changes were not saved.</p>';
+    } catch { if (edit === ed) { err.innerHTML = 'Could not reload it right now. Try again in a moment. <button class="btn ghost" type="button" id="ed-reload">Reload</button>'; err.hidden = false; } }
   };
   view.addEventListener('input', ev => {
     const t = ev.target; if (!edit || !t) return;
@@ -2743,6 +2903,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);
     else if ((b = at('[data-out]'))) { edit.items = RS.removeItem(edit.items, +b.dataset.out); renderRows(); }
     else if (at('#ed-save')) saveEdit();
+    else if (at('#ed-reload')) reloadEdit();
     else if (at('#ed-cancel')) { const slug = edit.slug; edit = null; showSession(slug); }
     else if (at('#ed-delete')) openDelete();
   };
@@ -2782,7 +2943,74 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const renderWelcome = () => { $('w-install').innerHTML = installBlock(); };
   $('welcome').addEventListener('click', copyHandler($('welcome')));
   $('w-done').addEventListener('click', () => { ls.set(welcomeKey(), '1'); location.hash = ''; });
+  // L29: « Usage: 4/10 links today · 120/300 sheets · 80/200 MB », from my_quota(); hidden when the backend has no
+  // quotas (no such function), on any error, and for an answer meant for an account signed out since.
+  const mbOf = b => { const mb = (Number(b) || 0) / 1048576; return mb > 0 && mb < 10 ? String(Math.round(mb * 10) / 10) : String(Math.round(mb)); };
+  const renderUsage = async () => {
+    const el = $('s-usage'), uid = user && user.id; el.hidden = true;
+    if (!sb || typeof sb.rpc !== 'function' || !uid) return;
+    let r; try { r = await sb.rpc('my_quota'); } catch { return; }
+    const q = r && !r.error && r.data;
+    if (!q || typeof q !== 'object' || !user || user.id !== uid) return;
+    el.textContent = `Usage: ${q.requests_today}/${q.max_requests_per_day} links today · ${q.sheets}/${q.max_sheets} sheets · ${mbOf(q.storage_bytes)}/${q.max_storage_mb} MB`;
+    el.hidden = false;
+  };
+  // L28: Settings › iPhone shortcut. One active key per account (capture_tokens): made here, its secret shown once
+  // (only its SHA-256 is stored; nothing kept on the device), revoked here. The section shows only once a select on
+  // capture_tokens answers: a backend without the table never sees it, and nothing is written to it.
+  const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+  const webCrypto = () => { const c = typeof crypto !== 'undefined' ? crypto : null; return c && c.getRandomValues && c.subtle ? c : null; };
+  const sha256 = async (c, s) => hex(new Uint8Array(await c.subtle.digest('SHA-256', Uint8Array.from(s, ch => ch.charCodeAt(0)))));
+  let scActive = null;
+  const scErr = msg => { const e = $('shortcut-err'); e.textContent = msg || ''; e.hidden = !msg; };
+  const paintShortcut = () => {
+    const t = scActive;
+    $('shortcut-none').hidden = !!t; $('shortcut-active').hidden = !t;
+    $('shortcut-info').textContent = t ? `Key « ${t.label || 'iPhone'} », made ${fmtDate(t.created_at)} · ${t.last_used_at ? 'last used ' + fmtDate(t.last_used_at) : 'not used yet'}.` : '';
+    $('shortcut-url').textContent = backend ? backend.url.replace(/\/+$/, '') + '/functions/v1/add-link' : '';
+  };
+  const loadShortcut = async () => {
+    const uid = user && user.id;
+    if (!sb || !uid) { $('shortcut-section').hidden = true; return; }
+    let r;
+    try { r = await sb.from('capture_tokens').select('id,label,created_at,last_used_at,revoked_at').is('revoked_at', null).order('created_at', {ascending: false}); } catch (e) { r = {error: e}; }
+    if (!user || user.id !== uid) return;
+    // a failed read right after a key was made keeps the section (and the key's only copy) on screen
+    if (!r || r.error || !Array.isArray(r.data)) { if ($('shortcut-new').hidden) $('shortcut-section').hidden = true; return; }
+    scActive = r.data.find(t => !t.revoked_at) || null;
+    paintShortcut(); $('shortcut-section').hidden = false;
+  };
+  const SC_FAIL = 'Could not save it right now. Try again in a moment.';
+  $('shortcut-create').addEventListener('click', async () => {
+    const c = webCrypto(), uid = user && user.id; scErr('');
+    if (!uid) return;
+    if (!c) return scErr('This browser cannot make a key here: open Reelbook from its https address.');
+    const b = new Uint8Array(32); c.getRandomValues(b);
+    const key = 'rb_' + hex(b), label = $('shortcut-label').value.trim().slice(0, 60) || 'iPhone';
+    $('shortcut-create').disabled = true;
+    try {
+      const {error} = await sb.from('capture_tokens').insert({label, token_hash: await sha256(c, key)});
+      if (!user || user.id !== uid) return;
+      if (error) { scErr(error.code === '23505' ? 'This account has a key already: revoke it to make a new one.' : SC_FAIL); await loadShortcut(); return; }
+      $('shortcut-token').textContent = 'Bearer ' + key; $('shortcut-new').hidden = false; $('shortcut-label').value = '';
+      await loadShortcut();
+    } catch { scErr(SC_FAIL); } finally { $('shortcut-create').disabled = false; }
+  });
+  $('shortcut-revoke').addEventListener('click', async () => {
+    const t = scActive, uid = user && user.id; scErr('');
+    if (!t || !uid) return;
+    $('shortcut-revoke').disabled = true;
+    try {
+      const {error} = await sb.from('capture_tokens').update({revoked_at: new Date().toISOString()}).eq('id', t.id);
+      if (!user || user.id !== uid) return;
+      if (error) return scErr(SC_FAIL);
+      $('shortcut-new').hidden = true; $('shortcut-token').textContent = '';
+      await loadShortcut();
+    } catch { scErr(SC_FAIL); } finally { $('shortcut-revoke').disabled = false; }
+  });
   const renderSettings = () => {
+    renderUsage();
+    $('shortcut-token').textContent = ''; $('shortcut-new').hidden = true; scErr(''); loadShortcut(); // a key is shown once
     $('s-sessions').hidden = sessionsOk;
     // Old one-page sessions left on an older backend: hidden by the app, rebuilt as v2 by requeue-sessions + /reelbook.
     $('s-v1').hidden = !v1Hidden;
@@ -3139,6 +3367,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
         if (client !== sb) return;
+        authNow = session && session.access_token ? {client, token: session.access_token, exp: Number(session.expires_at) || 0} : null;
         const next = session ? session.user : null;
         if (peeked && user) {
           const kept = storedUser();

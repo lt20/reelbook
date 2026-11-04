@@ -1,0 +1,14 @@
+// L28: the Edge Function add-link's unit tests (supabase/functions/add-link/core.test.ts) are Deno tests, run here
+// when Deno is installed (skipped otherwise, with the reason). No network: --no-remote, a stubbed client.
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const {execFileSync, spawnSync} = require('node:child_process');
+
+const hasDeno = (() => { try { execFileSync('deno', ['--version'], {stdio: 'ignore'}); return true; } catch { return false; } })();
+const file = path.join(__dirname, '../supabase/functions/add-link/core.test.ts');
+
+test('add-link core: Deno unit tests (validation, key hash, refusals, rate limit, quota message, no key in logs)', {skip: hasDeno ? false : 'deno is not installed'}, () => {
+  const r = spawnSync('deno', ['test', '--no-remote', '--quiet', file], {encoding: 'utf8', timeout: 60000, env: {...process.env, NO_COLOR: '1'}});
+  assert.equal(r.status, 0, (r.stdout || '') + (r.stderr || ''));
+});
