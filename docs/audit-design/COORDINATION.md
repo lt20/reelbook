@@ -178,14 +178,17 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
   that case alone now stores `rb.welcome.u1` before loading the home page.
 
 ## Debt (found during P0–P2, not blocking)
-- Queue: a stale read can show a removed row until the next refresh (#28, Codex pass 4).
-- Notes: drafts `rb.draft.<uid>.<key>` are not cleared on sign-out (#30).
-- Practice log: a save stored at 23:59 whose answer is lost, retried after midnight, makes a duplicate entry (#32).
+- ~~Queue: a stale read can show a removed row until the next refresh (#28, Codex pass 4).~~ Done in #64 (D2).
+- ~~Notes: drafts `rb.draft.<uid>.<key>` are not cleared on sign-out (#30).~~ Done in #62 (D1).
+- ~~Practice log: a save stored at 23:59 whose answer is lost, retried after midnight, makes a duplicate entry (#32).~~
+  Done in #64 (D2).
 - `scripts/codex-acceptance.sh --out` accepts any folder of the repo; should be limited to `tests/` (L0).
 - Screenshots run in Chromium, not WebKit (L0).
-- Queue delete on page close may not leave a real iPhone (supabase-js fetches the token first) (#28).
-- Session edit from a tab left open can overwrite structured dose fields published since: add a freshness check
-  (`updated_at`) before writing (#36, Codex passes 2–3; the same risk existed for title, format and doses).
+- ~~Queue delete on page close may not leave a real iPhone (supabase-js fetches the token first) (#28).~~ Done in #64
+  (D2): direct `fetch` keepalive with the token in memory; to check once on a real iPhone (installed PWA).
+- ~~Session edit from a tab left open can overwrite structured dose fields published since: add a freshness check
+  (`updated_at`) before writing (#36, Codex passes 2–3; the same risk existed for title, format and doses).~~ Done in
+  #62 (D1).
 - Back, scroll restore and the unsaved-edit prompt are checked by a Playwright script kept outside the repo
   (`check.cjs` of L17): move such browser checks into `tests/e2e/` (#47).
 - Screenshots: Playwright WebKit is now installed on Laurent's Mac (L20): switch `tests/e2e/shots.mjs` to WebKit.

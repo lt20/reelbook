@@ -55,12 +55,14 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
   // location.hash set by the app fires hashchange, as in a browser
   const winListeners = {};
+  // every listener of the window and of the document, by type (win() and doc() fire them all, in order)
+  const winAll = {}, docAll = {};
   let currentHash = hash;
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
@@ -75,7 +77,8 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
   const context = {
     URL, console,
     crypto: globalThis.crypto, // Web Crypto, as every browser has it (L28: the shortcut key and its SHA-256)
-    setTimeout: fn => { if (tables) queueMicrotask(fn); },
+    // timers run as microtasks; one of timerCap ms or more never fires (a test that waits for the work, not the time)
+    setTimeout: (fn, ms) => { if (tables && !(ms >= timerCap)) queueMicrotask(fn); },
     location: {
       href: 'https://app.example.test/reelbook/', origin: 'https://app.example.test', pathname: '/reelbook/',
       get hash() { return currentHash; },
@@ -84,7 +87,9 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
-      removeItem: key => storage.delete(key)
+      removeItem: key => storage.delete(key),
+      get length() { return storage.size; },
+      key: i => [...storage.keys()][i] ?? null
     },
     window: {
       REELBOOK: {
@@ -92,13 +97,14 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
         hosted: {name: 'Reelbook hosted', url: hostedUrl, anonKey: ownKey, blurb: 'Free for now.'},
         repo: 'https://github.com/lt20/reelbook'
       },
-      scrollTo() {}, addEventListener(type, listener) { winListeners[type] = listener; },
-      ...(idb ? {indexedDB: fakeIndexedDB(idb)} : {})
+      scrollTo() {}, addEventListener(type, listener) { winListeners[type] = listener; (winAll[type] = winAll[type] || []).push(listener); },
+      ...(idb ? {indexedDB: fakeIndexedDB(idb)} : {}),
+      ...(confirm ? {confirm} : {})
     },
     document: {
       getElementById: element,
       body: {insertAdjacentHTML() {}},
-      addEventListener() {},
+      addEventListener(type, listener) { (docAll[type] = docAll[type] || []).push(listener); },
       title: 'Reelbook'
     },
     navigator: nav,
@@ -170,7 +176,9 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     },
     go(h) { context.location.hash = h; },
     // a window event the app listens to (e.g. beforeinstallprompt), with the event object given
-    async win(type, ev = {}) { assert.ok(winListeners[type], `window handles ${type}`); await winListeners[type](ev); await Promise.resolve(); }
+    async win(type, ev = {}) { assert.ok(winAll[type], `window handles ${type}`); for (const l of winAll[type]) await l(ev); await Promise.resolve(); },
+    // a document event (e.g. visibilitychange), after setting `props` on the document (e.g. {visibilityState: 'hidden'})
+    async doc(type, props = {}, ev = {}) { Object.assign(context.document, props); assert.ok(docAll[type], `document handles ${type}`); for (const l of docAll[type]) await l(ev); await Promise.resolve(); }
   };
 }
 
