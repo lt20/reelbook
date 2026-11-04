@@ -4,11 +4,17 @@ No human tests a lot before it merges (`docs/audit-design/COORDINATION.md`): the
 screenshots of the real app, in an iPhone 14 viewport, light and dark, on a fake backend. Nothing here
 ships: `app/` is copied, never modified.
 
+The browser is **WebKit** (Safari's engine, the one of the iPhone) by default; `--browser chromium` on
+`shots.mjs` or `nav-check.mjs` runs the same steps in Chromium for a cross-check.
+
 ## Once per machine
 
 ```sh
-tools/e2e-setup.sh     # playwright@1.63.0 into ~/.cache/reelbook-e2e (no package.json in the repo)
+tools/e2e-setup.sh     # playwright@1.63.0 into ~/.cache/reelbook-e2e (no package.json in the repo),
+                       # then Playwright's WebKit and Chromium (skipped when already downloaded)
 ```
+
+A browser missing from Playwright's cache stops the run with a message that points back here.
 
 ## In a lot's worktree
 
@@ -28,6 +34,27 @@ node tests/e2e/shots.mjs --base http://127.0.0.1:8771/index.html --out "$OUT/sho
 Rebuild after each change to `app/` (`build.sh` copies; it refuses to write into a folder that is not a
 previous preview). Each run writes `<name>.png` per step and `report.json`; it exits 1 when a step has a
 page error, a console error, a failed request (a missing photo included) or an action that cannot run.
+
+### Navigation checks (by hand, not in CI)
+
+Real history, real scrolling and `window.confirm` are out of reach of the `vm` tests (`tests/*.cjs`).
+`nav-check.mjs` plays them in the browser against the preview, on the synthetic fixtures:
+
+```sh
+node tests/e2e/nav-check.mjs --base http://127.0.0.1:8802/index.html [--browser chromium] [--out "$OUT/nav"]
+```
+
+- Back from a sheet (browser Back, then the app's « ‹ Strength ») puts the notebook page back at its
+  scroll position;
+- a session in Edit with a changed title asks « Discard your changes? » on Back (browser and app button):
+  Cancel keeps the edit, OK leaves; an unchanged edit leaves without asking;
+- two facets chosen one after the other (L23), then Back, Back, Forward, Forward: the hash, the chips and the
+  results follow.
+
+Five checks, each in a fresh iPhone 14 context; exit 1 when one fails (a page or console error included).
+`--only <check>` reruns one; `--out` keeps a screenshot of each last screen. Run it after a change to
+navigation, the session editor or the search view (L17, L23); it replaces L17's `check.cjs`, kept outside
+the repo. Port 8802 is the one of debt lot D3: any free port works.
 
 - **Steps**: `tests/e2e/steps/smoke.json` (sign-in, home, notebook, sheet, session, settings, add-video panel,
   settings on a backend without the `sessions` table). A lot adds its own file, e.g.
