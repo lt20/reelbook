@@ -47,6 +47,13 @@ your request, or when the law requires it.
 As long as your account exists. When you ask for your account to be deleted, your account and everything listed
 under « What you add » are deleted within `[DELETION DELAY, e.g. 30 days]`; technical logs expire on their own.
 
+## Waiting list
+
+When every seat of the beta is taken, you can leave your first name and your email (and the language of the
+page) on the waiting list, with your consent. They are used for one thing only: the maintainer writes to you,
+by hand, when a seat is free. No newsletter, never shared. Your entry is deleted when you sign up with that email,
+or as soon as you ask (`[CONTACT EMAIL]`). Only the maintainer can read the list.
+
 ## Your data, your copy
 
 Your sheets come from folders on your own computer (`work/`), which stay yours. `rb.py` (the command line that

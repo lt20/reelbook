@@ -7,7 +7,7 @@ const path = require('node:path');
 
 const sql = fs.readFileSync(path.join(__dirname, '../supabase/schema.sql'), 'utf8');
 const start = sql.indexOf('-- Quotas per account (L29)');
-const quota = sql.slice(start);
+const quota = sql.slice(start, sql.indexOf('-- Beta locks (L32)'));   // up to the beta section (tests/beta-schema.test.cjs)
 const code = quota.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');   // statements, comments out
 const flat = code.replace(/\s+/g, ' ');
 
