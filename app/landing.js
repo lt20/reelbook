@@ -109,6 +109,7 @@
       "ui.dn.p": "Combien de fois, et la dernière.",
       "ui.more": "+ 15 autres",
       "ui.copied": "Copiée",
+      "ui.copyHand": "La copie n’a pas marché : la ligne est sélectionnée, copie-la à la main (⌘C ou Ctrl+C).",
       "cu.name": "Cerceau aérien",
       "cu.desc": "Montées, figures et enchaînements au cerceau aérien, du débutant au confirmé. Un groupe par famille de figures."
     },
@@ -202,6 +203,7 @@
       "ui.dn.p": "How many times, and the last one.",
       "ui.more": "+ 15 more",
       "ui.copied": "Copied",
+      "ui.copyHand": "Copying did not work: the line is selected, copy it by hand (⌘C or Ctrl+C).",
       "cu.name": "Aerial hoop",
       "cu.desc": "Climbs, poses and sequences on the aerial hoop, beginner to advanced. One group per family of poses."
     }
@@ -542,9 +544,11 @@
     all('[data-k]').forEach(el => { const v = t(el.getAttribute('data-k')); if (v != null) el.innerHTML = v; });
     all('[data-ka]').forEach(el => { const v = t(el.getAttribute('data-ka')); if (v != null) el.setAttribute('aria-label', v); });
     all('#intro .lp-lang button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang)));
+    // the « Your own notebook » example: translated while it holds an example, kept once the visitor has typed in it
+    const example = (el, k) => el && (el.value === DICT.fr[k] || el.value === DICT.en[k]);
     const name = $('lp-cuName'), desc = $('lp-cuDesc');
-    if (name) name.value = t('cu.name');
-    if (desc) desc.value = t('cu.desc');
+    if (example(name, 'cu.name')) name.value = t('cu.name');
+    if (example(desc, 'cu.desc')) desc.value = t('cu.desc');
     if ($('intro')) { renderLib(); renderAll(); paintSeats(); }
   };
   const setLang = l => {
@@ -575,11 +579,25 @@
       if (target && target.scrollIntoView) target.scrollIntoView({behavior, block: 'start'});
     });
     on(intro, 'submit', ev => ev.preventDefault());
+    // « Copy the line »: the clipboard API, else the page's copy command on the selected line; when neither copies,
+    // the line stays selected and a message says to copy it by hand (one tap on the line selects it all).
     on($('lp-copy'), 'click', ev => {
-      const b = ev.currentTarget || ev.target, pre = intro.querySelector ? intro.querySelector('pre') : null, label = t('i2.copy');
+      const b = ev.currentTarget || ev.target, pre = intro.querySelector ? intro.querySelector('pre') : null, msg = $('lp-copyMsg'), label = t('i2.copy');
+      if (!pre) return;
+      const say = k => { if (msg) { msg.hidden = !k; msg.textContent = k ? t(k) : ''; } };
+      const copied = () => { say(null); b.textContent = t('ui.copied'); setTimeout(() => { b.textContent = label; }, 1600); };
+      const byHand = () => {
+        let ok = false;
+        try {
+          const range = doc.createRange(), sel = win.getSelection();
+          range.selectNodeContents(pre); sel.removeAllRanges(); sel.addRange(range);
+          ok = !!(doc.execCommand && doc.execCommand('copy'));
+        } catch (e) { ok = false; }
+        if (ok) copied(); else say('ui.copyHand');
+      };
       const clip = win.navigator && win.navigator.clipboard;
-      if (!clip || !pre) return;
-      clip.writeText(pre.textContent.trim()).then(() => { b.textContent = t('ui.copied'); setTimeout(() => { b.textContent = label; }, 1600); }, () => {});
+      if (!clip || typeof clip.writeText !== 'function') { byHand(); return; }
+      Promise.resolve().then(() => clip.writeText(pre.textContent.trim())).then(copied, byHand);
     });
     // the bar: a shadow once scrolled, the section in view underlined
     const bar = $('lp-topbar'), links = all('#lp-topbar nav a');

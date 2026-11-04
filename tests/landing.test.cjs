@@ -37,6 +37,12 @@ function landing({language, stored = {}} = {}) {
   lists.set('#intro .lp-lang button', fromHtml(/<button\b[^>]*\bdata-lang="[^"]+"[^>]*>/g));
   lists.set('#intro .lp-ex button', fromHtml(/<button\b[^>]*\bdata-ex="[^"]+"[^>]*>/g));
   for (const k of ['data-seats-line', 'data-seats', 'data-seats-bar']) lists.set(`[${k}]`, fromHtml(new RegExp(`<[a-z]+\\b[^>]*\\b${k}(?=[\\s>])[^>]*>`, 'g')));
+  // the « Your own notebook » fields hold the markup's English example, as in the browser
+  byId('lp-cuName').value = attrsOf(html.match(/<input id="lp-cuName"[^>]*>/)[0]).value;
+  byId('lp-cuDesc').value = html.match(/<textarea id="lp-cuDesc">([^<]*)<\/textarea>/)[1];
+  // the install line, for « Copy the line »
+  const pre = stub(); pre.textContent = '\n' + html.match(/<pre>([^<]*)<\/pre>/)[1] + '\n';
+  byId('intro').querySelector = sel => sel === 'pre' ? pre : null;
   const documentElement = {lang: 'en', scrollHeight: 0};
   const document = {getElementById: byId, querySelectorAll: sel => lists.get(sel) || [], documentElement};
   const window = {
@@ -44,9 +50,10 @@ function landing({language, stored = {}} = {}) {
     localStorage: {getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, String(v)), removeItem: k => storage.delete(k)},
     addEventListener() {}, scrollTo() {}
   };
-  vm.runInNewContext(landingJs, {window, document, console});
+  const timers = [];
+  vm.runInNewContext(landingJs, {window, document, console, setTimeout: fn => timers.push(fn)});
   const click = el => el.listeners.click({preventDefault() {}, target: el, currentTarget: el});
-  return {RBL: window.RBL, byId, lists, storage, documentElement, click};
+  return {RBL: window.RBL, byId, lists, storage, documentElement, click, window, document, pre, timers};
 }
 
 test('L30 — language: saved choice, else navigator.language, else English', () => {
@@ -290,4 +297,57 @@ test('L30 — installation « On my own Supabase » + « Create my notebook »: 
   await page.fire('auth-form', 'submit');
   assert.deepEqual(page.clients.at(-1).calls.map(c => c[0]), ['up']);
   assert.deepEqual(JSON.parse(page.storage.get('rb.backend')), {mode: 'own', url: ownUrl, key: ownKey});
+});
+
+test('L30 — « Your own notebook »: the example follows FR / EN, what the visitor typed stays', () => {
+  const page = landing({language: 'en'});
+  const name = page.byId('lp-cuName'), desc = page.byId('lp-cuDesc');
+  assert.equal(name.value, 'Aerial hoop');
+  page.RBL.setLang('fr');
+  assert.equal(name.value, 'Cerceau aérien', 'untouched: the example is translated');
+  assert.match(desc.value, /^Montées, figures/);
+  name.value = 'Pole dance'; desc.value = 'Mes figures à la barre.';
+  page.RBL.setLang('en');
+  assert.equal(name.value, 'Pole dance', 'typed: kept');
+  assert.equal(desc.value, 'Mes figures à la barre.');
+  desc.value = '';
+  page.RBL.setLang('fr');
+  assert.equal(desc.value, '', 'emptied: stays empty');
+  assert.equal(name.value, 'Pole dance');
+});
+
+test('L30 — « Copy the line »: copied, or else selected with a message to copy it by hand', async () => {
+  const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
+  const run = async (clipboard, {copyCommand = false} = {}) => {
+    const page = landing({language: 'fr'});
+    if (clipboard !== undefined) page.window.navigator.clipboard = clipboard;
+    const selected = [];
+    page.document.createRange = () => ({selectNodeContents: node => selected.push(node)});
+    page.window.getSelection = () => ({removeAllRanges() {}, addRange() {}});
+    page.document.execCommand = cmd => cmd === 'copy' && copyCommand;
+    const button = page.byId('lp-copy'), msg = page.byId('lp-copyMsg');
+    page.click(button);
+    await flush();
+    return {page, button, msg, selected};
+  };
+  let wrote = null;
+  const ok = await run({writeText: async s => { wrote = s; }});
+  assert.equal(wrote, 'curl -fsSL https://lt20.github.io/reelbook/install.sh | bash');
+  assert.equal(ok.button.textContent, 'Copiée');
+  assert.equal(ok.msg.hidden, true);
+  ok.page.timers.forEach(fn => fn());
+  assert.equal(ok.button.textContent, ok.page.RBL.t('i2.copy'), 'the label comes back');
+  const hand = 'La copie n’a pas marché : la ligne est sélectionnée, copie-la à la main (⌘C ou Ctrl+C).';
+  for (const [what, clipboard] of [['no clipboard API', undefined], ['writing refused', {writeText: async () => { throw new Error('NotAllowedError'); }}], ['writeText missing', {}]]) {
+    const r = await run(clipboard);
+    assert.equal(r.msg.hidden, false, `${what}: a visible message`);
+    assert.equal(r.msg.textContent, hand, what);
+    assert.deepEqual(r.selected, [r.page.pre], `${what}: the line is selected`);
+    assert.notEqual(r.button.textContent, 'Copiée');
+  }
+  const cmd = await run({writeText: async () => { throw new Error('NotAllowedError'); }}, {copyCommand: true});
+  assert.equal(cmd.button.textContent, 'Copiée', 'the page copy command copied it');
+  assert.equal(cmd.msg.hidden, true);
+  assert.match(html, /<p class="lp-copy-msg" id="lp-copyMsg" role="status" hidden><\/p>/);
+  assert.match(html, /#intro pre\{[^}]*user-select:all/, 'one tap selects the whole line');
 });

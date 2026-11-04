@@ -840,7 +840,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-wl .lp-btn{justify-self:start;min-height:46px}
 #intro .lp-opt b{display:block;font-size:17px}
 #intro .lp-opt span{display:block;font-size:15px;color:var(--ink-2);line-height:1.4}
-#intro pre{margin:0;background:var(--night);color:#e6e9ef;border-radius:12px;padding:14px;font:500 13.5px/1.5 var(--mono);white-space:pre-wrap;word-break:break-all}
+#intro pre{margin:0;background:var(--night);color:#e6e9ef;border-radius:12px;padding:14px;font:500 13.5px/1.5 var(--mono);white-space:pre-wrap;word-break:break-all;-webkit-user-select:all;user-select:all}
+#intro .lp-copy-msg{margin:0;font-size:14px;color:var(--ink)}
 #intro code{font:600 .92em var(--mono)}
 #intro .lp-copy{align-self:flex-start;min-height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--ink);color:var(--paper);font:700 15px/1 var(--body);cursor:pointer}
 #intro .lp-copy:active{transform:scale(.97)}
@@ -1043,7 +1044,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       <p class="lp-need" data-k="i2.n">You need Claude Pro or above with Claude Code, and Chrome with the Claude in Chrome extension.</p>
       <p data-k="i2.p">Paste this line in Terminal. It installs the <code>/reelbook</code> skill and links it to your notebook.</p>
       <pre>curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
-      <button class="lp-copy" type="button" id="lp-copy" data-k="i2.copy">Copy the line</button></li>
+      <button class="lp-copy" type="button" id="lp-copy" data-k="i2.copy">Copy the line</button>
+      <p class="lp-copy-msg" id="lp-copyMsg" role="status" hidden></p></li>
     <li><h3 data-k="i3.h">Add it to your phone</h3>
       <p data-k="i3.p">Put Reelbook on your home screen, then the « Send to Reelbook » shortcut in the iPhone Share menu.</p>
       <p data-k="i3.p2">On Android, just paste the link in the app.</p>
