@@ -445,30 +445,43 @@ def _my_quota(cfg):
 def _photos_full(q):
     return f"{q['max_storage_mb']} MB of photos" if q and q["storage_bytes"] >= q["max_storage_mb"] * 1048576 else None
 
+LIST_PAGE = 1000   # storage lists at most this many objects per call: the list is read page by page
+
 def _remote_images(cfg, slug):
     """{file name: (MD5, size)} of the photos the backend already holds for this sheet (storage eTag and size), {} if
-    none; None when the list could not be read (then nothing is skipped, and nothing is ever removed)."""
-    try:
-        objs = http("POST", f"{cfg['url']}/storage/v1/object/list/sheets", hdr(cfg),
-                    {"prefix": f"{cfg['user_id']}/{slug}/img", "limit": 1000}, tolerate=(400, 404)) or []
-    except RbHTTPError:
-        return None
-    out = {}
-    for o in objs if isinstance(objs, list) else []:
-        if not isinstance(o, dict) or not o.get("name"): continue
-        md = o.get("metadata") or {}
-        size = md.get("size")
-        out[o["name"]] = (str(md.get("eTag") or "").strip('"').lower(), size if isinstance(size, int) else 0)
-    return out
+    none; None when the complete list could not be read (then nothing is skipped, and nothing is ever removed): a page
+    that fails, an answer that is not a list, or a page that repeats a name already seen (a server ignoring `offset`).
+    So a photo is only ever removed when it is absent from the whole list, never from a first page alone."""
+    out, offset = {}, 0
+    while True:
+        try:
+            objs = http("POST", f"{cfg['url']}/storage/v1/object/list/sheets", hdr(cfg),
+                        {"prefix": f"{cfg['user_id']}/{slug}/img", "limit": LIST_PAGE, "offset": offset,
+                         "sortBy": {"column": "name", "order": "asc"}}, tolerate=(400, 404))
+        except RbHTTPError:
+            return None
+        if objs is None: objs = []
+        if not isinstance(objs, list): return None
+        for o in objs:
+            if not isinstance(o, dict) or not o.get("name"): continue
+            if o["name"] in out: return None
+            md = o.get("metadata") or {}
+            size = md.get("size")
+            out[o["name"]] = (str(md.get("eTag") or "").strip('"').lower(), size if isinstance(size, int) else 0)
+        if len(objs) < LIST_PAGE: return out
+        offset += len(objs)
 
 def _remove_files(cfg, paths):
-    """Best effort: the photos a refused publish had just added, so that they do not fill the quota for nothing."""
+    """Best effort: the photos a refused publish had just added, so that they do not fill the quota for nothing. Never
+    stops the run: any failure (an HTTP status, the network, a bad answer) is reported and the caller goes on, so that
+    _quota_stop() still flags the request as error."""
     if not paths: return
     try:
-        http("DELETE", f"{cfg['url']}/storage/v1/object/sheets", hdr(cfg), {"prefixes": paths}, tolerate=(400, 403, 404, 500))
+        http("DELETE", f"{cfg['url']}/storage/v1/object/sheets", hdr(cfg), {"prefixes": paths}, tolerate=range(300, 600))
         print(f"rb: removed the {len(paths)} photo(s) this publish had added", file=sys.stderr)
-    except RbHTTPError:
-        print(f"rb: could not remove the photo(s) this publish had added: {', '.join(paths)}", file=sys.stderr)
+    except (Exception, SystemExit) as e:
+        why = f"{e.code}: {e.body}" if isinstance(e, RbHTTPError) else type(e).__name__ + (f": {e}" if str(e) else "")
+        print(f"rb: could not remove the photo(s) this publish had added ({why}): {', '.join(paths)}", file=sys.stderr)
 
 def quota_message(limit):
     """What the user reads when a limit refuses a publish: which limit, what to do, how to ask for more."""

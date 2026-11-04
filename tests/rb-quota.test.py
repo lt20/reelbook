@@ -42,7 +42,7 @@ def run(fn):
 class Base(unittest.TestCase):
     def setUp(self):
         self.calls, self.http_calls = [], []
-        self.saved = (rb.rest, rb.http, rb.session, rb.REQUEST_ID)
+        self.saved = (rb.rest, rb.http, rb.session, rb.REQUEST_ID, rb.LIST_PAGE)
         rb.session = lambda: CFG
         self.tmp = tempfile.TemporaryDirectory()
         d = pathlib.Path(self.tmp.name) / "floor"
@@ -53,18 +53,28 @@ class Base(unittest.TestCase):
         self.dir = d
 
     def tearDown(self):
-        rb.rest, rb.http, rb.session, rb.REQUEST_ID = self.saved
+        rb.rest, rb.http, rb.session, rb.REQUEST_ID, rb.LIST_PAGE = self.saved
         self.tmp.cleanup()
 
-    def fake(self, upload=None, sheet=None, q=None, remote=None, existing=(), note="Redo: fix the title", requests=None):
+    def fake(self, upload=None, sheet=None, q=None, remote=None, existing=(), note="Redo: fix the title", requests=None,
+             delete=None):
         """upload: (code, body) the storage answers to an upload (a callable: per file name); sheet: (code, body) the
-        sheet upsert answers; q: my_quota's answer (None: no such function); remote: [{name, metadata}] already stored;
-        existing: slugs the account already has; requests: callable(row or list) -> error body or None."""
+        sheet upsert answers; q: my_quota's answer (None: no such function); remote: [{name, metadata}] already stored,
+        served page by page as storage does (a callable: answers each list call itself); existing: slugs the account
+        already has; requests: callable(row or list) -> error body or None; delete: (code, body) the storage answers
+        to the removal, or an exception it raises (the network), handled as the real http() does (die() when the code
+        is not tolerated)."""
         def http(method, url, headers=None, data=None, raw=False, tolerate=()):
             self.http_calls.append((method, url.split("/storage/v1/")[-1], data if not raw else None, tolerate))
             if "object/list/sheets" in url:
                 if remote == "error": raise rb.RbHTTPError(400, '{"message":"list failed"}')
-                return remote or []
+                if callable(remote): return remote(data)
+                start = data.get("offset", 0)
+                return (remote or [])[start:start + data["limit"]]
+            if method == "DELETE" and delete:
+                if isinstance(delete, Exception): raise delete
+                if delete[0] in tolerate: raise rb.RbHTTPError(*delete)
+                rb.die(f"DELETE {url} → {delete[0]}: {delete[1]}")
             if method == "POST" and upload:
                 err = upload(url.rsplit("/", 1)[-1]) if callable(upload) else upload
                 if err: raise rb.RbHTTPError(*err)
@@ -200,6 +210,55 @@ class PhotoQuota(Base):
         self.assertEqual(self.uploads(), ["a.jpg", "b.jpg"], "nothing skipped when the list is unknown")
         self.assertEqual([c for c in self.http_calls if c[0] == "DELETE"], [], "a photo already there is never removed")
         self.assertIn("200 MB of photos", err)
+
+    def test_a_photo_past_the_first_page_of_the_list_is_never_removed(self):
+        # Codex pass 4: a sheet with more photos than one page of the list (1 000; 2 here). b.jpg is already stored,
+        # on the second page: the refusal must remove a.jpg only, never b.jpg.
+        rb.LIST_PAGE = 2
+        other = {"metadata": {"eTag": '"other"'}}
+        remote = [{"name": "0.jpg", **other}, {"name": "1.jpg", **other}, {"name": "b.jpg", **other}]
+        self.fake(q=quota(sheets=299), sheet=(400, SHEETS_QUOTA), remote=remote)
+        code, _, err = self.publish()
+        self.assertEqual(code, 1)
+        lists = [c[2] for c in self.http_calls if c[1] == "object/list/sheets"]
+        self.assertEqual([(l["offset"], l["limit"]) for l in lists], [(0, 2), (2, 2)], "the whole list, page by page")
+        self.assertEqual([c[2] for c in self.http_calls if c[0] == "DELETE"], [{"prefixes": ["u1/floor/img/a.jpg"]}])
+        self.assertIn("300 sheets", err)
+
+    def test_an_incomplete_list_removes_nothing(self):
+        # in doubt, nothing is removed: a later page that fails, or a server that ignores `offset` (same page again)
+        rb.LIST_PAGE = 1
+        first = [{"name": "0.jpg", "metadata": {"eTag": '"other"'}}]
+        def later_page_fails(data):
+            if data["offset"]: raise rb.RbHTTPError(400, '{"message":"list failed"}')
+            return first
+        for remote in (later_page_fails, lambda data: first):
+            self.calls.clear(); self.http_calls.clear()
+            self.fake(q=quota(sheets=299), sheet=(400, SHEETS_QUOTA), remote=remote)
+            code, _, err = self.publish()
+            self.assertEqual(code, 1)
+            self.assertEqual(self.uploads(), ["a.jpg", "b.jpg"], "nothing skipped when the list is incomplete")
+            self.assertEqual([c for c in self.http_calls if c[0] == "DELETE"], [], "no photo removed in doubt")
+            self.assertIn("300 sheets", err)
+
+    def test_a_failed_removal_still_flags_the_request(self):
+        # Codex pass 4: the removal answers 503 (or the network fails): the run goes on, says so, and the request is
+        # flagged as error with the quota message instead of staying « processing »
+        import urllib.error
+        for delete in ((503, '{"message":"unavailable"}'), urllib.error.URLError("timed out")):
+            self.calls.clear(); self.http_calls.clear()
+            self.fake(q=quota(sheets=299), sheet=(400, SHEETS_QUOTA), delete=delete)
+            rb.REQUEST_ID = "r5"
+            code, _, err = self.publish()
+            self.assertEqual(code, 1)
+            self.assertEqual(len([c for c in self.http_calls if c[0] == "DELETE"]), 1)
+            self.assertIn("could not remove the photo(s) this publish had added", err)
+            self.assertIn("u1/floor/img/a.jpg", err)
+            patch = [c for c in self.calls if c[0] == "PATCH"]
+            self.assertEqual(len(patch), 1, err)
+            self.assertEqual(patch[0][2]["status"], "error")
+            self.assertTrue(patch[0][2]["note"].endswith(rb.quota_message("300 sheets")))
+            self.assertIn("quota reached on this backend: 300 sheets", err)
 
     def test_bare_refusal_read_through_my_quota(self):
         answers = [quota(photos=150 * MB), quota(photos=201 * MB)]   # before the publish, then after the refusal
