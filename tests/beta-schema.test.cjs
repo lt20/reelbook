@@ -101,7 +101,7 @@ test('the waiting-list row goes once the email is confirmed, not at an unconfirm
 
 test('lock 3 and 4, links: a second before insert trigger on requests, a counter of the day that deletes do not lower', () => {
   assert.match(flat, /create trigger requests_beta before insert on public\.requests for each row execute function public\.beta_on_request\(\)/);
-  assert.match(flat, /create table if not exists public\.beta_daily \( day date primary key, links int not null default 0 \)/);
+  assert.match(flat, /create table if not exists public\.beta_daily \( day date primary key, links int not null default 0, waitlist int not null default 0 \)/);
   const f = fn('beta_on_request');
   assert.match(f, /today date := \(now\(\) at time zone 'utc'\)::date;/);
   assert.match(f, /if not found then return new; end if; perform pg_advisory_xact_lock\(hashtext\('reelbook beta'\), hashtext\('links'\)\); if not public\.beta_exempt\(new\.user_id\) then/);
@@ -142,11 +142,12 @@ test('join_waitlist: consent, shape, only when full or closed, 200 a day, the sa
   assert.match(f, /if char_length\(mail\) > 254 or mail !~ /);
   assert.match(f, /if not found or \(s\.signups_open and s\.seats_offset \+ public\.beta_accounts\(\) < s\.seats_total\) then raise exception using errcode = 'P0001', message = 'waitlist: seats open'/);
   assert.match(f, /pg_advisory_xact_lock\(hashtext\('reelbook beta'\), hashtext\('waitlist'\)\)/);
-  assert.ok(f.includes(`from public.beta_waitlist w where w.created_at >= ${midnight}; if n >= 200 then`));
-  const cap = f.indexOf('if n >= 200'), listed = f.indexOf("if exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail)) then return 'ok'; end if;");
-  assert.ok(listed > -1 && cap > listed, 'a listed email gets ok, even on a day the 200 are reached');
-  assert.match(f, /insert into public\.beta_waitlist \(first_name, email, lang, consent_at\) values \(fname, mail, lng, now\(\)\); return 'ok';/);
-  assert.doesNotMatch(f, /update public\.beta_waitlist|on conflict/, 'a listed row is never changed');
+  assert.ok(f.includes('select d.waitlist into n from public.beta_daily d where d.day = today; if coalesce(n, 0) >= 200 then'),
+    'new rows of the day counted as they are added: a delete gives no slot back');
+  const cap = f.indexOf('if coalesce(n, 0) >= 200'), listed = f.indexOf('if not exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail)) then');
+  assert.ok(cap > -1 && listed > cap, 'the daily cap answers before the lookup, listed or not: the answer never tells who is listed');
+  assert.match(f, /then insert into public\.beta_waitlist \(first_name, email, lang, consent_at\) values \(fname, mail, lng, now\(\)\); insert into public\.beta_daily as d \(day, waitlist\) values \(today, 1\) on conflict \(day\) do update set waitlist = d\.waitlist \+ 1; end if; return 'ok';/);
+  assert.doesNotMatch(f, /update public\.beta_waitlist|insert into public\.beta_waitlist [^;]*on conflict/, 'a listed row is never changed');
 });
 
 test('functions: security definer with an empty search_path; internals closed; beta_seats and join_waitlist public', () => {

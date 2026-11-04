@@ -567,10 +567,12 @@ create trigger beta_waitlist_done after insert or update of email, email_confirm
 -- insert adds a link to the project; every writer is checked (app, add-link function, service role). One at a time.
 -- The links of the day are counted as they are added (beta_daily, one row per UTC day), not as the rows still there:
 -- deleting links gives no slot of the day back. Exempt accounts are counted and never refused. Counting starts
--- with the settings row; a refused or rolled-back insert is not counted.
+-- with the settings row; a refused or rolled-back insert is not counted. waitlist: the new rows of the waiting list
+-- that day (join_waitlist, below), counted the same way.
 create table if not exists public.beta_daily (
-  day   date primary key,
-  links int not null default 0
+  day      date primary key,
+  links    int not null default 0,
+  waitlist int not null default 0
 );
 
 alter table public.beta_daily enable row level security;
@@ -636,13 +638,13 @@ $$;
 
 -- The waiting-list form (shown when the beta is full or closed), signed in or not. Refuses without consent, with a
 -- bad first name or email, and while a seat can be taken (or without the settings row); 200 new rows a day for the
--- whole project at most. A new email and one already listed both get « ok », and a listed row is never changed:
--- the answer tells nothing about who is listed (except on a day the 200 are reached, when a listed email still gets
--- « ok » and a new one « waitlist: full today »).
+-- whole project at most, counted as they are added (beta_daily: a row deleted later gives no slot back). A new email
+-- and one already listed both get « ok », a listed row is never changed, and the daily cap answers before the lookup
+-- (« waitlist: full today » for everybody, listed or not): the answer never tells who is listed.
 create or replace function public.join_waitlist(first_name text, email text, lang text, consent boolean) returns text
 language plpgsql volatile security definer set search_path = '' as $$
 declare
-  s public.beta_settings; n int;
+  s public.beta_settings; n int; today date := (now() at time zone 'utc')::date;
   fname text := btrim(coalesce(join_waitlist.first_name, ''));
   mail text := btrim(coalesce(join_waitlist.email, ''));
   lng text := case when lower(join_waitlist.lang) in ('fr', 'en') then lower(join_waitlist.lang) end;
@@ -661,13 +663,16 @@ begin
     raise exception using errcode = 'P0001', message = 'waitlist: seats open';
   end if;
   perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('waitlist'));
-  if exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail)) then return 'ok'; end if;
-  select count(*) into n from public.beta_waitlist w
-    where w.created_at >= date_trunc('day', now() at time zone 'utc') at time zone 'utc';
-  if n >= 200 then
-    raise exception using errcode = 'P0001', message = 'waitlist: full today';
+  select d.waitlist into n from public.beta_daily d where d.day = today;
+  if coalesce(n, 0) >= 200 then
+    raise exception using errcode = 'P0001', message = 'waitlist: full today',
+      hint = 'Too many requests today: try again tomorrow. If you already joined, you are still on the list.';
   end if;
-  insert into public.beta_waitlist (first_name, email, lang, consent_at) values (fname, mail, lng, now());
+  if not exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail)) then
+    insert into public.beta_waitlist (first_name, email, lang, consent_at) values (fname, mail, lng, now());
+    insert into public.beta_daily as d (day, waitlist) values (today, 1)
+      on conflict (day) do update set waitlist = d.waitlist + 1;
+  end if;
   return 'ok';
 end $$;
 
