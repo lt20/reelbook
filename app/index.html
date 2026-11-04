@@ -563,12 +563,27 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 .demo .top a{color:var(--accent);font-weight:600;text-decoration:none}
 .demo-nb{display:flex;align-items:center;gap:var(--s-2)}
 .demo-nb .nb-ico{width:22px;height:22px;color:var(--t,var(--accent))}
-.demo-see{margin:-4px 0 14px}
 /* L24: invitation to install the app, a quiet card at the top of the home page (browser tab only) */
 .install{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s-2) var(--s-3);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-3) var(--s-3) var(--s-3) var(--s-4);margin:0 0 var(--s-4)}
 .install .ic-share{flex:none;width:1.375rem;height:1.375rem;color:var(--accent)}
 .install p{flex:1 1 12rem;margin:0;font-size:var(--fs-sm);line-height:1.4}
 .install .acts{display:flex;gap:var(--s-2);margin-left:auto}
+/* L25: the first screen on a device that has never signed in (what Reelbook is, then the account actions) */
+.intro-steps{list-style:none;margin:var(--s-5) 0 0;padding:0;display:grid;gap:var(--s-4);counter-reset:step}
+.intro-steps li{display:grid;grid-template-columns:6rem 1fr;grid-template-rows:auto 1fr;column-gap:var(--s-4);align-content:start;counter-increment:step}
+.intro-steps svg{grid-row:1/3;display:block;width:100%;height:auto;color:var(--accent);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-2)}
+.intro-steps svg .fill{fill:var(--tag)}
+.intro-steps b{font-family:var(--display);font-size:var(--fs-lg);line-height:1.05;align-self:end}
+.intro-steps b::before{content:counter(step) ". ";color:var(--muted)}
+.intro-steps span{font-size:var(--fs-sm);color:var(--muted);line-height:1.4;margin-top:var(--s-1)}
+@media (min-width:600px){.intro-steps{grid-template-columns:repeat(3,1fr)}.intro-steps li{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}.intro-steps svg{grid-row:auto;margin-bottom:var(--s-3)}.intro-steps b{align-self:start}}
+.intro-needs{margin-top:var(--s-5)}
+.intro-acts{margin-top:var(--s-5)}
+.intro-acts .btn{min-height:44px}
+.auth-demo{margin:var(--s-2) 0 0}
+.intro-demo{display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);color:var(--accent);font-weight:600}
+.auth-adv{margin-top:var(--s-3)}
+.auth-adv a{display:inline-block;padding:var(--s-2) 0}
 </style>
 </head>
 <body>
@@ -607,8 +622,29 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 <!-- ===== Auth ===== -->
 <div id="auth" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
+  <!-- L25: what Reelbook is, shown before the account actions on a device that has never signed in -->
+  <section id="intro" hidden>
+    <h1>Your videos, as sheets</h1>
+    <p class="lead" id="intro-summary">Reelbook turns the videos you save from Instagram, TikTok, YouTube or Facebook into sheets with photos and key points, filed in your notebooks.</p>
+    <ol class="intro-steps">
+      <li id="intro-step-link"><svg aria-hidden="true" focusable="false" viewBox="0 0 96 72" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 36h20m-6-6 6 6-6 6"/><rect x="34" y="4" width="36" height="64" rx="7"/><path d="M46 10h12"/><rect class="fill" x="39" y="28" width="26" height="14" rx="7"/><path d="M48 35h8"/><rect x="43" y="32" width="9" height="6" rx="3"/><rect x="52" y="32" width="9" height="6" rx="3"/><path d="M44 52h16"/></svg><b>Paste a link</b><span>Found a move worth keeping? Copy the video&rsquo;s link and paste it in Reelbook.</span></li>
+      <li id="intro-step-claude"><svg aria-hidden="true" focusable="false" viewBox="0 0 96 72" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="48" height="32" rx="3"/><path d="M1 47h54l-4 6H5z"/><path class="fill" d="M28 17l2.6 6.4L37 26l-6.4 2.6L28 35l-2.6-6.4L19 26l6.4-2.6z"/><path d="M58 26h9m-4-4 4 4-4 4"/><rect x="72" y="10" width="20" height="30" rx="2"/><rect class="fill" x="75" y="13" width="14" height="10" rx="1"/><path d="M75 29h14M75 34h9"/></svg><b>Claude makes the sheet</b><span>Claude Code, on your computer, watches the video and writes the sheet: photos, dose, key points.</span></li>
+      <li id="intro-step-workout"><svg aria-hidden="true" focusable="false" viewBox="0 0 96 72" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="36" height="64" rx="7"/><rect class="fill" x="14" y="14" width="24" height="18" rx="2"/><path d="M14 40h24M14 47h18M14 54h21"/><path d="M60 36h20"/><rect x="55" y="26" width="6" height="20" rx="2"/><rect x="79" y="26" width="6" height="20" rx="2"/><path d="M51 31v10M89 31v10"/></svg><b>Read it during the workout</b><span>Open the sheet on your phone: the gesture first, then the details.</span></li>
+    </ol>
+    <div class="panel intro-needs">
+      <h2>What you need</h2>
+      <ul>
+        <li>Claude Pro or above, with Claude Code</li>
+        <li>Chrome with the Claude in Chrome extension</li>
+        <li>A computer that stays on: your videos are processed there</li>
+      </ul>
+    </div>
+    <div class="actions intro-acts">
+      <button class="btn" type="button" id="intro-signup">Create an account</button>
+      <button class="btn ghost" type="button" id="intro-signin">Sign in</button>
+    </div>
+  </section>
   <h1 id="auth-title">Sign in</h1>
-  <p class="demo-see"><a href="#demo">See a demo</a></p>
   <form class="panel" id="auth-form">
     <label>Email <input id="a-email" type="email" autocomplete="email" required></label>
     <label>Password <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
@@ -618,16 +654,20 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       <button class="btn" type="submit" id="a-submit">Sign in</button>
       <button class="btn ghost" type="button" id="a-toggle">Create an account</button>
     </div>
-    <p class="hint">Backend: <span id="a-backend"></span> · <a href="#" id="a-own">Sign in to my own instance</a><a href="#" id="a-hosted" hidden> · Use Reelbook hosted</a></p>
+    <p class="hint">Backend: <span id="a-backend"></span></p>
   </form>
+  <!-- L25: the advanced way, under the form -->
+  <p class="hint auth-adv" id="a-adv"><a href="#" id="a-own">Use my own Supabase</a><a href="#" id="a-hosted" hidden> · Use Reelbook hosted</a></p>
   <form class="panel" id="login-own-form" hidden>
     <h2>Connect your own instance</h2>
-    <p class="hint">Enter your Supabase project details once on this device.</p>
+    <p class="hint">Enter your Supabase project details once on this device. Setup guide: <a id="login-own-guide" href="#" target="_blank" rel="noopener">docs/own-supabase.md</a>.</p>
     <label>Project URL <input id="login-own-url" type="url" placeholder="https://xxxx.supabase.co" required></label>
     <label>Anon key <input id="login-own-key" type="text" placeholder="eyJhbGciOi…" required autocomplete="off"></label>
     <p class="err" id="login-own-err" hidden></p>
     <div class="actions"><button class="btn" type="submit">Use this instance</button><button class="btn ghost" type="button" id="login-own-cancel">Cancel</button></div>
   </form>
+  <!-- L25 + L27: the one « See a demo » link, after the presentation's actions and under the sign-in form alike -->
+  <p class="auth-demo"><a class="intro-demo" id="intro-demo" href="#demo" hidden>See a demo</a></p>
 </div>
 
 <!-- ===== Home: portal / theme ===== -->
@@ -964,7 +1004,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   $('hosted-name').textContent = CFG.hosted.name || 'Hosted backend';
   $('hosted-blurb').textContent = hostedOk ? CFG.hosted.blurb : 'Not available yet.';
   $('pick-hosted').disabled = !hostedOk;
-  $('own-guide').href = CFG.repo + '/blob/main/docs/own-supabase.md';
+  $('own-guide').href = $('login-own-guide').href = CFG.repo + '/blob/main/docs/own-supabase.md';
   $('howto-repo').href = CFG.repo;
   $('pick-hosted').addEventListener('click', () => { signupBackendChosen = true; selectBackend(hostedBackend(), false); });
   $('pick-own').addEventListener('click', () => { $('own-form').hidden = false; $('own-url').focus(); });
@@ -978,20 +1018,37 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   $('login-own-form').addEventListener('submit', ev => {
     ev.preventDefault();
     const err = $('login-own-err'); err.hidden = true;
-    try { selectBackend(ownBackend($('login-own-url').value, $('login-own-key').value)); $('login-own-form').hidden = true; }
+    // L25: from « Create an account », the project is kept once the account exists (as from the setup screen)
+    try {
+      const next = ownBackend($('login-own-url').value, $('login-own-key').value);
+      if (mode === 'up') { signupBackendChosen = true; selectBackend(next, false); } else selectBackend(next);
+      $('login-own-form').hidden = true;
+    }
     catch (e) { err.textContent = e.message; err.hidden = false; }
   });
   $('a-own').addEventListener('click', ev => { ev.preventDefault(); $('login-own-err').hidden = true; $('login-own-form').hidden = false; $('login-own-url').focus(); });
   $('login-own-cancel').addEventListener('click', () => { $('login-own-form').hidden = true; });
-  $('a-hosted').addEventListener('click', ev => { ev.preventDefault(); $('login-own-form').hidden = true; selectBackend(hostedBackend()); });
+  $('a-hosted').addEventListener('click', ev => { ev.preventDefault(); $('login-own-form').hidden = true; selectBackend(hostedBackend(), mode === 'in'); });
   $('s-reset').addEventListener('click', async () => { if (!await signOutHere({force: true})) return; ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
 
   // ---------- auth ----------
-  let mode = 'in', signupBackendChosen = false, authBusy = false;
+  // L25: introOpen, the presentation shows above the account actions until the visitor picks one, on a device
+  // that has never signed in (no rb.backend stored).
+  let mode = 'in', signupBackendChosen = false, authBusy = false, introOpen = !readBackend();
   const setMode = m => { mode = m; $('auth-title').textContent = m === 'in' ? 'Sign in' : 'Create an account'; $('a-submit').textContent = m === 'in' ? 'Sign in' : 'Create account'; $('a-toggle').textContent = m === 'in' ? 'Create an account' : 'I already have an account'; $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-info').hidden = true; $('login-own-form').hidden = true; };
-  const returnToSignin = () => { setMode('in'); signupBackendChosen = false; selectBackend(rememberedBackend(), false); };
+  // « Sign in » asked for explicitly (setup, sign-up form): the form, never the presentation again (L25)
+  const returnToSignin = () => { introOpen = false; setMode('in'); signupBackendChosen = false; selectBackend(rememberedBackend(), false); };
   $('a-toggle').addEventListener('click', () => { if (mode === 'up') returnToSignin(); else { setMode('up'); signupBackendChosen = false; route(); } });
   $('setup-signin').addEventListener('click', ev => { ev.preventDefault(); returnToSignin(); });
+  // L25: « Create an account » is the hosted backend (the main path); « Use my own Supabase » stays under the form.
+  $('intro-signup').addEventListener('click', () => {
+    introOpen = false; setMode('up'); signupBackendChosen = hostedOk;
+    if (hostedOk) selectBackend(hostedBackend(), false); else route();
+    $('a-email').focus();
+  });
+  $('intro-signin').addEventListener('click', () => { introOpen = false; setMode('in'); route(); $('a-email').focus(); });
+  // « See a demo » appears once the demo notebook exists (L27 adds its view).
+  $('intro-demo').hidden = !views.includes('demo');
   $('auth-form').addEventListener('submit', async ev => {
     ev.preventDefault();
     const err = $('a-err'), info = $('a-info'); err.hidden = true; info.hidden = true; authBusy = true; $('a-submit').disabled = true;
@@ -3288,11 +3345,15 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (backend && !sb) { boot(); return; }
     if (!user) {
       if (mode === 'up' && !signupBackendChosen) { show('setup'); return; }
+      const intro = introOpen && mode === 'in'; // L25: the presentation, then the account actions
+      $('intro').hidden = !intro;
+      $('auth-title').hidden = $('auth-form').hidden = $('a-adv').hidden = intro;
+      $('auth-title').textContent = mode === 'in' ? 'Sign in' : 'Create an account';
+      if (intro) $('login-own-form').hidden = true;
       $('a-backend').textContent = backendLabel();
       $('a-submit').disabled = !backend || authBusy;
-      $('a-own').hidden = mode !== 'in';
-      $('a-own').textContent = backend && backend.mode === 'own' ? 'Change instance' : 'Sign in to my own instance';
-      $('a-hosted').hidden = mode !== 'in' || !hostedOk || !backend || backend.mode === 'hosted';
+      $('a-own').textContent = backend && backend.mode === 'own' ? 'Change instance' : 'Use my own Supabase';
+      $('a-hosted').hidden = !hostedOk || !backend || backend.mode === 'hosted';
       show('auth'); return;
     }
     // An unknown token (a removed sheet, an old `#<slug>~<anchor>` link) opens the home page.

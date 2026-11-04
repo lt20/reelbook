@@ -78,6 +78,21 @@ test('L27 — Create an account from the demo opens sign-up; leaving starts the 
   assert.equal(page.clients.length, 1, 'outside the demo, the backend starts as usual');
 });
 
+test('L25 + L27 — demo, Create an account, then « Sign in » opens the sign-in form, not the presentation', async () => {
+  const {fetch} = files();
+  const page = await app({hash: '#demo', tables: {}, fetch});
+  await settle();
+  click(page, 'demo-signup');
+  await settle();
+  assert.equal(page.element('setup').hidden, false);
+  await page.fire('setup-signin');
+  await settle();
+  assert.equal(page.element('auth').hidden, false);
+  assert.equal(page.element('intro').hidden, true);
+  assert.equal(page.element('auth-form').hidden, false);
+  assert.equal(page.element('auth-title').textContent, 'Sign in');
+});
+
 test('L27 — with an account kept on this device, the banner leads back to its notebooks', async () => {
   const {fetch} = files();
   const stored = {['rb.auth.' + hostedUrl.replace(/\W/g, '')]: JSON.stringify({user: {id: 'u1'}}), 'rb.backend': JSON.stringify({mode: 'hosted'})};
