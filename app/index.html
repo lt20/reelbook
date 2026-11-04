@@ -1406,7 +1406,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (!/^search\?/.test(raw)) return sel;
     for (const pair of raw.slice(7).split('&')) {
       const [k, v = ''] = pair.split('=');
-      if (!sel[k]) continue;
+      if (!FACET_KEYS.includes(k)) continue; // never an inherited key (#search?constructor=x)
       for (const x of v.split(',')) { let d = ''; try { d = decodeURIComponent(x); } catch {} if (d && !sel[k].includes(d)) sel[k].push(d); }
     }
     return sel;

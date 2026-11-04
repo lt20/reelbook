@@ -49,6 +49,13 @@ test('under a facet, sessions and untagged sheets leave the results; the empty t
   assert.match(page.element('results').innerHTML, /with these tags/);
 });
 
+test('a hash with unknown or inherited keys is ignored (Codex pass 1): the home page and its results still show', async () => {
+  const page = await open({hash: '#search?constructor=x&__proto__=y&toString=z&gear=band'});
+  assert.equal(page.element('home').hidden, false);
+  assert.ok(has(page, 'band-row'));
+  assert.equal(has(page, 'mat-flow'), false);
+});
+
 test('the time bucket goes through the hash; a value from an old link stays listed to untick; Clear empties one facet', async () => {
   const page = await open({hash: '#search?time=' + encodeURIComponent('10–20') + '&zone=elbow'});
   assert.equal(page.element('facets').hidden, false);
