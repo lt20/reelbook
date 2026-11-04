@@ -626,16 +626,13 @@ begin
   return true;
 end $$;
 
--- For the app, signed in or not: seats taken (offset included) and total, whether a sign-up can take one now
--- (open: signups_open and a seat left; the sign-ups of the day are not in it), and today_left: the sign-ups left
--- today, UTC (signups_per_day minus today's, counted like the seats, never below 0), so the app can say « come back
--- tomorrow » when it is 0. Null without the settings row (the app then shows no counter). Never an email nor an id.
+-- For the app, signed in or not: seats taken (offset included) and total, and whether a sign-up can take one now
+-- (open: signups_open and a seat left; the sign-ups of the day are not in it). Null without the settings row (the
+-- app then shows no counter). Never an email nor an id.
 create or replace function public.beta_seats() returns jsonb
 language sql stable security definer set search_path = '' as $$
-  select jsonb_build_object('taken', t.taken, 'total', s.seats_total, 'open', s.signups_open and t.taken < s.seats_total,
-                            'today_left', greatest(s.signups_per_day - t.today, 0))
-  from public.beta_settings s, lateral (select s.seats_offset + public.beta_accounts() as taken,
-    public.beta_accounts(date_trunc('day', now() at time zone 'utc') at time zone 'utc') as today) t
+  select jsonb_build_object('taken', t.taken, 'total', s.seats_total, 'open', s.signups_open and t.taken < s.seats_total)
+  from public.beta_settings s, lateral (select s.seats_offset + public.beta_accounts() as taken) t
   where s.id
 $$;
 
@@ -692,97 +689,3 @@ revoke execute on function public.beta_seats() from public;
 grant execute on function public.beta_seats() to anon, authenticated;
 revoke execute on function public.join_waitlist(text, text, text, boolean) from public;
 grant execute on function public.join_waitlist(text, text, text, boolean) to anon, authenticated;
-
--- ---------------------------------------------------------------------------
--- Daily alert (L33): one ntfy notification a day at 08:00 Europe/Zurich, sent by the database itself (pg_cron +
--- pg_net), with the figures of the beta: seats, sign-ups, photos, videos, waiting list. Counts only: never an email
--- nor a first name. Tag « 70% » when a figure reaches 70 % of its limit, priority high from 90 %.
--- The schedule only exists where pg_cron and pg_net are enabled (Dashboard › Database › Extensions): without them
--- the block at the end does nothing and the rest of this file runs as before (own backends). Enable both BEFORE
--- running this file, or run it again after enabling them.
--- The ntfy topic is a secret (anybody who knows it reads the notifications): it lives in Supabase Vault, named
--- reelbook_ntfy_topic, never in this file nor in a table clients can read. Paste it yourself in the SQL editor:
---   select vault.create_secret('<your topic>', 'reelbook_ntfy_topic');
--- (a topic name; a full https://… URL also works, its last segment is the topic). Without it the job fails at each
--- run with « beta alert: no topic » (Integrations › Cron › the job's runs) and sends nothing.
--- pg_cron runs in UTC: the job runs at 06:00 and 07:00 UTC and sends once, at the run that is 08:00 in Zurich
--- (summer and winter time). By hand, at any hour: select public.beta_alert();
--- Stop it: select cron.unschedule('reelbook-daily-alert');
--- ---------------------------------------------------------------------------
-
--- The day's line: { title, message, tags, priority } for ntfy. Sign-ups and videos: today so far (UTC) and all of
--- yesterday (the run is early in the UTC day); waiting list: its size and the rows added yesterday and today
--- (beta_daily.waitlist). Without the settings row: the counts, no limits, no tag.
-create or replace function public.beta_alert_message() returns jsonb
-language plpgsql stable security definer set search_path = '' as $$
-declare
-  s public.beta_settings;
-  midnight timestamptz := date_trunc('day', now() at time zone 'utc') at time zone 'utc';
-  today date := (now() at time zone 'utc')::date;
-  accounts int := public.beta_accounts();
-  signups_today int := public.beta_accounts(midnight);
-  signups_yesterday int := public.beta_accounts(midnight - interval '1 day') - public.beta_accounts(midnight);
-  photos bigint; videos_today int; videos_yesterday int; listed int; listed_new int; ratio numeric; line text;
-begin
-  select coalesce(sum(case when o.metadata->>'size' ~ '^[0-9]+$' then (o.metadata->>'size')::bigint end), 0)::bigint
-    into photos from storage.objects o where o.bucket_id = 'sheets';
-  select coalesce(sum(d.links) filter (where d.day = today), 0)::int,
-         coalesce(sum(d.links) filter (where d.day = today - 1), 0)::int,
-         coalesce(sum(d.waitlist), 0)::int
-    into videos_today, videos_yesterday, listed_new from public.beta_daily d where d.day >= today - 1;
-  select count(*)::int into listed from public.beta_waitlist;
-  select * into s from public.beta_settings b where b.id;
-  if not found then
-    line := format('beta off (no settings row) · accounts %s · sign-ups today %s (yesterday %s) · photos %s GB · waiting list %s (+%s since yesterday)',
-      accounts, signups_today, signups_yesterday, round(photos / 1073741824.0, 1), listed, listed_new);
-    return jsonb_build_object('title', 'Reelbook beta', 'message', line, 'tags', '[]'::jsonb, 'priority', 3);
-  end if;
-  -- the highest share of a limit (a limit of 0 is a closure, not a share: left out)
-  ratio := greatest((s.seats_offset + accounts)::numeric / nullif(s.seats_total, 0),
-                    greatest(signups_today, signups_yesterday)::numeric / nullif(s.signups_per_day, 0),
-                    photos::numeric / nullif(s.max_photos_gb::bigint * 1073741824, 0),
-                    greatest(videos_today, videos_yesterday)::numeric / nullif(s.max_videos_per_day, 0));
-  line := format('seats %s/%s · sign-ups today %s/%s (yesterday %s) · photos %s/%s GB · videos today %s/%s (yesterday %s) · waiting list %s (+%s since yesterday)',
-    s.seats_offset + accounts, s.seats_total, signups_today, s.signups_per_day, signups_yesterday,
-    round(photos / 1073741824.0, 1), s.max_photos_gb, videos_today, s.max_videos_per_day, videos_yesterday, listed, listed_new);
-  return jsonb_build_object('title', 'Reelbook beta', 'message', line,
-    'tags', case when ratio >= 0.7 then '["70%"]'::jsonb else '[]'::jsonb end,
-    'priority', case when ratio >= 0.9 then 4 else 3 end);
-end $$;
-
--- Sends the day's line to ntfy (pg_net, asynchronous: the answer lands in net._http_response). at_8_only: the
--- scheduled runs, which send only when it is 08:00 in Zurich. Returns the pg_net request id, or null when skipped.
-create or replace function public.beta_alert(at_8_only boolean default false) returns bigint
-language plpgsql volatile security definer set search_path = '' as $$
-declare topic text; server text := 'https://ntfy.sh';
-begin
-  if at_8_only and extract(hour from now() at time zone 'Europe/Zurich') <> 8 then return null; end if;
-  if to_regclass('vault.decrypted_secrets') is null or to_regnamespace('net') is null then
-    raise exception using errcode = 'P0001', message = 'beta alert: needs Vault and pg_net';
-  end if;
-  select btrim(v.decrypted_secret) into topic from vault.decrypted_secrets v
-    where v.name = 'reelbook_ntfy_topic' order by v.created_at desc limit 1;
-  if coalesce(topic, '') = '' then
-    raise exception using errcode = 'P0001', message = 'beta alert: no topic',
-      hint = 'Store it once in the SQL editor: select vault.create_secret(''<your topic>'', ''reelbook_ntfy_topic'');';
-  end if;
-  if topic ~ '^https?://' then   -- a full URL: its server, and its last segment as the topic
-    server := regexp_replace(rtrim(topic, '/'), '/[^/]*$', '');
-    topic := regexp_replace(rtrim(topic, '/'), '^.*/', '');
-  end if;
-  return net.http_post(url := server, body := public.beta_alert_message() || jsonb_build_object('topic', topic),
-                       headers := '{"Content-Type": "application/json"}'::jsonb);
-end $$;
-
--- Internal: run by the job (as the owner) or by hand in the SQL editor, never by a client.
-revoke execute on function public.beta_alert_message() from public, anon, authenticated;
-revoke execute on function public.beta_alert(boolean) from public, anon, authenticated;
-
--- The schedule, only with both extensions (cron.schedule with an existing name updates that job: re-runs are safe).
-do $$
-begin
-  if exists (select 1 from pg_extension where extname = 'pg_cron')
-     and exists (select 1 from pg_extension where extname = 'pg_net') then
-    perform cron.schedule('reelbook-daily-alert', '0 6,7 * * *', 'select public.beta_alert(true)');
-  end if;
-end $$;

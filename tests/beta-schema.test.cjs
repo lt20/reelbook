@@ -7,7 +7,7 @@ const path = require('node:path');
 
 const sql = fs.readFileSync(path.join(__dirname, '../supabase/schema.sql'), 'utf8');
 const start = sql.indexOf('-- Beta locks (L32)');
-const beta = sql.slice(start, sql.indexOf('-- Daily alert (L33)'));   // up to the alert section (tests/alert-schema.test.cjs)
+const beta = sql.slice(start);
 const code = beta.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');   // statements, comments out
 const flat = code.replace(/\s+/g, ' ');
 const fn = name => {   // the body of one function, from its create to its closing $$;
@@ -125,13 +125,11 @@ test('lock 3 and 4, photos: photo_quota_ok calls the beta check, which reads the
   assert.match(f, /if used >= s\.max_photos_gb::bigint \* 1073741824 then raise exception using errcode = 'P0001', message = 'beta: project limit of photos'/);
 });
 
-test('beta_seats: taken (offset included), total, open, today_left; null without the row; never an email or an id', () => {
+test('beta_seats: taken (offset included), total, open; null without the row; never an email or an id', () => {
   const f = fn('beta_seats');
   assert.match(f, /language sql stable security definer/);
-  assert.match(f, /jsonb_build_object\('taken', t\.taken, 'total', s\.seats_total, 'open', s\.signups_open and t\.taken < s\.seats_total, 'today_left', greatest\(s\.signups_per_day - t\.today, 0\)\)/,
-    'the keys of L32 unchanged; today_left (L33) never below 0');
-  assert.match(f, /select s\.seats_offset \+ public\.beta_accounts\(\) as taken,/);
-  assert.ok(f.includes(`public.beta_accounts(${midnight}) as today) t`), 'today\'s sign-ups counted like lock 2 counts them');
+  assert.match(f, /jsonb_build_object\('taken', t\.taken, 'total', s\.seats_total, 'open', s\.signups_open and t\.taken < s\.seats_total\)/);
+  assert.match(f, /select s\.seats_offset \+ public\.beta_accounts\(\) as taken/);
   assert.match(f, /from public\.beta_settings s,/, 'no row: no result, so null');
   assert.doesNotMatch(f, /email|'id'|u\.id\b/);
 });
