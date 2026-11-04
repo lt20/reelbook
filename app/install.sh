@@ -75,7 +75,8 @@ done
 resolve_backend
 if [ -n "$DRY" ]; then
   echo "Backend: $URL"
-  echo "Key: $KEY"
+  # masked: a secret key given by mistake must not land in a terminal log
+  if [ ${#KEY} -ge 20 ]; then echo "Key: ${KEY:0:10}...${KEY: -4} (${#KEY} characters)"; else echo "Key: (${#KEY} characters)"; fi
   echo "Folder: $DIR"
   echo "Dry run: nothing installed."
   exit 0

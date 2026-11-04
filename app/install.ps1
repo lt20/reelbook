@@ -64,7 +64,9 @@ function Install-Reelbook {
   $Backend = Resolve-ReelbookBackend $Url $Key $ConfigUrl
   if ($Dry) {
     Write-Host "Backend: $($Backend.Url)"
-    Write-Host "Key: $($Backend.Key)"
+    # masked: a secret key given by mistake must not land in a terminal log
+    $k = [string]$Backend.Key
+    if ($k.Length -ge 20) { Write-Host "Key: $($k.Substring(0, 10))...$($k.Substring($k.Length - 4)) ($($k.Length) characters)" } else { Write-Host "Key: ($($k.Length) characters)" }
     Write-Host "Folder: $Dir"
     Write-Host "Dry run: nothing installed."
     return

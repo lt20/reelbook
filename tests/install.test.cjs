@@ -18,6 +18,8 @@ const JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiJ9.c2lnbmF0d
 
 // a config.js fixture written to the temp folder; returns its file:// url
 let n = 0;
+// the dry run shows a key masked: its first 10 and last 4 characters and its length
+const masked = key => key.length >= 20 ? `Key: ${key.slice(0, 10)}...${key.slice(-4)} (${key.length} characters)` : `Key: (${key.length} characters)`;
 const fixture = text => { const f = path.join(tmp, `config-${++n}.js`); fs.writeFileSync(f, text); return 'file://' + f; };
 const config = (hosted, extra = '') => `// Reelbook — app configuration.\nwindow.REELBOOK = {\n  ${extra}\n  hosted: ${hosted},\n  defaults: ['strength'],\n  repo: 'https://github.com/lt20/reelbook'\n};\n`;
 const hostedBlock = (url, key, q = "'") => `{\n    name: 'Reelbook hosted',\n    url: ${q}${url}${q},\n    anonKey: ${q}${key}${q},\n    blurb: 'Free for now.'\n  }`;
@@ -43,7 +45,8 @@ test('without arguments install.sh takes the hosted url and key from config.js',
   const r = run(['--dry-run'], fixture(config(hostedBlock('https://abc.supabase.co', JWT))));
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /^Backend: https:\/\/abc\.supabase\.co$/m);
-  assert.match(r.stdout, new RegExp(`^Key: ${JWT.replace(/\./g, '\\.')}$`, 'm'));
+  assert.ok(r.stdout.includes(masked(JWT) + '\n'), r.stdout);
+  assert.ok(!r.stdout.includes(JWT), 'the whole key is never printed');
   assert.match(r.stdout, /Dry run: nothing installed\./);
 });
 
@@ -53,7 +56,7 @@ test('install.sh reads double quotes, a trailing slash, a publishable key, and s
   assert.match(dq.stdout, /^Backend: https:\/\/abc\.supabase\.co$/m);
   const pub = run(['--dry-run'], fixture(config(hostedBlock('https://abc.supabase.co', 'sb_publishable_AbC-12_x'))));
   assert.equal(pub.status, 0, pub.stderr);
-  assert.match(pub.stdout, /^Key: sb_publishable_AbC-12_x$/m);
+  assert.ok(pub.stdout.includes(masked('sb_publishable_AbC-12_x') + '\n'), pub.stdout);
   const commented = `{\n    // url: 'https://old.supabase.co',\n    url: 'https://new.supabase.co', // the current one\n    anonKey: '${JWT}'\n  }`;
   const c = run(['--dry-run'], fixture(config(commented)));
   assert.equal(c.status, 0, c.stderr);
@@ -69,7 +72,7 @@ test('install.sh reads the repository config.js the same way the app does', () =
   if (!url) { assert.notEqual(r.status, 0); return; }
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, new RegExp(`^Backend: ${url.replace(/\/$/, '').replace(/[.]/g, '\\.')}$`, 'm'));
-  assert.ok(r.stdout.includes(`Key: ${anonKey}\n`));
+  assert.ok(r.stdout.includes(masked(anonKey) + '\n'), r.stdout);
 });
 
 test('an empty hosted block in config.js asks for --url and --key', () => {
@@ -117,7 +120,8 @@ test('with --url and --key install.sh is unchanged: config.js is not read', () =
   const r = run(['--url', ownUrl, '--key', ownKey, '--dir', path.join(tmp, 'rb'), '--dry-run']); // config url unreachable
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, new RegExp(`^Backend: ${ownUrl.replace(/\./g, '\\.')}$`, 'm'));
-  assert.match(r.stdout, new RegExp(`^Key: ${ownKey}$`, 'm'));
+  assert.ok(r.stdout.includes(masked(ownKey) + '\n'), r.stdout);
+  assert.ok(!r.stdout.includes(ownKey), 'the whole key is never printed');
   assert.match(r.stdout, /^Folder: .*\/rb$/m);
 });
 
@@ -146,6 +150,8 @@ test('install.ps1 takes the hosted backend from config.js as text when REELBOOK_
   assert.match(ps1, /Set both REELBOOK_URL and REELBOOK_KEY/);
   assert.match(ps1, /No hosted backend is set in \$ConfigUrl/);
   assert.match(ps1, /REELBOOK_DRY_RUN/);
+  assert.doesNotMatch(ps1, /Write-Host "Key: \$\(\$Backend\.Key\)"/, 'the dry run masks the key');
+  assert.match(ps1, /\$k\.Substring\(0, 10\)\)\.\.\.\$\(\$k\.Substring\(\$k\.Length - 4\)\)/);
   // the variables of a line are cleared once read: a later short line in the same window uses the hosted backend
   assert.match(ps1, /Remove-Item Env:REELBOOK_URL, Env:REELBOOK_KEY, Env:REELBOOK_CONFIG_URL, Env:REELBOOK_DRY_RUN/);
   const body = ps1.slice(ps1.indexOf('function Install-Reelbook'));
