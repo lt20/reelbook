@@ -134,8 +134,8 @@ Deno.test('a lost race on the counters reads again; three lost races answer 429'
   eq(res.status, 429); eq(s.inserts(), []);
 });
 
-Deno.test('a list of URLs, or one link per line: the first one is queued', async () => {
-  for (const url of [[reel, 'https://youtu.be/b'], `${reel}\nhttps://youtu.be/b`]) {
+Deno.test('a list of URLs, or one link per line: the first supported one is queued', async () => {
+  for (const url of [[reel, 'https://youtu.be/b'], `${reel}\nhttps://youtu.be/b`, ['https://example.test/x', reel], `https://example.test/x\n${reel}`]) {
     const s = stub([await token()]);
     eq((await handle(post({ url }), s.client, () => T0)).status, 201);
     eq((s.inserts()[0][2] as Row).url, reel);

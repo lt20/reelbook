@@ -90,9 +90,11 @@ export async function handle(req: Request, client: Client, now: () => Date = () 
   let body: { url?: unknown; note?: unknown } | null = null;
   try { body = JSON.parse(text); } catch { /* answered below */ }
   if (!body || typeof body !== 'object') return reply(400, 'Send JSON: {"url": "<video link>"}.');
-  // Shortcuts may send the URLs of a share as a list, or as one text with a link per line: the first one counts.
-  const first = Array.isArray(body.url) ? body.url[0] : body.url;
-  const url = validateLink(typeof first === 'string' ? first.trim().split(/\s+/)[0] : first);
+  // Shortcuts may send the URLs of a share as a list, or as one text with a link per line: the first supported one
+  // counts (as Paste link in the app).
+  const parts = (Array.isArray(body.url) ? body.url : [body.url])
+    .flatMap(v => (typeof v === 'string' ? v.trim().split(/\s+/) : [v])).slice(0, 20);
+  const url = parts.map(validateLink).find(Boolean) || null;
   if (!url) return reply(400, 'Send an Instagram, TikTok, YouTube or Facebook link.');
   const note = typeof body.note === 'string' ? body.note.trim().slice(0, NOTE_MAX) : '';
 

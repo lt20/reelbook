@@ -1646,9 +1646,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   $('paste-link').addEventListener('click', async () => {
     const err = $('f-err'), fail = msg => { err.textContent = msg; err.hidden = false; };
-    const read = openRead; openRead = null;
+    const read = openRead, before = $('f-url').value; openRead = null;
     let text;
     try { text = await (read && !read.failed && Date.now() - read.at < 2000 ? read.p : readClip()); } catch { return fail('Reelbook could not read the clipboard. Paste the link in the field.'); }
+    if ($('f-url').value !== before) return; // typed meanwhile (iOS waits for the Paste bubble): what was typed wins
     const link = linkIn(text);
     if (!link) return fail(String(text || '').trim() ? 'The clipboard holds no Instagram, TikTok, YouTube or Facebook link.' : 'The clipboard is empty. Copy the video\'s link first.');
     $('f-url').value = link; ls.set(DRAFT, link); err.hidden = true; $('f-url').focus();

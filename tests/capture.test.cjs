@@ -18,6 +18,21 @@ test('Paste link takes the first supported link of a text holding several', asyn
   assert.equal(page.element('f-err').hidden, true);
 });
 
+test('a link typed while Paste link waits for the clipboard is kept', async () => {
+  let answer = null;
+  const page = await app({...signedIn, tables: tables(), nav: {clipboard: {readText: () => new Promise(resolve => { answer = resolve; })}}});
+  await settle();
+  await page.fire('add-video-fab'); await settle();
+  answer('');                                   // the read + started: nothing
+  await settle();
+  const pasting = page.fire('paste-link');
+  page.element('f-url').value = 'https://youtu.be/typed';
+  answer('https://www.instagram.com/reel/old/');
+  await pasting; await settle();
+  assert.equal(page.element('f-url').value, 'https://youtu.be/typed');
+  assert.notEqual(page.storage.get('rb.draft'), 'https://www.instagram.com/reel/old/');
+});
+
 test('a link pre-filled by + is kept as the draft (a closed PWA finds it again)', async () => {
   const reel = 'https://www.instagram.com/reel/abc/';
   const page = await app({...signedIn, tables: tables(), nav: {clipboard: {async readText() { return reel; }}}});
