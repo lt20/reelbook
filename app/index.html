@@ -951,7 +951,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   $('a-own').addEventListener('click', ev => { ev.preventDefault(); $('login-own-err').hidden = true; $('login-own-form').hidden = false; $('login-own-url').focus(); });
   $('login-own-cancel').addEventListener('click', () => { $('login-own-form').hidden = true; });
   $('a-hosted').addEventListener('click', ev => { ev.preventDefault(); $('login-own-form').hidden = true; selectBackend(hostedBackend()); });
-  $('s-reset').addEventListener('click', async () => { if (!await signOutHere()) return; ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
+  $('s-reset').addEventListener('click', async () => { if (!await signOutHere({force: true})) return; ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
 
   // ---------- auth ----------
   let mode = 'in', signupBackendChosen = false, authBusy = false;
@@ -1834,14 +1834,16 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const flushNotes = () => { if (notesNow) notesNow.flush(); };
   // Debt #30: signing out (Settings: Sign out, or another backend) leaves no note draft of the account on the device.
   // The note being typed is saved first and this account's note writes are waited for (5 s at most); a draft still
-  // not stored then (offline, a failed save) is deleted only once the user agrees, else nothing changes. A session
+  // not stored then (offline, a failed save) is deleted only once the user agrees, else nothing changes. Drafts go
+  // only once the sign-out succeeded (Sign out refused by the server: still signed in, nothing deleted; another
+  // backend goes on anyway: the user agreed). One that appears meanwhile (another tab) is asked about again. A session
   // revoked elsewhere keeps its drafts: they come back at the next sign-in of the same account.
   const draftKeysOf = uid => {
     const pre = 'rb.draft.' + uid + '.', out = [];
     try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre)) out.push(k); } } catch {}
     return out;
   };
-  const signOutHere = async () => {
+  const signOutHere = async ({force = false} = {}) => {
     if (!sb) return true;
     const uid = user ? user.id : '';
     if (uid) {
@@ -1852,12 +1854,14 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       if (runs.length) await Promise.race([Promise.all(runs), new Promise(ok => setTimeout(ok, 5000))]);
       const left = draftKeysOf(uid), n = left.length;
       if (n && typeof window.confirm === 'function' && !window.confirm(`${n === 1 ? 'A note is' : n + ' notes are'} not saved yet. Sign out and delete ${n === 1 ? 'it' : 'them'} from this device?`)) { if (ta) ta.readOnly = ro; return false; }
+      const res = await sb.auth.signOut().catch(error => ({error}));
+      if (res && res.error && !force) { console.warn('Sign-out failed:', res.error.message || res.error); if (ta) ta.readOnly = ro; return false; }
       left.forEach(ls.del);
-      await sb.auth.signOut();
-      draftKeysOf(uid).forEach(ls.del); // one made while the sign-out was on its way
+      const late = draftKeysOf(uid); // typed while the sign-out was on its way (another tab): asked, never dropped silently
+      if (late.length && (typeof window.confirm !== 'function' || window.confirm('A note typed during sign-out is not saved. Delete it from this device?'))) late.forEach(ls.del);
       return true;
     }
-    await sb.auth.signOut();
+    await sb.auth.signOut().catch(() => {});
     return true;
   };
   const wireNotes = async key => {

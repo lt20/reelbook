@@ -146,18 +146,36 @@ test('#30: a note write stuck past 5 s does not hold up sign-out; the draft goes
   assert.equal(page.storage.has('rb.draft.u1.m1'), false);
 });
 
-test('#30: the note is read-only during sign-out, and a draft made while it is on its way is cleared too', async () => {
-  const page = await openNote();
+test('#30: the note is read-only during sign-out; a draft made while it is on its way (another tab) is asked about', async () => {
+  const asked = [];
+  let answer = true;
+  const page = await openNote({confirm: q => { asked.push(q); return answer; }});
   const ta = page.element('n-text');
   let during = null;
   page.clients.at(-1).auth.signOut = async () => {
     during = ta.readOnly;
-    ta.value = 'Typed meanwhile'; await page.fire('n-text', 'input'); // as if the input slipped through
+    page.storage.set('rb.draft.u1.m2', 'Typed in another tab'); // the same account, another tab
     return {error: null};
   };
   await page.fire('s-signout'); await settle();
   assert.equal(during, true);
-  assert.equal(page.storage.has('rb.draft.u1.m1'), false);
+  assert.deepEqual(asked, ['A note typed during sign-out is not saved. Delete it from this device?']);
+  assert.equal(page.storage.has('rb.draft.u1.m2'), false);
+  answer = false; // No: kept for the next sign-in of the account
+  await page.fire('s-signout'); await settle();
+  assert.equal(page.storage.get('rb.draft.u1.m2'), 'Typed in another tab');
+});
+
+test('#30: a sign-out refused by the server deletes nothing; « another backend » goes on anyway', async () => {
+  const page = await openNote({stored: {'rb.draft.u1.m2': 'typed offline'}, confirm: () => true});
+  page.clients.at(-1).auth.signOut = async () => ({error: {message: 'Failed to fetch'}});
+  const warn = console.warn; console.warn = () => {};
+  try { await page.fire('s-signout'); await settle(); } finally { console.warn = warn; }
+  assert.equal(page.storage.get('rb.draft.u1.m2'), 'typed offline', 'still signed in: the draft stays');
+  assert.equal(page.element('n-text').readOnly, false);
+  await page.fire('s-reset'); await settle();
+  assert.equal(page.storage.has('rb.draft.u1.m2'), false);
+  assert.equal(page.storage.has('rb.backend'), false, 'the backend choice is reset');
 });
 
 test('#30: No at the sign-out question gives the note field back', async () => {
