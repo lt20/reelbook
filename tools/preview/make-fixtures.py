@@ -451,6 +451,38 @@ def label_image(path, size, colour, text):
     img.save(path, 'JPEG', quality=70, optimize=True)
 
 
+# L23: the facet tags of the sheets (sheets.tags, vocabulary of app/config.js `facets`). Jab-cross and the
+# shadow boxing sheets stay untagged: they only match while no facet is chosen.
+TAGS = {
+    'pompes-inclinees': {'zone': ['chest'], 'gear': ['chair'], 'minutes': 5, 'type': 'strength'},
+    'fente-arriere': {'zone': ['legs'], 'gear': ['dumbbell'], 'minutes': 6, 'type': 'strength'},
+    'chien-tete-en-bas': {'zone': ['back', 'legs'], 'gear': ['mat'], 'minutes': 2, 'type': 'stretch'},
+    'ange-au-sol': {'zone': ['shoulders'], 'gear': ['mat'], 'minutes': 4, 'type': 'mobility'},
+    'rotation-externe-elastique': {'zone': ['shoulders'], 'gear': ['band'], 'minutes': 3, 'type': 'strength'},
+    'elevations-laterales': {'zone': ['shoulders'], 'gear': ['dumbbell'], 'minutes': 5, 'type': 'strength'},
+    'pompes-piquees': {'zone': ['shoulders'], 'gear': ['none'], 'minutes': 5, 'type': 'strength'},
+    'face-pull-elastique': {'zone': ['shoulders'], 'gear': ['band'], 'minutes': 4, 'type': 'strength'},
+    'curl-marteau': {'zone': ['arms'], 'gear': ['dumbbell'], 'minutes': 4, 'type': 'strength'},
+    'dips-banc': {'zone': ['arms'], 'gear': ['chair'], 'minutes': 4, 'type': 'strength'},
+    'extension-triceps': {'zone': ['arms'], 'gear': ['dumbbell'], 'minutes': 4, 'type': 'strength'},
+    'rowing-sous-table': {'zone': ['back'], 'gear': ['none'], 'minutes': 5, 'type': 'strength'},
+    'superman': {'zone': ['back'], 'gear': ['mat'], 'minutes': 3, 'type': 'strength'},
+    'tirage-horizontal-elastique': {'zone': ['back'], 'gear': ['band'], 'minutes': 4, 'type': 'strength'},
+    'squat-gobelet': {'zone': ['legs'], 'gear': ['kettlebell'], 'minutes': 6, 'type': 'strength'},
+    'pont-fessier': {'zone': ['hips'], 'gear': ['mat'], 'minutes': 4, 'type': 'strength'},
+    'rotation-thoracique': {'zone': ['back'], 'gear': ['mat'], 'minutes': 3, 'type': 'mobility'},
+    'backroll': {'zone': [], 'gear': ['kite', 'board'], 'minutes': 20, 'type': 'skill'},
+    'session-gainage-planche': {'zone': ['core'], 'gear': ['mat'], 'minutes': None, 'type': 'strength'},
+    'session-gainage-planche-laterale': {'zone': ['core'], 'gear': ['mat'], 'minutes': None, 'type': 'strength'},
+    'session-gainage-dead-bug': {'zone': ['core'], 'gear': ['mat'], 'minutes': None, 'type': 'strength'},
+    'session-epaules-ytw': {'zone': ['shoulders'], 'gear': ['mat'], 'minutes': None, 'type': 'mobility'},
+    'session-epaules-pompes-scapulaires': {'zone': ['shoulders'], 'gear': ['none'], 'minutes': None, 'type': 'strength'},
+    'session-epaules-tenue-mur': {'zone': ['shoulders'], 'gear': ['wall'], 'minutes': None, 'type': 'mobility'},
+    'session-epaules-rowing-un-bras': {'zone': ['back'], 'gear': ['dumbbell'], 'minutes': None, 'type': 'strength'},
+    'session-bras-curl-elastique': {'zone': ['arms'], 'gear': ['band'], 'minutes': None, 'type': 'strength'},
+    'session-bras-pompes-serrees': {'zone': ['arms', 'chest'], 'gear': ['none'], 'minutes': None, 'type': 'strength'},
+}
+
 PRACTICE_LOG = [
     {'id': f'log-{i + 1}', 'slug': slug, 'done_on': day, 'text': text, 'created_at': f'{day}T18:{10 + i:02d}:00Z'}
     for i, (slug, day, text) in enumerate([
@@ -488,7 +520,8 @@ def main():
         html = technique_html(s) if s.get('technique') else sheet_html(s)
         sheets.append({'slug': s['slug'], 'kind': 'sheet', 'theme': s['theme'], 'group': s['group'], 'title': s['title'],
                        'summary': s['summary'], 'duration': s['duration'], 'thumbnail': 'img/thumb.jpg',
-                       'source': s['source'], 'added_at': RECENT.get(s['slug']) or stamp(), 'html': html})
+                       'source': s['source'], 'added_at': RECENT.get(s['slug']) or stamp(), 'html': html,
+                       **({'tags': TAGS[s['slug']]} if s['slug'] in TAGS else {})})
     for ses in SESSIONS:
         for it in ses['items']:
             n += 1
@@ -496,7 +529,8 @@ def main():
             images(it['slug'], ses['theme'], it['title'], it['steps'], it.get('mistakes', ()))
             sheets.append({'slug': it['slug'], 'kind': 'sheet', 'theme': ses['theme'], 'group': it['group'], 'title': it['title'],
                            'summary': it['lead'], 'duration': '', 'thumbnail': 'img/thumb.jpg',
-                           'source': ses['source'], 'added_at': stamp(), 'html': exercise_html(it)})
+                           'source': ses['source'], 'added_at': stamp(), 'html': exercise_html(it),
+                           **({'tags': TAGS[it['slug']]} if it['slug'] in TAGS else {})})
         sessions.append({'id': f'ses-{len(sessions) + 1}', 'slug': ses['slug'], 'theme': ses['theme'], 'title': ses['title'],
                          'format': ses['format'], 'why': ses['why'], 'key_points': ses['key_points'], 'source': ses['source'],
                          'origin': 'video', 'thumbnail': f"u1/{ses['items'][0]['slug']}/img/thumb.jpg",

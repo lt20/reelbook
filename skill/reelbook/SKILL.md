@@ -219,6 +219,14 @@ languages: translate the English column).
   sheet (a sheet already published only gets a warning: fix it when you redo it).
   A progression or a technique taught in stages adds **`steps`**, a whole number (`"steps": 5`);
   the app shows `duration` only.
+- **`tags`** (the facets of the search view): `"tags": {"zone": [], "gear": [], "minutes": 8, "type": "mobility"}`,
+  values **only** from the `facets` vocabulary of `app/config.js` (`rb.py publish` refuses an unknown value on a
+  new sheet). Leave a facet empty (`[]`, `null`, `""`) rather than guess. One line per facet:
+  - `zone`: the body areas the exercise works, 1–2 (`shoulders`, `core`, `full body`…), `[]` for a non-body topic.
+  - `gear`: the kit you see in the video (`band`, `mat`, `kite`…), `["none"]` for bodyweight with nothing.
+  - `minutes`: the number in `duration` (`"8 min"` → `8`), `null` when `duration` is `""`.
+  - `type`: one value (`strength`, `mobility`, `stretch`, `cardio`, `skill`, `drill`, `warm-up`, `routine`), or `""`.
+  An exercise sheet of a session gets its own `tags` (`minutes`: `null`, its dose lives on the session).
 
 ## 3 bis. One video = a session (several exercises)
 - **First decide: one movement taught in stages, or a workout?** Several named moves do not make

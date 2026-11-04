@@ -167,7 +167,9 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       await listener({preventDefault() {}});
       await Promise.resolve();
     },
-    go(h) { context.location.hash = h; }
+    go(h) { context.location.hash = h; },
+    // a window event the app listens to (e.g. beforeinstallprompt), with the event object given
+    async win(type, ev = {}) { assert.ok(winListeners[type], `window handles ${type}`); await winListeners[type](ev); await Promise.resolve(); }
   };
 }
 

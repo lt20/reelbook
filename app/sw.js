@@ -8,9 +8,9 @@
 // - The demo notebook (app/demo/, L27): same-origin files, kept like the shell as they are fetched; the app fetches
 //   them all on the first visit of #demo, so the demo opens offline afterwards. Not precached: most never open it.
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
-const VERSION = 'rb-shell-37';
+const VERSION = 'rb-shell-38';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300;
-const SHELL = ['./', './index.html', './config.js?v=7', './sessions.js?v=10', './sheet.js?v=4', './vendor/supabase.js?v=2', './manifest.webmanifest',
+const SHELL = ['./', './index.html', './config.js?v=8', './sessions.js?v=10', './sheet.js?v=4', './vendor/supabase.js?v=2', './manifest.webmanifest',
   './fonts/barlow-condensed-600-latin.woff2', './fonts/barlow-condensed-700-latin.woff2', './fonts/source-sans-3-latin.woff2',
   './icons.svg', './icons/reelbook-mark.svg', './icons/reelbook-mark-light.svg', './icons/reelbook-wordmark.svg', './icons/reelbook-wordmark-light.svg', './icons/reelbook-app.svg', './icons/reelbook-icon-180.png', './icons/reelbook-icon-192.png', './icons/reelbook-icon-512.png', './icons/reelbook-icon-512-maskable.png'];
 
