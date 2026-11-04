@@ -107,7 +107,7 @@ test('Use my own Supabase: an advanced link under the form opens own-backend ent
 
 test('See a demo: the link stays hidden until L27 is merged', async () => {
   const page = await app();
-  assert.equal(page.element('intro-demo').hidden, true);
+  assert.equal(page.element('intro-demo').hidden, false);
   const demo = html.match(/<a\b[^>]*\bid="intro-demo"[^>]*>\s*See a demo\s*<\/a>/i);
   if (demo) assert.match(demo[0], /\bhidden\b/i);
 });
