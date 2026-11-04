@@ -210,10 +210,11 @@ and `animationend` toast accepted (#28); L5 double write of the top bar accepted
 ## Waiting for Laurent (P5, 4 Nov)
 - Done 4 Nov: SQL run (search_text, tags, quotas + override row; check returned max_sheets 100000, 113 sheets, 65 MB);
   L25 (#58, single « See a demo » link in the presentation, coordinator flip of l25 test l.110) and L26 (#61) merged.
-- Tags: `rb.py backfill-search` (if its dry run finds sheets), then `rb.py backfill-tags` (only tags sheets without
-  tags: run it once search_text is filled).
-- L28 step B: `supabase functions deploy add-link --no-verify-jwt --project-ref <ref>`, then the SQL of #63
-  (`capture_tokens`); business test in #63.
+- Done 4 Nov: search_text filled (113 sheets, ~1 500 characters each) and tags written (gear empty on 30/113, type on
+  2/113); facets checked by Laurent on the iPhone (« ça marche très bien »).
+- Done 4 Nov: L28 step B deployed by Laurent (`add-link` function, then the `capture_tokens` SQL). Business test of the
+  iPhone shortcut: pending, in the Notion page « Reelbook » (Tests métier de Laurent).
+- Business tests and Laurent's feedback now live in the Notion page « Reelbook » (two databases, as for Paul).
 - `docs/privacy.md`: draft, not linked; placeholders (legal entity, region, contact) to fill and validate (decision 10).
 - Demo: film 4 exercises + 1 session, swap `app/demo/` (README there) — decision 11.
 - iPhone: delete a queue row and close the app at once → the row stays gone (D2, keepalive DELETE).
