@@ -207,7 +207,9 @@ A null column keeps the default; one row per account you want to lift.
 
 The same file also holds project-wide limits for a beta (seats, sign-ups a day, videos a day, total photos,
 kill switches, a waiting list: « Beta locks » in `supabase/schema.sql`). They are **off until a row of
-`beta_settings` exists**: your own Supabase never needs one, and behaves as above without it.
+`beta_settings` exists**: your own Supabase never needs one, and behaves as above without it. A daily ntfy summary
+of those figures (« Daily alert ») is scheduled only where the `pg_cron` and `pg_net` extensions are enabled, and
+sends nothing until you store a topic in Vault.
 
 ## Repository layout
 
