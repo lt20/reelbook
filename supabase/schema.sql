@@ -313,13 +313,16 @@ create trigger sheets_quota before insert or update on public.sheets
 
 -- Photos: a new file (insert) or an overwrite (update, `x-upsert`) is refused once the account's files reach its
 -- maximum. The size of the file on its way is not known to the policy, so the last upload under the limit may pass
--- it by one file (at most 5 MB, the bucket's file size limit). Raises instead of answering false: the client gets
+-- it by one file (at most 5 MB, the bucket's file size limit). One account's checks run one at a time (same lock as
+-- the triggers, held to the end of the transaction; volatile, so the total is read after the lock): uploads sent in
+-- parallel cannot all read the same total. Raises instead of answering false: the client gets
 -- « quota: 200 MB of photos » rather than a bare row level security refusal.
 create or replace function public.photo_quota_ok(bucket text) returns boolean
-language plpgsql stable security definer set search_path = '' as $$
+language plpgsql volatile security definer set search_path = '' as $$
 declare uid uuid := auth.uid(); lim int; used bigint;
 begin
   if bucket is distinct from 'sheets' or uid is null then return true; end if;
+  perform pg_advisory_xact_lock(hashtext('reelbook quota'), hashtext(uid::text));
   select l.max_storage_mb into lim from public.quota_limits(uid) l;
   select u.storage_bytes into used from public.quota_usage(uid) u;
   if used >= lim::bigint * 1048576 then

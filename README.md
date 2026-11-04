@@ -174,8 +174,8 @@ each video is rebuilt as exercise sheets plus a session, and its old page is del
 `supabase/schema.sql` limits what each account may add, so that one account cannot fill a backend shared
 by several people (the hosted one): **10 video links a day** (counted from midnight UTC), **300 sheets**
 and **200 MB of photos**. The database enforces them, whatever the client; they only refuse what would
-add (a new link, a new sheet, a new photo): nothing stored is removed, and republishing a sheet you
-already have always works. Settings shows « Usage: 4/10 links today · 120/300 sheets · 80/200 MB »;
+add (a new link, a new sheet, a new or changed photo): nothing stored is removed, and republishing a sheet you
+already have works (`rb.py publish` does not send again the photos the backend already holds). Settings shows « Usage: 4/10 links today · 120/300 sheets · 80/200 MB »;
 `rb.py publish` says which limit refused it. A backend set up before the limits has none until
 `supabase/schema.sql` is re-run.
 

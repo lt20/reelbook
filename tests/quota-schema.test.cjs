@@ -66,6 +66,9 @@ test('bypass paths closed in the text: server clock for created_at, upsert of an
   assert.match(sh, /if tg_op = 'UPDATE' and new\.user_id is not distinct from old\.user_id then return new/);
   assert.match(sh, /exists \(select 1 from public\.sheets s where s\.user_id = new\.user_id and s\.slug = new\.slug\) then return new/);
   assert.match(sh, /pg_advisory_xact_lock/);
+  const ph = flat.slice(flat.indexOf('function public.photo_quota_ok'), flat.indexOf('revoke execute on function public.photo_quota_ok'));
+  assert.match(ph, /language plpgsql volatile/, 'reads the total after the lock');
+  assert.match(ph, /pg_advisory_xact_lock\(hashtext\('reelbook quota'\), hashtext\(uid::text\)\)/, 'parallel uploads checked one at a time');
 });
 
 test('functions: security definer with an empty search_path; internals not executable by clients; my_quota for the signed-in only', () => {
