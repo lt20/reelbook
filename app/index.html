@@ -315,6 +315,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 .newsec h2{margin:0 0 var(--s-2)}
 .newrow{display:grid;grid-auto-flow:column;grid-auto-columns:min(72%,260px);gap:var(--s-3);overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-padding:0 2px;padding:2px 2px 10px;-webkit-overflow-scrolling:touch}
 .newrow .card{scroll-snap-align:start}
+.card .nbtag{position:absolute;top:var(--s-2);left:var(--s-2);max-width:calc(100% - 2*var(--s-2));box-sizing:border-box;padding:3px var(--s-2);border-radius:var(--r-pill);background:var(--paper);color:color-mix(in srgb,var(--t,var(--accent)) 60%,var(--ink));font-size:var(--fs-xs);font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .newrow .card h3{font-size:var(--fs-md)}
 .newrow .card p{-webkit-line-clamp:2}
 .report{margin-top:14px}
@@ -1280,7 +1281,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 
   // ---------- home rendering ----------
   // L12: at most two meta pills, on one line: callers list them most useful first.
-  const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}
+  const card = (e, href, thumbUrl, extra) => `<a class="card${extra && extra.big ? ' big' : ''}" href="${href}">${extra && extra.n ? `<span class="k">${extra.n}</span>` : ''}${extra && extra.nb || ''}
       <img src="${esc(thumbUrl)}" alt="" loading="lazy">
       <div class="b"><h3>${esc(e.title)}</h3>${extra && extra.where && extra.where.length ? `<p class="where">${esc(extra.where.join(' · '))}</p>` : ''}<p>${esc(e.summary)}</p>${extra && extra.fmt ? `<p class="fmt">${esc(extra.fmt)}</p>` : ''}
       <div class="m">${(extra && extra.meta || []).slice(0, 2).map(m => `<span class="${esc(m.cls || '')}">${m.sr ? `<i class="vh"${langAttr(m.lang)}>${esc(m.sr)}</i> ` : ''}${esc(m.txt)}</span>`).join('')}</div></div></a>`;
@@ -1332,10 +1333,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const inTag = slug => { const n = (inSessions.get(slug) || []).length; return n ? [{txt: `in ${plural(n, 'session')}`, cls: 'session'}] : []; };
   // L6: « done 28 Oct », the latest practice of a sheet or a session (key as for notes).
   const doneTag = key => practiceOk && lastDone.has(key) ? [{txt: 'done ' + fmtDay(lastDone.get(key)), cls: 'done'}] : [];
-  const sheetCard = (e, pre = [], where = []) => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {where, meta: [...pre, ...doneTag(e.slug), ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : []), {txt: e.duration}, {txt: (e.source || {}).author || ''}].filter(m => m.txt)});
+  const sheetCard = (e, pre = [], where = [], nb = '') => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {where, nb, meta: [...pre, ...doneTag(e.slug), ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : []), {txt: e.duration}, {txt: (e.source || {}).author || ''}].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return purl(s.thumbnail); const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
-  const v2Card = (s, pre = [], big = true, where = []) => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, where, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : []), {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
+  const v2Card = (s, pre = [], big = true, where = [], nb = '') => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, where, nb, fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : []), {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
   // ---------- L7: « New » row ----------
   // Sheets added and video sessions created in the last 72 h, not opened yet on this device: rb.seen.<user id>
   // holds the keys of the pages opened (a sheet's slug, « session/<slug> » for a session, as RS.noteKey), the last
@@ -1348,13 +1349,15 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const seenKeys = () => readList(seenKey());
   const markSeen = key => { const k = seenKey(); if (!k) return; const a = seenKeys().filter(x => x !== key); a.push(key); ls.set(k, JSON.stringify(a.slice(-500))); };
   const isRecent = v => { const t = Date.parse(v || ''); return t > Date.now() - NEW_MS; };
+  // The notebook's name on the photo of a new card: Claude chose it alone, so a wrong one shows at once (open, then Move).
+  const nbTag = id => { const t = themeById.get(id); return t ? `<span class="nbtag" style="--t:${colorOf(t)}">${esc(t.title)}</span>` : ''; };
   const renderNew = show => {
     const seen = new Set(seenKeys());
     const ses = show ? v2Sessions.filter(s => s.origin === 'video' && isRecent(s.created_at)) : [];
     const inNew = new Set(ses.flatMap(s => (s.items || []).map(i => i && i.slug)));
     const list = [
-      ...ses.filter(s => !seen.has(RS.noteKey(s.slug))).map(s => ({at: s.created_at, html: v2Card(s, [], false)})),
-      ...(show ? sheets : []).filter(e => isRecent(e.added_at) && !inNew.has(e.slug) && !seen.has(e.slug)).map(e => ({at: e.added_at, html: sheetCard(e)}))
+      ...ses.filter(s => !seen.has(RS.noteKey(s.slug))).map(s => ({at: s.created_at, html: v2Card(s, [], false, [], nbTag(s.theme))})),
+      ...(show ? sheets : []).filter(e => isRecent(e.added_at) && !inNew.has(e.slug) && !seen.has(e.slug)).map(e => ({at: e.added_at, html: sheetCard(e, [], [], nbTag(e.theme))}))
     ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, NEW_MAX);
     $('new-sec').hidden = !list.length;
     $('new-sec').innerHTML = list.length ? '<h2 class="eyebrow" id="new-h">New</h2><div class="newrow" id="new-cards"></div>' : '';

@@ -41,6 +41,28 @@ test('a page opened by account A stays « New » for account B on the same devic
   assert.deepEqual(JSON.parse(page.storage.get('rb.seen.uA')), ['curl'], 'A\'s list is left alone');
 });
 
+test('a new card shows the name of its notebook on the photo, a session card too', async () => {
+  const t = {user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0},
+                           {id: 'custom-a', title: 'Tom & <Jerry>', description: 'x', groups: [], builtin: false, position: 1}],
+    sheets: [{...sheet('solo', 1), theme: 'custom-a'}, sheet('gsp-angel', 2)],
+    sessions: [{slug: 'gsp', theme: 'strength', title: 'GSP', created_at: hoursAgo(2), origin: 'video', source: {}, items: [{slug: 'gsp-angel', dose: ''}]}]};
+  const page = await app({...signedIn, tables: t}); await settle();
+  const cards = page.element('new-cards').innerHTML.split('<a class="card').slice(1);
+  assert.equal(cards.length, 2);
+  assert.match(cards[0], /href="#solo"[^]*<span class="nbtag"[^>]*>Tom &amp; &lt;Jerry&gt;<\/span>/);
+  assert.match(cards[1], /href="#session\/gsp"[^]*<span class="nbtag"[^>]*>Strength<\/span>/);
+});
+
+test('the notebook tag: a notebook no longer on the account has the name the home page gives it; no tag on a notebook page', async () => {
+  const gone = await app({...signedIn, tables: tables([{...sheet('lost', 1), theme: 'cook'}])}); await settle();
+  const name = gone.element('new-cards').innerHTML.match(/<span class="nbtag"[^>]*>([^<]*)<\/span>/)[1];
+  assert.ok(gone.element('portal').innerHTML.includes(`<h2>${name}</h2>`));
+  const page = await app({...signedIn, tables: tables([sheet('fresh', 1)])}); await settle();
+  page.go('#strength'); await settle();
+  assert.ok(page.element('view').innerHTML.includes('fresh'));
+  assert.ok(!page.element('view').innerHTML.includes('nbtag'));
+});
+
 test('no « New » row on a notebook page', async () => {
   const page = await app({...signedIn, tables: tables([sheet('fresh', 1)])}); await settle();
   assert.equal(page.element('new-sec').hidden, false);
