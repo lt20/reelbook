@@ -185,6 +185,13 @@ async function main() {
       page.on('console', (m) => { if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) errors.push(`console: ${m.text()}`); });
       // the sheet header photo is first requested as img/thumb.jpg (known app bug, tolerated by the steps files too)
       page.on('response', (r) => { if (r.status() >= 400 && !/\/img\/thumb\.jpg$/.test(r.url())) errors.push(`http ${r.status()}: ${r.url()}`); });
+      // as shots.mjs, except a photo the browser cancels itself because the page moved on (WebKit « cancelled »,
+      // Chromium « net::ERR_ABORTED »): opening a sheet mid-scroll leaves the notebook's thumbnails unfinished.
+      page.on('requestfailed', (r) => {
+        const why = r.failure()?.errorText || '?';
+        if (r.resourceType() === 'image' && /^(cancelled|net::ERR_ABORTED)$/i.test(why)) return;
+        errors.push(`request failed: ${r.url()} (${why})`);
+      });
       let detail = '';
       try {
         detail = await CHECKS[name](page, opts.base);
