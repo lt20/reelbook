@@ -25,15 +25,11 @@
 - Tests 493/493; captures 10/10 in WebKit and Chromium (overflow 0, headings ≤ 2 lines, 0 console error, 0 third-party request).
 - Journal `progress/2026-11-04-L30.md` (update its `codex:` line).
 
-## Codex state: pass 1/3 = bloquant @ 37a1521 (comment on PR #75), not fixed yet
-1. `app/landing.js` ~483 (notes example): the textarea is editable and says « Saved », and a FR ↔ EN switch re-renders it,
-   so what was typed disappears. Fix: make it `readonly` (or drop « Saved »).
-2. `app/index.html` ~1516 (auth submit): Supabase's `e.message` is shown in English in French. Fix: map the known
-   errors (e.g. `invalid_credentials`, `user_already_exists`, weak password, rate limit) to dictionary keys
-   (FR + EN), fall back to `e.message`; add the keys to `APP` in `landing.js` and a test.
-3. remark: add a harness test for « On my own Supabase » + « Create my notebook » → `#setup` with `own-form` shown,
-   then the own-project submit continues the sign-up (`lp-host-own` element `.checked = true` in the harness).
-Then `scripts/codex-review.sh 75 --post` (pass 2/3), leave the PR draft.
+## Codex state (takeover, 4 Nov): 3/3 passes used, all bloquant, every item fixed
+- Pass 1 @ 37a1521 → fixed in ab7ebfb · pass 2 @ ab7ebfb → fixed in 13fd6d1 · pass 3 @ 13fd6d1 → fixed in fff577f.
+- fff577f is not re-reviewed: a 4th pass needs the coordinator (`scripts/codex-review.sh 75 --post --force-pass`).
+- Details and the `beta_seats` capture incident: journal `progress/2026-11-04-L30.md`, « Codex fixes ».
+- PR stays draft.
 
 ## Gaps in the mockup (reported in the PR)
 - Inert: « Ajouter le raccourci », original-video links, example search results, « Créer le carnet », « Fait aujourd'hui ».
