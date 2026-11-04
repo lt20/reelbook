@@ -5,7 +5,7 @@
 #   scripts/codex-acceptance.sh <spec.md> --out <dossier> --maquette shots/home.png [--maquette …]
 #   scripts/codex-acceptance.sh <spec.md> --out <dossier> --commit   # commit séparé, ces fichiers seuls
 #   scripts/codex-acceptance.sh <spec.md> --out <dossier> --force    # réécrire des tests existants
-#
+# --out : un dossier SOUS tests/ (chemin physique : un lien qui en sort est refusé).
 # Codes : 0 = fichiers écrits · 1 = proposition refusée (chemin hors cible, pas un test…) ·
 #         2 = usage · 3 = Codex en échec.
 #
@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
     --maquette) maquettes+=("${2:-}"); shift 2 ;;
     --force) force=true; shift ;;
     --commit) commit=true; shift ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
     -*) echo "argument inconnu : $1 (voir --help)" >&2; exit 2 ;;
     *) [ -z "$spec" ] || { echo "une seule spec à la fois." >&2; exit 2; }; spec="$1"; shift ;;
   esac
@@ -65,18 +65,32 @@ fi
 case "/$out/" in
   */../*) echo "⛔ --out ne doit pas contenir de segment « .. »." >&2; exit 2 ;;
 esac
+# La cible elle-même = chemin physique de cet ancêtre + les segments qui n'existent pas encore
+# (aucun « .. » ici, aucun lien possible dans ce qui n'existe pas) : elle doit être SOUS tests/
+# (tests/acceptance/<lot> en pratique), jamais app/, scripts/, supabase/… ni tests/ lui-même.
 anc="$out"
-while [ ! -d "$anc" ]; do anc="$(dirname "$anc")"; done
-case "$(cd "$anc" && pwd -P)/" in
+rest=""
+while [ ! -d "$anc" ]; do rest="$(basename "$anc")${rest:+/$rest}"; anc="$(dirname "$anc")"; done
+anc_abs="$(cd "$anc" && pwd -P)"
+case "$anc_abs/" in
   "$repo_root"/*) ;;
   *) echo "⛔ --out doit être dans le dépôt ($repo_root)." >&2; exit 2 ;;
 esac
+sous_tests() {
+  case "$1" in
+    "$repo_root"/tests/?*) return 0 ;;
+    *) echo "⛔ --out doit être un dossier sous tests/ (ex. tests/acceptance/l4)." >&2; return 1 ;;
+  esac
+}
+cible="${anc_abs%/}${rest:+/$rest}"
+sous_tests "${cible%/}" || exit 2
 mkdir -p "$out"
 out_abs="$(cd "$out" && pwd -P)"
 case "$out_abs/" in
   "$repo_root"/*) ;;
   *) echo "⛔ --out doit être dans le dépôt ($repo_root)." >&2; exit 2 ;;
 esac
+sous_tests "$out_abs" || exit 2
 out_rel="${out_abs#"$repo_root"/}"
 
 codex_check_login || exit 3
