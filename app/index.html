@@ -1633,13 +1633,16 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   // The first supported link in a text (an app's share text may wrap it in words), as written; null if none.
   const linkIn = text => {
-    const m = /https?:\/\/[^\s<>"']+/i.exec(String(text || '')); if (!m) return null;
-    const raw = m[0].replace(/[).,;!?]+$/, '');
-    try { return okHost(new URL(raw).hostname) ? raw : null; } catch { return null; }
+    for (const [m] of String(text || '').matchAll(/https?:\/\/[^\s<>"']+/gi)) {
+      const raw = m.replace(/[).,;!?]+$/, '');
+      try { if (okHost(new URL(raw).hostname)) return raw; } catch {}
+    }
+    return null;
   };
+  // Pre-filled, the link is kept like a typed one (rb.draft): a PWA closed before Queue it finds it again.
   const prefill = () => {
     const read = {at: Date.now(), failed: false, p: readClip()}; openRead = read;
-    read.p.then(text => { const link = linkIn(text); if (link && !sheetForm.hidden && !$('f-url').value.trim()) $('f-url').value = link; }, () => { read.failed = true; });
+    read.p.then(text => { const link = linkIn(text); if (link && !sheetForm.hidden && !$('f-url').value.trim()) { $('f-url').value = link; ls.set(DRAFT, link); } }, () => { read.failed = true; });
   };
   $('paste-link').addEventListener('click', async () => {
     const err = $('f-err'), fail = msg => { err.textContent = msg; err.hidden = false; };
@@ -2951,7 +2954,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     let r;
     try { r = await sb.from('capture_tokens').select('id,label,created_at,last_used_at,revoked_at').is('revoked_at', null).order('created_at', {ascending: false}); } catch (e) { r = {error: e}; }
     if (!user || user.id !== uid) return;
-    if (!r || r.error || !Array.isArray(r.data)) { $('shortcut-section').hidden = true; return; }
+    // a failed read right after a key was made keeps the section (and the key's only copy) on screen
+    if (!r || r.error || !Array.isArray(r.data)) { if ($('shortcut-new').hidden) $('shortcut-section').hidden = true; return; }
     scActive = r.data.find(t => !t.revoked_at) || null;
     paintShortcut(); $('shortcut-section').hidden = false;
   };
