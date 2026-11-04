@@ -78,5 +78,14 @@ window.REELBOOK = {
     { id: 'crafts', title: 'Sewing & crafts', sub: 'Stitches, patterns, knitting, repairs, DIY.', color: 7, profile: 'gym', icon: 'crafts',
       groups: ['Sewing', 'Knitting & crochet', 'Patterns', 'Repairs', 'DIY'] }
   ],
+  // L23, faceted library: the fixed vocabulary of a sheet's tags (sheets.tags, written by the skill in meta.json,
+  // checked by rb.py publish, which reads this block). A sheet holds {zone: [], gear: [], minutes: n | null, type: ''}.
+  // `time` buckets tags.minutes for the search view: [label, from (included), to (excluded) or null].
+  facets: {
+    zone: ['shoulders', 'arms', 'chest', 'back', 'core', 'hips', 'legs', 'knees', 'ankles', 'neck', 'full body'],
+    gear: ['none', 'mat', 'band', 'dumbbell', 'kettlebell', 'barbell', 'bar', 'rings', 'ball', 'foam roller', 'chair', 'wall', 'board', 'kite', 'plate', 'cable', 'machine', 'bench'],
+    type: ['strength', 'mobility', 'stretch', 'cardio', 'skill', 'drill', 'warm-up', 'routine'],
+    time: [['< 5', 0, 5], ['5–10', 5, 10], ['10–20', 10, 20], ['20+', 20, null]]
+  },
   repo: 'https://github.com/lt20/reelbook'
 };

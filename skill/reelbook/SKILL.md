@@ -219,6 +219,14 @@ languages: translate the English column).
   sheet (a sheet already published only gets a warning: fix it when you redo it).
   A progression or a technique taught in stages adds **`steps`**, a whole number (`"steps": 5`);
   the app shows `duration` only.
+- **`tags`** (the facets of the search view): `"tags": {"zone": [], "gear": [], "minutes": 8, "type": "mobility"}`,
+  values **only** from the `facets` vocabulary of `app/config.js` (`rb.py publish` refuses an unknown value on a
+  new sheet). Leave a facet empty (`[]`, `null`, `""`) rather than guess. One line per facet:
+  - `zone`: the body areas the exercise works, 1–2 (`shoulders`, `core`, `full body`…), `[]` for a non-body topic.
+  - `gear`: the kit you see in the video (`band`, `mat`, `plate`, `cable`, `machine`, `bench`, `kite`…), `["none"]` for bodyweight with nothing.
+  - `minutes`: the number in `duration` (`"8 min"` → `8`), `null` when `duration` is `""`.
+  - `type`: one value (`strength`, `mobility`, `stretch`, `cardio`, `skill`, `drill`, `warm-up`, `routine`), or `""`.
+  An exercise sheet of a session gets its own `tags` (`minutes`: `null`, its dose lives on the session).
 
 ## 3 bis. One video = a session (several exercises)
 - **First decide: one movement taught in stages, or a workout?** Several named moves do not make
@@ -293,6 +301,10 @@ languages: translate the English column).
   `supabase/schema.sql` on their project (`docs/own-supabase.md`); say so and flag the request
   with `rb.py error`. Reprocessing a video rewrites its session: changes made to it in the app
   (order, doses, removed items) are lost.
+- Add `--request <id>` to both. « quota reached on this backend: … »: the account hit a limit of a
+  shared backend (sheets, photos); `rb.py` has already put the request in error with that message.
+  Tell the user which limit and what it says to do, then stop the run: the next requests would hit
+  the same limit.
 - Check in the app (Chrome): open `<app url>#<slug>` (for a session, `<app url>#session/<slug>`, then
   each exercise sheet from it: `#session/<slug>/1`, then « Next »).
 - `python3 tools/rb.py done <id> --slug <slug>` (a session: its slug). On failure:

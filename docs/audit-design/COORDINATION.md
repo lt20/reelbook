@@ -43,6 +43,14 @@ Third chantier (4 Nov, Laurent « go !! » on P5): **P5 (opening to tinkerers)**
 7. Arbitrated on the audit: no bottom tab bar (three destinations): sticky nav bar + floating « + » button.
    Notebook pages keep photo cards, one horizontal row per group.
 8. Every local state tied to an account's content is stored per user (`<key>.<user id>`) — Codex, L7 pass 4.
+9. (4 Nov, P5, « OK recos ») Quotas per account on the hosted backend before L25/L26 send newcomers to it: lot L29,
+   migration pushed by Laurent (with an override row for his own account); L25 and L26 merge only after that push.
+10. (4 Nov) Privacy note for the hosted backend drafted in `docs/privacy.md` (L29), not linked from the app or the
+    README until Laurent validates the text (legal).
+11. (4 Nov) Demo (L27): the mechanism ships with drawn placeholder content; Laurent films 4 exercises + 1 session
+    later and the content is swapped without code.
+12. (4 Nov) Capture (L28) in two steps: « Paste link » (app only) merges as usual; the iOS shortcut (table +
+    Edge Function) is a protected PR that Laurent deploys (`db push` + `supabase functions deploy add-link`).
 
 ## Lots
 
@@ -81,27 +89,23 @@ Ports: L9 8779, L10 8780 … L20 8790.
 
 | Lot | What | Audit items | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
 |---|---|---|---|---|---|---|---|---|
-| L21 | Notebook identity: cover per notebook (colour + pictogram) — protected (`app/config.js`) | O8 | M | no | — | K | `feat/p5-identity` | to do |
-| L22 | Session headings in the content language (quick version, decision 2) | O6 | S | yes | — | K | `feat/p5-lang` | to do |
-| L23 | Faceted library: structured tags — protected (schema) | O7 | L | yes | — | K | `feat/p5-facets` | to do |
-| L24 | Invitation to install the app | O4 | S | yes | — | L | `feat/p5-install-card` | to do |
-| L25 | Present before signing up | O1 | M | yes | Q P5-1 | L | `feat/p5-welcome` | to do |
-| L26 | Installation you can tap | O2 | M | no | Q P5-1 | M | `feat/p5-install` | to do |
-| L27 | Demo without an account | O3 | M | yes | Q P5-3 (content) | L | `feat/p5-demo` | to do |
-| L28 | Capture in one gesture: Paste link, then iOS shortcut — protected (schema + Edge Function) | O5 | L | yes | Q P5-4 | M | `feat/p5-capture` | to do |
+| L21 | Notebook identity: cover per notebook (colour + pictogram) — protected (`app/config.js`) | O8 | M | no | — | K | `feat/p5-identity` | merged #53 |
+| L22 | Session headings in the content language (quick version, decision 2) | O6 | S | yes | — | K | `feat/p5-lang` | merged #51 |
+| L23 | Faceted library: structured tags — protected (schema) | O7 | L | yes | — | K | `feat/p5-facets` | merged #52 |
+| L24 | Invitation to install the app | O4 | S | yes | — | L | `feat/p5-install-card` | merged #54 |
+| L25 | Present before signing up | O1 | M | yes | L29 pushed (decision 9) | L | `feat/p5-welcome` | to do |
+| L26 | Installation you can tap | O2 | M | no | L29 pushed (decision 9) | M | `feat/p5-install` | to do |
+| L27 | Demo without an account | O3 | M | yes | decision 11 | L | `feat/p5-demo` | to do |
+| L28 | Capture in one gesture: Paste link, then iOS shortcut — protected (schema + Edge Function) | O5 | L | yes | decision 12 | M | `feat/p5-capture` | to do |
+| L23b | backfill-tags heuristic, second pass (Laurent's dry run, 4 Nov) | O7 | S | no | L23 | M | `fix/p5-tags-heuristic` | to do |
+| L29 | Quotas on the hosted backend + privacy note draft — protected (schema) | decisions 9 10 | M | no | — | M | `feat/p5-quotas` | to do |
 
 Ports: L21 8791 … L28 8798. Wave K touches: L21 home notebook cards + notebook header + `app/config.js` (`icon`) +
 `app/icons.svg`; L22 session page + player headings + `app/sessions.js`; L23 search view + `app/config.js`
 (`facets`) + `supabase/schema.sql` + `tools/rb.py` + `skill/reelbook/SKILL.md`. L21 and L23 both add a key to
 `app/config.js`: expect a one-line merge.
 
-Open for Laurent (4 Nov), recommendation first:
-- **Q P5-1** hosted backend before L25/L26 push newcomers to it: per-account quota migration (links per day, sheets,
-  photo storage), pushed by Laurent before L25/L26 merge.
-- **Q P5-2** privacy note for the hosted backend: drafted in `docs/privacy.md`, not linked from the app until Laurent
-  validates the text (legal).
-- **Q P5-3** demo content: L27 ships the mechanism with drawn placeholders; Laurent films 4 exercises + 1 session.
-- **Q P5-4** L28 step B needs `db push` + `supabase functions deploy add-link` by Laurent.
+Questions P5-1 to P5-4 settled on 4 Nov (« OK recos »): decisions 9–12.
 
 
 

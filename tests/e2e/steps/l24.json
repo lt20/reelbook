@@ -1,0 +1,5 @@
+[
+  {"name": "l24-01-home-install-card", "actions": [{"wait": "#install-card:not([hidden])"}, {"wait": "#portal >> text=Strength"}]},
+  {"name": "l24-02-after-not-now", "actions": [{"wait": "#install-card:not([hidden])"}, {"click": "#install-not-now"}, {"wait": 300}]},
+  {"name": "l24-03-notebook-no-card", "hash": "#strength", "actions": [{"wait": 300}]}
+]

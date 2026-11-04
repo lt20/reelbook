@@ -18,7 +18,11 @@ Ten minutes, free tier, no card. You get a private backend that only you can rea
    adds what is missing (sessions, for instance, need the `sessions` table) and keeps your data.
    The update that added search in the text of the sheets (`sheets.search_text`) also needs, once,
    `python3 tools/rb.py backfill-search` (try `--dry-run` first) so that sheets published before it
-   are found by their content too.
+   are found by their content too. The one that added the facet chips (`sheets.tags`) needs, once,
+   `python3 tools/rb.py backfill-tags` (try `--dry-run` first) so that sheets published before it get tags.
+   The schema also limits each account (10 links a day, 300 sheets, 200 MB of photos, meant for a shared
+   backend). On your own project, lift the limits of your account with the one `insert` given in the
+   README, « Limits on a shared backend », in the same query or right after.
 
 ## 3. Allow password sign-in without email confirmation (recommended for a single user)
 

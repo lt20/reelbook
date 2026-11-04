@@ -318,6 +318,20 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 .report{margin-top:14px}
 .report .link{appearance:none;background:transparent;border:0;padding:10px 0;min-height:44px;color:var(--muted);font:600 var(--fs-sm) var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 #report-dlg textarea{min-height:110px}
+/* ---- L23: facet chips under the search field (all notebooks), each opens a bottom sheet of values + counts ---- */
+.facets{display:flex;gap:var(--s-2);overflow-x:auto;scrollbar-width:none;margin:-8px -16px 18px;padding:0 var(--s-4);-webkit-overflow-scrolling:touch}
+.facets::-webkit-scrollbar{display:none}
+.facets button{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--paper);color:var(--ink);font:600 var(--fs-sm) var(--body);white-space:nowrap;cursor:pointer}
+.facets button::after{content:"";width:6px;height:6px;margin-left:8px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg);opacity:.6}
+.facets button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.fopts{display:grid;gap:2px;margin:var(--s-2) 0}
+.fopts button{display:flex;align-items:center;gap:var(--s-3);min-height:48px;padding:0 var(--s-3);border:0;border-radius:var(--r-sm);background:none;color:var(--ink);font:400 var(--fs-base) var(--body);text-align:left;cursor:pointer}
+.fopts button span{flex:1;text-transform:capitalize}
+.fopts button b{font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+.fopts button::before{content:"";flex:none;width:20px;height:20px;border:1.5px solid var(--line-strong);border-radius:5px;box-sizing:border-box}
+.fopts button[aria-pressed="true"]{font-weight:600}
+.fopts button[aria-pressed="true"]::before{border-color:var(--accent);background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 10 3.5 3.5L15 7'/%3E%3C/svg%3E") center/16px no-repeat}
+@media (hover:hover){.fopts button:hover{background:var(--tag)}}
 /* ---- L12: notebook page — sticky group chips, one row of cards per group, « See all » grid ---- */
 .group-chips{position:sticky;top:0;z-index:5;display:flex;gap:var(--s-2);overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;margin:var(--s-3) -16px 0;padding:var(--s-2) var(--s-4);background:var(--bg);-webkit-overflow-scrolling:touch}
 .group-chips::-webkit-scrollbar{display:none}
@@ -540,6 +554,19 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 #nav-bar.nb.titled #nav-ico{opacity:1}
 @media (prefers-reduced-motion:no-preference){#nav-ico{transition:opacity .15s}#nav-bar.nb{transition:border-color .2s,background-color .2s}}
 @media (prefers-reduced-motion:reduce){#nav-bar,#nav-title{transition:none}}
+/* L27: the demo notebook: a banner on every page (the way to sign up), a way back, no editing control */
+.demo-banner{position:sticky;top:0;z-index:6;display:block;margin:-20px -16px var(--s-4);padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:var(--fs-sm);text-align:center;text-decoration:none}
+.demo-banner:active{opacity:.85}
+.demo .top{margin:0 0 6px}
+.demo .top a{color:var(--accent);font-weight:600;text-decoration:none}
+.demo-nb{display:flex;align-items:center;gap:var(--s-2)}
+.demo-nb .nb-ico{width:22px;height:22px;color:var(--t,var(--accent))}
+.demo-see{margin:-4px 0 14px}
+/* L24: invitation to install the app, a quiet card at the top of the home page (browser tab only) */
+.install{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s-2) var(--s-3);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-3) var(--s-3) var(--s-3) var(--s-4);margin:0 0 var(--s-4)}
+.install .ic-share{flex:none;width:1.375rem;height:1.375rem;color:var(--accent)}
+.install p{flex:1 1 12rem;margin:0;font-size:var(--fs-sm);line-height:1.4}
+.install .acts{display:flex;gap:var(--s-2);margin-left:auto}
 </style>
 </head>
 <body>
@@ -579,6 +606,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 <div id="auth" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
   <h1 id="auth-title">Sign in</h1>
+  <p class="demo-see"><a href="#demo">See a demo</a></p>
   <form class="panel" id="auth-form">
     <label>Email <input id="a-email" type="email" autocomplete="email" required></label>
     <label>Password <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
@@ -627,8 +655,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="actions"><button class="btn danger" type="button" id="pd-discard">Discard the link</button><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-stay" autofocus>Keep editing</button></div>
   </dialog>
   <div class="flash" id="flash" role="status" hidden></div>
+  <!-- L24: « install the app », filled by renderInstall -->
+  <section class="install" id="install-card" aria-label="Install the app" hidden></section>
 
   <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
+  <div class="facets" id="facets" role="group" aria-label="Filter by tag" hidden><button type="button" id="facet-zone" aria-haspopup="dialog">Zone</button><button type="button" id="facet-gear" aria-haspopup="dialog">Gear</button><button type="button" id="facet-time" aria-haspopup="dialog">Time</button><button type="button" id="facet-type" aria-haspopup="dialog">Type</button></div>
   <div id="results" hidden></div>
   <!-- L7: sheets and video sessions delivered in the last 72 h, not opened yet on this device -->
   <section class="newsec" id="new-sec" aria-labelledby="new-h" hidden></section>
@@ -711,6 +742,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <h2>Account</h2>
     <p id="s-user"></p>
     <p class="hint">Backend: <span id="s-backend"></span></p>
+    <!-- L29: what the account uses against its limits (my_quota); hidden on a backend without quotas -->
+    <p class="hint" id="s-usage" hidden></p>
     <p class="hint" id="s-sessions" hidden>Re-run <code>supabase/schema.sql</code> to enable sessions.</p>
     <p class="hint" id="s-v1" hidden></p>
     <div class="actions"><button class="btn ghost" type="button" id="s-signout">Sign out</button><button class="btn ghost" type="button" id="s-reset">Change backend</button></div>
@@ -734,6 +767,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
+<!-- L27: the demo notebook (#demo), read only, from app/demo/ -->
+<div id="demo" class="demo" hidden></div>
 <!-- ===== L10: session player ===== -->
 <div id="player" class="player" hidden></div>
 <div id="play-flash" class="pl-flash" hidden aria-hidden="true"></div>
@@ -770,6 +805,12 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 </dialog>
 <!-- The « Removed · Undo » toast of a queue removal: the delete is sent when its 5 s bar ends (animationend). -->
 <div class="toast" role="status"><button type="button" id="queue-undo" hidden><span id="queue-toast"></span></button></div>
+<dialog class="dlg act" id="facet-dlg" aria-labelledby="facet-h">
+  <h2 id="facet-h">Zone</h2>
+  <p class="hint" id="facet-hint">Across all your notebooks. Pick several: a sheet matches any of them.</p>
+  <div class="fopts" id="facet-options"></div>
+  <div class="actions"><button class="btn" type="button" id="facet-done">Done</button><button class="btn ghost" type="button" id="facet-clear">Clear</button></div>
+</dialog>
 <dialog class="dlg act" id="del-dlg" aria-labelledby="del-h">
   <h2 id="del-h">Delete this session?</h2>
   <p><b id="del-name"></b><span class="u">Its exercise sheets stay in your notebooks.</span></p>
@@ -794,7 +835,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 </dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
-<script src="config.js?v=7"></script>
+<script src="config.js?v=9"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
 <script>
@@ -818,7 +859,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // the day before west of Greenwich.
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
-  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player'];
+  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player', 'demo'];
   const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); syncNav(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
   // ---------- L18: bottom sheets ----------
@@ -942,9 +983,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // v2Sessions: rows of the `sessions` table; inSessions: sheet slug -> those sessions; sessionsOk: false when the backend has no such table.
   let v2Sessions = [], v2BySlug = new Map(), inSessions = new Map(), sessionsOk = true, v1Hidden = 0;
   let user = null, sheets = [], bySlug = new Map(), notesIndex = new Set(), currentTheme = null, shown = null, loading = false, loadError = '';
-  // L14: noteBodies, key -> the text of the user's note (searched); noSearchCol: the client whose backend has no
-  // sheets.search_text column yet (read once, then the sheets are read without it until the next start).
-  let noteBodies = new Map(), noSearchCol = null;
+  // L14: noteBodies, key -> the text of the user's note (searched). colsGone: the optional sheets columns
+  // (search_text L14, tags L23) this client's backend does not have yet (each answers one 42703, then the sheets
+  // are read without it until the next start).
+  let noteBodies = new Map(), colsGone = {client: null, cols: new Set()};
   // noteEdits: key -> {body, seq}, the note texts saved here, laid over a catalogue read that began before their
   // save (seq > the read's noteSeq); dropped once a read that began after them is applied.
   let noteSeq = 0; const noteEdits = new Map();
@@ -1030,18 +1072,21 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (c) c.noteBodies = new Map(Array.isArray(s.noteBodies) ? s.noteBodies.filter(Array.isArray) : []);
     return c;
   };
-  // L14: the sheets with their search text; a backend without the column (schema not pushed yet) answers 42703,
-  // and the sheets are read as before, without an error.
+  // L14 / L23: the sheets with their search text and their tags; a backend without one of those columns (schema
+  // not pushed yet) answers 42703, and the sheets are read again without it, without an error.
   const SHEET_COLS = 'slug,kind,theme,"group",title,summary,duration,thumbnail,source,added_at,updated_at';
-  const noColumn = (e, col) => !!e && (e.code === '42703' || e.code === 'PGRST204') && String(e.message || '').includes(col);
+  const OPT_COLS = ['search_text', 'tags'];
+  const noColumn = (e, col) => !!e && (e.code === '42703' || e.code === 'PGRST204') && new RegExp('\\b' + col + '\\b').test(String(e.message || ''));
   const readSheets = async () => {
     const client = sb;
-    if (noSearchCol !== client) {
-      const r = await client.from('sheets').select(SHEET_COLS + ',search_text').order('title');
-      if (!noColumn(r.error, 'search_text')) return r;
-      noSearchCol = client;
+    if (colsGone.client !== client) colsGone = {client, cols: new Set()};
+    for (;;) {
+      const extra = OPT_COLS.filter(c => !colsGone.cols.has(c));
+      const r = await client.from('sheets').select([SHEET_COLS, ...extra].join(',')).order('title');
+      const gone = extra.find(c => noColumn(r.error, c));
+      if (!gone) return r;
+      colsGone.cols.add(gone);
     }
-    return client.from('sheets').select(SHEET_COLS).order('title');
   };
   // Sign-out: the user's cached catalogue and sheets, and the photos the service worker kept.
   const toWorker = msg => { try { if (navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage(msg)).catch(() => {}); } catch {} };
@@ -1352,16 +1397,95 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     }
     return [...(inSheet ? ['in the sheet'] : []), ...(inNote ? ['in your note'] : [])];
   };
-  const renderSearch = (terms, t) => {
+  // ---------- L23: facets ----------
+  // Tags of a sheet (sheets.tags: {zone: [], gear: [], minutes, type}, written by rb.py); the chips under the field
+  // filter all notebooks, AND across facets, OR inside one, with the text query. Sheets without tags (and sessions)
+  // only match when no facet is chosen. The choice lives in the hash (#search?zone=shoulders,knees&gear=band): Back
+  // restores the previous one. The chips show on the home page when at least one sheet has tags (none on a backend
+  // without the column). Vocabulary order from app/config.js; the time buckets fall back to the same as there.
+  const FACETS = CFG.facets || {}, FACET_KEYS = ['zone', 'gear', 'time', 'type'];
+  const FACET_LABEL = {zone: 'Zone', gear: 'Gear', time: 'Time', type: 'Type'};
+  const TIME = Array.isArray(FACETS.time) ? FACETS.time : [['< 5', 0, 5], ['5–10', 5, 10], ['10–20', 10, 20], ['20+', 20, null]];
+  const noFacets = () => ({zone: [], gear: [], time: [], type: []});
+  let facetSel = noFacets(), facetOpen = null, facetMoved = false;
+  const bucketOf = m => { if (typeof m !== 'number' || !isFinite(m)) return ''; const b = TIME.find(([, lo, hi]) => m >= lo && (hi == null || m < hi)); return b ? b[0] : ''; };
+  const facetValues = (e, k) => {
+    const g = e.tags; if (!g || typeof g !== 'object' || Array.isArray(g)) return [];
+    if (k === 'time') { const b = bucketOf(g.minutes); return b ? [b] : []; }
+    if (k === 'type') return g.type && typeof g.type === 'string' ? [g.type] : [];
+    return Array.isArray(g[k]) ? g[k].filter(v => typeof v === 'string' && v) : [];
+  };
+  const facetsHere = t => !t && sheets.some(e => FACET_KEYS.some(k => facetValues(e, k).length));
+  const facetsOn = () => FACET_KEYS.some(k => facetSel[k].length);
+  const facetMatch = e => FACET_KEYS.every(k => !facetSel[k].length || facetValues(e, k).some(v => facetSel[k].includes(v)));
+  const facetText = (k, v) => k === 'time' ? v + ' min' : v;
+  const attrEsc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  const facetHash = sel => { const q = FACET_KEYS.filter(k => sel[k].length).map(k => k + '=' + sel[k].map(encodeURIComponent).join(',')).join('&'); return q ? 'search?' + q : ''; };
+  const readFacetHash = () => {
+    const raw = String(location.hash || '').replace(/^#/, ''), sel = noFacets();
+    if (!/^search\?/.test(raw)) return sel;
+    for (const pair of raw.slice(7).split('&')) {
+      const [k, v = ''] = pair.split('=');
+      if (!FACET_KEYS.includes(k)) continue; // never an inherited key (#search?constructor=x)
+      for (const x of v.split(',')) { let d = ''; try { d = decodeURIComponent(x); } catch {} if (d && !sel[k].includes(d)) sel[k].push(d); }
+    }
+    return sel;
+  };
+  const paintFacets = show => {
+    $('facets').hidden = !show;
+    for (const k of FACET_KEYS) {
+      const c = $('facet-' + k), on = facetSel[k];
+      c.textContent = on.length ? `${FACET_LABEL[k]}: ${facetText(k, on[0])}${on.length > 1 ? ` +${on.length - 1}` : ''}` : FACET_LABEL[k];
+      c.classList.toggle('on', !!on.length);
+      c.setAttribute('aria-label', on.length ? `${FACET_LABEL[k]}, ${on.map(v => facetText(k, v)).join(', ')} chosen` : `${FACET_LABEL[k]}, any`);
+    }
+  };
+  // The values present in the catalogue (all notebooks), vocabulary order first, each with its number of sheets; a
+  // chosen value no sheet holds any more (an old link) stays listed so it can be unticked.
+  const paintFacetOptions = () => {
+    const k = facetOpen; if (!k) return;
+    const counts = new Map();
+    for (const e of sheets) for (const v of new Set(facetValues(e, k))) counts.set(v, (counts.get(v) || 0) + 1);
+    for (const v of facetSel[k]) if (!counts.has(v)) counts.set(v, 0);
+    const order = k === 'time' ? TIME.map(b => b[0]) : FACETS[k] || [], rank = v => { const i = order.indexOf(v); return i < 0 ? order.length : i; };
+    const vals = [...counts.keys()].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    $('facet-h').textContent = FACET_LABEL[k];
+    $('facet-clear').hidden = !facetSel[k].length;
+    $('facet-options').innerHTML = vals.length
+      ? vals.map(v => `<button type="button" data-facet-value="${attrEsc(v)}" aria-pressed="${facetSel[k].includes(v)}"><span>${esc(facetText(k, v))}</span><b>${counts.get(v)}</b></button>`).join('')
+      : `<p class="hint">No sheet has a ${FACET_LABEL[k].toLowerCase()} tag yet.</p>`;
+  };
+  // A new choice: shown at once, then written in the hash. The first change of a sheet opening is a new history
+  // entry, the next ones replace it (Back undoes the whole sheet, not each tick).
+  const setFacets = sel => {
+    facetSel = sel; paintFacetOptions();
+    const h = facetHash(sel);
+    if (facetMoved && typeof location.replace === 'function') {
+      const st = entry(); replacing = {i: navIndex == null ? 0 : navIndex, prev: st ? st.prev : null};
+      location.replace('#' + h);
+    } else { facetMoved = true; location.hash = h; }
+  };
+  const facetDlg = $('facet-dlg');
+  for (const k of FACET_KEYS) $('facet-' + k).addEventListener('click', () => { facetOpen = k; facetMoved = false; paintFacetOptions(); openSheet(facetDlg); });
+  $('facet-options').addEventListener('click', ev => {
+    const b = ev.target && ev.target.closest ? ev.target.closest('[data-facet-value]') : null, k = facetOpen;
+    if (!b || !k) return;
+    const v = b.dataset.facetValue, on = facetSel[k];
+    setFacets({...facetSel, [k]: on.includes(v) ? on.filter(x => x !== v) : [...on, v]});
+  });
+  $('facet-clear').addEventListener('click', () => { if (facetOpen && facetSel[facetOpen].length) setFacets({...facetSel, [facetOpen]: []}); });
+  $('facet-done').addEventListener('click', () => closeSheet(facetDlg));
+  const renderSearch = (terms, t, facets = false) => {
     const res = terms.map(wordStart), found = [];
     for (const e of sheets) {
       if (t && e.theme !== t.id) continue;
+      if (facets && !facetMatch(e)) continue;
       const nb = (themeById.get(e.theme) || {}).title || '', author = (e.source || {}).author || '';
       const pre = t ? [] : [{txt: nb}];
       const where = matchWhere(res, [e.title, e.summary, e.group, nb, author], textOf(e), noteBodies.get(e.slug));
       if (where) found.push({rank: where.length ? 1 : 0, html: sheetCard(e, pre, where)});
     }
-    for (const s of v2Sessions) {
+    for (const s of facets ? [] : v2Sessions) { // a session has no tags
       if (t && s.theme !== t.id) continue;
       const nb = (themeById.get(s.theme) || {}).title || '';
       const where = matchWhere(res, [s.title, s.format, nb, (s.source || {}).author || ''], '', noteBodies.get(RS.noteKey(s.slug)));
@@ -1369,7 +1493,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     }
     const cards = found.filter(c => !c.rank).concat(found.filter(c => c.rank)).map(c => c.html);
     $('results').innerHTML = cards.length ? `<div class="grid">${cards.join('')}</div>`
-      : `<p class="empty">Nothing matches « ${esc($('q').value.trim())} »${t ? ' in this notebook' : ''}. Try a body part or a piece of kit.</p>`;
+      : !terms.length ? '<p class="empty">No sheet has all these tags. Untick one, or pick another value.</p>'
+      : `<p class="empty">Nothing matches « ${esc($('q').value.trim())} »${t ? ' in this notebook' : facets ? ' with these tags' : ''}. Try a body part or a piece of kit.</p>`;
     return plural(cards.length, 'result');
   };
   $('q').addEventListener('input', () => renderHome());
@@ -1379,6 +1504,46 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     ? `${/[.!?]$/.test(loadError) ? '' : '.'} Your Supabase project may be paused: open your Supabase dashboard and restore it.` : '');
   // L6: the sheets and sessions practised at least once that still exist.
   const practisedCount = () => [...lastDone.keys()].filter(k => bySlug.has(k) || v2BySlug.has(RS.sessionSlugOf(k))).length;
+  // ---------- L24: invitation to install the app ----------
+  // A quiet card at the top of the home page while the app runs in a browser tab, for a signed-in user whose catalogue
+  // loaded with at least one sheet. iOS Safari: how to do it (Share, then Add to Home Screen). Chromium: an « Install »
+  // button once the browser fires beforeinstallprompt. Other browsers: nothing. « Not now » hides it for 30 days on this
+  // device (rb.install.dismissed, an ISO date; device-level, not per user). Inside #home, so never on the auth screen, a
+  // sheet or the player. Guarded for the test harness: no matchMedia, no beforeinstallprompt.
+  const INSTALL_KEY = 'rb.install.dismissed', INSTALL_SNOOZE = 30 * 24 * 60 * 60 * 1000;
+  const SHARE_GLYPH = '<svg class="ic-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M8.5 10H6.5a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5h-2"/></svg>';
+  // installFailed: prompt() was refused (the event is spent): the card says to use the browser menu instead
+  // installDismissed: « Not now » tapped on this page (holds even when localStorage refuses the write)
+  let installPrompt = null, installFailed = false, installDismissed = false, installShown = '';
+  const runsInstalled = () => navigator.standalone === true || !!(typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
+  // iPhone / iPod / iPad (iPadOS asks for the desktop site: a Mac with a touch screen), Safari only (not Chrome, Firefox, Edge, Opera on iOS)
+  const iosSafari = () => {
+    const ua = String(navigator.userAgent || '');
+    return (/iP(hone|od|ad)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) && /Version\/[\d.]+.*Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+  };
+  const installSnoozed = () => { const t = Date.parse(ls.get(INSTALL_KEY) || ''); return Number.isFinite(t) && Date.now() - t < INSTALL_SNOOZE; };
+  const renderInstall = () => {
+    const card = $('install-card'), how = installPrompt ? 'prompt' : installFailed ? 'failed' : iosSafari() ? 'ios' : '';
+    const on = !!how && !!user && !currentTheme && !loading && !loadError && sheets.length > 0 && !runsInstalled() && !installDismissed && !installSnoozed();
+    if (!on) { card.hidden = true; card.innerHTML = ''; installShown = ''; return; }
+    if (installShown !== how) {
+      installShown = how;
+      const notNow = '<button class="btn ghost sm" type="button" id="install-not-now">Not now</button>';
+      card.innerHTML = how === 'ios' ? `${SHARE_GLYPH}<p>Install Reelbook: tap Share, then Add to Home Screen</p><div class="acts">${notNow}</div>`
+        : how === 'failed' ? `<p role="status">The install window did not open. Install Reelbook from your browser menu instead.</p><div class="acts">${notNow}</div>`
+        : `<p>Install Reelbook on this device: it opens full screen, like an app.</p><div class="acts">${notNow}<button class="btn sm" type="button" id="install-go">Install</button></div>`;
+      $('install-not-now').addEventListener('click', () => { installDismissed = true; ls.set(INSTALL_KEY, new Date().toISOString()); renderInstall(); });
+      if (how === 'prompt') $('install-go').addEventListener('click', async () => {
+        const p = installPrompt; installPrompt = null; // a prompt event is used once
+        try { if (p) { await p.prompt(); await p.userChoice; } } catch (e) { console.warn('Install prompt refused:', (e && e.message) || e); installFailed = true; }
+        renderInstall();
+      });
+    }
+    card.hidden = false;
+  };
+  window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); installPrompt = ev; installFailed = false; renderInstall(); });
+  window.addEventListener('appinstalled', () => { installPrompt = null; installFailed = false; renderInstall(); });
+
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
     $('h-eyebrow').hidden = !t;
@@ -1391,13 +1556,15 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (t) $('count').textContent = renderGroups(t, one);
     else { renderPortal(); $('groups').innerHTML = ''; const n = sheets.length, sN = v2Sessions.length; $('count').textContent = loadError ? loadErrorText() : loading ? 'Loading…' : `${practiceOk ? `${practisedCount()} practised · ${n} saved` : plural(n, 'sheet')}${sN ? ` · ${plural(sN, 'session')}` : ''} · ${plural(themes.length, 'notebook')}`; }
     $('search').hidden = !sheets.length; $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
-    const terms = sheets.length ? searchTerms() : [];
-    $('results').hidden = !terms.length;
-    if (terms.length) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t); }
-    if (!t || terms.length) $('group-chips').hidden = true;
-    renderNew(!t && !loading && !loadError && !terms.length);
-    renderToTry(!t && !loading && !loadError && !terms.length);
+    const terms = sheets.length ? searchTerms() : [], fac = facetsHere(t), faceted = fac && facetsOn(), searching = terms.length || faceted;
+    paintFacets(fac);
+    $('results').hidden = !searching;
+    if (searching) { $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = renderSearch(terms, t, faceted); }
+    if (!t || searching) $('group-chips').hidden = true;
+    renderNew(!t && !loading && !loadError && !searching);
+    renderToTry(!t && !loading && !loadError && !searching);
     document.title = t ? `${one ? one + ' · ' : ''}${t.title} · Reelbook` : 'Reelbook';
+    renderInstall();
     syncNav();
   };
 
@@ -1564,6 +1731,13 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(); });
   // iOS Safari applies :active (the pressed state) only once the page listens to touchstart.
   document.addEventListener('touchstart', () => {}, {passive: true});
+  // L29: a backend with quotas refuses a link past the account's limit (« quota: 10 links per day », SQL P0001): said
+  // in plain words instead of the generic error. null for any other error.
+  const quotaText = e => {
+    const m = /^quota: (.+)$/.exec(String((e && e.message) || '').trim()); if (!m) return null;
+    return /per day$/.test(m[1]) ? `Limit reached: ${m[1]} on this backend. You can add more tomorrow (the count starts again at midnight UTC).`
+      : `Limit reached: ${m[1]} on this backend.`;
+  };
   const queueLink = async () => {
     const err = $('f-err'); err.hidden = true;
     const fail = msg => { err.textContent = msg; err.hidden = false; return false; };
@@ -1576,7 +1750,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       discardDraft(); openForm(false); refreshQueue();
       const f = $('flash'); f.textContent = currentTheme ? 'Queued. It shows in the queue on the home page. The sheet will be built on your next Claude Code run.' : 'Queued. The sheet will be built on your next Claude Code run.'; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000);
       return true;
-    } catch { return fail('Could not save it right now. Try again in a moment.'); }
+    } catch (e) { return fail(quotaText(e) || 'Could not save it right now. Try again in a moment.'); }
     finally { $('f-submit').disabled = false; }
   };
   sheetForm.addEventListener('submit', ev => { ev.preventDefault(); queueLink(); });
@@ -1975,7 +2149,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
         // The dialog may hold a newer report by now (Cancel, reopened): only this one's own sheet is marked sent.
         ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; if ($('report-note') === ta) { sheetSaved(rdlg); $('report-cancel').textContent = 'Close'; }
         refreshQueue();
-      } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
+      } catch (e) { st.className = 'status err'; st.textContent = quotaText(e) || 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
     }));
     openSheet(rdlg);
   };
@@ -2597,7 +2771,20 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const renderWelcome = () => { $('w-install').innerHTML = installBlock(); };
   $('welcome').addEventListener('click', copyHandler($('welcome')));
   $('w-done').addEventListener('click', () => { ls.set(welcomeKey(), '1'); location.hash = ''; });
+  // L29: « Usage: 4/10 links today · 120/300 sheets · 80/200 MB », from my_quota(); hidden when the backend has no
+  // quotas (no such function), on any error, and for an answer meant for an account signed out since.
+  const mbOf = b => { const mb = (Number(b) || 0) / 1048576; return mb > 0 && mb < 10 ? String(Math.round(mb * 10) / 10) : String(Math.round(mb)); };
+  const renderUsage = async () => {
+    const el = $('s-usage'), uid = user && user.id; el.hidden = true;
+    if (!sb || typeof sb.rpc !== 'function' || !uid) return;
+    let r; try { r = await sb.rpc('my_quota'); } catch { return; }
+    const q = r && !r.error && r.data;
+    if (!q || typeof q !== 'object' || !user || user.id !== uid) return;
+    el.textContent = `Usage: ${q.requests_today}/${q.max_requests_per_day} links today · ${q.sheets}/${q.max_sheets} sheets · ${mbOf(q.storage_bytes)}/${q.max_storage_mb} MB`;
+    el.hidden = false;
+  };
   const renderSettings = () => {
+    renderUsage();
     $('s-sessions').hidden = sessionsOk;
     // Old one-page sessions left on an older backend: hidden by the app, rebuilt as v2 by requeue-sessions + /reelbook.
     $('s-v1').hidden = !v1Hidden;
@@ -2638,6 +2825,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if ($('home').hidden) return null;
     // A notebook page; while the catalogue loads or cannot be read, any route but home's is taken for one.
     const tok = navHere || '', cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
+    if (/^search\?/.test(tok)) return null; // L23: the home page with facets chosen
     const t = themeById.get(nb) || (nb && (loading || loadError || !themes.length) ? libById.get(nb) || {id: nb, title: nb} : null);
     if (!t) return null;
     const one = currentTheme === t.id ? groupOf(t) : null;
@@ -2743,8 +2931,135 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (hit !== '#nav-close') pageAction(ev);
   });
 
+  // ---------- L27: the demo notebook (#demo, ?demo) ----------
+  // A read-only notebook served from static files: app/demo/catalogue.json and one folder per sheet (index.html,
+  // img/). No account and no backend: no Supabase client is created while the demo shows (boot), and the demo
+  // writes nothing (no localStorage, no IndexedDB), so a real account kept on this device is left as it was.
+  // Pages: #demo (sheets and the session), #demo/<sheet>, #demo/session/<slug>. Every file is fetched on the first
+  // visit, so the service worker keeps them all and the demo then opens offline.
+  const DEMO = 'demo', demoEl = $('demo'), demoPages = new Map();
+  let demoCat = null, demoLoading = null, demoGen = 0, demoSeat = null, demoShown = null;
+  // An account's own sheet or notebook named « demo » keeps its address (#demo, #demo/play…), once its catalogue is
+  // known: a sheet titled « Demo » gets that slug.
+  const demoOwned = t => !!user && (bySlug.has(DEMO) || themeById.has(DEMO)) && (t === DEMO || t.startsWith(DEMO + '/play'));
+  const demoTok = () => { let t = location.hash.slice(1); try { t = decodeURIComponent(t); } catch {} return t === DEMO || t.startsWith(DEMO + '/') ? t : null; };
+  const demoSlug = x => typeof x === 'string' && /^[a-z0-9][a-z0-9-]{0,79}$/.test(x);
+  const demoFile = p => `demo/${p}`;
+  const demoGet = async (p, json) => { const r = await fetch(demoFile(p)); if (!r.ok) throw new Error(String(r.status)); return json ? r.json() : r.text(); };
+  // Only what the pages need, from a file edited by hand: bad entries are left out.
+  const demoCheck = c => {
+    const str = v => typeof v === 'string' ? v : '', rel = v => /^[\w./-]+$/.test(str(v)) && !str(v).includes('..') ? v : '';
+    const sheets = (Array.isArray(c && c.sheets) ? c.sheets : []).filter(e => e && demoSlug(e.slug) && str(e.title))
+      .map(e => ({slug: e.slug, title: e.title, summary: str(e.summary), group: str(e.group), notebook: str(e.notebook), author: str(e.author), thumbnail: rel(e.thumbnail)}));
+    const has = new Set(sheets.map(e => e.slug));
+    const sessions = (Array.isArray(c && c.sessions) ? c.sessions : []).filter(s => s && demoSlug(s.slug) && str(s.title))
+      .map(s => ({slug: s.slug, title: s.title, format: str(s.format), why: str(s.why), author: str(s.author), thumbnail: rel(s.thumbnail),
+        items: (Array.isArray(s.items) ? s.items : []).filter(it => it && has.has(it.slug)).map(it => ({slug: it.slug, dose: str(it.dose)}))}));
+    const notebooks = (Array.isArray(c && c.notebooks) ? c.notebooks : []).filter(t => t && demoSlug(t.id) && str(t.title)).map(t => ({id: t.id, title: t.title}));
+    return {title: str(c && c.title) || 'Reelbook demo', intro: str(c && c.intro), notebooks, sheets, sessions, bySlug: new Map(sheets.map(e => [e.slug, e])), sesBySlug: new Map(sessions.map(s => [s.slug, s]))};
+  };
+  // A sheet as shown: its photos from its folder, gesture first (sheet.js), links kept inside the demo.
+  const demoRender = (slug, src) => {
+    const doc = new DOMParser().parseFromString(src, 'text/html');
+    doc.querySelectorAll('img').forEach(i => { const s = i.getAttribute('src') || ''; if (/^img\/[\w.-]+$/.test(s)) i.setAttribute('src', demoFile(`${slug}/${s}`)); i.removeAttribute('loading'); });
+    if (SH) { const keep = doc.body.cloneNode(true); try { SH.arrange(doc); } catch { doc.documentElement.replaceChild(keep, doc.body); } }
+    doc.querySelectorAll('nav.top, script, style, link').forEach(n => n.remove());
+    doc.querySelectorAll('a[href]').forEach(a => {
+      const h = a.getAttribute('href') || '', x = h.slice(1);
+      if (!h.startsWith('#')) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener'); return; }
+      a.setAttribute('href', demoCat && demoCat.bySlug.has(x) ? `#${DEMO}/${x}` : h.length > 1 ? `#${DEMO}/${slug}` : `#${DEMO}`);
+    });
+    const lang = sheetLang(src);
+    return lang ? `<div lang="${esc(lang)}">${doc.body.innerHTML}</div>` : doc.body.innerHTML;
+  };
+  const demoSource = slug => {
+    if (!demoPages.has(slug)) demoPages.set(slug, demoGet(`${slug}/index.html`).catch(e => { demoPages.delete(slug); throw e; }));
+    return demoPages.get(slug);
+  };
+  // First visit: every sheet read in the background, then the list of all demo files (catalogue, sheets, photos)
+  // goes to the service worker, which keeps them in its demo cache (sw.js, KEEP_DEMO): the page may not be under
+  // its control yet on a first visit, so its own fetches would not be kept.
+  const demoWarm = async c => {
+    const sw = (() => { try { return navigator.serviceWorker; } catch { return null; } })();
+    if (!sw || !sw.ready) return;
+    const files = ['catalogue.json'], abs = p => new URL(demoFile(p), location.href).href;
+    await Promise.all(c.sheets.map(e => demoSource(e.slug).then(src => {
+      files.push(`${e.slug}/index.html`);
+      for (const m of String(src).matchAll(/\bsrc="(img\/[\w.-]+)"/g)) files.push(`${e.slug}/${m[1]}`);
+    }, () => {})));
+    for (const x of [...c.sheets.map(e => e.thumbnail && `${e.slug}/${e.thumbnail}`), ...c.sessions.map(s => s.thumbnail)]) if (x) files.push(x);
+    try { const reg = await sw.ready; if (reg && reg.active) reg.active.postMessage({type: 'KEEP_DEMO', urls: [...new Set(files)].map(abs)}); } catch {}
+  };
+  const demoLoad = () => demoLoading || (demoLoading = (typeof fetch === 'function' ? demoGet('catalogue.json', true) : Promise.reject(new Error('no fetch')))
+    .then(c => { demoCat = demoCheck(c); demoWarm(demoCat).catch(() => {}); return demoCat; }, e => { demoLoading = null; throw e; }));
+  // The banner leads to sign-up; with an account on this device (signed in, or a session kept for the remembered
+  // backend), back to that account's notebooks.
+  const demoKnown = () => !!(user || (backend && storedUser()));
+  const demoBanner = () => `<a class="demo-banner" id="demo-signup" href="#">${demoKnown() ? 'Demo · read only · Back to my notebooks' : 'Demo · read only · Create an account'}</a>`;
+  demoEl.addEventListener('click', ev => {
+    if (!(ev.target && ev.target.closest && ev.target.closest('#demo-signup'))) return;
+    ev.preventDefault();
+    if (!demoKnown()) { setMode('up'); signupBackendChosen = false; }
+    location.hash = '';
+  });
+  const demoThumb = (base, rel) => rel ? demoFile(base ? `${base}/${rel}` : rel) : '';
+  const demoCard = (e, extra = {}) => card(e, `#${DEMO}/${e.slug}`, demoThumb(e.slug, e.thumbnail), {...extra, meta: (extra.meta || [{txt: e.group}, {txt: e.author}]).filter(m => m.txt)});
+  const demoNb = t => ({...(libById.get(t.id) || {}), id: t.id, title: t.title});
+  const demoHome = c => {
+    const out = [`<div class="wrap"><p class="eyebrow">Read only</p><h1>${esc(c.title)}</h1>${c.intro ? `<p class="lead">${esc(c.intro)}</p>` : ''}</div>`];
+    if (c.sessions.length) out.push(`<section><h2>Sessions <span class="n">${c.sessions.length}</span></h2><div class="grid">${c.sessions.map(s => card({title: s.title, summary: s.why}, `#${DEMO}/session/${s.slug}`, demoThumb('', s.thumbnail), {big: true, fmt: s.format, meta: [{txt: plural(s.items.length, 'exercise')}, {txt: s.author}].filter(m => m.txt)})).join('')}</div></section>`);
+    const nbs = [...c.notebooks, ...[...new Set(c.sheets.map(e => e.notebook))].filter(id => !c.notebooks.some(t => t.id === id)).map(id => ({id, title: (libById.get(id) || {}).title || 'Notebook'}))];
+    for (const t of nbs) {
+      const list = c.sheets.filter(e => e.notebook === t.id); if (!list.length) continue;
+      const nb = demoNb(t);
+      out.push(`<section><h2 class="demo-nb" style="--t:${colorOf(nb)}">${nbIcon(nb)}${esc(t.title)} <span class="n">${list.length}</span></h2><div class="grid">${list.map(e => demoCard(e)).join('')}</div></section>`);
+    }
+    return `<div class="wide">${out.join('')}</div>`;
+  };
+  const demoSession = s => {
+    const items = s.items.map((it, i) => ({n: i + 1, dose: it.dose, sheet: demoCat.bySlug.get(it.slug)})), img = demoThumb('', s.thumbnail);
+    return `<div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
+      ${s.format ? `<div class="kit"><span><b class="kit-k">Format</b> ${esc(s.format)}</span></div>` : ''}${s.why ? `<h2>Why</h2><p>${esc(s.why)}</p>` : ''}</div>
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2><div class="grid">${items.map(it => demoCard(it.sheet, {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: it.sheet.author}]})).join('')}</div></div>`;
+  };
+  // The way back: to the session a sheet was opened from, else to the demo's first page.
+  const demoBack = sheet => {
+    const s = sheet && demoSeat ? demoCat.sesBySlug.get(demoSeat) : null;
+    return s && s.items.some(it => it.slug === sheet) ? `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
+  };
+  const showDemo = async tok => {
+    const gen = ++demoGen, page = (back, body) => { demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body; };
+    // Drawn again on the same page (the account's catalogue arrived): only the banner may change, the reader keeps
+    // the scroll.
+    if (demoShown === tok && !demoEl.hidden && demoCat) { const b = $('demo-signup'); if (b) b.outerHTML = demoBanner(); return; }
+    demoShown = tok; show('demo'); document.title = 'Reelbook demo';
+    if (!demoCat) {
+      page('', '<p class="loading">Loading the demo…</p>');
+      try { await demoLoad(); } catch { if (gen === demoGen) page('', '<div class="wrap"><p class="empty">The demo could not be loaded. Check the connection, then reload the page.</p></div>'); return; }
+      if (gen !== demoGen) return;
+    }
+    const rest = tok.slice(DEMO.length + 1), ses = rest.startsWith('session/') ? demoCat.sesBySlug.get(rest.slice(8)) : null;
+    if (ses) { demoSeat = ses.slug; page(demoBack(null), demoSession(ses)); document.title = ses.title; return; }
+    const e = demoCat.bySlug.get(rest);
+    if (!e) { demoSeat = null; page('', demoHome(demoCat)); return; }
+    page(demoBack(rest), '<p class="loading">Loading the sheet…</p>'); document.title = e.title;
+    let html = null; try { html = typeof DOMParser === 'function' ? demoRender(rest, await demoSource(rest)) : null; } catch {}
+    if (gen !== demoGen) return;
+    page(demoBack(rest), html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html);
+  };
+
   // ---------- routing ----------
   const route = () => {
+    // L27: the demo, signed in or not; leaving it with a backend remembered starts that backend (boot skipped it).
+    const demoAt = demoTok();
+    if (demoAt && !demoOwned(demoAt)) {
+      if (user) flushNotes();
+      if (edit) { if (editDirty() && !discardOk()) { undoLeave(); return; } edit = null; } // as leaving any session edit
+      showDemo(demoAt); return;
+    }
+    demoShown = null;
+    if (!demoEl.hidden && !user && mode === 'in') setMode('in'); // back from the demo: a fresh sign-in screen
+    if (backend && !sb) { boot(); return; }
     if (!user) {
       if (mode === 'up' && !signupBackendChosen) { show('setup'); return; }
       $('a-backend').textContent = backendLabel();
@@ -2783,6 +3098,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
     const from = currentTheme === nb && $('home').hidden === false ? groupOf(themeById.get(nb)) : null;
     shown = null; seat = null; chipPinned = ''; currentTheme = themeById.has(nb) ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
+    facetSel = readFacetHash(); // L23: #search?zone=…&gear=… (any other page: none chosen)
     view.innerHTML = ''; renderHome(); show('home');
     if (!settleScroll() && from && !groupOf(themeById.get(nb)) && groupIds.has(from)) document.getElementById(groupIds.get(from)).scrollIntoView({block: 'start'});
   };
@@ -2806,7 +3122,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       booted = identity; peeked = false;
       resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; ended = null; signed.clear(); cache.clear(); loadError = '';
     }
-    if (!backend) { route(); return; }
+    // L27: a visitor's demo creates no Supabase client; a device with an account kept starts it as usual (its own
+    // sheet « demo » may live at #demo, and the banner leads back to it).
+    if (!backend || (demoTok() && !storedUser())) { route(); return; }
     if (!sb) {
       // keepalive on DELETE: a queue removal sent as the page goes away (pagehide) outlives the page.
       const keepaliveFetch = (input, init) => fetch(input, init && init.method === 'DELETE' ? {...init, keepalive: true} : init);
@@ -2843,6 +3161,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     }
     route();
   };
+  // L27: ?demo opens the demo too (a link to share); the address keeps only #demo.
+  if (!location.hash && /(?:^|[?&])demo(?:[=&]|$)/.test(String(location.search || '').slice(1))) {
+    try { history.replaceState(history.state, '', location.pathname + '#' + DEMO); } catch { location.hash = '#' + DEMO; }
+  }
   boot();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

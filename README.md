@@ -134,17 +134,18 @@ Each session page also has its own « My notes ».
 
 ## Data model
 
-Five tables and one private storage bucket, all locked to the signed-in user by row level
+Six tables and one private storage bucket, all locked to the signed-in user by row level
 security (`supabase/schema.sql`):
 
 | Table / bucket | Holds |
 | --- | --- |
 | `requests` | pasted links: `url`, `status` (queued → processing → done / error), `theme` hint, `slug` |
-| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html`, `search_text` (the sheet's visible text, at most 4 000 characters, that search reads) (`kind` and `exercises` are left from the old one-page sessions and only serve their migration, below) |
+| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html`, `search_text` (the sheet's visible text, at most 4 000 characters, that search reads), `tags` (`{"zone": [], "gear": [], "minutes": n, "type": ""}`, the facets of the search view, values from `facets` in `app/config.js`) (`kind` and `exercises` are left from the old one-page sessions and only serve their migration, below) |
 | `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `origin` (`video` or `user`), `thumbnail`, `items` (ordered `{slug, dose}`, each slug a sheet) |
 | `notes` | your personal note per sheet (key: its slug) and per session (key: `session/<slug>`) |
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
 | `practice_log` | one row each time you tap « Done today » on a sheet or a session: `slug` (as for notes), `done_on`, `text` (« 12 kg, 3x10 ») |
+| `account_quotas` | limits of one account, read-only for it (see « Limits on a shared backend » below) |
 | `sheets/<user_id>/<slug>/img/*` | the photos |
 
 The app renders `sheets.html` inside its own styles, builds session pages from their `sessions`
@@ -158,10 +159,37 @@ Search in the text of the sheets came after that: re-run `supabase/schema.sql` t
 `python3 tools/rb.py backfill-search` (add `--dry-run` first to see the list; it writes only sheets whose
 `search_text` is empty, and new sheets get it from `rb.py publish`). Until then search reads titles,
 summaries, groups, notebooks, authors and your notes, as before.
+The facet chips of the search view (Zone, Gear, Time, Type) came next: re-run `supabase/schema.sql` to add the
+`sheets.tags` column, then tag the sheets you already have once with `python3 tools/rb.py backfill-tags`
+(`--dry-run` first; it derives the tags from each sheet's group, title, text and duration, without Claude, and
+writes only sheets that have none). New sheets get their tags from the skill through `rb.py publish`. Until then
+the app searches as before, without the chips.
 A backend that still holds old one-page sessions (`sheets` rows with `kind = 'session'`, before
 sessions were made of sheets): the app hides them and Settings counts them. Run
 `python3 tools/rb.py requeue-sessions` (add `--dry-run` first to see the list), then `/reelbook`:
 each video is rebuilt as exercise sheets plus a session, and its old page is deleted.
+
+### Limits on a shared backend
+
+`supabase/schema.sql` limits what each account may add, so that one account cannot fill a backend shared
+by several people (the hosted one): **10 video links a day** (counted from midnight UTC), **300 sheets**
+and **200 MB of photos**. The database enforces them, whatever the client; they only refuse what would
+add (a new link, a new sheet, a new or changed photo): nothing stored is removed, and republishing a sheet you
+already have works (`rb.py publish` does not send again the photos the backend already holds). Settings shows « Usage: 4/10 links today · 120/300 sheets · 80/200 MB »;
+`rb.py publish` says which limit refused it. A backend set up before the limits has none until
+`supabase/schema.sql` is re-run.
+
+**On your own Supabase**, lift them for your account with one insert in the SQL editor (your user id is
+under Authentication › Users, or `select id, email from auth.users;`):
+
+```sql
+insert into public.account_quotas (user_id, max_requests_per_day, max_sheets, max_storage_mb, note)
+values ('<your user id>', 1000, 100000, 100000, 'owner')
+on conflict (user_id) do update set max_requests_per_day = excluded.max_requests_per_day,
+  max_sheets = excluded.max_sheets, max_storage_mb = excluded.max_storage_mb, note = excluded.note;
+```
+
+A null column keeps the default; one row per account you want to lift.
 
 ## Repository layout
 
@@ -193,8 +221,8 @@ shell; sheets and photos need the network.
   the tab to the front; there is no way around it today.
 - **Frames are theirs.** Sheets reuse frames from someone else's video. Keep them for personal
   use, credit the author (the footer does), and do not publish a backend full of them.
-- **Quotas.** Free Supabase: 1 GB of storage, roughly 400 sheets. The hosted backend will set a
-  per-account limit.
+- **Quotas.** Free Supabase: 1 GB of storage, roughly 400 sheets. Each account is limited by the
+  schema (« Limits on a shared backend », above); lift your own on your own project.
 
 ## Platforms
 
