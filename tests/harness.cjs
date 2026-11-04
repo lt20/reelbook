@@ -38,6 +38,8 @@ const sheetDocument = {
 // client.selects journals every projection asked, [table, columns], in order.
 // `hold`: (table, ops) -> a promise a read or write waits for before answering (still on its way), or null; a
 // promise resolving to {data, error} answers that instead of the table's rows at that time (a read made earlier).
+// `fetch`: the window's fetch (none by default: the app reads its backend through the fake client only), e.g. the
+// demo's static files (L27).
 // IndexedDB as the app uses it (open, one 'kv' store, get / put; a ranged delete is not supported and fails).
 const fakeIndexedDB = store => ({
   open() {
@@ -53,7 +55,7 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = []} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -99,6 +101,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       title: 'Reelbook'
     },
     navigator: nav,
+    ...(fetch ? {fetch} : {}),
     ...(dom ? {DOMParser: SheetParser} : {}),
     supabase: {
       createClient(url, key, options) {
