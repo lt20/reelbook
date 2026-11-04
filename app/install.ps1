@@ -37,7 +37,9 @@ function Read-ReelbookConfig([string]$Source) {
     if ($c -is [byte[]]) { $c = [Text.Encoding]::UTF8.GetString($c) }
     return [string]$c
   }
-  return Get-Content -Raw -LiteralPath ($Source -replace '^file://', '')
+  # a file:// url becomes a local path (file:///C:/Users/me/config.js -> C:\Users\me\config.js); a path stays as is
+  if ($Source -match '^file:') { $Source = ([Uri]$Source).LocalPath }
+  return Get-Content -Raw -LiteralPath $Source
 }
 
 # The arguments given (REELBOOK_URL and REELBOOK_KEY), else the hosted backend of config.js; throws when neither.

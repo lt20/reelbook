@@ -153,6 +153,9 @@ test('install.ps1 takes the hosted backend from config.js as text when REELBOOK_
   // the downloaded text goes to the parser only: never to Invoke-Expression / iex / a script block
   const code = ps1.split('\n').filter(l => !l.trim().startsWith('#')).join('\n');
   assert.doesNotMatch(code, /Invoke-Expression|\biex\b|\[scriptblock\]|ScriptBlock\]::Create|&\s*\(\s*\$text/i);
+  // a file:// config url is turned into a local path by [Uri] (a Windows drive letter included), not by cutting text
+  assert.match(ps1, /\(\[Uri\]\$Source\)\.LocalPath/);
+  assert.doesNotMatch(ps1, /-replace '\^file:\/\/'/);
   // same url and key formats as install.sh
   const shText = fs.readFileSync(sh, 'utf8');
   const shUrl = shText.match(/valid_url\(\) \{ printf '%s' "\$1" \| grep -Eq '([^']+)'/)[1];
