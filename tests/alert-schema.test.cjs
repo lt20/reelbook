@@ -70,7 +70,7 @@ test('the message: counts only, never an email nor a first name', () => {
   assert.match(m, /^create or replace function public\.beta_alert_message\(\) returns jsonb language plpgsql stable security definer set search_path = ''/);
   assert.doesNotMatch(m, /email|first_name|raw_user_meta_data|phone|user_id|\bu\.id\b|\bname\b(?!\s*=)/i, 'no personal column read');
   const reads = [...m.matchAll(/from (\w+\.\w+)/g)].map(x => x[1]).sort();
-  assert.deepEqual([...new Set(reads)], ['public.beta_daily', 'public.beta_settings', 'public.beta_waitlist', 'storage.objects']);
+  assert.deepEqual([...new Set(reads)], ['public.beta_daily', 'public.beta_settings', 'public.beta_waitlist', 'public.requests', 'storage.objects']);
   assert.match(m, /select count\(\*\)::int into listed from public\.beta_waitlist;/, 'the waiting list as a number');
   assert.match(m, /coalesce\(sum\(d\.waitlist\), 0\)::int into videos_today, videos_yesterday, listed_new from public\.beta_daily d where d\.day >= today - 1;/,
     'new entries: beta_daily.waitlist, yesterday and today');
@@ -85,7 +85,10 @@ test('the message: every figure of the spec, the 70 % tag and the 90 % priority'
   }
   assert.match(m, /ratio := greatest\(\(s\.seats_offset \+ accounts\)::numeric \/ nullif\(s\.seats_total, 0\), greatest\(signups_today, signups_yesterday\)::numeric \/ nullif\(s\.signups_per_day, 0\), photos::numeric \/ nullif\(s\.max_photos_gb::bigint \* 1073741824, 0\), greatest\(videos_today, videos_yesterday\)::numeric \/ nullif\(s\.max_videos_per_day, 0\)\);/);
   assert.match(m, /'tags', case when ratio >= 0\.7 then '\["70%"\]'::jsonb else '\[\]'::jsonb end, 'priority', case when ratio >= 0\.9 then 4 else 3 end\)/);
-  assert.match(m, /if not found then line := format\('beta off \(no settings row\)/, 'without the settings row: counts, no limits');
+  assert.match(m, /if not found then .*? line := format\('beta off \(no settings row\) · accounts %s · sign-ups today %s \(yesterday %s\) · photos %s GB · videos today %s \(yesterday %s\) · waiting list %s \(\+%s since yesterday\)'/,
+    'without the settings row: every count, no limits');
+  assert.match(m, /select \(count\(\*\) filter \(where r\.created_at >= midnight\)\)::int, \(count\(\*\) filter \(where r\.created_at < midnight\)\)::int into videos_today, videos_yesterday from public\.requests r where r\.created_at >= midnight - interval '1 day';/,
+    'videos without the row: beta_daily only counts once the row exists');
 });
 
 test('both functions closed to clients; nothing dropped, nothing deleted, no table added', () => {

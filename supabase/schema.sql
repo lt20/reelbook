@@ -712,7 +712,7 @@ grant execute on function public.join_waitlist(text, text, text, boolean) to ano
 
 -- The day's line: { title, message, tags, priority } for ntfy. Sign-ups and videos: today so far (UTC) and all of
 -- yesterday (the run is early in the UTC day); waiting list: its size and the rows added yesterday and today
--- (beta_daily.waitlist). Without the settings row: the counts, no limits, no tag.
+-- (beta_daily.waitlist). Without the settings row: the counts, no limits, no tag (videos: the requests rows).
 create or replace function public.beta_alert_message() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare
@@ -733,8 +733,11 @@ begin
   select count(*)::int into listed from public.beta_waitlist;
   select * into s from public.beta_settings b where b.id;
   if not found then
-    line := format('beta off (no settings row) · accounts %s · sign-ups today %s (yesterday %s) · photos %s GB · waiting list %s (+%s since yesterday)',
-      accounts, signups_today, signups_yesterday, round(photos / 1073741824.0, 1), listed, listed_new);
+    -- beta_daily counts links only once the row exists: here, the links still there (a deleted one is not counted)
+    select (count(*) filter (where r.created_at >= midnight))::int, (count(*) filter (where r.created_at < midnight))::int
+      into videos_today, videos_yesterday from public.requests r where r.created_at >= midnight - interval '1 day';
+    line := format('beta off (no settings row) · accounts %s · sign-ups today %s (yesterday %s) · photos %s GB · videos today %s (yesterday %s) · waiting list %s (+%s since yesterday)',
+      accounts, signups_today, signups_yesterday, round(photos / 1073741824.0, 1), videos_today, videos_yesterday, listed, listed_new);
     return jsonb_build_object('title', 'Reelbook beta', 'message', line, 'tags', '[]'::jsonb, 'priority', 3);
   end if;
   -- the highest share of a limit (a limit of 0 is a closure, not a share: left out)
