@@ -71,6 +71,23 @@ test('sign-up saves its chosen backend after account creation', async () => {
   assert.equal(page.element('a-info').hidden, false);
 });
 
+test('L25: sign-up with my own Supabase keeps the project only once the account exists', async () => {
+  const page = await app();
+  await page.fire('intro-signup');
+  await page.fire('a-own');
+  page.element('login-own-url').value = ownUrl;
+  page.element('login-own-key').value = ownKey;
+  await page.fire('login-own-form', 'submit');
+  assert.equal(page.clients.at(-1).url, ownUrl);
+  assert.equal(page.element('auth-title').textContent, 'Create an account');
+  assert.equal(page.storage.get('rb.backend'), undefined);
+  page.element('a-email').value = 'new@example.test';
+  page.element('a-pass').value = 'example-password';
+  await page.fire('auth-form', 'submit');
+  assert.equal(page.clients.at(-1).calls[0][0], 'up');
+  assert.deepEqual(JSON.parse(page.storage.get('rb.backend')), {mode: 'own', url: ownUrl, key: ownKey});
+});
+
 const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'existing-user', email: 'user@example.test'}}};
 const reel = 'https://www.instagram.com/reel/DeGBCfjsbTt/';
 
