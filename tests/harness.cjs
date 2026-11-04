@@ -55,7 +55,7 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -74,7 +74,8 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
   };
   const context = {
     URL, console,
-    setTimeout: fn => { if (tables) queueMicrotask(fn); },
+    // timers run as microtasks; one of timerCap ms or more never fires (a test that waits for the work, not the time)
+    setTimeout: (fn, ms) => { if (tables && !(ms >= timerCap)) queueMicrotask(fn); },
     location: {
       href: 'https://app.example.test/reelbook/', origin: 'https://app.example.test', pathname: '/reelbook/',
       get hash() { return currentHash; },
@@ -83,7 +84,9 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
-      removeItem: key => storage.delete(key)
+      removeItem: key => storage.delete(key),
+      get length() { return storage.size; },
+      key: i => [...storage.keys()][i] ?? null
     },
     window: {
       REELBOOK: {
@@ -92,7 +95,8 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
         repo: 'https://github.com/lt20/reelbook'
       },
       scrollTo() {}, addEventListener(type, listener) { winListeners[type] = listener; },
-      ...(idb ? {indexedDB: fakeIndexedDB(idb)} : {})
+      ...(idb ? {indexedDB: fakeIndexedDB(idb)} : {}),
+      ...(confirm ? {confirm} : {})
     },
     document: {
       getElementById: element,
