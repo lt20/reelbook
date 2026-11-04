@@ -301,6 +301,10 @@ languages: translate the English column).
   `supabase/schema.sql` on their project (`docs/own-supabase.md`); say so and flag the request
   with `rb.py error`. Reprocessing a video rewrites its session: changes made to it in the app
   (order, doses, removed items) are lost.
+- Add `--request <id>` to both. « quota reached on this backend: … »: the account hit a limit of a
+  shared backend (sheets, photos); `rb.py` has already put the request in error with that message.
+  Tell the user which limit and what it says to do, then stop the run: the next requests would hit
+  the same limit.
 - Check in the app (Chrome): open `<app url>#<slug>` (for a session, `<app url>#session/<slug>`, then
   each exercise sheet from it: `#session/<slug>/1`, then « Next »).
 - `python3 tools/rb.py done <id> --slug <slug>` (a session: its slug). On failure:

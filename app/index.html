@@ -742,6 +742,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <h2>Account</h2>
     <p id="s-user"></p>
     <p class="hint">Backend: <span id="s-backend"></span></p>
+    <!-- L29: what the account uses against its limits (my_quota); hidden on a backend without quotas -->
+    <p class="hint" id="s-usage" hidden></p>
     <p class="hint" id="s-sessions" hidden>Re-run <code>supabase/schema.sql</code> to enable sessions.</p>
     <p class="hint" id="s-v1" hidden></p>
     <div class="actions"><button class="btn ghost" type="button" id="s-signout">Sign out</button><button class="btn ghost" type="button" id="s-reset">Change backend</button></div>
@@ -1729,6 +1731,13 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(); });
   // iOS Safari applies :active (the pressed state) only once the page listens to touchstart.
   document.addEventListener('touchstart', () => {}, {passive: true});
+  // L29: a backend with quotas refuses a link past the account's limit (« quota: 10 links per day », SQL P0001): said
+  // in plain words instead of the generic error. null for any other error.
+  const quotaText = e => {
+    const m = /^quota: (.+)$/.exec(String((e && e.message) || '').trim()); if (!m) return null;
+    return /per day$/.test(m[1]) ? `Limit reached: ${m[1]} on this backend. You can add more tomorrow (the count starts again at midnight UTC).`
+      : `Limit reached: ${m[1]} on this backend.`;
+  };
   const queueLink = async () => {
     const err = $('f-err'); err.hidden = true;
     const fail = msg => { err.textContent = msg; err.hidden = false; return false; };
@@ -1741,7 +1750,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       discardDraft(); openForm(false); refreshQueue();
       const f = $('flash'); f.textContent = currentTheme ? 'Queued. It shows in the queue on the home page. The sheet will be built on your next Claude Code run.' : 'Queued. The sheet will be built on your next Claude Code run.'; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000);
       return true;
-    } catch { return fail('Could not save it right now. Try again in a moment.'); }
+    } catch (e) { return fail(quotaText(e) || 'Could not save it right now. Try again in a moment.'); }
     finally { $('f-submit').disabled = false; }
   };
   sheetForm.addEventListener('submit', ev => { ev.preventDefault(); queueLink(); });
@@ -2140,7 +2149,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
         // The dialog may hold a newer report by now (Cancel, reopened): only this one's own sheet is marked sent.
         ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; if ($('report-note') === ta) { sheetSaved(rdlg); $('report-cancel').textContent = 'Close'; }
         refreshQueue();
-      } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
+      } catch (e) { st.className = 'status err'; st.textContent = quotaText(e) || 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
     }));
     openSheet(rdlg);
   };
@@ -2762,7 +2771,20 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const renderWelcome = () => { $('w-install').innerHTML = installBlock(); };
   $('welcome').addEventListener('click', copyHandler($('welcome')));
   $('w-done').addEventListener('click', () => { ls.set(welcomeKey(), '1'); location.hash = ''; });
+  // L29: « Usage: 4/10 links today · 120/300 sheets · 80/200 MB », from my_quota(); hidden when the backend has no
+  // quotas (no such function), on any error, and for an answer meant for an account signed out since.
+  const mbOf = b => { const mb = (Number(b) || 0) / 1048576; return mb > 0 && mb < 10 ? String(Math.round(mb * 10) / 10) : String(Math.round(mb)); };
+  const renderUsage = async () => {
+    const el = $('s-usage'), uid = user && user.id; el.hidden = true;
+    if (!sb || typeof sb.rpc !== 'function' || !uid) return;
+    let r; try { r = await sb.rpc('my_quota'); } catch { return; }
+    const q = r && !r.error && r.data;
+    if (!q || typeof q !== 'object' || !user || user.id !== uid) return;
+    el.textContent = `Usage: ${q.requests_today}/${q.max_requests_per_day} links today · ${q.sheets}/${q.max_sheets} sheets · ${mbOf(q.storage_bytes)}/${q.max_storage_mb} MB`;
+    el.hidden = false;
+  };
   const renderSettings = () => {
+    renderUsage();
     $('s-sessions').hidden = sessionsOk;
     // Old one-page sessions left on an older backend: hidden by the app, rebuilt as v2 by requeue-sessions + /reelbook.
     $('s-v1').hidden = !v1Hidden;
