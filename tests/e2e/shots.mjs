@@ -2,6 +2,10 @@
 // shots.mjs — screenshots of the app in an iPhone 14 viewport, one fresh browser context per step.
 //
 //   node tests/e2e/shots.mjs --base http://127.0.0.1:8770/ --out <dir> [--dark] [--steps <file.json>] [--only <name>]
+//                            [--browser webkit|chromium]
+//
+// Browser: WebKit by default (Safari's engine, as on the iPhone), --browser chromium for a cross-check.
+// A browser not downloaded yet: tools/e2e-setup.sh installs both.
 //
 // Steps (default tests/e2e/steps/smoke.json): a JSON array of
 //   {name, hash?, query?, viewport?, actions?: [...], full?, settle?, allow?: ["<regex>", …]}
@@ -26,24 +30,40 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-function parseArgs(argv) {
-  const o = { dark: false, steps: join(here, 'steps', 'smoke.json'), only: '' };
+// WebKit is Safari's engine, the one the app meets on an iPhone; Chromium stays for a quick cross-check.
+export const BROWSERS = ['webkit', 'chromium'];
+
+export function parseArgs(argv) {
+  const o = { dark: false, steps: join(here, 'steps', 'smoke.json'), only: '', browser: 'webkit' };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dark') o.dark = true;
-    else if (['--base', '--out', '--steps', '--only'].includes(a)) o[a.slice(2)] = argv[++i];
+    else if (['--base', '--out', '--steps', '--only', '--browser'].includes(a)) o[a.slice(2)] = argv[++i];
     else throw new Error(`unknown argument: ${a}`);
   }
-  if (!o.base || !o.out) throw new Error('usage: shots.mjs --base <url> --out <dir> [--dark] [--steps <file.json>] [--only <name>]');
+  if (!o.base || !o.out) throw new Error('usage: shots.mjs --base <url> --out <dir> [--dark] [--steps <file.json>] [--only <name>] [--browser webkit|chromium]');
+  if (!BROWSERS.includes(o.browser)) throw new Error(`--browser: ${BROWSERS.join(' or ')}, not ${JSON.stringify(o.browser)}`);
   return o;
 }
 
-function loadPlaywright() {
+export function loadPlaywright() {
   const dir = process.env.REELBOOK_PLAYWRIGHT || join(process.env.REELBOOK_E2E_DIR || join(homedir(), '.cache', 'reelbook-e2e'), 'node_modules', 'playwright');
   try {
     return createRequire(import.meta.url)(dir);
   } catch {
     throw new Error(`Playwright not found in ${dir}: run tools/e2e-setup.sh (or set REELBOOK_PLAYWRIGHT)`);
+  }
+}
+
+// Launches WebKit or Chromium; a browser Playwright has not downloaded yet gets a message that says how to fix it.
+export async function launchBrowser(pw, name) {
+  try {
+    return await pw[name].launch();
+  } catch (e) {
+    if (/Executable doesn't exist|browserType\.launch: .*(install|not found)/i.test(String(e.message))) {
+      throw new Error(`Playwright's ${name} is not installed on this machine: run tools/e2e-setup.sh (installs WebKit and Chromium)${name === 'webkit' ? ', or pass --browser chromium' : ''}`);
+    }
+    throw e;
   }
 }
 
@@ -88,11 +108,12 @@ async function main() {
     if (names.has(s.name)) throw new Error(`duplicate step name: ${s.name}`);
     names.add(s.name);
   }
-  const { chromium, devices } = loadPlaywright();
+  const pw = loadPlaywright();
+  const { devices } = pw;
+  const browser = await launchBrowser(pw, opts.browser);
   const out = resolve(opts.out);
   mkdirSync(out, { recursive: true });
-  const browser = await chromium.launch();
-  const report = { base: opts.base, dark: opts.dark, steps: [], ok: true };
+  const report = { base: opts.base, browser: opts.browser, dark: opts.dark, steps: [], ok: true };
   try {
     for (const step of steps) {
       const url = stepUrl(opts.base, step);
@@ -133,7 +154,7 @@ async function main() {
     await browser.close();
     writeFileSync(join(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   }
-  console.log(`${report.steps.filter((s) => s.ok).length}/${report.steps.length} steps ok (${opts.dark ? 'dark' : 'light'}) → ${out}`);
+  console.log(`${report.steps.filter((s) => s.ok).length}/${report.steps.length} steps ok (${opts.browser}, ${opts.dark ? 'dark' : 'light'}) → ${out}`);
   return report.ok && report.steps.length > 0 ? 0 : 1;
 }
 
