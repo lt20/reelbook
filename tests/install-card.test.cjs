@@ -75,6 +75,21 @@ test('Chromium: a refused prompt() keeps the card and points to the browser menu
   assert.match(card.innerHTML, /id="install-go"/);
 });
 
+test('Not now hides the card for this page even when localStorage refuses the write (Codex pass 3)', async () => {
+  const ios = {userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'};
+  const page = await open({nav: ios});
+  assert.equal(page.element('install-card').hidden, false);
+  page.storage.set = () => { throw new Error('QuotaExceededError'); }; // Safari with storage off / full
+  await page.fire('install-not-now');
+  assert.equal(page.element('install-card').hidden, true);
+  assert.equal(page.storage.get('rb.install.dismissed'), undefined, 'nothing could be stored');
+  page.go('#strength');
+  await settle();
+  page.go('#home');
+  await settle();
+  assert.equal(page.element('install-card').hidden, true, 'still hidden back on the home page');
+});
+
 test('A notebook page does not show the invitation (Codex pass 2)', async () => {
   const ios = {userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'};
   const home = await open({nav: ios});

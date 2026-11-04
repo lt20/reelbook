@@ -1395,7 +1395,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const INSTALL_KEY = 'rb.install.dismissed', INSTALL_SNOOZE = 30 * 24 * 60 * 60 * 1000;
   const SHARE_GLYPH = '<svg class="ic-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M8.5 10H6.5a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5h-2"/></svg>';
   // installFailed: prompt() was refused (the event is spent): the card says to use the browser menu instead
-  let installPrompt = null, installFailed = false, installShown = '';
+  // installDismissed: « Not now » tapped on this page (holds even when localStorage refuses the write)
+  let installPrompt = null, installFailed = false, installDismissed = false, installShown = '';
   const runsInstalled = () => navigator.standalone === true || !!(typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
   // iPhone / iPod / iPad (iPadOS asks for the desktop site: a Mac with a touch screen), Safari only (not Chrome, Firefox, Edge, Opera on iOS)
   const iosSafari = () => {
@@ -1405,7 +1406,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const installSnoozed = () => { const t = Date.parse(ls.get(INSTALL_KEY) || ''); return Number.isFinite(t) && Date.now() - t < INSTALL_SNOOZE; };
   const renderInstall = () => {
     const card = $('install-card'), how = installPrompt ? 'prompt' : installFailed ? 'failed' : iosSafari() ? 'ios' : '';
-    const on = !!how && !!user && !currentTheme && !loading && !loadError && sheets.length > 0 && !runsInstalled() && !installSnoozed();
+    const on = !!how && !!user && !currentTheme && !loading && !loadError && sheets.length > 0 && !runsInstalled() && !installDismissed && !installSnoozed();
     if (!on) { card.hidden = true; card.innerHTML = ''; installShown = ''; return; }
     if (installShown !== how) {
       installShown = how;
@@ -1413,7 +1414,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       card.innerHTML = how === 'ios' ? `${SHARE_GLYPH}<p>Install Reelbook: tap Share, then Add to Home Screen</p><div class="acts">${notNow}</div>`
         : how === 'failed' ? `<p role="status">The install window did not open. Install Reelbook from your browser menu instead.</p><div class="acts">${notNow}</div>`
         : `<p>Install Reelbook on this device: it opens full screen, like an app.</p><div class="acts">${notNow}<button class="btn sm" type="button" id="install-go">Install</button></div>`;
-      $('install-not-now').addEventListener('click', () => { ls.set(INSTALL_KEY, new Date().toISOString()); renderInstall(); });
+      $('install-not-now').addEventListener('click', () => { installDismissed = true; ls.set(INSTALL_KEY, new Date().toISOString()); renderInstall(); });
       if (how === 'prompt') $('install-go').addEventListener('click', async () => {
         const p = installPrompt; installPrompt = null; // a prompt event is used once
         try { if (p) { await p.prompt(); await p.userChoice; } } catch (e) { console.warn('Install prompt refused:', (e && e.message) || e); installFailed = true; }
