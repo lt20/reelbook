@@ -89,6 +89,8 @@ plays. A video left « in progress » by a run that died goes back to the queue 
   it allowed (System Settings → General → Login Items).
 - Log in `~/Library/Logs/reelbook-nightly.log`. Set `REELBOOK_NOTIFY_URL` to an
   [ntfy](https://ntfy.sh) topic before installing to get a phone notice after each run.
+- Signing out of the app no longer signs the computer out. If rb.py or the night notice says
+  « signed out », run `python3 tools/rb.py login` again.
 
 ## Notebooks
 
