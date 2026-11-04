@@ -1846,11 +1846,16 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const uid = user ? user.id : '';
     if (uid) {
       flushNotes();
+      // no typing meanwhile: a text typed now would make a draft after the clean-up (given back on No)
+      const ta = notesNow ? $('n-text') : null, ro = ta ? ta.readOnly : false; if (ta) ta.readOnly = true;
       const runs = [...noteQueues].filter(([k]) => k.startsWith(uid + '|')).map(([, run]) => run);
       if (runs.length) await Promise.race([Promise.all(runs), new Promise(ok => setTimeout(ok, 5000))]);
       const left = draftKeysOf(uid), n = left.length;
-      if (n && typeof window.confirm === 'function' && !window.confirm(`${n === 1 ? 'A note is' : n + ' notes are'} not saved yet. Sign out and delete ${n === 1 ? 'it' : 'them'} from this device?`)) return false;
+      if (n && typeof window.confirm === 'function' && !window.confirm(`${n === 1 ? 'A note is' : n + ' notes are'} not saved yet. Sign out and delete ${n === 1 ? 'it' : 'them'} from this device?`)) { if (ta) ta.readOnly = ro; return false; }
       left.forEach(ls.del);
+      await sb.auth.signOut();
+      draftKeysOf(uid).forEach(ls.del); // one made while the sign-out was on its way
+      return true;
     }
     await sb.auth.signOut();
     return true;

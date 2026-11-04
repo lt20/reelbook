@@ -145,3 +145,23 @@ test('#30: a note write stuck past 5 s does not hold up sign-out; the draft goes
   release(); await settle(); // the write lands later: nothing comes back on the device
   assert.equal(page.storage.has('rb.draft.u1.m1'), false);
 });
+
+test('#30: the note is read-only during sign-out, and a draft made while it is on its way is cleared too', async () => {
+  const page = await openNote();
+  const ta = page.element('n-text');
+  let during = null;
+  page.clients.at(-1).auth.signOut = async () => {
+    during = ta.readOnly;
+    ta.value = 'Typed meanwhile'; await page.fire('n-text', 'input'); // as if the input slipped through
+    return {error: null};
+  };
+  await page.fire('s-signout'); await settle();
+  assert.equal(during, true);
+  assert.equal(page.storage.has('rb.draft.u1.m1'), false);
+});
+
+test('#30: No at the sign-out question gives the note field back', async () => {
+  const page = await openNote({stored: {'rb.draft.u1.m2': 'typed offline'}, confirm: () => false});
+  await page.fire('s-signout'); await settle();
+  assert.equal(page.element('n-text').readOnly, false);
+});
