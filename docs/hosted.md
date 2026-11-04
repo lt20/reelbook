@@ -10,7 +10,8 @@ It is enabled by filling `hosted.url` and `hosted.anonKey` in `app/config.js`.
   notice before any change and can export: the
   skill's `rb.py` works against any backend, and `supabase/schema.sql` recreates yours in
   minutes.
-- Quota: to be set per account (storage and number of requests per day) before opening widely.
+- Quotas per account, enforced by the database: 10 video links a day, 300 sheets, 200 MB of
+  photos (README, « Limits on a shared backend »). Settings shows your usage. More on request.
 
 To move from hosted to your own project: create it, run the schema, change the backend in the
 app's Settings, sign up again, then republish your sheets with `rb.py publish` from the local
