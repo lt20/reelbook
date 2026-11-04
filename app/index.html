@@ -646,7 +646,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="addrow"><input id="f-url" type="url" inputmode="url" enterkeyhint="go" autocomplete="off" placeholder="https://…" required><button class="btn" type="submit" id="f-submit">Queue it</button></div>
     <p class="err" id="f-err" hidden></p>
     <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/reelbook</code>.</p>
-    <div class="actions"><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
+    <div class="actions"><button class="btn ghost sm" type="button" id="paste-link">Paste link</button><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
   </form>
   <dialog class="dlg act" id="pending-dlg" aria-labelledby="pd-title">
     <h2 id="pd-title">Not queued yet</h2>
@@ -1583,6 +1583,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     paintHint();
     if (sheetForm.scrollIntoView) sheetForm.scrollIntoView({block: 'center'});
     $('f-url').focus();
+    if (!$('f-url').value.trim()) prefill();
   };
   // A pasted link survives a closed tab or a killed PWA: it is kept until queued or discarded.
   const DRAFT = 'rb.draft';
@@ -1590,6 +1591,34 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const discardDraft = () => { sheetForm.reset(); ls.del(DRAFT); $('f-err').hidden = true; };
   if (ls.get(DRAFT)) { $('f-url').value = ls.get(DRAFT); sheetForm.hidden = false; btn.setAttribute('aria-expanded', 'true'); $('f-err').textContent = 'This link is not queued yet.'; $('f-err').hidden = false; }
   $('f-url').addEventListener('input', () => { const v = $('f-url').value.trim(); if (v) ls.set(DRAFT, v); else ls.del(DRAFT); });
+  // L28: « Paste link » reads the clipboard into the field; + opening an empty form tries it too, permission
+  // permitting (on iOS, the system's Paste bubble), and says nothing when it gets no supported link. Nothing is
+  // sent without a tap on Queue it. Paste link tapped within 2 s of the opening uses the read the opening started
+  // (iOS would ask twice), unless that read failed.
+  let openRead = null;
+  const readClip = () => {
+    const cb = typeof navigator !== 'undefined' && navigator ? navigator.clipboard : null;
+    try { return cb && cb.readText ? Promise.resolve(cb.readText()) : Promise.reject(new Error('no clipboard')); } catch (e) { return Promise.reject(e); }
+  };
+  // The first supported link in a text (an app's share text may wrap it in words), as written; null if none.
+  const linkIn = text => {
+    const m = /https?:\/\/[^\s<>"']+/i.exec(String(text || '')); if (!m) return null;
+    const raw = m[0].replace(/[).,;!?]+$/, '');
+    try { return okHost(new URL(raw).hostname) ? raw : null; } catch { return null; }
+  };
+  const prefill = () => {
+    const read = {at: Date.now(), failed: false, p: readClip()}; openRead = read;
+    read.p.then(text => { const link = linkIn(text); if (link && !sheetForm.hidden && !$('f-url').value.trim()) $('f-url').value = link; }, () => { read.failed = true; });
+  };
+  $('paste-link').addEventListener('click', async () => {
+    const err = $('f-err'), fail = msg => { err.textContent = msg; err.hidden = false; };
+    const read = openRead; openRead = null;
+    let text;
+    try { text = await (read && !read.failed && Date.now() - read.at < 2000 ? read.p : readClip()); } catch { return fail('Reelbook could not read the clipboard. Paste the link in the field.'); }
+    const link = linkIn(text);
+    if (!link) return fail(String(text || '').trim() ? 'The clipboard holds no Instagram, TikTok, YouTube or Facebook link.' : 'The clipboard is empty. Copy the video\'s link first.');
+    $('f-url').value = link; ls.set(DRAFT, link); err.hidden = true; $('f-url').focus();
+  });
   const dlg = $('pending-dlg');
   let afterPending = null;
   const askPending = (next, queueLabel) => {
