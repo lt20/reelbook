@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 0 500 500" width="500" height="500" role="img" aria-label="Riding away, the kite low in front">
+  <rect x="-100" width="600" height="500" fill="#e8edf4"/>
+  <path d="M-150,400 Q-125,392 -100,400 T-50,400 Q-25,392 0,400 T50,400 Q75,392 100,400 T150,400 Q175,392 200,400 T250,400 Q275,392 300,400 T350,400 Q375,392 400,400 T450,400 Q475,392 500,400 T550,400 V500 H-150 Z" fill="#9cc3dd" opacity=".9"/>
+  <path d="M80,96 Q150,36 220,96 Q150,64 80,96 Z" fill="#e0703a"/>
+  <line x1="84" y1="94" x2="274" y2="222" stroke="#7d8899" stroke-width="2"/>
+  <line x1="216" y1="94" x2="310" y2="222" stroke="#7d8899" stroke-width="2"/>
+  <line x1="270" y1="222" x2="314" y2="222" stroke="#1f2a3a" stroke-width="6" stroke-linecap="round"/>
+  <line x1="240" y1="398" x2="340" y2="394" stroke="#e0703a" stroke-width="12" stroke-linecap="round"/>
+  <polyline points="236,304 258,350 254,396" fill="none" stroke="#7d8899" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="236,304 290,348 316,392" fill="none" stroke="#1f2a3a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="222,214 236,304" fill="none" stroke="#1f2a3a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="222,214 262,236 292,222" fill="none" stroke="#7d8899" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="222,214 262,236 292,222" fill="none" stroke="#1f2a3a" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="214" cy="176" r="25" fill="#1f2a3a"/>
+</svg>
