@@ -2,3 +2,6 @@
 __pycache__/
 .DS_Store
 work/
+
+# Supabase CLI state (linked project, CLI version), local only
+supabase/.temp/
