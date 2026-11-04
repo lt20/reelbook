@@ -49,7 +49,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-11T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Pectoraux · triceps · 5 min</p>\n    <h1>Pompes inclinées</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes inclinées\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Des pompes les mains en appui sur un support surélevé : plus le support est haut, plus c'est facile.</p>\n<div class=\"kit\"><span>un banc ou une table stable</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>La pompe classique est trop dure au début ; l'inclinaison garde le même geste avec moins de charge.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>8–12</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Corps en planche.</b> Les fesses ne montent pas, le ventre ne s'affaisse pas.</li>\n  <li><b>Coudes à 45°.</b> Ni collés au corps, ni ouverts en croix.</li>\n  <li><b>Poitrine au support.</b> Descends jusqu'à frôler le bord avec le sternum.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Position haute, bras tendus sur le banc\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Mains un peu plus larges que les épaules, bras tendus.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Poitrine près du banc, coudes fléchis\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Descente</h3><p>Trois secondes, coudes à 45°, jusqu'au support.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Remonte en poussant le support loin de toi ; si le dos se creuse, prends un support plus haut.</p>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : bassin affaissé, dos creusé\" loading=\"lazy\"></figure><h3>Bassin qui tombe</h3><p>Le ventre s'affaisse vers le support : serre les fessiers, épaules, hanches et talons alignés.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0001/\">Voir la vidéo</a>. Dose lue dans les commentaires.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Pectoraux · triceps · 5 min</p>\n    <h1>Pompes inclinées</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes inclinées\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Des pompes les mains en appui sur un support surélevé : plus le support est haut, plus c'est facile.</p>\n<div class=\"kit\"><span>un banc ou une table stable</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>La pompe classique est trop dure au début ; l'inclinaison garde le même geste avec moins de charge.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>8–12</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Corps en planche.</b> Les fesses ne montent pas, le ventre ne s'affaisse pas.</li>\n  <li><b>Coudes à 45°.</b> Ni collés au corps, ni ouverts en croix.</li>\n  <li><b>Poitrine au support.</b> Descends jusqu'à frôler le bord avec le sternum.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Position haute, bras tendus sur le banc\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Mains un peu plus larges que les épaules, bras tendus.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Poitrine près du banc, coudes fléchis\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Descente</h3><p>Trois secondes, coudes à 45°, jusqu'au support.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Remonte en poussant le support loin de toi ; si le dos se creuse, prends un support plus haut.</p>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : bassin affaissé, dos creusé\" loading=\"lazy\"></figure><h3>Bassin qui tombe</h3><p>Le ventre s'affaisse vers le support : serre les fessiers, épaules, hanches et talons alignés.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0001/\">Voir la vidéo</a>. Dose lue dans les commentaires.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "chest"
+    ],
+    "gear": [
+     "chair"
+    ],
+    "minutes": 5,
+    "type": "strength"
+   }
   },
   {
    "slug": "fente-arriere",
@@ -66,7 +76,17 @@
     "platform": "TikTok"
    },
    "added_at": "2026-10-12T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Cuisses · fessiers · 6 minutes</p>\n    <h1>Fente arrière</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Fente arrière\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Debout, tu recules une jambe et descends jusqu'à ce que le genou arrière frôle le sol.</p>\n<div class=\"kit\"><span>poids du corps</span><span>ou deux haltères légers</span></div>\n\n<h2>Pourquoi</h2>\n<p>Reculer plutôt qu'avancer garde le poids sur le talon avant : moins de pression sur le genou.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>par jambe</span></div>\n  <div class=\"d\"><b>45 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Buste droit.</b> Regarde devant toi, pas tes pieds.</li>\n  <li><b>Poids sur le talon avant.</b> Les orteils avant peuvent se soulever.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Debout, pieds parallèles\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Debout</h3><p>Pieds largeur de hanches, mains sur les hanches.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Fente basse, genou arrière près du sol\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En bas</h3><p>Genou arrière à un doigt du sol, genou avant au-dessus de la cheville.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens en poussant dans le talon avant ; alterne les jambes ou enchaîne toute une série du même côté.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000002\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Cuisses · fessiers · 6 minutes</p>\n    <h1>Fente arrière</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Fente arrière\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Debout, tu recules une jambe et descends jusqu'à ce que le genou arrière frôle le sol.</p>\n<div class=\"kit\"><span>poids du corps</span><span>ou deux haltères légers</span></div>\n\n<h2>Pourquoi</h2>\n<p>Reculer plutôt qu'avancer garde le poids sur le talon avant : moins de pression sur le genou.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>par jambe</span></div>\n  <div class=\"d\"><b>45 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Buste droit.</b> Regarde devant toi, pas tes pieds.</li>\n  <li><b>Poids sur le talon avant.</b> Les orteils avant peuvent se soulever.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Debout, pieds parallèles\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Debout</h3><p>Pieds largeur de hanches, mains sur les hanches.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Fente basse, genou arrière près du sol\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En bas</h3><p>Genou arrière à un doigt du sol, genou avant au-dessus de la cheville.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens en poussant dans le talon avant ; alterne les jambes ou enchaîne toute une série du même côté.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000002\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "legs"
+    ],
+    "gear": [
+     "dumbbell"
+    ],
+    "minutes": 6,
+    "type": "strength"
+   }
   },
   {
    "slug": "chien-tete-en-bas",
@@ -83,7 +103,18 @@
     "platform": "YouTube"
    },
    "added_at": "now-30h",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Posture · dos · ischios · 2 minutes</p>\n    <h1>Chien tête en bas</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Chien tête en bas\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Mains et pieds au sol, bassin vers le plafond : le corps dessine un V à l'envers.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Une posture de transition qui étire tout l'arrière du corps et soulage le bas du dos.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>5</b><span>respirations</span></div>\n  <div class=\"d\"><b>3</b><span>fois</span></div>\n  <div class=\"d\"><b>libre</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Dos long avant jambes tendues.</b> Plie les genoux si le dos s'arrondit.</li>\n  <li><b>Pousse le sol.</b> Les épaules s'éloignent des oreilles.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À quatre pattes sur le tapis\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À quatre pattes</h3><p>Mains sous les épaules, genoux sous les hanches.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Corps en V inversé\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Le V</h3><p>Décolle les genoux, envoie le bassin haut et loin.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Respire lentement par le nez ; reviens à quatre pattes entre deux tenues.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0003\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Posture · dos · ischios · 2 minutes</p>\n    <h1>Chien tête en bas</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Chien tête en bas\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Mains et pieds au sol, bassin vers le plafond : le corps dessine un V à l'envers.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Une posture de transition qui étire tout l'arrière du corps et soulage le bas du dos.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>5</b><span>respirations</span></div>\n  <div class=\"d\"><b>3</b><span>fois</span></div>\n  <div class=\"d\"><b>libre</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Dos long avant jambes tendues.</b> Plie les genoux si le dos s'arrondit.</li>\n  <li><b>Pousse le sol.</b> Les épaules s'éloignent des oreilles.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À quatre pattes sur le tapis\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À quatre pattes</h3><p>Mains sous les épaules, genoux sous les hanches.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Corps en V inversé\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Le V</h3><p>Décolle les genoux, envoie le bassin haut et loin.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Respire lentement par le nez ; reviens à quatre pattes entre deux tenues.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0003\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "back",
+     "legs"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": 2,
+    "type": "stretch"
+   }
   },
   {
    "slug": "jab-cross",
@@ -117,7 +148,17 @@
     "platform": "TikTok"
    },
    "added_at": "2026-10-15T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Épaules · haut du dos · 4 minutes</p>\n    <h1>Ange au sol</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Ange au sol\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Allongé sur le dos, les bras glissent au sol du haut vers le bas, comme un ange dans la neige.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras en W\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras en W</h3><p>Coudes et dos des mains au sol.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bras en Y\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bras en Y</h3><p>Glisse les bras au-dessus de la tête.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000010\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Épaules · haut du dos · 4 minutes</p>\n    <h1>Ange au sol</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Ange au sol\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Allongé sur le dos, les bras glissent au sol du haut vers le bas, comme un ange dans la neige.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras en W\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras en W</h3><p>Coudes et dos des mains au sol.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bras en Y\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bras en Y</h3><p>Glisse les bras au-dessus de la tête.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000010\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "shoulders"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": 4,
+    "type": "mobility"
+   }
   },
   {
    "slug": "rotation-externe-elastique",
@@ -134,7 +175,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-16T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Coiffe des rotateurs · 3 minutes</p>\n    <h1>Rotation externe à l'élastique</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rotation externe à l'élastique\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Coude collé au corps, l'avant-bras s'ouvre vers l'extérieur contre l'élastique.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Départ\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Coude à 90°, main devant le ventre.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Ouverture\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Ouverture</h3><p>L'avant-bras pivote vers l'extérieur.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0011\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Coiffe des rotateurs · 3 minutes</p>\n    <h1>Rotation externe à l'élastique</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rotation externe à l'élastique\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Coude collé au corps, l'avant-bras s'ouvre vers l'extérieur contre l'élastique.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Départ\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Coude à 90°, main devant le ventre.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Ouverture\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Ouverture</h3><p>L'avant-bras pivote vers l'extérieur.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0011\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "shoulders"
+    ],
+    "gear": [
+     "band"
+    ],
+    "minutes": 3,
+    "type": "strength"
+   }
   },
   {
    "slug": "elevations-laterales",
@@ -151,7 +202,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-17T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Deltoïdes · 5 minutes</p>\n    <h1>Élévations latérales</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Élévations latérales\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Bras presque tendus, les haltères montent sur les côtés jusqu'à hauteur d'épaules.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras le long du corps\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras le long du corps</h3><p>Haltères légers, coudes souples.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En haut\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En haut</h3><p>Mains à hauteur d'épaules, pas plus.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0012/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Deltoïdes · 5 minutes</p>\n    <h1>Élévations latérales</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Élévations latérales\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Bras presque tendus, les haltères montent sur les côtés jusqu'à hauteur d'épaules.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras le long du corps\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras le long du corps</h3><p>Haltères légers, coudes souples.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En haut\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En haut</h3><p>Mains à hauteur d'épaules, pas plus.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0012/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "shoulders"
+    ],
+    "gear": [
+     "dumbbell"
+    ],
+    "minutes": 5,
+    "type": "strength"
+   }
   },
   {
    "slug": "pompes-piquees",
@@ -168,7 +229,17 @@
     "platform": "TikTok"
    },
    "added_at": "2026-10-18T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Épaules · triceps · 5 minutes</p>\n    <h1>Pompes piquées</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes piquées\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Bassin haut, la tête descend entre les mains : la pompe qui charge les épaules.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Le V\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Le V</h3><p>Bassin haut, mains et pieds au sol.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Descente\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Descente</h3><p>Le front vient entre les mains.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000013\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Épaules · triceps · 5 minutes</p>\n    <h1>Pompes piquées</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes piquées\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Bassin haut, la tête descend entre les mains : la pompe qui charge les épaules.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Le V\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Le V</h3><p>Bassin haut, mains et pieds au sol.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Descente\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Descente</h3><p>Le front vient entre les mains.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000013\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "shoulders"
+    ],
+    "gear": [
+     "none"
+    ],
+    "minutes": 5,
+    "type": "strength"
+   }
   },
   {
    "slug": "face-pull-elastique",
@@ -185,7 +256,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-19T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Arrière d'épaule · 4 minutes</p>\n    <h1>Face pull à l'élastique</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Face pull à l'élastique\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">L'élastique vient vers le visage, coudes hauts, omoplates serrées.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras tendus</h3><p>Élastique accroché à hauteur de visage.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Tirage\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tirage</h3><p>Mains de part et d'autre des oreilles.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0014\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Arrière d'épaule · 4 minutes</p>\n    <h1>Face pull à l'élastique</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Face pull à l'élastique\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">L'élastique vient vers le visage, coudes hauts, omoplates serrées.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras tendus</h3><p>Élastique accroché à hauteur de visage.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Tirage\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tirage</h3><p>Mains de part et d'autre des oreilles.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0014\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "shoulders"
+    ],
+    "gear": [
+     "band"
+    ],
+    "minutes": 4,
+    "type": "strength"
+   }
   },
   {
    "slug": "curl-marteau",
@@ -202,7 +283,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-20T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Biceps · avant-bras · 4 minutes</p>\n    <h1>Curl marteau</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Curl marteau\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Paumes face à face, les haltères montent sans balancer le buste.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras tendus</h3><p>Paumes vers les cuisses.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En haut\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En haut</h3><p>Coudes fixes, poings vers les épaules.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0015/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Biceps · avant-bras · 4 minutes</p>\n    <h1>Curl marteau</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Curl marteau\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Paumes face à face, les haltères montent sans balancer le buste.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras tendus</h3><p>Paumes vers les cuisses.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En haut\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En haut</h3><p>Coudes fixes, poings vers les épaules.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0015/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "arms"
+    ],
+    "gear": [
+     "dumbbell"
+    ],
+    "minutes": 4,
+    "type": "strength"
+   }
   },
   {
    "slug": "dips-banc",
@@ -219,7 +310,17 @@
     "platform": "TikTok"
    },
    "added_at": "2026-10-21T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Triceps · 4 minutes</p>\n    <h1>Dips sur banc</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Dips sur banc\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Mains sur le bord d'un banc derrière toi, tu descends en pliant les coudes.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Départ\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Bras tendus, fesses près du banc.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En bas\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En bas</h3><p>Coudes à 90°, dirigés vers l'arrière.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000016\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Triceps · 4 minutes</p>\n    <h1>Dips sur banc</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Dips sur banc\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Mains sur le bord d'un banc derrière toi, tu descends en pliant les coudes.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Départ\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Bras tendus, fesses près du banc.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En bas\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En bas</h3><p>Coudes à 90°, dirigés vers l'arrière.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000016\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "arms"
+    ],
+    "gear": [
+     "chair"
+    ],
+    "minutes": 4,
+    "type": "strength"
+   }
   },
   {
    "slug": "extension-triceps",
@@ -236,7 +337,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-22T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Triceps · 4 minutes</p>\n    <h1>Extension triceps au-dessus de la tête</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Extension triceps au-dessus de la tête\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Un haltère à deux mains derrière la tête, les avant-bras se déplient vers le plafond.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Derrière la tête\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Derrière la tête</h3><p>Coudes vers le plafond.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bras tendus</h3><p>Seuls les avant-bras bougent.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0017\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Triceps · 4 minutes</p>\n    <h1>Extension triceps au-dessus de la tête</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Extension triceps au-dessus de la tête\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Un haltère à deux mains derrière la tête, les avant-bras se déplient vers le plafond.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Derrière la tête\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Derrière la tête</h3><p>Coudes vers le plafond.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bras tendus</h3><p>Seuls les avant-bras bougent.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0017\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "arms"
+    ],
+    "gear": [
+     "dumbbell"
+    ],
+    "minutes": 4,
+    "type": "strength"
+   }
   },
   {
    "slug": "rowing-sous-table",
@@ -253,7 +364,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-23T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Dos · biceps · 5 minutes</p>\n    <h1>Rowing inversé sous la table</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rowing inversé sous la table\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Allongé sous une table solide, tu tires la poitrine vers le bord.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Suspendu\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Suspendu</h3><p>Mains au bord, corps gainé.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Tirage\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tirage</h3><p>Poitrine au bord, coudes près du corps.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0018/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Dos · biceps · 5 minutes</p>\n    <h1>Rowing inversé sous la table</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rowing inversé sous la table\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Allongé sous une table solide, tu tires la poitrine vers le bord.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Suspendu\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Suspendu</h3><p>Mains au bord, corps gainé.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Tirage\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tirage</h3><p>Poitrine au bord, coudes près du corps.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0018/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "back"
+    ],
+    "gear": [
+     "none"
+    ],
+    "minutes": 5,
+    "type": "strength"
+   }
   },
   {
    "slug": "superman",
@@ -270,7 +391,17 @@
     "platform": "TikTok"
    },
    "added_at": "2026-10-24T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Lombaires · fessiers · 3 minutes</p>\n    <h1>Superman</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Superman\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">À plat ventre, bras et jambes décollent ensemble quelques secondes.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À plat ventre\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À plat ventre</h3><p>Bras devant, front au sol.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Envol\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Envol</h3><p>Bras et jambes décollent, regard au sol.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000019\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Lombaires · fessiers · 3 minutes</p>\n    <h1>Superman</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Superman\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">À plat ventre, bras et jambes décollent ensemble quelques secondes.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À plat ventre\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À plat ventre</h3><p>Bras devant, front au sol.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Envol\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Envol</h3><p>Bras et jambes décollent, regard au sol.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000019\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "back"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": 3,
+    "type": "strength"
+   }
   },
   {
    "slug": "tirage-horizontal-elastique",
@@ -287,7 +418,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-25T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Dos · 4 minutes</p>\n    <h1>Tirage horizontal à l'élastique</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Tirage horizontal à l'élastique\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Assis jambes tendues, l'élastique autour des pieds, tu tires les coudes vers l'arrière.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras tendus</h3><p>Dos droit, élastique tendu.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Coudes en arrière\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Coudes en arrière</h3><p>Omoplates serrées une seconde.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0020\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Dos · 4 minutes</p>\n    <h1>Tirage horizontal à l'élastique</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Tirage horizontal à l'élastique\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Assis jambes tendues, l'élastique autour des pieds, tu tires les coudes vers l'arrière.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras tendus</h3><p>Dos droit, élastique tendu.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Coudes en arrière\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Coudes en arrière</h3><p>Omoplates serrées une seconde.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0020\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "back"
+    ],
+    "gear": [
+     "band"
+    ],
+    "minutes": 4,
+    "type": "strength"
+   }
   },
   {
    "slug": "squat-gobelet",
@@ -304,7 +445,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-26T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Cuisses · fessiers · 6 minutes</p>\n    <h1>Squat gobelet</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Squat gobelet\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Un poids tenu contre la poitrine, tu descends entre tes talons, dos droit.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Debout\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Debout</h3><p>Poids contre le sternum, pieds un peu ouverts.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En bas\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En bas</h3><p>Coudes entre les genoux.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0021/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Cuisses · fessiers · 6 minutes</p>\n    <h1>Squat gobelet</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Squat gobelet\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Un poids tenu contre la poitrine, tu descends entre tes talons, dos droit.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Debout\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Debout</h3><p>Poids contre le sternum, pieds un peu ouverts.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En bas\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En bas</h3><p>Coudes entre les genoux.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0021/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "legs"
+    ],
+    "gear": [
+     "kettlebell"
+    ],
+    "minutes": 6,
+    "type": "strength"
+   }
   },
   {
    "slug": "pont-fessier",
@@ -321,7 +472,17 @@
     "platform": "TikTok"
    },
    "added_at": "2026-10-27T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Fessiers · ischios · 4 minutes</p>\n    <h1>Pont fessier</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pont fessier\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur le dos, pieds au sol, tu montes le bassin en serrant les fessiers.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Au sol\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Au sol</h3><p>Pieds près des fesses.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bassin haut\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bassin haut</h3><p>Épaules-hanches-genoux alignés.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000022\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Fessiers · ischios · 4 minutes</p>\n    <h1>Pont fessier</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pont fessier\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur le dos, pieds au sol, tu montes le bassin en serrant les fessiers.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Au sol\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Au sol</h3><p>Pieds près des fesses.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bassin haut\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bassin haut</h3><p>Épaules-hanches-genoux alignés.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.tiktok.com/@coach.demo/video/7400000000000000022\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "hips"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": 4,
+    "type": "strength"
+   }
   },
   {
    "slug": "rotation-thoracique",
@@ -338,7 +499,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Haut du dos · 3 minutes</p>\n    <h1>Rotations thoraciques à quatre pattes</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rotations thoraciques à quatre pattes\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Une main derrière la tête, le coude part vers le plafond puis revient sous le buste.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À quatre pattes\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À quatre pattes</h3><p>Main derrière la tête.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Ouverture\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Ouverture</h3><p>Le coude monte, le regard suit.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0023\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Haut du dos · 3 minutes</p>\n    <h1>Rotations thoraciques à quatre pattes</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rotations thoraciques à quatre pattes\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Une main derrière la tête, le coude part vers le plafond puis revient sous le buste.</p>\n<div class=\"kit\"><span>poids du corps</span><span>un tapis</span></div>\n\n<h2>Pourquoi</h2>\n<p>Un mouvement simple à placer en début ou en fin de séance, sans matériel lourd.</p>\n\n<h2>Dose <small>suggestion, pas dans la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3</b><span>séries</span></div>\n  <div class=\"d\"><b>10</b><span>répétitions</span></div>\n  <div class=\"d\"><b>60 s</b><span>repos</span></div>\n</div>\n\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Trois secondes dans la phase difficile.</li>\n  <li><b>Respire.</b> Souffle pendant l'effort, ne bloque pas.</li>\n</ol>\n</div>\n\n<div class=\"wide\">\n<h2>L'enchaînement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"À quatre pattes\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>À quatre pattes</h3><p>Main derrière la tête.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Ouverture\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Ouverture</h3><p>Le coude monte, le regard suit.</p></div>\n</div>\n<p class=\"loop\"><span class=\"arrow\">↻</span> Reviens au départ par le même chemin ; arrête la série dès que le geste se dégrade.</p>\n</div>\n\n<div class=\"wrap\">\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0023\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "back"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": 3,
+    "type": "mobility"
+   }
   },
   {
    "slug": "backroll",
@@ -355,7 +526,16 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Rotation · 20 min</p>\n    <h1>Backroll</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Backroll\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Une rotation arrière sur l'axe du corps, en sautant depuis la carre : la première figure après le saut simple.</p>\n<div class=\"kit\"><span>twin-tip</span><span>aile 9–12 m</span><span>harnais et leash</span><span>casque</span></div>\n\n<h2>Prérequis</h2>\n<ul class=\"prereq\"><li>Sauts simples posés des deux côtés, sans perdre la voile.</li><li>Remontée au vent sur les deux bords.</li></ul>\n\n<h2>Conditions</h2>\n<div class=\"cond\">\n  <div class=\"c\"><b>15–25 nds</b><span>vent établi</span></div>\n  <div class=\"c\"><b>9–12 m</b><span>aile</span></div>\n  <div class=\"c\"><b>Plat</b><span>eau à la taille ou plus</span></div>\n</div>\n\n<h2>Go / no-go</h2>\n<div class=\"gonogo\">\n  <div class=\"go\"><h3>Go</h3><ul><li>Vent régulier, rafales de moins de 8 nds d'écart.</li><li>Au moins 50 m libres sous le vent.</li><li>Tu poses tes sauts simples à chaque essai.</li></ul></div>\n  <div class=\"nogo\"><h3>No-go</h3><ul><li>Vent de terre ou rafaleux.</li><li>Eau trop peu profonde ou du monde sous le vent.</li><li>Fatigue : tes réceptions deviennent approximatives.</li></ul></div>\n</div>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Rider en carre, voile haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Approche</h3><p>Vitesse moyenne, carre franche, voile à 11 h.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Rider qui décolle en tournant les épaules\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Appel</h3><p>Pop sur la carre, la tête et les épaules tournent vers l'arrière.</p></div>\n  <div class=\"step\"><figure><img src=\"img/03.jpg\" alt=\"Rider en rotation, genoux groupés\" loading=\"lazy\"><span class=\"k\">3</span></figure><h3>Rotation</h3><p>Genoux groupés, la barre près des hanches, le regard cherche la voile.</p></div>\n  <div class=\"step\"><figure><img src=\"img/04.jpg\" alt=\"Rider qui atterrit planche à plat\" loading=\"lazy\"><span class=\"k\">4</span></figure><h3>Réception</h3><p>Planche sous le vent, voile qui descend, tu repars en carre.</p></div>\n</div>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : barre tirée, rider soulevé trop haut\" loading=\"lazy\"></figure><h3>Barre tirée en tournant</h3><p>La voile remonte et te soulève trop : garde la barre au même endroit pendant la rotation.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>La tête d'abord.</b> Les épaules suivent le regard, le reste du corps suit les épaules.</li>\n  <li><b>Barre immobile.</b> Elle ne bouge pas pendant la rotation.</li>\n  <li><b>Repère la voile.</b> Dès que tu la revois, ouvre et prépare la réception.</li>\n</ol>\n\n<h2>Plan d'essais <small>suggestion, absente de la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3–5</b><span>essais par côté</span></div>\n  <div class=\"d\"><b>1</b><span>réception propre, puis l'autre côté</span></div>\n  <div class=\"d\"><b>20 min</b><span>puis navigue sans essayer</span></div>\n</div>\n<p class=\"note\">La vidéo ne donne ni nombre d'essais ni durée : plan suggéré.</p>\n\n<h2>Sécurité <small>conseil général, absent de la vidéo</small></h2>\n<div class=\"safety\"><ul><li>Casque et gilet d'impact tant que tu l'apprends.</li><li>Personne sous le vent, jamais près du bord.</li></ul></div>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0040\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Rotation · 20 min</p>\n    <h1>Backroll</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Backroll\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Une rotation arrière sur l'axe du corps, en sautant depuis la carre : la première figure après le saut simple.</p>\n<div class=\"kit\"><span>twin-tip</span><span>aile 9–12 m</span><span>harnais et leash</span><span>casque</span></div>\n\n<h2>Prérequis</h2>\n<ul class=\"prereq\"><li>Sauts simples posés des deux côtés, sans perdre la voile.</li><li>Remontée au vent sur les deux bords.</li></ul>\n\n<h2>Conditions</h2>\n<div class=\"cond\">\n  <div class=\"c\"><b>15–25 nds</b><span>vent établi</span></div>\n  <div class=\"c\"><b>9–12 m</b><span>aile</span></div>\n  <div class=\"c\"><b>Plat</b><span>eau à la taille ou plus</span></div>\n</div>\n\n<h2>Go / no-go</h2>\n<div class=\"gonogo\">\n  <div class=\"go\"><h3>Go</h3><ul><li>Vent régulier, rafales de moins de 8 nds d'écart.</li><li>Au moins 50 m libres sous le vent.</li><li>Tu poses tes sauts simples à chaque essai.</li></ul></div>\n  <div class=\"nogo\"><h3>No-go</h3><ul><li>Vent de terre ou rafaleux.</li><li>Eau trop peu profonde ou du monde sous le vent.</li><li>Fatigue : tes réceptions deviennent approximatives.</li></ul></div>\n</div>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Rider en carre, voile haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Approche</h3><p>Vitesse moyenne, carre franche, voile à 11 h.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Rider qui décolle en tournant les épaules\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Appel</h3><p>Pop sur la carre, la tête et les épaules tournent vers l'arrière.</p></div>\n  <div class=\"step\"><figure><img src=\"img/03.jpg\" alt=\"Rider en rotation, genoux groupés\" loading=\"lazy\"><span class=\"k\">3</span></figure><h3>Rotation</h3><p>Genoux groupés, la barre près des hanches, le regard cherche la voile.</p></div>\n  <div class=\"step\"><figure><img src=\"img/04.jpg\" alt=\"Rider qui atterrit planche à plat\" loading=\"lazy\"><span class=\"k\">4</span></figure><h3>Réception</h3><p>Planche sous le vent, voile qui descend, tu repars en carre.</p></div>\n</div>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : barre tirée, rider soulevé trop haut\" loading=\"lazy\"></figure><h3>Barre tirée en tournant</h3><p>La voile remonte et te soulève trop : garde la barre au même endroit pendant la rotation.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>La tête d'abord.</b> Les épaules suivent le regard, le reste du corps suit les épaules.</li>\n  <li><b>Barre immobile.</b> Elle ne bouge pas pendant la rotation.</li>\n  <li><b>Repère la voile.</b> Dès que tu la revois, ouvre et prépare la réception.</li>\n</ol>\n\n<h2>Plan d'essais <small>suggestion, absente de la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3–5</b><span>essais par côté</span></div>\n  <div class=\"d\"><b>1</b><span>réception propre, puis l'autre côté</span></div>\n  <div class=\"d\"><b>20 min</b><span>puis navigue sans essayer</span></div>\n</div>\n<p class=\"note\">La vidéo ne donne ni nombre d'essais ni durée : plan suggéré.</p>\n\n<h2>Sécurité <small>conseil général, absent de la vidéo</small></h2>\n<div class=\"safety\"><ul><li>Casque et gilet d'impact tant que tu l'apprends.</li><li>Personne sous le vent, jamais près du bord.</li></ul></div>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0040\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [],
+    "gear": [
+     "kite",
+     "board"
+    ],
+    "minutes": 20,
+    "type": "skill"
+   }
   },
   {
    "slug": "session-gainage-planche",
@@ -372,7 +552,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Abdominaux · épaules</p>\n    <h1>Planche</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Planche\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur les avant-bras et la pointe des pieds, le corps droit comme une planche.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Avant-bras au sol\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Installation</h3><p>Avant-bras au sol, coudes sous les épaules.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Planche tenue\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tenue</h3><p>Décolle les genoux, corps aligné.</p></div>\n</div>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : bassin trop haut, corps en V\" loading=\"lazy\"></figure><h3>Fesses en l'air</h3><p>Le bassin monte au-dessus de la ligne : rentre le nombril, descends les hanches.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Fesses serrées.</b> Le bassin ne tombe pas.</li>\n  <li><b>Coudes sous les épaules.</b> Pousse le sol.</li>\n</ol>\n\n<h2>Plus facile / plus dur</h2>\n<p>Genoux au sol, la ligne épaules-genoux reste droite.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Abdominaux · épaules</p>\n    <h1>Planche</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Planche\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur les avant-bras et la pointe des pieds, le corps droit comme une planche.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Avant-bras au sol\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Installation</h3><p>Avant-bras au sol, coudes sous les épaules.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Planche tenue\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tenue</h3><p>Décolle les genoux, corps aligné.</p></div>\n</div>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : bassin trop haut, corps en V\" loading=\"lazy\"></figure><h3>Fesses en l'air</h3><p>Le bassin monte au-dessus de la ligne : rentre le nombril, descends les hanches.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>Fesses serrées.</b> Le bassin ne tombe pas.</li>\n  <li><b>Coudes sous les épaules.</b> Pousse le sol.</li>\n</ol>\n\n<h2>Plus facile / plus dur</h2>\n<p>Genoux au sol, la ligne épaules-genoux reste droite.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "core"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": null,
+    "type": "strength"
+   }
   },
   {
    "slug": "session-gainage-planche-laterale",
@@ -389,7 +579,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Obliques · hanches</p>\n    <h1>Planche latérale</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Planche latérale\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur un avant-bras et le bord des pieds, le bassin haut.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Allongé sur le côté\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Sur le côté</h3><p>Coude sous l'épaule, jambes tendues.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Planche latérale tenue\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bassin haut</h3><p>Monte le bassin, corps aligné.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Hanches hautes.</b> Elles ne s'affaissent pas vers le sol.</li>\n  <li><b>Épaule active.</b> Pousse le sol avec l'avant-bras.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Genou du dessous au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Obliques · hanches</p>\n    <h1>Planche latérale</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Planche latérale\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur un avant-bras et le bord des pieds, le bassin haut.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Allongé sur le côté\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Sur le côté</h3><p>Coude sous l'épaule, jambes tendues.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Planche latérale tenue\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Bassin haut</h3><p>Monte le bassin, corps aligné.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Hanches hautes.</b> Elles ne s'affaissent pas vers le sol.</li>\n  <li><b>Épaule active.</b> Pousse le sol avec l'avant-bras.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Genou du dessous au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "core"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": null,
+    "type": "strength"
+   }
   },
   {
    "slug": "session-gainage-dead-bug",
@@ -406,7 +606,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Abdominaux profonds</p>\n    <h1>Dead bug</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Dead bug\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur le dos, bras et jambes en l'air, tu allonges un bras et la jambe opposée.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Sur le dos, genoux pliés en l'air\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Genoux à 90°, bras vers le plafond.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bras et jambe opposés allongés\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Allonger</h3><p>Bras droit et jambe gauche vers le sol.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lombaires au sol.</b> Le bas du dos reste collé.</li>\n  <li><b>Lentement.</b> Trois secondes pour allonger.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Allonge seulement les jambes, bras vers le plafond.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Abdominaux profonds</p>\n    <h1>Dead bug</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Dead bug\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Sur le dos, bras et jambes en l'air, tu allonges un bras et la jambe opposée.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Sur le dos, genoux pliés en l'air\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Départ</h3><p>Genoux à 90°, bras vers le plafond.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Bras et jambe opposés allongés\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Allonger</h3><p>Bras droit et jambe gauche vers le sol.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lombaires au sol.</b> Le bas du dos reste collé.</li>\n  <li><b>Lentement.</b> Trois secondes pour allonger.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Allonge seulement les jambes, bras vers le plafond.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0005/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "core"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": null,
+    "type": "strength"
+   }
   },
   {
    "slug": "session-shadow-garde",
@@ -457,7 +667,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Shoulders · séance</p>\n    <h1>Y-T-W allongé</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Y-T-W allongé\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">À plat ventre, les bras dessinent un Y, un T puis un W.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Le Y\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Le Y</h3><p>Bras en Y, pouces vers le plafond.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Le W\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Le W</h3><p>Coudes pliés, omoplates serrées.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0030\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Shoulders · séance</p>\n    <h1>Y-T-W allongé</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Y-T-W allongé\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">À plat ventre, les bras dessinent un Y, un T puis un W.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Le Y\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Le Y</h3><p>Bras en Y, pouces vers le plafond.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Le W\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Le W</h3><p>Coudes pliés, omoplates serrées.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0030\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "shoulders"
+    ],
+    "gear": [
+     "mat"
+    ],
+    "minutes": null,
+    "type": "mobility"
+   }
   },
   {
    "slug": "session-epaules-pompes-scapulaires",
@@ -474,7 +694,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Shoulders · séance</p>\n    <h1>Pompes scapulaires</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes scapulaires\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">En planche bras tendus, seules les omoplates se rapprochent puis s'écartent.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Planche haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Planche haute</h3><p>Bras tendus, corps gainé.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Omoplates\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Omoplates</h3><p>Elles se rapprochent sans plier les bras.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0030\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Shoulders · séance</p>\n    <h1>Pompes scapulaires</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes scapulaires\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">En planche bras tendus, seules les omoplates se rapprochent puis s'écartent.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Planche haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Planche haute</h3><p>Bras tendus, corps gainé.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Omoplates\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Omoplates</h3><p>Elles se rapprochent sans plier les bras.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0030\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "shoulders"
+    ],
+    "gear": [
+     "none"
+    ],
+    "minutes": null,
+    "type": "strength"
+   }
   },
   {
    "slug": "session-epaules-tenue-mur",
@@ -491,7 +721,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Shoulders · séance</p>\n    <h1>Tenue bras au mur</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Tenue bras au mur\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Dos au mur, les bras glissent le long du mur sans le quitter.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Contre le mur\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Contre le mur</h3><p>Dos, tête et bras au mur.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Glisser\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Glisser</h3><p>Les bras montent sans décoller.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0030\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Shoulders · séance</p>\n    <h1>Tenue bras au mur</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Tenue bras au mur\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Dos au mur, les bras glissent le long du mur sans le quitter.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Contre le mur\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Contre le mur</h3><p>Dos, tête et bras au mur.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Glisser\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Glisser</h3><p>Les bras montent sans décoller.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0030\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "shoulders"
+    ],
+    "gear": [
+     "wall"
+    ],
+    "minutes": null,
+    "type": "mobility"
+   }
   },
   {
    "slug": "session-epaules-rowing-un-bras",
@@ -508,7 +748,17 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Back · séance</p>\n    <h1>Rowing un bras</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rowing un bras\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Un genou sur le banc, l'haltère monte vers la hanche.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Appui\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Appui</h3><p>Dos plat, bras tendu vers le sol.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Tirage\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tirage</h3><p>Le coude file vers le plafond.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0030\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Back · séance</p>\n    <h1>Rowing un bras</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Rowing un bras\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Un genou sur le banc, l'haltère monte vers la hanche.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Appui\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Appui</h3><p>Dos plat, bras tendu vers le sol.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Tirage\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Tirage</h3><p>Le coude file vers le plafond.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0030\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "back"
+    ],
+    "gear": [
+     "dumbbell"
+    ],
+    "minutes": null,
+    "type": "strength"
+   }
   },
   {
    "slug": "session-bras-curl-elastique",
@@ -525,7 +775,17 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Arms · séance</p>\n    <h1>Curl à l'élastique</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Curl à l'élastique\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Debout sur l'élastique, les mains montent vers les épaules.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras tendus</h3><p>Élastique sous les pieds.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En haut\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En haut</h3><p>Poings aux épaules, coudes fixes.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0031/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Arms · séance</p>\n    <h1>Curl à l'élastique</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Curl à l'élastique\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Debout sur l'élastique, les mains montent vers les épaules.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Bras tendus\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Bras tendus</h3><p>Élastique sous les pieds.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"En haut\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>En haut</h3><p>Poings aux épaules, coudes fixes.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0031/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "arms"
+    ],
+    "gear": [
+     "band"
+    ],
+    "minutes": null,
+    "type": "strength"
+   }
   },
   {
    "slug": "session-bras-pompes-serrees",
@@ -542,7 +802,18 @@
     "platform": "Instagram"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Arms · séance</p>\n    <h1>Pompes serrées</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes serrées\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Mains sous les épaules, coudes le long du corps : la pompe des triceps.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Planche haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Planche haute</h3><p>Mains sous les épaules.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Descente\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Descente</h3><p>Coudes qui frôlent les côtes.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0031/\">Voir la vidéo</a>.</footer>\n</div>\n"
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Arms · séance</p>\n    <h1>Pompes serrées</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Pompes serrées\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Mains sous les épaules, coudes le long du corps : la pompe des triceps.</p>\n<div class=\"kit\"><span>un tapis</span></div>\n</div>\n\n<div class=\"wide\">\n<h2>Le mouvement</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Planche haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Planche haute</h3><p>Mains sous les épaules.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Descente\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Descente</h3><p>Coudes qui frôlent les côtes.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Repères</h2>\n<ol class=\"keys\">\n  <li><b>Lentement.</b> Le geste avant la vitesse.</li>\n  <li><b>Gainé.</b> Le bassin ne bouge pas.</li>\n</ol>\n\n<h2>Version plus facile</h2>\n<p>Moins d'amplitude, ou les genoux au sol.</p>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.instagram.com/reel/PREVIEW0031/\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "tags": {
+    "zone": [
+     "arms",
+     "chest"
+    ],
+    "gear": [
+     "none"
+    ],
+    "minutes": null,
+    "type": "strength"
+   }
   }
  ],
  "sessions": [
