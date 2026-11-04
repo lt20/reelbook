@@ -693,21 +693,34 @@ def cmd_backfill_search(args):
 def _fold(s):
     return "".join(c for c in unicodedata.normalize("NFD", str(s or "")) if not unicodedata.combining(c)).lower()
 
-# Keywords on folded text (English, with the French of older sheets). A zone comes from the group (the library's
-# groups: Shoulders, Abs, Ankles & feet…), else from the title; gear from the title and search text; the type is the
-# keyword met first in the title (or the group), else in the search text.
+# Keywords on folded text (English, with the French of older sheets). The text of a sheet is its title, its library
+# group, its slug (an exercise of a session carries the session's: `session-dos-2-halteres-shrugs`) and its search text.
+# - zone: a body area named in the title, else a movement of the title (« pompes » → chest), else the group when the
+#   whole group name is body areas (« Ankles & feet »; « Kicks & knees » is a family of techniques), else the slug;
+#   none at all in a `technique` or `partner` notebook (a kick is not a knee exercise, a foil tack not an ankle one).
+# - gear: from the title, slug and search text.
+# - type: the keyword met first in the title, group and slug; else the notebook's profile (TYPE_BY_PROFILE); else the
+#   keyword met first in the search text; else the notebook (TYPE_BY_NOTEBOOK); else empty.
 ZONE_WORDS = {"shoulders": r"shoulders?|epaules?", "arms": r"arms?|bras|biceps|triceps", "chest": r"chest|pecs?|pectoraux",
               "back": r"back|spine|dos", "core": r"core|abs|abdos?|abdominaux", "hips": r"hips?|glutes?|hanches?|fessiers?",
               "legs": r"legs?|jambes?", "knees": r"knees?|genoux?", "ankles": r"ankles?|feet|chevilles?|pieds?",
               "neck": r"neck|nuque|cou", "full body": r"full[- ]body|corps entier"}
+# Movements that name a zone only when the title names no body area (« pompe triceps » works the arms).
+ZONE_MOVES = {"chest": r"pompes?|push[- ]?ups?"}
 GEAR_WORDS = {"mat": r"mats?|tapis", "band": r"bands?|elastiques?", "dumbbell": r"dumbbells?|halteres?",
-              "kettlebell": r"kettlebells?", "barbell": r"barbells?", "bar": r"pull-?up bar|bar|barre fixe",
+              "kettlebell": r"kettlebells?", "barbell": r"barbells?", "bar": r"pull[- ]?up bar|bar|barre fixe",
               "rings": r"rings|anneaux", "ball": r"balls?|ballon", "foam roller": r"foam roll\w*|rouleau",
-              "chair": r"chairs?|chaise", "wall": r"walls?|mur", "board": r"boards?", "kite": r"kites?"}
-GEAR_NONE = r"no equipment|bodyweight|body weight|sans materiel|poids du corps"
+              "chair": r"chairs?|chaise", "wall": r"walls?|mur", "board": r"boards?", "kite": r"kites?",
+              "plate": r"plates?|disques?|discs?", "cable": r"cables?|poulies?|pulleys?", "machine": r"machines?|smith",
+              "bench": r"bench(?:es)?|bancs?"}
+GEAR_NONE = (r"no equipment|without (?:any )?equipment|equipment[- ]free|no gear|bodyweight|body weight"
+             r"|sans (?:aucun )?(?:materiel|equipement)|poids du corps")
 TYPE_WORDS = {"strength": r"strength\w*|renforcement|musculation", "mobility": r"mobility|mobilite", "stretch": r"stretch\w*|etirements?",
               "cardio": r"cardio\w*|hiit", "skill": r"skills?", "drill": r"drills?|educatifs?",
               "warm-up": r"warm[- ]?ups?|echauffement", "routine": r"routines?"}
+NO_ZONE_PROFILES = ("technique", "partner")
+TYPE_BY_PROFILE = {"technique": "skill", "partner": "skill"}
+TYPE_BY_NOTEBOOK = {"strength": "strength", "yoga": "stretch"}
 
 def _words(text, table):
     """{value: position of its first keyword in text} for the values of `table` met in text."""
@@ -717,18 +730,35 @@ def _words(text, table):
         if m: out[value] = m.start()
     return out
 
-def derive_tags(row, vocab=None):
-    """The tags of a published sheet from what it already holds: group, title, search text, duration. Values outside
-    the vocabulary of app/config.js are dropped (a vocabulary change never writes an unknown value)."""
+def _group_zones(group):
+    """The zones of a library group whose whole name is body areas (« Ankles & feet »), else none (« Kicks & knees »)."""
+    found = _words(group, ZONE_WORDS)
+    rest = re.sub(rf"(?<![\w-])(?:{'|'.join(ZONE_WORDS.values())})(?![\w-])", " ", group)
+    return found if found and not re.sub(r"\b(?:and|et)\b|[&,/+\s]", "", rest) else {}
+
+def derive_tags(row, vocab=None, profiles=None):
+    """The tags of a published sheet from what it already holds: notebook, group, title, slug, search text, duration.
+    Values outside the vocabulary of app/config.js are dropped (a vocabulary change never writes an unknown value).
+    `profiles` is {notebook id: profile} (library_profiles(); a notebook it does not know is 'gym')."""
     vocab = facets_vocab() if vocab is None else vocab
+    profiles = library_profiles() if profiles is None else profiles
     ok = lambda k, v: not vocab.get(k) or v in vocab[k]
-    group, title, text = _fold(row.get("group")), _fold(row.get("title")), _fold(row.get("search_text"))
-    zones = _words(group, ZONE_WORDS) or _words(title, ZONE_WORDS)
-    found = _words(title + " \n " + text, GEAR_WORDS)
-    gear = [g for g in GEAR_WORDS if g in found]
-    if not gear and re.search(GEAR_NONE, title + " " + text): gear = ["none"]
+    theme = row.get("theme") or ""
+    profile = profiles.get(theme, "gym")
+    # hyphens read as spaces: « Pompe-triceps » names the triceps, a slug is words joined by hyphens
+    group, title, text, slug = (_fold(row.get(k)).replace("-", " ") for k in ("group", "title", "search_text", "slug"))
+    zones = {}
+    if profile not in NO_ZONE_PROFILES:
+        zones = _words(title, ZONE_WORDS) or _words(title, ZONE_MOVES) or _group_zones(group) or _words(slug, ZONE_WORDS)
+    # a title that says « without equipment » beats the kit of its session's slug (« Shrugs sans matériel »)
+    if not _words(title, GEAR_WORDS) and re.search(GEAR_NONE, title): gear = ["none"]
+    else:
+        found = _words(title + " \n " + slug + " \n " + text, GEAR_WORDS)
+        gear = [g for g in GEAR_WORDS if g in found]
+        if not gear and re.search(GEAR_NONE, slug + " \n " + text): gear = ["none"]
     first = lambda d: min(d, key=d.get) if d else ""
-    kind = first(_words(title + " " + group, TYPE_WORDS)) or first(_words(text, TYPE_WORDS))
+    kind = (first(_words(title + " \n " + group + " \n " + slug, TYPE_WORDS)) or TYPE_BY_PROFILE.get(profile)
+            or first(_words(text, TYPE_WORDS)) or TYPE_BY_NOTEBOOK.get(theme, ""))
     return {"zone": [z for z in ZONE_WORDS if z in zones and ok("zone", z)], "gear": [g for g in gear if ok("gear", g)],
             "minutes": _minutes(row.get("duration")), "type": kind if kind and ok("type", kind) else ""}
 
@@ -736,7 +766,7 @@ def cmd_backfill_tags(args):
     if any(a != "--dry-run" for a in args): die("usage: rb.py backfill-tags [--dry-run]")
     dry = "--dry-run" in args
     cfg = session()
-    vocab = facets_vocab()
+    vocab, profiles = facets_vocab(), library_profiles()
     cols = ["slug", "theme", '"group"', "title", "duration", "search_text", "tags"]
     PAGE, last, seen, n = 200, None, 0, 0   # keyset on slug (writes do not shift it)
     while True:
@@ -751,7 +781,7 @@ def cmd_backfill_tags(args):
         for r in rows:
             if r.get("tags"): continue   # tagged meanwhile, or a server ignoring the filter
             seen += 1
-            tags = derive_tags(r, vocab)
+            tags = derive_tags(r, vocab, profiles)
             if not (tags["zone"] or tags["gear"] or tags["type"] or tags["minutes"] is not None): continue
             n += 1
             print(f"{r['slug']}: {json.dumps(tags, ensure_ascii=False)}" + (" (dry run)" if dry else ""))
