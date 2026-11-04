@@ -101,6 +101,10 @@ wingfoil, surfing, running, pilates, barre, pole dance, dance, prenatal, cooking
 description is written for Claude: it is what the skill reads to decide where a video belongs
 and how to group it. Notebooks are per account; remove one from Settings when it is empty.
 
+A video that fits none of your notebooks still gets its sheet: Claude turns on the matching built-in
+notebook, or creates a custom one named after the subject (`rb.py add-theme`), and says so in its
+report. It never files a video in a merely « closest » notebook.
+
 Claude filed a sheet in the wrong place? Open it and tap **Move**: pick another notebook and a
 group (one it already has, or a new one). A session moves too, to another notebook only: its
 exercise sheets stay where they are.
@@ -128,7 +132,7 @@ Each session page also has its own « My notes ».
 ## How a sheet is made
 
 1. `rb.py requeue-stuck` frees the links a dead run left « in progress », `rb.py themes` lists your
-   notebooks, `rb.py queue` your queued links; Claude claims one.
+   notebooks, `rb.py queue` your queued links; Claude claims one, and adds a notebook if none fits.
 2. Chrome opens the video. Claude reads caption and comments, draws a grid of the whole video
    (a frame every 0.2 s, so short reps are not missed; on a long video, only the useful passages), reads the burned-in subtitles and writes
    a second-by-second timeline of the movements.

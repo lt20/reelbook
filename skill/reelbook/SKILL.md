@@ -16,12 +16,23 @@ project, reached through `rb.py` (sign-in done once with `rb.py login`).
 fight, kitesurf, cooking, pilates…) and **custom ones** the user described themselves
 (`id` starts with `custom-`, the `description` says what belongs in it: follow it). A sheet
 needs a `theme` from that list and a `group`: use the notebook's groups when it has some, else
-create a short, reusable group name (custom notebooks start with none). **No notebook fits →
-do not publish**: never a « closest » notebook (a pizza was filed in Strength › Cooking), never an
-invented one. Flag the request with a notebook to add, e.g.
-`python3 tools/rb.py error <id> --note "No notebook fits: add Cooking?"`, say so in the end-of-run
-report, and take the next request. Routes in the app: `#` portal, `#<theme>`, `#<slug>` for a
-sheet, `#session/<slug>` for a session.
+create a short, reusable group name (custom notebooks start with none). Routes in the app: `#` portal,
+`#<theme>`, `#<slug>` for a sheet, `#session/<slug>` for a session.
+
+**No notebook of the account fits → add one, then publish.** A missing notebook is never a reason to
+refuse a video whose subject you have identified, and never a reason to use a « closest » notebook (a
+pizza was filed in Strength › Cooking):
+1. `python3 tools/rb.py library` lists the built-in notebooks not on the account. One fits →
+   `python3 tools/rb.py add-theme <id>` (a pizza: `cook`).
+2. None fits → a custom one, named after the broad subject rather than this one video (Parkour, not
+   Kong vault), in the user's language: `python3 tools/rb.py add-theme --title "Parkour" --description
+   "Vaults, precision jumps, wall runs, landings: drills and technique for parkour."`. The description
+   (30 characters or more) says what belongs in it, for the next videos; it names the board sport or the
+   partner discipline when it is one, which is what picks the template (section 3).
+
+The command prints the notebook's line: its `id` is the sheet's `theme`, its `profile` picks the template. List
+every notebook added in the end-of-run report: the user can Move the sheet and Remove the notebook in the
+app. Only a video whose subject you cannot tell goes to `rb.py error` (section 4).
 
 **Language**: write the sheet in the user's language (the one they talk to you in). Section
 titles: one label per function, the same on both templates, translated from this table (other
