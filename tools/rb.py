@@ -713,7 +713,8 @@ GEAR_WORDS = {"mat": r"mats?|tapis", "band": r"bands?|elastiques?", "dumbbell": 
               "chair": r"chairs?|chaise", "wall": r"walls?|mur", "board": r"boards?", "kite": r"kites?",
               "plate": r"plates?|disques?|discs?", "cable": r"cables?|poulies?|pulleys?", "machine": r"machines?|smith",
               "bench": r"bench(?:es)?|bancs?"}
-GEAR_NONE = r"no equipment|bodyweight|body weight|sans materiel|poids du corps"
+GEAR_NONE = (r"no equipment|without (?:any )?equipment|equipment[- ]free|no gear|bodyweight|body weight"
+             r"|sans (?:aucun )?(?:materiel|equipement)|poids du corps")
 TYPE_WORDS = {"strength": r"strength\w*|renforcement|musculation", "mobility": r"mobility|mobilite", "stretch": r"stretch\w*|etirements?",
               "cardio": r"cardio\w*|hiit", "skill": r"skills?", "drill": r"drills?|educatifs?",
               "warm-up": r"warm[- ]?ups?|echauffement", "routine": r"routines?"}

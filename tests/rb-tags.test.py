@@ -167,7 +167,9 @@ class Rules(unittest.TestCase):
         self.assertEqual(self.tags(title="Weight plate halo")["gear"], ["plate"])
 
     def test_title_without_equipment_beats_the_slug(self):
-        self.assertEqual(self.tags(slug="session-dos-2-halteres-shrugs", title="Shrugs sans matériel")["gear"], ["none"])
+        for title in ("Shrugs sans matériel", "Shrugs without equipment", "Shrugs, no equipment", "Shrugs sans équipement",
+                      "Bodyweight shrugs", "Shrugs au poids du corps", "Equipment-free shrugs"):
+            self.assertEqual(self.tags(slug="session-dos-2-halteres-shrugs", title=title)["gear"], ["none"], title)
         self.assertEqual(self.tags(slug="session-dos-2-halteres-shrugs", title="Shrugs",
                                    search_text="Au poids du corps ou avec haltères")["gear"], ["dumbbell"])
         self.assertEqual(self.tags(title="Band pull-apart, no equipment besides the band")["gear"], ["band"])
