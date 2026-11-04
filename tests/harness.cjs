@@ -161,6 +161,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
   await Promise.resolve();
   return {
     element, clients, storage,
+    location: context.location, // e.g. a mailto: the app opened by setting location.href (L26)
     async fire(id, type = 'click') {
       const listener = element(id).listeners[type];
       assert.ok(listener, `${id} handles ${type}`);

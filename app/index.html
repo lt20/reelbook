@@ -2751,13 +2751,27 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // ---------- settings ----------
   const cliCmd = () => backend ? `python3 tools/rb.py login --url ${backend.url} --key ${backend.key}` : '';
   const base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
-  const installSh = () => backend ? `curl -fsSL ${base}install.sh | bash -s -- --url ${backend.url} --key ${backend.key}` : '';
-  const installPs = () => backend ? `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex` : '';
+  // L26: on the hosted backend the installers find its url and key by themselves (in the published config.js), so the
+  // line is short and the same for everyone; on an own backend it carries them.
+  const installSh = () => !backend ? '' : backend.mode === 'hosted' ? `curl -fsSL ${base}install.sh | bash` : `curl -fsSL ${base}install.sh | bash -s -- --url ${backend.url} --key ${backend.key}`;
+  const installPs = () => !backend ? '' : backend.mode === 'hosted' ? `irm ${base}install.ps1 | iex` : `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex`;
   const installBlock = () => `<p class="hint"><b>macOS / Linux</b> (Terminal)</p><pre data-cmd="sh">${esc(installSh())}</pre>
     <div class="actions"><button class="btn sm ghost" type="button" data-copy="sh">Copy</button><span class="hint" data-copied="sh"></span></div>
     <p class="hint"><b>Windows</b> (PowerShell)</p><pre data-cmd="ps">${esc(installPs())}</pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="ps">Copy</button><span class="hint" data-copied="ps"></span></div>`;
-  const copyHandler = root => async ev => { const b = ev.target.closest('[data-copy]'); if (!b) return; const pre = root.querySelector(`[data-cmd="${b.dataset.copy}"]`) || $(b.dataset.copy); const out = root.querySelector(`[data-copied="${b.dataset.copy}"]`); try { await navigator.clipboard.writeText(pre.textContent); out.textContent = 'Copied.'; } catch { out.textContent = 'Select and copy the command above.'; } };
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="ps">Copy</button><span class="hint" data-copied="ps"></span></div>
+    <div class="actions"><button class="btn sm ghost" type="button" data-send>Send to my computer</button></div>`;
+  // L26: « Send to my computer »: the two lines and one sentence, through the share sheet (mail, messages, AirDrop),
+  // else a mail to the signed-in address. A share closed by the person (AbortError) does nothing more.
+  const installText = () => `Set up Reelbook on this computer: paste one of these lines in a terminal.\n\nmacOS / Linux (Terminal):\n${installSh()}\n\nWindows (PowerShell):\n${installPs()}\n`;
+  const installMail = () => `mailto:${encodeURIComponent(user ? user.email : '').replace('%40', '@')}?subject=${encodeURIComponent('Set up Reelbook')}&body=${encodeURIComponent(installText())}`;
+  const sendInstall = async () => {
+    if (navigator.share) {
+      try { await navigator.share({title: 'Set up Reelbook', text: installText()}); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    location.href = installMail();
+  };
+  const copyHandler = root => async ev => { if (ev.target.closest('[data-send]')) return sendInstall(); const b = ev.target.closest('[data-copy]'); if (!b) return; const pre = root.querySelector(`[data-cmd="${b.dataset.copy}"]`) || $(b.dataset.copy); const out = root.querySelector(`[data-copied="${b.dataset.copy}"]`); try { await navigator.clipboard.writeText(pre.textContent); out.textContent = 'Copied.'; } catch { out.textContent = 'Select and copy the command above.'; } };
   const welcomeKey = () => 'rb.welcome.' + (user ? user.id : '');
   const renderWelcome = () => { $('w-install').innerHTML = installBlock(); };
   $('welcome').addEventListener('click', copyHandler($('welcome')));
