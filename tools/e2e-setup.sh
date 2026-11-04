@@ -5,7 +5,7 @@
 #
 # The repository has no package.json on purpose (static app, no build): Playwright lives in a
 # cache folder shared by every worktree. Browsers go to Playwright's own cache
-# (~/Library/Caches/ms-playwright on macOS); an existing Chromium of the same version is reused.
+# (~/Library/Caches/ms-playwright on macOS); browsers of the same version already there are reused.
 set -euo pipefail
 version="1.63.0"
 dir="${REELBOOK_E2E_DIR:-$HOME/.cache/reelbook-e2e}"
@@ -22,5 +22,5 @@ else
   npm install --prefix "$dir" --no-audit --no-fund --silent "playwright@$version"
   echo "playwright $version installed in $dir"
 fi
-# Downloads Chromium only when the cache does not already hold this version's build.
-node "$dir/node_modules/playwright/cli.js" install chromium
+# Downloads WebKit (default of shots.mjs) and Chromium only when the cache does not already hold this version's builds.
+node "$dir/node_modules/playwright/cli.js" install webkit chromium

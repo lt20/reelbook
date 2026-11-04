@@ -11,8 +11,11 @@
                                 its line also has redo_of, {"sheets": [slugs], "sessions": [slugs]} published
                                 from that URL (source.url), the slugs to publish over
     rb.py claim <id>            mark a request as processing (processed_at = claim time until done/error)
-    rb.py publish <dir>         sheet folder: upload <dir>/img/* and upsert the sheet (<dir>/meta.json + <dir>/index.html)
-                                session folder: publish each exercise sheet sub-folder, then upsert the session
+    rb.py publish <dir> [--request <id>]
+                                sheet folder: upload <dir>/img/* and upsert the sheet (<dir>/meta.json + <dir>/index.html)
+                                session folder: publish each exercise sheet sub-folder, then upsert the session.
+                                A backend with quotas (L29) may refuse a new sheet or photo: the limit is said in plain
+                                words and, with --request, that request goes to error with the same message
     rb.py done <id> --slug S    close a request once its sheet or session is published
     rb.py error <id> --note T   flag a request that could not be processed (a « Redo: » note keeps its first
                                 line, T goes after it: Retry in the app queues the correction again)
@@ -63,7 +66,7 @@ meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no
     `kind` and `exercises` only serve this migration now; `publish` writes kind "sheet" and leaves
     `exercises` to its default.
 """
-import json, os, re, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error, unicodedata
+import hashlib, json, os, re, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error, unicodedata
 from html.parser import HTMLParser
 
 CFG_PATH = pathlib.Path(os.environ.get("REELBOOK_CONFIG") or "~/.config/reelbook/config.json").expanduser()
@@ -218,14 +221,16 @@ def cmd_done(args):
     if len(args) < 3 or args[1] != "--slug": die("usage: rb.py done <id> --slug <slug>")
     _patch_request(session(), args[0], {"status": "done", "slug": args[2], "processed_at": now()})
 
-def cmd_error(args):
-    if len(args) < 3 or args[1] != "--note": die("usage: rb.py error <id> --note <text>")
-    cfg, note = session(), " ".join(args[2:])
+def _error_request(cfg, rid, note):
     # a correction keeps its « Redo: … » line first: the app shows the error, and Retry queues the instruction again
-    was = rest(cfg, "GET", "requests", params={"id": f"eq.{args[0]}", "select": "note"}) or []
+    was = rest(cfg, "GET", "requests", params={"id": f"eq.{rid}", "select": "note"}) or []
     redo = str((was[0].get("note") if was else "") or "").split("\n")[0]
     if redo.startswith("Redo:"): note = f"{redo}\n{note}"
-    _patch_request(cfg, args[0], {"status": "error", "note": note, "processed_at": now()})
+    _patch_request(cfg, rid, {"status": "error", "note": note, "processed_at": now()})
+
+def cmd_error(args):
+    if len(args) < 3 or args[1] != "--note": die("usage: rb.py error <id> --note <text>")
+    _error_request(session(), args[0], " ".join(args[2:]))
 
 def now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -414,16 +419,123 @@ def _check_durations(cfg, sheets):
         if m["slug"] in old: print(f"rb: warning: {msg}; published anyway, the sheet existed before this rule", file=sys.stderr)
         else: die(msg)
 
-def _publish_sheet(cfg, d, meta):
+# ---------------------------------------------------------------------------
+# Quotas (L29): a shared backend limits each account (supabase/schema.sql, « Quotas per account »). The database
+# refuses with « quota: 300 sheets » or « quota: 200 MB of photos » (SQL P0001); a storage server that hides the
+# message behind a bare refusal is read through my_quota().
+# ---------------------------------------------------------------------------
+
+QUOTA_RE = re.compile(r"quota: ([^\"\\\n]+)")
+REQUEST_ID = None   # set by `publish --request <id>`: the request a quota refusal flags
+
+def _quota_in(body):
+    """The limit named by a quota refusal (« 300 sheets »), or None."""
+    m = QUOTA_RE.search(str(body or ""))
+    return m.group(1).strip().rstrip(".") if m else None
+
+def _my_quota(cfg):
+    """The account's limits and usage (my_quota(), a stable function: GET), or None on a backend without quotas."""
+    try:
+        q = rest(cfg, "GET", "rpc/my_quota", tolerate=(400, 401, 403, 404))
+    except RbHTTPError:
+        return None
+    keys = ("sheets", "max_sheets", "storage_bytes", "max_storage_mb")
+    return q if isinstance(q, dict) and all(isinstance(q.get(k), int) for k in keys) else None
+
+def _photos_full(q):
+    return f"{q['max_storage_mb']} MB of photos" if q and q["storage_bytes"] >= q["max_storage_mb"] * 1048576 else None
+
+LIST_PAGE = 1000   # storage lists at most this many objects per call: the list is read page by page
+
+def _remote_images(cfg, slug):
+    """{file name: (MD5, size)} of the photos the backend already holds for this sheet (storage eTag and size), {} if
+    none; None when the complete list could not be read (then nothing is skipped, and nothing is ever removed): a page
+    that fails, an answer that is not a list, or a page that repeats a name already seen (a server ignoring `offset`).
+    So a photo is only ever removed when it is absent from the whole list, never from a first page alone."""
+    out, offset = {}, 0
+    while True:
+        try:
+            objs = http("POST", f"{cfg['url']}/storage/v1/object/list/sheets", hdr(cfg),
+                        {"prefix": f"{cfg['user_id']}/{slug}/img", "limit": LIST_PAGE, "offset": offset,
+                         "sortBy": {"column": "name", "order": "asc"}}, tolerate=(400, 404))
+        except RbHTTPError:
+            return None
+        if objs is None: objs = []
+        if not isinstance(objs, list): return None
+        for o in objs:
+            if not isinstance(o, dict) or not o.get("name"): continue
+            if o["name"] in out: return None
+            md = o.get("metadata") or {}
+            size = md.get("size")
+            out[o["name"]] = (str(md.get("eTag") or "").strip('"').lower(), size if isinstance(size, int) else 0)
+        if len(objs) < LIST_PAGE: return out
+        offset += len(objs)
+
+def _remove_files(cfg, paths):
+    """Best effort: the photos a refused publish had just added, so that they do not fill the quota for nothing. Never
+    stops the run: any failure (an HTTP status, the network, a bad answer) is reported and the caller goes on, so that
+    _quota_stop() still flags the request as error."""
+    if not paths: return
+    try:
+        http("DELETE", f"{cfg['url']}/storage/v1/object/sheets", hdr(cfg), {"prefixes": paths}, tolerate=range(300, 600))
+        print(f"rb: removed the {len(paths)} photo(s) this publish had added", file=sys.stderr)
+    except (Exception, SystemExit) as e:
+        why = f"{e.code}: {e.body}" if isinstance(e, RbHTTPError) else type(e).__name__ + (f": {e}" if str(e) else "")
+        print(f"rb: could not remove the photo(s) this publish had added ({why}): {', '.join(paths)}", file=sys.stderr)
+
+def quota_message(limit):
+    """What the user reads when a limit refuses a publish: which limit, what to do, how to ask for more."""
+    what = ("The count starts again at midnight UTC." if limit.endswith("per day") else
+            "Delete sheets you no longer need (`rb.py delete <slug>`) to make room.")
+    return (f"quota reached on this backend: {limit} for this account. {what} For a higher limit, ask whoever runs this "
+            "backend (the hosted one: open an issue at https://github.com/lt20/reelbook/issues). On your own Supabase "
+            "project, lift it with one insert: see « Limits on a shared backend » in the README.")
+
+def _quota_stop(cfg, limit, added=()):
+    _remove_files(cfg, list(added))
+    msg = quota_message(limit)
+    if REQUEST_ID:
+        _error_request(cfg, REQUEST_ID, msg)
+    die(msg)
+
+def _publish_sheet(cfg, d, meta, q=None):
+    """`q`: the account's quota (_my_quota), read by the caller just before; None skips the checks made beforehand."""
     slug = meta["slug"]
-    n, img_d = 0, d / "img"
-    if img_d.is_dir():
-        for f in sorted(img_d.iterdir()):
-            if f.suffix.lower() not in IMG_EXT: continue
-            ctype = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
-            path = f"{cfg['user_id']}/{slug}/img/{f.name}"
-            http("POST", f"{cfg['url']}/storage/v1/object/sheets/{path}", hdr(cfg, {"Content-Type": ctype, "x-upsert": "true"}), f.read_bytes(), raw=True)
-            n += 1
+    img_d = d / "img"
+    files = [f for f in sorted(img_d.iterdir()) if f.suffix.lower() in IMG_EXT] if img_d.is_dir() else []
+    n = len(files)
+    # A photo the backend already holds, byte for byte (same MD5 as its eTag), is not sent again: a republish with the
+    # same photos writes nothing to storage, so a full photo quota never blocks it.
+    remote = _remote_images(cfg, slug) if files else {}
+    known = remote or {}
+    todo = []
+    for f in files:
+        data = f.read_bytes()
+        if known.get(f.name, ("", 0))[0] != hashlib.md5(data).hexdigest(): todo.append((f, data))
+    # Quotas (L29), checked before anything is sent: a new sheet past the sheet limit, or photos that would take the
+    # account past its photo limit (what they add, minus the old versions they replace), stop here: no photo without a
+    # sheet, no sheet left with half of its photos replaced. Only a race (another device at the same time) can still
+    # be refused midway by the database.
+    if q:
+        is_new = not (rest(cfg, "GET", "sheets", params={"select": "slug", "slug": f"eq.{slug}"}) or [])
+        if is_new and q["sheets"] >= q["max_sheets"]: _quota_stop(cfg, f"{q['max_sheets']} sheets")
+        grow = sum(len(data) - known.get(f.name, ("", 0))[1] for f, data in todo)
+        if todo and (_photos_full(q) or q["storage_bytes"] + grow > q["max_storage_mb"] * 1048576):
+            _quota_stop(cfg, f"{q['max_storage_mb']} MB of photos")
+    # photos this publish adds (not overwrites), removed again if a limit refuses the publish midway; none is ever
+    # removed when the list of the photos already there could not be read (remote None)
+    added = []
+    for f, data in todo:
+        ctype = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
+        path = f"{cfg['user_id']}/{slug}/img/{f.name}"
+        url = f"{cfg['url']}/storage/v1/object/sheets/{path}"
+        try:
+            http("POST", url, hdr(cfg, {"Content-Type": ctype, "x-upsert": "true"}), data, raw=True, tolerate=(400, 403, 500))
+        except RbHTTPError as e:
+            limit = _quota_in(e.body) or (_photos_full(_my_quota(cfg)) if e.code in (400, 403) else None)
+            if limit: _quota_stop(cfg, limit, added)
+            die(f"POST {url} → {e.code}: {e.body}")
+        if remote is not None and f.name not in remote: added.append(path)
     row = {"slug": slug, "kind": "sheet", "theme": meta["theme"], "group": meta["group"], "title": meta["title"],
            "summary": meta.get("summary", ""), "duration": meta.get("duration", ""), "thumbnail": meta.get("thumbnail", "img/thumb.jpg"),
            "source": meta.get("source", {}), "html": (d / "index.html").read_text()}
@@ -436,6 +548,8 @@ def _publish_sheet(cfg, d, meta):
             out = post(row, (400,))
             break
         except RbHTTPError as e:
+            limit = _quota_in(e.body)
+            if limit: _quota_stop(cfg, limit, added)
             # a backend not migrated yet (PostgREST PGRST204, unknown column): the sheet still goes out without it
             col = next((c for c in OPTIONAL_COLUMNS if c in row and _no_column(e, c)), None)
             if not col: die(f"POST sheets → {e}")
@@ -518,8 +632,18 @@ def _publish_session(d, meta):
         _check_theme(m["theme"], known, sub / "meta.json")
     _check_durations(cfg, [(sub / "meta.json", m) for _, sub, m in sheets])
     _check_tags(cfg, [(sub / "meta.json", m) for _, sub, m in sheets])
+    # Quotas (L29): all the new sheets of the session must fit before the first one is published, or the session would
+    # stop midway and leave sheets without their session in the last free slots.
+    q = _my_quota(cfg)
+    if q:
+        slugs = [m["slug"] for _, _, m in sheets]
+        have = {r.get("slug") for r in (rest(cfg, "GET", "sheets", params={"select": "slug", "slug": f"in.({','.join(slugs)})"}) or [])}
+        new = sum(1 for s in slugs if s not in have)
+        if new and q["sheets"] + new > q["max_sheets"]:
+            print(f"rb: this session adds {new} new sheet(s); the account has room for {max(q['max_sheets'] - q['sheets'], 0)}", file=sys.stderr)
+            _quota_stop(cfg, f"{q['max_sheets']} sheets")
     for _, sub, m in sheets:          # the sheets first: the session only links to them
-        _publish_sheet(cfg, sub, m)
+        _publish_sheet(cfg, sub, m, _my_quota(cfg))
     th = meta.get("thumbnail", "")
     row = {"slug": meta["slug"], "theme": meta["theme"], "title": meta["title"], "format": meta.get("format", ""),
            "why": meta.get("why", ""), "key_points": meta.get("key_points", []), "source": meta.get("source", {}),
@@ -531,7 +655,13 @@ def _publish_session(d, meta):
     _drop_v1_sessions(cfg, (meta.get("source") or {}).get("url"))
 
 def cmd_publish(args):
-    if not args: die("usage: rb.py publish <dir>")
+    global REQUEST_ID
+    args = list(args)
+    if "--request" in args:
+        i = args.index("--request")
+        if i + 1 >= len(args): die("usage: rb.py publish <dir> [--request <id>]")
+        REQUEST_ID = args[i + 1]; del args[i:i + 2]
+    if len(args) != 1: die("usage: rb.py publish <dir> [--request <id>]")
     d = pathlib.Path(args[0])
     meta_p = d / "meta.json"
     if not meta_p.exists(): die(f"{d} needs meta.json")
@@ -547,7 +677,7 @@ def cmd_publish(args):
     _check_theme(meta["theme"], _known_themes(cfg), meta_p)
     _check_durations(cfg, [(meta_p, meta)])
     _check_tags(cfg, [(meta_p, meta)])
-    _publish_sheet(cfg, d, meta)
+    _publish_sheet(cfg, d, meta, _my_quota(cfg))
 
 def cmd_list(args):
     usage = "usage: rb.py list [--since <ISO time, e.g. 2026-11-03T02:00:00Z>]"
@@ -607,9 +737,24 @@ def cmd_requeue_sessions(args):
             print(f"skip {r['slug']}: same video as another v1 session", file=sys.stderr); continue
         todo.append({"url": url, "theme": r["theme"]})
         print(f"{'would queue' if dry else 'queue'} {r['slug']}: {url}")
+    done = len(todo)
     if todo and not dry:
-        rest(cfg, "POST", "requests", todo, prefer="return=minimal")
-    print(f"{len(v1)} v1 session(s), {len(todo)} request(s) {'to insert (dry run, nothing written)' if dry else 'inserted'}")
+        try:
+            rest(cfg, "POST", "requests", todo, prefer="return=minimal", tolerate=(400,))
+        except RbHTTPError as e:
+            if not _quota_in(e.body): die(f"POST requests → {e}")
+            # the daily link quota (L29) refused the whole batch: queue what fits today, one by one
+            done = 0
+            for t in todo:
+                try:
+                    rest(cfg, "POST", "requests", t, prefer="return=minimal", tolerate=(400,))
+                except RbHTTPError as e1:
+                    if not _quota_in(e1.body): die(f"POST requests → {e1}")
+                    print(f"rb: {quota_message(_quota_in(e1.body))} {done} of {len(todo)} queued today: run "
+                          "`rb.py requeue-sessions` again tomorrow for the rest (it skips what is already queued).", file=sys.stderr)
+                    break
+                done += 1
+    print(f"{len(v1)} v1 session(s), {done} request(s) {'to insert (dry run, nothing written)' if dry else 'inserted'}")
 
 def _ts(v):
     """A PostgREST timestamp (« …+00:00 » or « …Z ») as epoch seconds; None when absent or unreadable."""
@@ -693,21 +838,34 @@ def cmd_backfill_search(args):
 def _fold(s):
     return "".join(c for c in unicodedata.normalize("NFD", str(s or "")) if not unicodedata.combining(c)).lower()
 
-# Keywords on folded text (English, with the French of older sheets). A zone comes from the group (the library's
-# groups: Shoulders, Abs, Ankles & feet…), else from the title; gear from the title and search text; the type is the
-# keyword met first in the title (or the group), else in the search text.
+# Keywords on folded text (English, with the French of older sheets). The text of a sheet is its title, its library
+# group, its slug (an exercise of a session carries the session's: `session-dos-2-halteres-shrugs`) and its search text.
+# - zone: a body area named in the title, else a movement of the title (« pompes » → chest), else the group when the
+#   whole group name is body areas (« Ankles & feet »; « Kicks & knees » is a family of techniques), else the slug;
+#   none at all in a `technique` or `partner` notebook (a kick is not a knee exercise, a foil tack not an ankle one).
+# - gear: from the title, slug and search text.
+# - type: the keyword met first in the title, group and slug; else the notebook's profile (TYPE_BY_PROFILE); else the
+#   keyword met first in the search text; else the notebook (TYPE_BY_NOTEBOOK); else empty.
 ZONE_WORDS = {"shoulders": r"shoulders?|epaules?", "arms": r"arms?|bras|biceps|triceps", "chest": r"chest|pecs?|pectoraux",
               "back": r"back|spine|dos", "core": r"core|abs|abdos?|abdominaux", "hips": r"hips?|glutes?|hanches?|fessiers?",
               "legs": r"legs?|jambes?", "knees": r"knees?|genoux?", "ankles": r"ankles?|feet|chevilles?|pieds?",
               "neck": r"neck|nuque|cou", "full body": r"full[- ]body|corps entier"}
+# Movements that name a zone only when the title names no body area (« pompe triceps » works the arms).
+ZONE_MOVES = {"chest": r"pompes?|push[- ]?ups?"}
 GEAR_WORDS = {"mat": r"mats?|tapis", "band": r"bands?|elastiques?", "dumbbell": r"dumbbells?|halteres?",
-              "kettlebell": r"kettlebells?", "barbell": r"barbells?", "bar": r"pull-?up bar|bar|barre fixe",
+              "kettlebell": r"kettlebells?", "barbell": r"barbells?", "bar": r"pull[- ]?up bar|bar|barre fixe",
               "rings": r"rings|anneaux", "ball": r"balls?|ballon", "foam roller": r"foam roll\w*|rouleau",
-              "chair": r"chairs?|chaise", "wall": r"walls?|mur", "board": r"boards?", "kite": r"kites?"}
-GEAR_NONE = r"no equipment|bodyweight|body weight|sans materiel|poids du corps"
+              "chair": r"chairs?|chaise", "wall": r"walls?|mur", "board": r"boards?", "kite": r"kites?",
+              "plate": r"plates?|disques?|discs?", "cable": r"cables?|poulies?|pulleys?", "machine": r"machines?|smith",
+              "bench": r"bench(?:es)?|bancs?"}
+GEAR_NONE = (r"no equipment|without (?:any )?equipment|equipment[- ]free|no gear|bodyweight|body weight"
+             r"|sans (?:aucun )?(?:materiel|equipement)|poids du corps")
 TYPE_WORDS = {"strength": r"strength\w*|renforcement|musculation", "mobility": r"mobility|mobilite", "stretch": r"stretch\w*|etirements?",
               "cardio": r"cardio\w*|hiit", "skill": r"skills?", "drill": r"drills?|educatifs?",
               "warm-up": r"warm[- ]?ups?|echauffement", "routine": r"routines?"}
+NO_ZONE_PROFILES = ("technique", "partner")
+TYPE_BY_PROFILE = {"technique": "skill", "partner": "skill"}
+TYPE_BY_NOTEBOOK = {"strength": "strength", "yoga": "stretch"}
 
 def _words(text, table):
     """{value: position of its first keyword in text} for the values of `table` met in text."""
@@ -717,18 +875,35 @@ def _words(text, table):
         if m: out[value] = m.start()
     return out
 
-def derive_tags(row, vocab=None):
-    """The tags of a published sheet from what it already holds: group, title, search text, duration. Values outside
-    the vocabulary of app/config.js are dropped (a vocabulary change never writes an unknown value)."""
+def _group_zones(group):
+    """The zones of a library group whose whole name is body areas (« Ankles & feet »), else none (« Kicks & knees »)."""
+    found = _words(group, ZONE_WORDS)
+    rest = re.sub(rf"(?<![\w-])(?:{'|'.join(ZONE_WORDS.values())})(?![\w-])", " ", group)
+    return found if found and not re.sub(r"\b(?:and|et)\b|[&,/+\s]", "", rest) else {}
+
+def derive_tags(row, vocab=None, profiles=None):
+    """The tags of a published sheet from what it already holds: notebook, group, title, slug, search text, duration.
+    Values outside the vocabulary of app/config.js are dropped (a vocabulary change never writes an unknown value).
+    `profiles` is {notebook id: profile} (library_profiles(); a notebook it does not know is 'gym')."""
     vocab = facets_vocab() if vocab is None else vocab
+    profiles = library_profiles() if profiles is None else profiles
     ok = lambda k, v: not vocab.get(k) or v in vocab[k]
-    group, title, text = _fold(row.get("group")), _fold(row.get("title")), _fold(row.get("search_text"))
-    zones = _words(group, ZONE_WORDS) or _words(title, ZONE_WORDS)
-    found = _words(title + " \n " + text, GEAR_WORDS)
-    gear = [g for g in GEAR_WORDS if g in found]
-    if not gear and re.search(GEAR_NONE, title + " " + text): gear = ["none"]
+    theme = row.get("theme") or ""
+    profile = profiles.get(theme, "gym")
+    # hyphens read as spaces: « Pompe-triceps » names the triceps, a slug is words joined by hyphens
+    group, title, text, slug = (_fold(row.get(k)).replace("-", " ") for k in ("group", "title", "search_text", "slug"))
+    zones = {}
+    if profile not in NO_ZONE_PROFILES:
+        zones = _words(title, ZONE_WORDS) or _words(title, ZONE_MOVES) or _group_zones(group) or _words(slug, ZONE_WORDS)
+    # a title that says « without equipment » beats the kit of its session's slug (« Shrugs sans matériel »)
+    if not _words(title, GEAR_WORDS) and re.search(GEAR_NONE, title): gear = ["none"]
+    else:
+        found = _words(title + " \n " + slug + " \n " + text, GEAR_WORDS)
+        gear = [g for g in GEAR_WORDS if g in found]
+        if not gear and re.search(GEAR_NONE, slug + " \n " + text): gear = ["none"]
     first = lambda d: min(d, key=d.get) if d else ""
-    kind = first(_words(title + " " + group, TYPE_WORDS)) or first(_words(text, TYPE_WORDS))
+    kind = (first(_words(title + " \n " + group + " \n " + slug, TYPE_WORDS)) or TYPE_BY_PROFILE.get(profile)
+            or first(_words(text, TYPE_WORDS)) or TYPE_BY_NOTEBOOK.get(theme, ""))
     return {"zone": [z for z in ZONE_WORDS if z in zones and ok("zone", z)], "gear": [g for g in gear if ok("gear", g)],
             "minutes": _minutes(row.get("duration")), "type": kind if kind and ok("type", kind) else ""}
 
@@ -736,7 +911,7 @@ def cmd_backfill_tags(args):
     if any(a != "--dry-run" for a in args): die("usage: rb.py backfill-tags [--dry-run]")
     dry = "--dry-run" in args
     cfg = session()
-    vocab = facets_vocab()
+    vocab, profiles = facets_vocab(), library_profiles()
     cols = ["slug", "theme", '"group"', "title", "duration", "search_text", "tags"]
     PAGE, last, seen, n = 200, None, 0, 0   # keyset on slug (writes do not shift it)
     while True:
@@ -751,7 +926,7 @@ def cmd_backfill_tags(args):
         for r in rows:
             if r.get("tags"): continue   # tagged meanwhile, or a server ignoring the filter
             seen += 1
-            tags = derive_tags(r, vocab)
+            tags = derive_tags(r, vocab, profiles)
             if not (tags["zone"] or tags["gear"] or tags["type"] or tags["minutes"] is not None): continue
             n += 1
             print(f"{r['slug']}: {json.dumps(tags, ensure_ascii=False)}" + (" (dry run)" if dry else ""))

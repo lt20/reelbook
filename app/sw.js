@@ -5,17 +5,21 @@
 // - Signed photos from Supabase Storage: cache-first, keyed by their URL without the token (a new token is
 //   signed at each start; the app's rbv parameter, the sheet's updated_at, stays in the key so a republished
 //   photo is fetched again; the request to Storage goes without it), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE), a deleted sheet's dropped (DROP_PHOTOS).
+// - The demo notebook (app/demo/, L27): stale-while-revalidate too, in a cache of its own (DEMO) that a new
+//   VERSION keeps. On the first visit of #demo the app sends the list of its files (message KEEP_DEMO), fetched
+//   here even when the page is not controlled yet, so the demo opens offline afterwards. Not precached: most
+//   visitors never open it.
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
-const VERSION = 'rb-shell-37';
-const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300;
-const SHELL = ['./', './index.html', './config.js?v=8', './sessions.js?v=10', './sheet.js?v=4', './vendor/supabase.js?v=2', './manifest.webmanifest',
+const VERSION = 'rb-shell-40';
+const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300, DEMO = 'rb-demo-1';
+const SHELL = ['./', './index.html', './config.js?v=9', './sessions.js?v=10', './sheet.js?v=4', './vendor/supabase.js?v=2', './manifest.webmanifest',
   './fonts/barlow-condensed-600-latin.woff2', './fonts/barlow-condensed-700-latin.woff2', './fonts/source-sans-3-latin.woff2',
   './icons.svg', './icons/reelbook-mark.svg', './icons/reelbook-mark-light.svg', './icons/reelbook-wordmark.svg', './icons/reelbook-wordmark-light.svg', './icons/reelbook-app.svg', './icons/reelbook-icon-180.png', './icons/reelbook-icon-192.png', './icons/reelbook-icon-512.png', './icons/reelbook-icon-512-maskable.png'];
 
 // cache: 'reload' so a new version is not built from stale HTTP-cached files.
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, {cache: 'reload'})))).then(() => self.skipWaiting())); });
 // Old shells go; the photo cache stays across versions (only a sign-out empties it).
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== PHOTOS).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== PHOTOS && k !== DEMO).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 
 // epoch: bumped at each sign-out and each deleted sheet, so a photo still downloading then is not put back in the
 // emptied cache (another sheet's photo in flight is only left uncached).
@@ -27,22 +31,34 @@ self.addEventListener('message', e => {
     const part = '/storage/v1/object/sign/sheets/' + e.data.path; epoch++;
     e.waitUntil(caches.open(PHOTOS).then(async c => Promise.all((await c.keys()).filter(k => k.url.includes(part)).map(k => c.delete(k)))).catch(() => {}));
   }
+  if (e.data && e.data.type === 'KEEP_DEMO' && Array.isArray(e.data.urls)) e.waitUntil(keepDemo(e.data.urls).catch(() => {}));
 });
+
+// A demo file: same origin, under <scope>/demo/.
+const demoFile = url => url.origin === location.origin && /\/demo\/[\w.\/-]+$/.test(url.pathname) && !url.pathname.includes('..');
+const keepDemo = async urls => {
+  const c = await caches.open(DEMO);
+  await Promise.all(urls.slice(0, 300).map(async u => {
+    let url; try { url = new URL(String(u)); } catch { return; }
+    if (!demoFile(url)) return;
+    try { const r = await fetch(url.href, {cache: 'no-cache'}); if (keep(r)) await c.put(url.href, r); } catch {}
+  }));
+};
 
 // A redirected response cannot answer a navigation (Safari), an error page must not replace a good copy.
 const keep = r => r && r.ok && !r.redirected;
 
-const shell = async e => {
+const shell = async (e, store = VERSION) => {
   const req = e.request, url = new URL(req.url);
   // A navigation with a query (the sign-up confirmation link) is the same page.
   const key = req.mode === 'navigate' ? url.origin + url.pathname : req;
   const refresh = fetch(key, {cache: 'no-cache'}).then(async r => {
-    if (keep(r)) { const copy = r.clone(); await (await caches.open(VERSION)).put(key, copy); }
+    if (keep(r)) { const copy = r.clone(); await (await caches.open(store)).put(key, copy); }
     return r;
   });
   refresh.catch(() => {}); // handled below (offline with a cached copy) or by the caller
   let cached = null;
-  try { cached = await (await caches.open(VERSION)).match(key) || null; } catch {}
+  try { cached = await (await caches.open(store)).match(key) || null; } catch {}
   if (!cached) return refresh;
   e.waitUntil(refresh.catch(() => {})); // offline: the cached copy stays
   return cached;
@@ -77,5 +93,5 @@ self.addEventListener('fetch', e => {
   if (url.pathname.includes('/storage/v1/object/sign/')) { e.respondWith(photo(e).catch(() => bare(e.request))); return; }
   if (url.origin !== location.origin) return;
   // Never stuck on a broken cache: any failure goes to the network.
-  e.respondWith(shell(e).catch(() => fetch(e.request)));
+  e.respondWith(shell(e, demoFile(url) ? DEMO : VERSION).catch(() => fetch(e.request)));
 });

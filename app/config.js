@@ -83,7 +83,7 @@ window.REELBOOK = {
   // `time` buckets tags.minutes for the search view: [label, from (included), to (excluded) or null].
   facets: {
     zone: ['shoulders', 'arms', 'chest', 'back', 'core', 'hips', 'legs', 'knees', 'ankles', 'neck', 'full body'],
-    gear: ['none', 'mat', 'band', 'dumbbell', 'kettlebell', 'barbell', 'bar', 'rings', 'ball', 'foam roller', 'chair', 'wall', 'board', 'kite'],
+    gear: ['none', 'mat', 'band', 'dumbbell', 'kettlebell', 'barbell', 'bar', 'rings', 'ball', 'foam roller', 'chair', 'wall', 'board', 'kite', 'plate', 'cable', 'machine', 'bench'],
     type: ['strength', 'mobility', 'stretch', 'cardio', 'skill', 'drill', 'warm-up', 'routine'],
     time: [['< 5', 0, 5], ['5–10', 5, 10], ['10–20', 10, 20], ['20+', 20, null]]
   },

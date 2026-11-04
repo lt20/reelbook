@@ -165,6 +165,8 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .howto{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px var(--s-4)}
 .howto h2{margin:0 0 10px}
 .howto ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:var(--fs-base);line-height:1.45}
+.sc-steps{margin:0 0 var(--s-3);padding-left:22px;display:grid;gap:10px;line-height:1.45}
+.sc-steps pre{margin:6px 0 4px}.sc-steps .actions{display:flex;margin:0 0 6px}
 .howto li>strong{font-family:var(--display);font-size:var(--fs-md);letter-spacing:.01em;text-transform:uppercase;display:block}
 .howto .tip{margin:var(--s-3) 0 0;font-size:var(--fs-sm);color:var(--muted)}
 /* ---- cards ---- */
@@ -554,6 +556,13 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 #nav-bar.nb.titled #nav-ico{opacity:1}
 @media (prefers-reduced-motion:no-preference){#nav-ico{transition:opacity .15s}#nav-bar.nb{transition:border-color .2s,background-color .2s}}
 @media (prefers-reduced-motion:reduce){#nav-bar,#nav-title{transition:none}}
+/* L27: the demo notebook: a banner on every page (the way to sign up), a way back, no editing control */
+.demo-banner{position:sticky;top:0;z-index:6;display:block;margin:-20px -16px var(--s-4);padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:var(--fs-sm);text-align:center;text-decoration:none}
+.demo-banner:active{opacity:.85}
+.demo .top{margin:0 0 6px}
+.demo .top a{color:var(--accent);font-weight:600;text-decoration:none}
+.demo-nb{display:flex;align-items:center;gap:var(--s-2)}
+.demo-nb .nb-ico{width:22px;height:22px;color:var(--t,var(--accent))}
 /* L24: invitation to install the app, a quiet card at the top of the home page (browser tab only) */
 .install{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s-2) var(--s-3);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-3) var(--s-3) var(--s-3) var(--s-4);margin:0 0 var(--s-4)}
 .install .ic-share{flex:none;width:1.375rem;height:1.375rem;color:var(--accent)}
@@ -677,7 +686,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="addrow"><input id="f-url" type="url" inputmode="url" enterkeyhint="go" autocomplete="off" placeholder="https://…" required><button class="btn" type="submit" id="f-submit">Queue it</button></div>
     <p class="err" id="f-err" hidden></p>
     <p class="hint" id="f-hint">Notebook and group are decided when the video is analysed. The sheet is built on your next Claude Code run: <code>/reelbook</code>.</p>
-    <div class="actions"><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
+    <div class="actions"><button class="btn ghost sm" type="button" id="paste-link">Paste link</button><button class="btn ghost sm" type="button" id="f-cancel">Cancel</button></div>
   </form>
   <dialog class="dlg act" id="pending-dlg" aria-labelledby="pd-title">
     <h2 id="pd-title">Not queued yet</h2>
@@ -773,6 +782,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <h2>Account</h2>
     <p id="s-user"></p>
     <p class="hint">Backend: <span id="s-backend"></span></p>
+    <!-- L29: what the account uses against its limits (my_quota); hidden on a backend without quotas -->
+    <p class="hint" id="s-usage" hidden></p>
     <p class="hint" id="s-sessions" hidden>Re-run <code>supabase/schema.sql</code> to enable sessions.</p>
     <p class="hint" id="s-v1" hidden></p>
     <div class="actions"><button class="btn ghost" type="button" id="s-signout">Sign out</button><button class="btn ghost" type="button" id="s-reset">Change backend</button></div>
@@ -792,10 +803,39 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-cli">Copy</button><span class="hint" data-copied="s-cli"></span></div>
     <p class="hint">The computer keeps its own session in <code>~/.config/reelbook/</code>; signing out here does not sign it out.</p>
   </div>
+  <!-- L28: the iPhone shortcut's key (capture_tokens, Edge Function add-link); hidden on a backend without that table -->
+  <section class="panel" id="shortcut-section" aria-labelledby="shortcut-h" hidden>
+    <h2 id="shortcut-h">iPhone shortcut</h2>
+    <p class="hint">Send a video to your queue from the Share Sheet of Instagram, TikTok, YouTube or Safari, without opening Reelbook. The shortcut uses a key that can add links to your queue, nothing else.</p>
+    <div id="shortcut-none">
+      <label for="shortcut-label">Name of the key</label>
+      <div class="addrow"><input id="shortcut-label" type="text" maxlength="60" autocomplete="off" placeholder="iPhone"><button class="btn" type="button" id="shortcut-create">Create a key</button></div>
+    </div>
+    <div id="shortcut-active" hidden>
+      <p id="shortcut-info"></p>
+      <div class="actions"><button class="btn ghost sm" type="button" id="shortcut-revoke">Revoke the key</button></div>
+    </div>
+    <div id="shortcut-new" hidden>
+      <p><b>Copy the key now: it is shown only once.</b></p>
+      <pre id="shortcut-token"></pre>
+      <div class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-token">Copy</button><span class="hint" data-copied="shortcut-token"></span></div>
+    </div>
+    <p class="err" id="shortcut-err" hidden></p>
+    <p><b>Build the shortcut once</b> <span class="hint">· in the Shortcuts app on the iPhone.</span></p>
+    <ol class="sc-steps">
+      <li>Tap <b>+</b> for a new shortcut and name it <b>Add to Reelbook</b>. In its details (ⓘ), turn on <b>Show in Share Sheet</b>.</li>
+      <li>Add the action <b>Get URLs</b> from <b>Shortcut Input</b>.</li>
+      <li>Add the action <b>Get contents of URL</b> with this URL:<pre id="shortcut-url"></pre><span class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-url">Copy</button><span class="hint" data-copied="shortcut-url"></span></span>Tap <b>Show More</b>: Method <b>POST</b>; Headers: add <code>Authorization</code> with the key as its value (it starts with <code>Bearer</code>); Request Body <b>JSON</b>: add a text field <code>url</code> set to <b>URLs</b>.</li>
+      <li>Add the action <b>Show Notification</b> with <b>Contents of URL</b>: it reads « Queued in Reelbook. », or why not.</li>
+    </ol>
+    <p class="hint">Then, in Instagram or TikTok: Share › Add to Reelbook. A lost phone, or a key shared by mistake: revoke it here, create a new one and paste it in the shortcut.</p>
+  </section>
 </div>
 
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
+<!-- L27: the demo notebook (#demo), read only, from app/demo/ -->
+<div id="demo" class="demo" hidden></div>
 <!-- ===== L10: session player ===== -->
 <div id="player" class="player" hidden></div>
 <div id="play-flash" class="pl-flash" hidden aria-hidden="true"></div>
@@ -862,7 +902,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 </dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
-<script src="config.js?v=8"></script>
+<script src="config.js?v=9"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
 <script>
@@ -886,7 +926,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // the day before west of Greenwich.
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
-  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player'];
+  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player', 'demo'];
   const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); syncNav(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
   // ---------- L18: bottom sheets ----------
@@ -947,6 +987,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   let backend = rememberedBackend();
   let sb = null;
+  // D2: {client, token, exp} of the session supabase-js last gave (onAuthStateChange), for a request that cannot wait.
+  let authNow = null;
   const backendLabel = () => backend ? (backend.mode === 'hosted' ? (CFG.hosted.name || 'Reelbook hosted') : backend.url.replace(/^https?:\/\//, '')) : 'No backend selected';
   const selectBackend = (next, remember = true) => { backend = next; if (remember && next) ls.set('rb.backend', JSON.stringify(next.mode === 'hosted' ? {mode: 'hosted'} : next)); boot(); };
   const ownBackend = (urlInput, keyInput) => {
@@ -985,7 +1027,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   $('a-own').addEventListener('click', ev => { ev.preventDefault(); $('login-own-err').hidden = true; $('login-own-form').hidden = false; $('login-own-url').focus(); });
   $('login-own-cancel').addEventListener('click', () => { $('login-own-form').hidden = true; });
   $('a-hosted').addEventListener('click', ev => { ev.preventDefault(); $('login-own-form').hidden = true; selectBackend(hostedBackend(), mode === 'in'); });
-  $('s-reset').addEventListener('click', async () => { if (sb) await sb.auth.signOut(); ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
+  $('s-reset').addEventListener('click', async () => { if (!await signOutHere({force: true})) return; ls.del('rb.backend'); signupBackendChosen = false; setMode('in'); location.hash = ''; selectBackend(hostedBackend(), false); });
 
   // ---------- auth ----------
   // L25: introOpen, the presentation shows above the account actions until the visitor picks one, on a device
@@ -1020,7 +1062,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     } catch (e) { if (client === sb) { err.textContent = e.message || 'Could not sign in.'; err.hidden = false; } }
     finally { authBusy = false; $('a-submit').disabled = !backend; }
   });
-  $('s-signout').addEventListener('click', async () => { await sb.auth.signOut(); location.hash = ''; });
+  $('s-signout').addEventListener('click', async () => { if (await signOutHere()) location.hash = ''; });
 
   // ---------- data ----------
   // v2Sessions: rows of the `sessions` table; inSessions: sheet slug -> those sessions; sessionsOk: false when the backend has no such table.
@@ -1067,7 +1109,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const loadThemes = async () => { themeRows = await readThemes(); setThemes(themeRows); saveCatalogue(); };
   const addTheme = async row => { touched(); const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
   const removeTheme = async id => { touched(); const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
-  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at';
+  const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at,updated_at';
   const setSessions = rows => { v2Sessions = rows; v2BySlug = new Map(rows.map(s => [s.slug, s])); inSessions = RS.sessionsBySheet(rows); };
   // L19, instant start. A key-value store in IndexedDB for the last catalogue and the sheets opened, per backend
   // and user (RS.catalogueCacheKey). None (private mode, an old browser, the test harness): reads give null and
@@ -1626,6 +1668,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     paintHint();
     if (sheetForm.scrollIntoView) sheetForm.scrollIntoView({block: 'center'});
     $('f-url').focus();
+    if (!$('f-url').value.trim()) prefill();
   };
   // A pasted link survives a closed tab or a killed PWA: it is kept until queued or discarded.
   const DRAFT = 'rb.draft';
@@ -1633,6 +1676,38 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const discardDraft = () => { sheetForm.reset(); ls.del(DRAFT); $('f-err').hidden = true; };
   if (ls.get(DRAFT)) { $('f-url').value = ls.get(DRAFT); sheetForm.hidden = false; btn.setAttribute('aria-expanded', 'true'); $('f-err').textContent = 'This link is not queued yet.'; $('f-err').hidden = false; }
   $('f-url').addEventListener('input', () => { const v = $('f-url').value.trim(); if (v) ls.set(DRAFT, v); else ls.del(DRAFT); });
+  // L28: « Paste link » reads the clipboard into the field; + opening an empty form tries it too, permission
+  // permitting (on iOS, the system's Paste bubble), and says nothing when it gets no supported link. Nothing is
+  // sent without a tap on Queue it. Paste link tapped within 2 s of the opening uses the read the opening started
+  // (iOS would ask twice), unless that read failed.
+  let openRead = null;
+  const readClip = () => {
+    const cb = typeof navigator !== 'undefined' && navigator ? navigator.clipboard : null;
+    try { return cb && cb.readText ? Promise.resolve(cb.readText()) : Promise.reject(new Error('no clipboard')); } catch (e) { return Promise.reject(e); }
+  };
+  // The first supported link in a text (an app's share text may wrap it in words), as written; null if none.
+  const linkIn = text => {
+    for (const [m] of String(text || '').matchAll(/https?:\/\/[^\s<>"']+/gi)) {
+      const raw = m.replace(/[).,;!?]+$/, '');
+      try { if (okHost(new URL(raw).hostname)) return raw; } catch {}
+    }
+    return null;
+  };
+  // Pre-filled, the link is kept like a typed one (rb.draft): a PWA closed before Queue it finds it again.
+  const prefill = () => {
+    const read = {at: Date.now(), failed: false, p: readClip()}; openRead = read;
+    read.p.then(text => { const link = linkIn(text); if (link && !sheetForm.hidden && !$('f-url').value.trim()) { $('f-url').value = link; ls.set(DRAFT, link); } }, () => { read.failed = true; });
+  };
+  $('paste-link').addEventListener('click', async () => {
+    const err = $('f-err'), fail = msg => { err.textContent = msg; err.hidden = false; };
+    const read = openRead, before = $('f-url').value; openRead = null;
+    let text;
+    try { text = await (read && !read.failed && Date.now() - read.at < 2000 ? read.p : readClip()); } catch { return fail('Reelbook could not read the clipboard. Paste the link in the field.'); }
+    if ($('f-url').value !== before) return; // typed meanwhile (iOS waits for the Paste bubble): what was typed wins
+    const link = linkIn(text);
+    if (!link) return fail(String(text || '').trim() ? 'The clipboard holds no Instagram, TikTok, YouTube or Facebook link.' : 'The clipboard is empty. Copy the video\'s link first.');
+    $('f-url').value = link; ls.set(DRAFT, link); err.hidden = true; $('f-url').focus();
+  });
   const dlg = $('pending-dlg');
   let afterPending = null;
   const askPending = (next, queueLabel) => {
@@ -1667,13 +1742,16 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // remembers it open); a failed request can be retried; a removal waits for the « Removed · Undo » toast to end.
   let queueCount = 0, queueRows = [], lastRun = null, pendingDel = null;
   const deleting = new Set(); // ids whose DELETE is in flight: kept out of every read until it answers
+  // D2: id -> queueGen when its DELETE answered. A read sent before that answer may still hold the row: it stays out
+  // of such reads, and is forgotten by the first read sent after the answer.
+  const removed = new Map();
   // queueGen: bumped by every read and every write; a read that answers after a newer one, or after a write, is dropped.
   // queueEpoch: bumped on an account or backend change; a write answering after it touches nothing.
   let queueGen = 0, queueEpoch = 0;
   // Another account or backend: forget the previous queue before any read (a failed read keeps what is shown).
   const resetQueue = () => {
     commitDel(); // a removal waiting on its toast is sent with the previous client, not dropped
-    queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear();
+    queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear(); removed.clear();
     $('queue-undo').hidden = true; queueCount = 0; $('queue-sec').hidden = true; $('queue-summary').innerHTML = ''; $('queue').innerHTML = '';
   };
   const rowErr = new Map(), DAY = 86400000, QOPEN = 'rb.queueOpen';
@@ -1722,14 +1800,28 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       ]);
       // a failed read keeps what is shown: an empty list is only believed from a successful read
       if (list.error || gen !== queueGen) return;
-      queueRows = (list.data || []).filter(d => d.status !== 'done' && !deleting.has(String(d.id)) && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
+      const gone = id => deleting.has(id) || (removed.has(id) && gen <= removed.get(id)) || (pendingDel && String(pendingDel.row.id) === id);
+      queueRows = (list.data || []).filter(d => d.status !== 'done' && !gone(String(d.id)));
+      for (const [id, g] of removed) if (gen > g) removed.delete(id);
       if (!last.error) lastRun = (last.data && last.data.processed_at) || null;
       renderQueue();
     } catch {}
   };
-  // A removal is sent when the toast's bar ends, when the page is left or hidden, or when another row is removed.
-  // If the delete fails, the row comes back where it was, with the reason.
-  const commitDel = () => {
+  // D2, a removal sent as the page goes away: supabase-js reads its session (and may refresh the token) before its
+  // request leaves, which a closing iPhone page may never reach. With the access token supabase-js last gave
+  // (authNow, still valid), the DELETE goes to PostgREST at once, keepalive; else null and supabase-js sends it.
+  const leaveDelete = id => {
+    const a = authNow;
+    if (!a || a.client !== sb || !backend || typeof fetch !== 'function' || !(a.exp * 1000 > Date.now() + 30000)) return null;
+    try {
+      return fetch(`${String(backend.url).replace(/\/+$/, '')}/rest/v1/requests?id=eq.${encodeURIComponent(id)}`, {
+        method: 'DELETE', keepalive: true, headers: {apikey: backend.key, Authorization: `Bearer ${a.token}`}
+      }).then(r => ({error: r && r.ok ? null : {}}));
+    } catch { return null; }
+  };
+  // A removal is sent when the toast's bar ends, when the page is left or hidden (leaving), or when another row is
+  // removed. If the delete fails, the row comes back where it was, with the reason.
+  const commitDel = (leaving = false) => {
     if (!pendingDel) return;
     const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
     const key = String(row.id), epoch = queueEpoch; deleting.add(key); queueGen++;
@@ -1739,7 +1831,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       if (!queueRows.some(d => String(d.id) === String(row.id))) queueRows.splice(Math.min(i, queueRows.length), 0, row);
       rowErr.set(String(row.id), `Could not remove it: ${(e && e.message) || 'try again in a moment.'}`); renderQueue();
     };
-    sb.from('requests').delete().eq('id', row.id).then(r => { if (r && r.error) restore(r.error); else deleting.delete(key); }, restore);
+    const sent = (leaving === true && leaveDelete(row.id)) || sb.from('requests').delete().eq('id', row.id);
+    sent.then(r => {
+      if (r && r.error) { restore(r.error); return; }
+      if (epoch === queueEpoch) { deleting.delete(key); removed.set(key, queueGen); }
+    }, restore);
   };
   $('queue').addEventListener('click', async ev => {
     const r = ev.target.closest('[data-retry]');
@@ -1769,11 +1865,18 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
     queueRows.splice(Math.min(i, queueRows.length), 0, row); renderQueue();
   });
-  $('queue-undo').addEventListener('animationend', commitDel);
-  window.addEventListener('pagehide', commitDel);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(); });
+  $('queue-undo').addEventListener('animationend', () => commitDel());
+  window.addEventListener('pagehide', () => commitDel(true));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(true); });
   // iOS Safari applies :active (the pressed state) only once the page listens to touchstart.
   document.addEventListener('touchstart', () => {}, {passive: true});
+  // L29: a backend with quotas refuses a link past the account's limit (« quota: 10 links per day », SQL P0001): said
+  // in plain words instead of the generic error. null for any other error.
+  const quotaText = e => {
+    const m = /^quota: (.+)$/.exec(String((e && e.message) || '').trim()); if (!m) return null;
+    return /per day$/.test(m[1]) ? `Limit reached: ${m[1]} on this backend. You can add more tomorrow (the count starts again at midnight UTC).`
+      : `Limit reached: ${m[1]} on this backend.`;
+  };
   const queueLink = async () => {
     const err = $('f-err'); err.hidden = true;
     const fail = msg => { err.textContent = msg; err.hidden = false; return false; };
@@ -1786,7 +1889,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       discardDraft(); openForm(false); refreshQueue();
       const f = $('flash'); f.textContent = currentTheme ? 'Queued. It shows in the queue on the home page. The sheet will be built on your next Claude Code run.' : 'Queued. The sheet will be built on your next Claude Code run.'; f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000);
       return true;
-    } catch { return fail('Could not save it right now. Try again in a moment.'); }
+    } catch (e) { return fail(quotaText(e) || 'Could not save it right now. Try again in a moment.'); }
     finally { $('f-submit').disabled = false; }
   };
   sheetForm.addEventListener('submit', ev => { ev.preventDefault(); queueLink(); });
@@ -1877,6 +1980,38 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   let notesNow = null;
   const noteQueues = new Map(); // '<user id>|<note key>' -> its last write (a stuck write never holds up another note or account)
   const flushNotes = () => { if (notesNow) notesNow.flush(); };
+  // Debt #30: signing out (Settings: Sign out, or another backend) leaves no note draft of the account on the device.
+  // The note being typed is saved first and this account's note writes are waited for (5 s at most); a draft still
+  // not stored then (offline, a failed save) is deleted only once the user agrees, else nothing changes. Drafts go
+  // only once the sign-out succeeded (Sign out refused by the server: still signed in, nothing deleted; another
+  // backend goes on anyway: the user agreed). One that appears meanwhile (another tab) is asked about again. A session
+  // revoked elsewhere keeps its drafts: they come back at the next sign-in of the same account.
+  const draftKeysOf = uid => {
+    const pre = 'rb.draft.' + uid + '.', out = [];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre)) out.push(k); } } catch {}
+    return out;
+  };
+  const signOutHere = async ({force = false} = {}) => {
+    if (!sb) return true;
+    const uid = user ? user.id : '';
+    if (uid) {
+      flushNotes();
+      // no typing meanwhile: a text typed now would make a draft after the clean-up (given back on No)
+      const ta = notesNow ? $('n-text') : null, ro = ta ? ta.readOnly : false; if (ta) ta.readOnly = true;
+      const runs = [...noteQueues].filter(([k]) => k.startsWith(uid + '|')).map(([, run]) => run);
+      if (runs.length) await Promise.race([Promise.all(runs), new Promise(ok => setTimeout(ok, 5000))]);
+      const left = draftKeysOf(uid), n = left.length;
+      if (n && typeof window.confirm === 'function' && !window.confirm(`${n === 1 ? 'A note is' : n + ' notes are'} not saved yet. Sign out and delete ${n === 1 ? 'it' : 'them'} from this device?`)) { if (ta) ta.readOnly = ro; return false; }
+      const res = await sb.auth.signOut().catch(error => ({error}));
+      if (res && res.error && !force) { console.warn('Sign-out failed:', res.error.message || res.error); if (ta) ta.readOnly = ro; return false; }
+      left.forEach(ls.del);
+      const late = draftKeysOf(uid); // typed while the sign-out was on its way (another tab): asked, never dropped silently
+      if (late.length && (typeof window.confirm !== 'function' || window.confirm('A note typed during sign-out is not saved. Delete it from this device?'))) late.forEach(ls.del);
+      return true;
+    }
+    await sb.auth.signOut().catch(() => {});
+    return true;
+  };
   const wireNotes = async key => {
     flushNotes();
     const ta = $('n-text'), st = $('n-status'), retry = $('n-retry');
@@ -2027,8 +2162,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   // Saved: the row joins the page's entries and the latest date of its key (cards, home counter). Not saved: what is
   // in the field stays there with « Not saved. Try again. »; nothing reads as done.
-  // A try carries its own id: Save again on the same text, the same day, sends the same row, so a row stored whose answer was lost
-  // comes back as a duplicate key (23505) and counts as saved, never as a second entry.
+  // A try carries its own id: Save again on the same text sends the same row, so a row stored whose answer was lost
+  // comes back as a duplicate key (23505) and counts as saved, never as a second entry. D2: its day too is the one of
+  // the first Save, so a retry past midnight is still the same row (#32).
   const newId = () => {
     const c = typeof crypto !== 'undefined' ? crypto : null;
     if (c && c.randomUUID) return c.randomUUID();
@@ -2036,8 +2172,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const h = b.map(x => x.toString(16).padStart(2, '0')).join('');
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
   };
-  // A try: {id, slug, done_on, text}, the same one again for the same text the same day (see above).
-  const logAttempt = (prev, key, text) => prev && prev.text === text && prev.done_on === todayIso() ? prev : {id: newId(), slug: key, done_on: todayIso(), text};
+  // A try: {id, slug, done_on, text}, the same one again for the same text, whatever the time (see above).
+  const logAttempt = (prev, key, text) => prev && prev.text === text && prev.slug === key ? prev : {id: newId(), slug: key, done_on: todayIso(), text};
   // The write behind « Done today » and the player's « Save to log » (L11): one practice_log row (a catalogue change:
   // localGen). {entry} once stored, {} when not saved, null when signed out or another account meanwhile.
   const insertPractice = async row => {
@@ -2094,7 +2230,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   let edit = null;
   // L5: the session the shown sheet is opened from, {s, n, items} (n counted from 1 over `items`), else null.
   let seat = null;
-  const draftOf = s => ({slug: s.slug, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
+  // at: the version the edit starts from (sessions.updated_at), the condition of its write (saveEdit)
+  const draftOf = s => ({slug: s.slug, at: s.updated_at || null, title: s.title, format: s.format || '', was: {title: s.title, format: s.format || ''},
     items: RS.resolveItems(s, bySlug).map(it => ({slug: it.sheet.slug, dose: it.dose, was: it.dose, given: it.given}))});
   const editRows = () => edit.items.map((it, i) => {
     const sh = bySlug.get(it.slug), t = esc(sh ? sh.title : it.slug);
@@ -2185,7 +2322,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
         // The dialog may hold a newer report by now (Cancel, reopened): only this one's own sheet is marked sent.
         ta.value = ''; st.textContent = 'Sent. Claude will redo this sheet on the next run.'; if ($('report-note') === ta) { sheetSaved(rdlg); $('report-cancel').textContent = 'Close'; }
         refreshQueue();
-      } catch { st.className = 'status err'; st.textContent = 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
+      } catch (e) { st.className = 'status err'; st.textContent = quotaText(e) || 'Could not send it right now. Try again in a moment.'; send.disabled = false; }
     }));
     openSheet(rdlg);
   };
@@ -2581,8 +2718,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (theme === s.theme) { closeSheet(mdlg); return; }
     $('mv-submit').disabled = true; err.hidden = true;
     try {
-      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
-      s.theme = theme; saveCatalogue();
+      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug,updated_at'); if (error || !data || !data.length) throw error || new Error('no row');
+      s.theme = theme; stamp(s, data[0]); saveCatalogue();
       closeSheet(mdlg);
       const top = $('sheet-top');
       if (top && shownSession() === s) top.innerHTML = `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`; syncNav();
@@ -2612,6 +2749,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // ---------- compose sessions: « + New session », « Add to session », Edit mode, delete ----------
   // Every write checks it changed a row: RLS answers an empty result, not an error, for a row it hides.
   const oneRow = ({data, error}) => { if (error || !data || !data.length) throw error || new Error('no row'); return data[0]; };
+  // A session written from this tab takes the updated_at the write gave it: its next Edit starts from there (#36).
+  const stamp = (s, r) => { if (r && r.updated_at) s.updated_at = r.updated_at; };
   // Slugs a new session must not take: the user's sessions, and notes left by deleted sessions.
   const takenSlugs = () => new Set([...v2Sessions.map(s => s.slug), ...[...notesIndex].map(RS.sessionSlugOf).filter(Boolean)]);
   const createSession = async (theme, title, slugs) => {
@@ -2689,7 +2828,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     else { add = RS.addItem(s.items, e.slug); if (!add.added) return fail('This sheet is already in that session.'); }
     $('as-submit').disabled = true; err.hidden = true;
     try {
-      if (s) { touched(); oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug')); s.items = add.items; setSessions(v2Sessions); saveCatalogue(); }
+      if (s) { touched(); const r = oneRow(await sb.from('sessions').update({items: add.items}).eq('slug', s.slug).select('slug,updated_at')); s.items = add.items; stamp(s, r); setSessions(v2Sessions); saveCatalogue(); }
       else s = await createSession(e.theme, title, [e.slug]);
       closeSheet(adlg);
       const top = $('sheet-top');
@@ -2705,11 +2844,41 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const row = {title: RS.keepOrClip(edit.title, edit.was.title, RS.MAX.title), format: RS.keepOrClip(edit.format, edit.was.format, RS.MAX.format), items: RS.cleanItems(edit.items)};
     if (!row.title) { err.textContent = 'Give the session a title.'; err.hidden = false; $('ed-title').focus(); return; }
     b.disabled = true; err.hidden = true;
+    const ed = edit;
     try {
-      touched(); oneRow(await sb.from('sessions').update(row).eq('slug', s.slug).select('slug'));
-      Object.assign(s, row); setSessions(v2Sessions); saveCatalogue(); edit = null;
+      // Debt #36: written only over the version the edit was opened on (updated_at unchanged): a tab left open never
+      // overwrites what was published or saved since. No version known (a catalogue cached before): written as before.
+      let q = sb.from('sessions').update(row).eq('slug', s.slug);
+      if (ed.at) q = q.eq('updated_at', ed.at);
+      touched(); const {data, error} = await q.select('slug,updated_at'); if (error) throw error;
+      if (!data || !data.length) {
+        if (!ed.at) throw new Error('no row');
+        if (edit !== ed) return;
+        // nothing written; the edits stay on screen (to copy) until Reload opens the new version
+        err.innerHTML = 'This session changed since you opened it. Reload to see the new version. <button class="btn ghost" type="button" id="ed-reload">Reload</button>';
+        err.hidden = false; return;
+      }
+      Object.assign(s, row); stamp(s, data[0]); setSessions(v2Sessions); saveCatalogue(); if (edit === ed) edit = null;
       showSession(s.slug, 'Saved.');
     } catch { err.textContent = 'Could not save it right now. Try again in a moment.'; err.hidden = false; b.disabled = false; }
+  };
+  // Reload (after a refused save): the session as stored now, opened in Edit again; deleted meanwhile: its notebook.
+  const reloadEdit = async () => {
+    const ed = edit, err = $('ed-err'), b = $('ed-reload'); if (b) b.disabled = true;
+    try {
+      const {data, error} = await sb.from('sessions').select(SESSION_COLS).eq('slug', ed.slug).maybeSingle(); if (error) throw error;
+      if (edit !== ed) return;
+      const s = v2BySlug.get(ed.slug); touched();
+      if (!data || !s) {
+        setSessions(v2Sessions.filter(x => x.slug !== ed.slug)); saveCatalogue(); edit = null;
+        flashHome('This session was deleted meanwhile.'); location.hash = s ? s.theme : ''; return;
+      }
+      if (data.thumbnail) await signAll([data.thumbnail]).catch(() => {});
+      if (edit !== ed) return;
+      Object.assign(s, data); setSessions(v2Sessions); saveCatalogue();
+      edit = draftOf(s); showSession(s.slug);
+      const top = $('sheet-top'); if (top) top.innerHTML = '<p class="flash" role="status">This is the new version. Your changes were not saved.</p>';
+    } catch { if (edit === ed) { err.innerHTML = 'Could not reload it right now. Try again in a moment. <button class="btn ghost" type="button" id="ed-reload">Reload</button>'; err.hidden = false; } }
   };
   view.addEventListener('input', ev => {
     const t = ev.target; if (!edit || !t) return;
@@ -2788,6 +2957,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     else if ((b = at('[data-down]'))) reorder(+b.dataset.down, 1);
     else if ((b = at('[data-out]'))) { edit.items = RS.removeItem(edit.items, +b.dataset.out); renderRows(); }
     else if (at('#ed-save')) saveEdit();
+    else if (at('#ed-reload')) reloadEdit();
     else if (at('#ed-cancel')) { const slug = edit.slug; edit = null; showSession(slug); }
     else if (at('#ed-delete')) openDelete();
   };
@@ -2807,7 +2977,74 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const renderWelcome = () => { $('w-install').innerHTML = installBlock(); };
   $('welcome').addEventListener('click', copyHandler($('welcome')));
   $('w-done').addEventListener('click', () => { ls.set(welcomeKey(), '1'); location.hash = ''; });
+  // L29: « Usage: 4/10 links today · 120/300 sheets · 80/200 MB », from my_quota(); hidden when the backend has no
+  // quotas (no such function), on any error, and for an answer meant for an account signed out since.
+  const mbOf = b => { const mb = (Number(b) || 0) / 1048576; return mb > 0 && mb < 10 ? String(Math.round(mb * 10) / 10) : String(Math.round(mb)); };
+  const renderUsage = async () => {
+    const el = $('s-usage'), uid = user && user.id; el.hidden = true;
+    if (!sb || typeof sb.rpc !== 'function' || !uid) return;
+    let r; try { r = await sb.rpc('my_quota'); } catch { return; }
+    const q = r && !r.error && r.data;
+    if (!q || typeof q !== 'object' || !user || user.id !== uid) return;
+    el.textContent = `Usage: ${q.requests_today}/${q.max_requests_per_day} links today · ${q.sheets}/${q.max_sheets} sheets · ${mbOf(q.storage_bytes)}/${q.max_storage_mb} MB`;
+    el.hidden = false;
+  };
+  // L28: Settings › iPhone shortcut. One active key per account (capture_tokens): made here, its secret shown once
+  // (only its SHA-256 is stored; nothing kept on the device), revoked here. The section shows only once a select on
+  // capture_tokens answers: a backend without the table never sees it, and nothing is written to it.
+  const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+  const webCrypto = () => { const c = typeof crypto !== 'undefined' ? crypto : null; return c && c.getRandomValues && c.subtle ? c : null; };
+  const sha256 = async (c, s) => hex(new Uint8Array(await c.subtle.digest('SHA-256', Uint8Array.from(s, ch => ch.charCodeAt(0)))));
+  let scActive = null;
+  const scErr = msg => { const e = $('shortcut-err'); e.textContent = msg || ''; e.hidden = !msg; };
+  const paintShortcut = () => {
+    const t = scActive;
+    $('shortcut-none').hidden = !!t; $('shortcut-active').hidden = !t;
+    $('shortcut-info').textContent = t ? `Key « ${t.label || 'iPhone'} », made ${fmtDate(t.created_at)} · ${t.last_used_at ? 'last used ' + fmtDate(t.last_used_at) : 'not used yet'}.` : '';
+    $('shortcut-url').textContent = backend ? backend.url.replace(/\/+$/, '') + '/functions/v1/add-link' : '';
+  };
+  const loadShortcut = async () => {
+    const uid = user && user.id;
+    if (!sb || !uid) { $('shortcut-section').hidden = true; return; }
+    let r;
+    try { r = await sb.from('capture_tokens').select('id,label,created_at,last_used_at,revoked_at').is('revoked_at', null).order('created_at', {ascending: false}); } catch (e) { r = {error: e}; }
+    if (!user || user.id !== uid) return;
+    // a failed read right after a key was made keeps the section (and the key's only copy) on screen
+    if (!r || r.error || !Array.isArray(r.data)) { if ($('shortcut-new').hidden) $('shortcut-section').hidden = true; return; }
+    scActive = r.data.find(t => !t.revoked_at) || null;
+    paintShortcut(); $('shortcut-section').hidden = false;
+  };
+  const SC_FAIL = 'Could not save it right now. Try again in a moment.';
+  $('shortcut-create').addEventListener('click', async () => {
+    const c = webCrypto(), uid = user && user.id; scErr('');
+    if (!uid) return;
+    if (!c) return scErr('This browser cannot make a key here: open Reelbook from its https address.');
+    const b = new Uint8Array(32); c.getRandomValues(b);
+    const key = 'rb_' + hex(b), label = $('shortcut-label').value.trim().slice(0, 60) || 'iPhone';
+    $('shortcut-create').disabled = true;
+    try {
+      const {error} = await sb.from('capture_tokens').insert({label, token_hash: await sha256(c, key)});
+      if (!user || user.id !== uid) return;
+      if (error) { scErr(error.code === '23505' ? 'This account has a key already: revoke it to make a new one.' : SC_FAIL); await loadShortcut(); return; }
+      $('shortcut-token').textContent = 'Bearer ' + key; $('shortcut-new').hidden = false; $('shortcut-label').value = '';
+      await loadShortcut();
+    } catch { scErr(SC_FAIL); } finally { $('shortcut-create').disabled = false; }
+  });
+  $('shortcut-revoke').addEventListener('click', async () => {
+    const t = scActive, uid = user && user.id; scErr('');
+    if (!t || !uid) return;
+    $('shortcut-revoke').disabled = true;
+    try {
+      const {error} = await sb.from('capture_tokens').update({revoked_at: new Date().toISOString()}).eq('id', t.id);
+      if (!user || user.id !== uid) return;
+      if (error) return scErr(SC_FAIL);
+      $('shortcut-new').hidden = true; $('shortcut-token').textContent = '';
+      await loadShortcut();
+    } catch { scErr(SC_FAIL); } finally { $('shortcut-revoke').disabled = false; }
+  });
   const renderSettings = () => {
+    renderUsage();
+    $('shortcut-token').textContent = ''; $('shortcut-new').hidden = true; scErr(''); loadShortcut(); // a key is shown once
     $('s-sessions').hidden = sessionsOk;
     // Old one-page sessions left on an older backend: hidden by the app, rebuilt as v2 by requeue-sessions + /reelbook.
     $('s-v1').hidden = !v1Hidden;
@@ -2954,8 +3191,135 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (hit !== '#nav-close') pageAction(ev);
   });
 
+  // ---------- L27: the demo notebook (#demo, ?demo) ----------
+  // A read-only notebook served from static files: app/demo/catalogue.json and one folder per sheet (index.html,
+  // img/). No account and no backend: no Supabase client is created while the demo shows (boot), and the demo
+  // writes nothing (no localStorage, no IndexedDB), so a real account kept on this device is left as it was.
+  // Pages: #demo (sheets and the session), #demo/<sheet>, #demo/session/<slug>. Every file is fetched on the first
+  // visit, so the service worker keeps them all and the demo then opens offline.
+  const DEMO = 'demo', demoEl = $('demo'), demoPages = new Map();
+  let demoCat = null, demoLoading = null, demoGen = 0, demoSeat = null, demoShown = null;
+  // An account's own sheet or notebook named « demo » keeps its address (#demo, #demo/play…), once its catalogue is
+  // known: a sheet titled « Demo » gets that slug.
+  const demoOwned = t => !!user && (bySlug.has(DEMO) || themeById.has(DEMO)) && (t === DEMO || t.startsWith(DEMO + '/play'));
+  const demoTok = () => { let t = location.hash.slice(1); try { t = decodeURIComponent(t); } catch {} return t === DEMO || t.startsWith(DEMO + '/') ? t : null; };
+  const demoSlug = x => typeof x === 'string' && /^[a-z0-9][a-z0-9-]{0,79}$/.test(x);
+  const demoFile = p => `demo/${p}`;
+  const demoGet = async (p, json) => { const r = await fetch(demoFile(p)); if (!r.ok) throw new Error(String(r.status)); return json ? r.json() : r.text(); };
+  // Only what the pages need, from a file edited by hand: bad entries are left out.
+  const demoCheck = c => {
+    const str = v => typeof v === 'string' ? v : '', rel = v => /^[\w./-]+$/.test(str(v)) && !str(v).includes('..') ? v : '';
+    const sheets = (Array.isArray(c && c.sheets) ? c.sheets : []).filter(e => e && demoSlug(e.slug) && str(e.title))
+      .map(e => ({slug: e.slug, title: e.title, summary: str(e.summary), group: str(e.group), notebook: str(e.notebook), author: str(e.author), thumbnail: rel(e.thumbnail)}));
+    const has = new Set(sheets.map(e => e.slug));
+    const sessions = (Array.isArray(c && c.sessions) ? c.sessions : []).filter(s => s && demoSlug(s.slug) && str(s.title))
+      .map(s => ({slug: s.slug, title: s.title, format: str(s.format), why: str(s.why), author: str(s.author), thumbnail: rel(s.thumbnail),
+        items: (Array.isArray(s.items) ? s.items : []).filter(it => it && has.has(it.slug)).map(it => ({slug: it.slug, dose: str(it.dose)}))}));
+    const notebooks = (Array.isArray(c && c.notebooks) ? c.notebooks : []).filter(t => t && demoSlug(t.id) && str(t.title)).map(t => ({id: t.id, title: t.title}));
+    return {title: str(c && c.title) || 'Reelbook demo', intro: str(c && c.intro), notebooks, sheets, sessions, bySlug: new Map(sheets.map(e => [e.slug, e])), sesBySlug: new Map(sessions.map(s => [s.slug, s]))};
+  };
+  // A sheet as shown: its photos from its folder, gesture first (sheet.js), links kept inside the demo.
+  const demoRender = (slug, src) => {
+    const doc = new DOMParser().parseFromString(src, 'text/html');
+    doc.querySelectorAll('img').forEach(i => { const s = i.getAttribute('src') || ''; if (/^img\/[\w.-]+$/.test(s)) i.setAttribute('src', demoFile(`${slug}/${s}`)); i.removeAttribute('loading'); });
+    if (SH) { const keep = doc.body.cloneNode(true); try { SH.arrange(doc); } catch { doc.documentElement.replaceChild(keep, doc.body); } }
+    doc.querySelectorAll('nav.top, script, style, link').forEach(n => n.remove());
+    doc.querySelectorAll('a[href]').forEach(a => {
+      const h = a.getAttribute('href') || '', x = h.slice(1);
+      if (!h.startsWith('#')) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener'); return; }
+      a.setAttribute('href', demoCat && demoCat.bySlug.has(x) ? `#${DEMO}/${x}` : h.length > 1 ? `#${DEMO}/${slug}` : `#${DEMO}`);
+    });
+    const lang = sheetLang(src);
+    return lang ? `<div lang="${esc(lang)}">${doc.body.innerHTML}</div>` : doc.body.innerHTML;
+  };
+  const demoSource = slug => {
+    if (!demoPages.has(slug)) demoPages.set(slug, demoGet(`${slug}/index.html`).catch(e => { demoPages.delete(slug); throw e; }));
+    return demoPages.get(slug);
+  };
+  // First visit: every sheet read in the background, then the list of all demo files (catalogue, sheets, photos)
+  // goes to the service worker, which keeps them in its demo cache (sw.js, KEEP_DEMO): the page may not be under
+  // its control yet on a first visit, so its own fetches would not be kept.
+  const demoWarm = async c => {
+    const sw = (() => { try { return navigator.serviceWorker; } catch { return null; } })();
+    if (!sw || !sw.ready) return;
+    const files = ['catalogue.json'], abs = p => new URL(demoFile(p), location.href).href;
+    await Promise.all(c.sheets.map(e => demoSource(e.slug).then(src => {
+      files.push(`${e.slug}/index.html`);
+      for (const m of String(src).matchAll(/\bsrc="(img\/[\w.-]+)"/g)) files.push(`${e.slug}/${m[1]}`);
+    }, () => {})));
+    for (const x of [...c.sheets.map(e => e.thumbnail && `${e.slug}/${e.thumbnail}`), ...c.sessions.map(s => s.thumbnail)]) if (x) files.push(x);
+    try { const reg = await sw.ready; if (reg && reg.active) reg.active.postMessage({type: 'KEEP_DEMO', urls: [...new Set(files)].map(abs)}); } catch {}
+  };
+  const demoLoad = () => demoLoading || (demoLoading = (typeof fetch === 'function' ? demoGet('catalogue.json', true) : Promise.reject(new Error('no fetch')))
+    .then(c => { demoCat = demoCheck(c); demoWarm(demoCat).catch(() => {}); return demoCat; }, e => { demoLoading = null; throw e; }));
+  // The banner leads to sign-up; with an account on this device (signed in, or a session kept for the remembered
+  // backend), back to that account's notebooks.
+  const demoKnown = () => !!(user || (backend && storedUser()));
+  const demoBanner = () => `<a class="demo-banner" id="demo-signup" href="#">${demoKnown() ? 'Demo · read only · Back to my notebooks' : 'Demo · read only · Create an account'}</a>`;
+  demoEl.addEventListener('click', ev => {
+    if (!(ev.target && ev.target.closest && ev.target.closest('#demo-signup'))) return;
+    ev.preventDefault();
+    if (!demoKnown()) { setMode('up'); signupBackendChosen = false; }
+    location.hash = '';
+  });
+  const demoThumb = (base, rel) => rel ? demoFile(base ? `${base}/${rel}` : rel) : '';
+  const demoCard = (e, extra = {}) => card(e, `#${DEMO}/${e.slug}`, demoThumb(e.slug, e.thumbnail), {...extra, meta: (extra.meta || [{txt: e.group}, {txt: e.author}]).filter(m => m.txt)});
+  const demoNb = t => ({...(libById.get(t.id) || {}), id: t.id, title: t.title});
+  const demoHome = c => {
+    const out = [`<div class="wrap"><p class="eyebrow">Read only</p><h1>${esc(c.title)}</h1>${c.intro ? `<p class="lead">${esc(c.intro)}</p>` : ''}</div>`];
+    if (c.sessions.length) out.push(`<section><h2>Sessions <span class="n">${c.sessions.length}</span></h2><div class="grid">${c.sessions.map(s => card({title: s.title, summary: s.why}, `#${DEMO}/session/${s.slug}`, demoThumb('', s.thumbnail), {big: true, fmt: s.format, meta: [{txt: plural(s.items.length, 'exercise')}, {txt: s.author}].filter(m => m.txt)})).join('')}</div></section>`);
+    const nbs = [...c.notebooks, ...[...new Set(c.sheets.map(e => e.notebook))].filter(id => !c.notebooks.some(t => t.id === id)).map(id => ({id, title: (libById.get(id) || {}).title || 'Notebook'}))];
+    for (const t of nbs) {
+      const list = c.sheets.filter(e => e.notebook === t.id); if (!list.length) continue;
+      const nb = demoNb(t);
+      out.push(`<section><h2 class="demo-nb" style="--t:${colorOf(nb)}">${nbIcon(nb)}${esc(t.title)} <span class="n">${list.length}</span></h2><div class="grid">${list.map(e => demoCard(e)).join('')}</div></section>`);
+    }
+    return `<div class="wide">${out.join('')}</div>`;
+  };
+  const demoSession = s => {
+    const items = s.items.map((it, i) => ({n: i + 1, dose: it.dose, sheet: demoCat.bySlug.get(it.slug)})), img = demoThumb('', s.thumbnail);
+    return `<div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
+      ${s.format ? `<div class="kit"><span><b class="kit-k">Format</b> ${esc(s.format)}</span></div>` : ''}${s.why ? `<h2>Why</h2><p>${esc(s.why)}</p>` : ''}</div>
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2><div class="grid">${items.map(it => demoCard(it.sheet, {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: it.sheet.author}]})).join('')}</div></div>`;
+  };
+  // The way back: to the session a sheet was opened from, else to the demo's first page.
+  const demoBack = sheet => {
+    const s = sheet && demoSeat ? demoCat.sesBySlug.get(demoSeat) : null;
+    return s && s.items.some(it => it.slug === sheet) ? `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
+  };
+  const showDemo = async tok => {
+    const gen = ++demoGen, page = (back, body) => { demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body; };
+    // Drawn again on the same page (the account's catalogue arrived): only the banner may change, the reader keeps
+    // the scroll.
+    if (demoShown === tok && !demoEl.hidden && demoCat) { const b = $('demo-signup'); if (b) b.outerHTML = demoBanner(); return; }
+    demoShown = tok; show('demo'); document.title = 'Reelbook demo';
+    if (!demoCat) {
+      page('', '<p class="loading">Loading the demo…</p>');
+      try { await demoLoad(); } catch { if (gen === demoGen) page('', '<div class="wrap"><p class="empty">The demo could not be loaded. Check the connection, then reload the page.</p></div>'); return; }
+      if (gen !== demoGen) return;
+    }
+    const rest = tok.slice(DEMO.length + 1), ses = rest.startsWith('session/') ? demoCat.sesBySlug.get(rest.slice(8)) : null;
+    if (ses) { demoSeat = ses.slug; page(demoBack(null), demoSession(ses)); document.title = ses.title; return; }
+    const e = demoCat.bySlug.get(rest);
+    if (!e) { demoSeat = null; page('', demoHome(demoCat)); return; }
+    page(demoBack(rest), '<p class="loading">Loading the sheet…</p>'); document.title = e.title;
+    let html = null; try { html = typeof DOMParser === 'function' ? demoRender(rest, await demoSource(rest)) : null; } catch {}
+    if (gen !== demoGen) return;
+    page(demoBack(rest), html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html);
+  };
+
   // ---------- routing ----------
   const route = () => {
+    // L27: the demo, signed in or not; leaving it with a backend remembered starts that backend (boot skipped it).
+    const demoAt = demoTok();
+    if (demoAt && !demoOwned(demoAt)) {
+      if (user) flushNotes();
+      if (edit) { if (editDirty() && !discardOk()) { undoLeave(); return; } edit = null; } // as leaving any session edit
+      showDemo(demoAt); return;
+    }
+    demoShown = null;
+    if (!demoEl.hidden && !user && mode === 'in') setMode('in'); // back from the demo: a fresh sign-in screen
+    if (backend && !sb) { boot(); return; }
     if (!user) {
       if (mode === 'up' && !signupBackendChosen) { show('setup'); return; }
       const intro = introOpen && mode === 'in'; // L25: the presentation, then the account actions
@@ -3022,7 +3386,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       booted = identity; peeked = false;
       resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; ended = null; signed.clear(); cache.clear(); loadError = '';
     }
-    if (!backend) { route(); return; }
+    // L27: a visitor's demo creates no Supabase client; a device with an account kept starts it as usual (its own
+    // sheet « demo » may live at #demo, and the banner leads back to it).
+    if (!backend || (demoTok() && !storedUser())) { route(); return; }
     if (!sb) {
       // keepalive on DELETE: a queue removal sent as the page goes away (pagehide) outlives the page.
       const keepaliveFetch = (input, init) => fetch(input, init && init.method === 'DELETE' ? {...init, keepalive: true} : init);
@@ -3039,6 +3405,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
         if (client !== sb) return;
+        authNow = session && session.access_token ? {client, token: session.access_token, exp: Number(session.expires_at) || 0} : null;
         const next = session ? session.user : null;
         if (peeked && user) {
           const kept = storedUser();
@@ -3059,6 +3426,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     }
     route();
   };
+  // L27: ?demo opens the demo too (a link to share); the address keeps only #demo.
+  if (!location.hash && /(?:^|[?&])demo(?:[=&]|$)/.test(String(location.search || '').slice(1))) {
+    try { history.replaceState(history.state, '', location.pathname + '#' + DEMO); } catch { location.hash = '#' + DEMO; }
+  }
   boot();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
