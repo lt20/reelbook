@@ -173,7 +173,7 @@ test('codex-acceptance.sh : écrit sous la cible (espaces compris), maquette joi
     ],
     notes: '',
   });
-  const out = 'apps/mobile/__acceptance__/s1 a';
+  const out = 'tests/acceptance/s1 a';
   let res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/s1/S1-A.md', '--out', out, '--commit'], {
     cwd: r.dir,
     env: fake.env(),
@@ -190,7 +190,7 @@ test('codex-acceptance.sh : écrit sous la cible (espaces compris), maquette joi
   // séparé ne contient que les tests :
   const log = r.git('log', '-1', '--name-only', '--format=%s');
   assert.match(log, /^test\(acceptance\): S1-A/);
-  assert.match(log, /__acceptance__\/s1 a\/liste\.test\.cjs/);
+  assert.match(log, /tests\/acceptance\/s1 a\/liste\.test\.cjs/);
   assert.doesNotMatch(log, /Home\.tsx/);
 
   // une proposition hors cible ne touche pas au code de prod
@@ -210,7 +210,7 @@ test('codex-acceptance.sh : une maquette PNG citée est jointe en image', () => 
   r.write('design/s1/liste.png', 'png');
   r.write('docs/s1/S1-B.md', '# S1-B\nMaquette : design/s1/liste.png et design/s1/absente.png\n');
   fake.reply({ fichiers: [{ chemin: 'b.test.cjs', contenu: 'x' }], notes: '' });
-  const res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/s1/S1-B.md', '--out', 'acc'], {
+  const res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/s1/S1-B.md', '--out', 'tests/acc'], {
     cwd: r.dir,
     env: fake.env(),
     encoding: 'utf8',
@@ -240,6 +240,45 @@ test('codex-acceptance.sh : un --out lien symbolique vers l’extérieur du dép
   assert.equal(res.status, 2);
   assert.match(res.stderr, /--out doit être dans le dépôt/);
   assert.deepEqual(readdirSync(dehors), []); // rien créé dehors
+});
+
+test('codex-acceptance.sh : un --out hors de tests/ est refusé avant toute création et tout appel à Codex', () => {
+  const fake = fakeCodex();
+  const r = repo();
+  r.write('docs/spec.md', '# Spec\n');
+  r.write('app/index.html', 'prod\n');
+  r.write('tests/a.test.cjs', 'x\n');
+  mkdirSync(join(r.dir, 'tests/acceptance'));
+  // tests/sortie → ../app : sous tests/ par le nom, dans app/ physiquement
+  symlinkSync('../app', join(r.dir, 'tests/sortie'));
+  fake.reply({ fichiers: [{ chemin: 'x.test.cjs', contenu: 'x' }], notes: '' });
+  const cas = ['app', 'app/neuf', 'docs/acc', 'acc', 'scripts/x', '.', 'tests', 'tests/', './tests/.', 'tests/sortie', 'tests/sortie/neuf', 'testsx/acc'];
+  for (const out of cas) {
+    const res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/spec.md', '--out', out, '--commit'], {
+      cwd: r.dir,
+      env: fake.env(),
+      encoding: 'utf8',
+    });
+    assert.equal(res.status, 2, `${out}: ${res.stderr}`);
+    assert.match(res.stderr, /--out doit être un dossier sous tests\//, out);
+  }
+  assert.equal(existsSync(join(r.dir, 'app/neuf')), false);
+  assert.equal(existsSync(join(r.dir, 'docs/acc')), false);
+  assert.equal(existsSync(join(r.dir, 'acc')), false);
+  assert.equal(existsSync(join(r.dir, 'scripts')), false);
+  assert.equal(existsSync(join(r.dir, 'testsx')), false);
+  assert.deepEqual(readdirSync(join(r.dir, 'app')), ['index.html']);
+  assert.equal(existsSync(join(fake.dir, 'args.txt')), false, 'Codex jamais appelé');
+  // sous tests/ (dossier neuf, ou déjà là) : accepté
+  for (const out of ['tests/acceptance/l30', './tests/acceptance']) {
+    const res = spawnSync('bash', [join(SCRIPTS, 'codex-acceptance.sh'), 'docs/spec.md', '--out', out], {
+      cwd: r.dir,
+      env: fake.env(),
+      encoding: 'utf8',
+    });
+    assert.equal(res.status, 0, `${out}: ${res.stderr}`);
+    assert.ok(existsSync(join(r.dir, out, 'x.test.cjs')), out);
+  }
 });
 
 test('codex-acceptance.sh : un --out avec « .. » est refusé avant toute création', () => {
