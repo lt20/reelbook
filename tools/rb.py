@@ -446,14 +446,20 @@ def _photos_full(q):
     return f"{q['max_storage_mb']} MB of photos" if q and q["storage_bytes"] >= q["max_storage_mb"] * 1048576 else None
 
 def _remote_images(cfg, slug):
-    """{file name: MD5} of the photos the backend already holds for this sheet (the storage eTag), {} if none."""
+    """{file name: (MD5, size)} of the photos the backend already holds for this sheet (storage eTag and size), {} if
+    none; None when the list could not be read (then nothing is skipped, and nothing is ever removed)."""
     try:
         objs = http("POST", f"{cfg['url']}/storage/v1/object/list/sheets", hdr(cfg),
                     {"prefix": f"{cfg['user_id']}/{slug}/img", "limit": 1000}, tolerate=(400, 404)) or []
     except RbHTTPError:
-        return {}
-    return {o["name"]: str((o.get("metadata") or {}).get("eTag") or "").strip('"').lower()
-            for o in objs if isinstance(o, dict) and o.get("name")}
+        return None
+    out = {}
+    for o in objs if isinstance(objs, list) else []:
+        if not isinstance(o, dict) or not o.get("name"): continue
+        md = o.get("metadata") or {}
+        size = md.get("size")
+        out[o["name"]] = (str(md.get("eTag") or "").strip('"').lower(), size if isinstance(size, int) else 0)
+    return out
 
 def _remove_files(cfg, paths):
     """Best effort: the photos a refused publish had just added, so that they do not fill the quota for nothing."""
@@ -488,17 +494,24 @@ def _publish_sheet(cfg, d, meta, q=None):
     # A photo the backend already holds, byte for byte (same MD5 as its eTag), is not sent again: a republish with the
     # same photos writes nothing to storage, so a full photo quota never blocks it.
     remote = _remote_images(cfg, slug) if files else {}
+    known = remote or {}
     todo = []
     for f in files:
         data = f.read_bytes()
-        if remote.get(f.name) != hashlib.md5(data).hexdigest(): todo.append((f, data))
-    # Quotas (L29), checked before anything is sent: a new sheet past the sheet limit, or new photos on a full account,
-    # stop here rather than leave photos without a sheet.
+        if known.get(f.name, ("", 0))[0] != hashlib.md5(data).hexdigest(): todo.append((f, data))
+    # Quotas (L29), checked before anything is sent: a new sheet past the sheet limit, or photos that would take the
+    # account past its photo limit (what they add, minus the old versions they replace), stop here: no photo without a
+    # sheet, no sheet left with half of its photos replaced. Only a race (another device at the same time) can still
+    # be refused midway by the database.
     if q:
         is_new = not (rest(cfg, "GET", "sheets", params={"select": "slug", "slug": f"eq.{slug}"}) or [])
         if is_new and q["sheets"] >= q["max_sheets"]: _quota_stop(cfg, f"{q['max_sheets']} sheets")
-        if todo and _photos_full(q): _quota_stop(cfg, _photos_full(q))
-    added = []   # photos this publish adds (not overwrites): removed again if a limit refuses the publish midway
+        grow = sum(len(data) - known.get(f.name, ("", 0))[1] for f, data in todo)
+        if todo and (_photos_full(q) or q["storage_bytes"] + grow > q["max_storage_mb"] * 1048576):
+            _quota_stop(cfg, f"{q['max_storage_mb']} MB of photos")
+    # photos this publish adds (not overwrites), removed again if a limit refuses the publish midway; none is ever
+    # removed when the list of the photos already there could not be read (remote None)
+    added = []
     for f, data in todo:
         ctype = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
         path = f"{cfg['user_id']}/{slug}/img/{f.name}"
@@ -509,7 +522,7 @@ def _publish_sheet(cfg, d, meta, q=None):
             limit = _quota_in(e.body) or (_photos_full(_my_quota(cfg)) if e.code in (400, 403) else None)
             if limit: _quota_stop(cfg, limit, added)
             die(f"POST {url} → {e.code}: {e.body}")
-        if f.name not in remote: added.append(path)
+        if remote is not None and f.name not in remote: added.append(path)
     row = {"slug": slug, "kind": "sheet", "theme": meta["theme"], "group": meta["group"], "title": meta["title"],
            "summary": meta.get("summary", ""), "duration": meta.get("duration", ""), "thumbnail": meta.get("thumbnail", "img/thumb.jpg"),
            "source": meta.get("source", {}), "html": (d / "index.html").read_text()}

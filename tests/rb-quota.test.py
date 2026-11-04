@@ -62,7 +62,9 @@ class Base(unittest.TestCase):
         existing: slugs the account already has; requests: callable(row or list) -> error body or None."""
         def http(method, url, headers=None, data=None, raw=False, tolerate=()):
             self.http_calls.append((method, url.split("/storage/v1/")[-1], data if not raw else None, tolerate))
-            if "object/list/sheets" in url: return remote or []
+            if "object/list/sheets" in url:
+                if remote == "error": raise rb.RbHTTPError(400, '{"message":"list failed"}')
+                return remote or []
             if method == "POST" and upload:
                 err = upload(url.rsplit("/", 1)[-1]) if callable(upload) else upload
                 if err: raise rb.RbHTTPError(*err)
@@ -168,6 +170,36 @@ class PhotoQuota(Base):
         self.assertIn(403, up[0][3], "the upload tolerates the refusal codes to read them")
         self.assertFalse([c for c in self.calls if c[:2] == ("POST", "sheets")], "the sheet row is not written")
         self.assertEqual([c[2] for c in self.http_calls if c[0] == "DELETE"], [{"prefixes": ["u1/floor/img/a.jpg"]}])
+
+    def test_photos_that_would_pass_the_limit_stop_before_sending(self):
+        # 10 bytes of new photos, 6 bytes of room: nothing sent, rather than a sheet with half of its photos
+        self.fake(q=quota(photos=200 * MB - 6), existing=("floor",))
+        code, _, err = self.publish()
+        self.assertEqual(code, 1)
+        self.assertEqual(self.uploads(), [])
+        self.assertIn("200 MB of photos", err)
+
+    def test_a_heavier_replacement_counts_only_what_it_adds(self):
+        # a.jpg (5 bytes) replaces a 1-byte version, b.jpg (5 bytes) is new: 9 bytes more
+        remote = [{"name": "a.jpg", "metadata": {"eTag": '"old"', "size": 1}}]
+        self.fake(q=quota(photos=200 * MB - 8), existing=("floor",), remote=remote)
+        code, _, _ = self.publish()
+        self.assertEqual(code, 1)
+        self.assertEqual(self.uploads(), [])
+        self.calls.clear(); self.http_calls.clear()
+        self.fake(q=quota(photos=200 * MB - 9), existing=("floor",), remote=remote)
+        code, _, err = self.publish()
+        self.assertIsNone(code, err)
+        self.assertEqual(self.uploads(), ["a.jpg", "b.jpg"])
+
+    def test_unreadable_list_sends_everything_and_never_removes(self):
+        self.fake(q=quota(photos=10 * MB), existing=("floor",), remote="error",
+                  upload=lambda name: (400, PHOTOS_QUOTA) if name == "b.jpg" else None)
+        code, _, err = self.publish()
+        self.assertEqual(code, 1)
+        self.assertEqual(self.uploads(), ["a.jpg", "b.jpg"], "nothing skipped when the list is unknown")
+        self.assertEqual([c for c in self.http_calls if c[0] == "DELETE"], [], "a photo already there is never removed")
+        self.assertIn("200 MB of photos", err)
 
     def test_bare_refusal_read_through_my_quota(self):
         answers = [quota(photos=150 * MB), quota(photos=201 * MB)]   # before the publish, then after the refusal
