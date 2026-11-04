@@ -582,9 +582,11 @@ create or replace function public.beta_on_request() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare s public.beta_settings; n int; today date := (now() at time zone 'utc')::date;
 begin
+  if not exists (select 1 from public.beta_settings) then return new; end if;
+  perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('links'));
+  -- read after the lock: a link that waited for it sees a switch or a limit changed meanwhile
   select * into s from public.beta_settings b where b.id;
   if not found then return new; end if;
-  perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('links'));
   if not public.beta_exempt(new.user_id) then
     if not s.captures_open then
       raise exception using errcode = 'P0001', message = 'beta: paused',

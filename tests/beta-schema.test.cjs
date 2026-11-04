@@ -104,7 +104,8 @@ test('lock 3 and 4, links: a second before insert trigger on requests, a counter
   assert.match(flat, /create table if not exists public\.beta_daily \( day date primary key, links int not null default 0, waitlist int not null default 0 \)/);
   const f = fn('beta_on_request');
   assert.match(f, /today date := \(now\(\) at time zone 'utc'\)::date;/);
-  assert.match(f, /if not found then return new; end if; perform pg_advisory_xact_lock\(hashtext\('reelbook beta'\), hashtext\('links'\)\); if not public\.beta_exempt\(new\.user_id\) then/);
+  assert.match(f, /if not exists \(select 1 from public\.beta_settings\) then return new; end if; perform pg_advisory_xact_lock\(hashtext\('reelbook beta'\), hashtext\('links'\)\); select \* into s from public\.beta_settings b where b\.id; if not found then return new; end if; if not public\.beta_exempt\(new\.user_id\) then/,
+    'settings read after the lock (Codex, L33 pass 2): a waiting link sees a switch turned off meanwhile');
   assert.match(f, /if not s\.captures_open then raise exception using errcode = 'P0001', message = 'beta: paused'/);
   assert.match(f, /select d\.links into n from public\.beta_daily d where d\.day = today;/);
   assert.match(f, /if coalesce\(n, 0\) >= s\.max_videos_per_day then raise exception using errcode = 'P0001', message = 'beta: project limit, try tomorrow'/);
