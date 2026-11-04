@@ -540,6 +540,14 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 #nav-bar.nb.titled #nav-ico{opacity:1}
 @media (prefers-reduced-motion:no-preference){#nav-ico{transition:opacity .15s}#nav-bar.nb{transition:border-color .2s,background-color .2s}}
 @media (prefers-reduced-motion:reduce){#nav-bar,#nav-title{transition:none}}
+/* L27: the demo notebook: a banner on every page (the way to sign up), a way back, no editing control */
+.demo-banner{position:sticky;top:0;z-index:6;display:block;margin:-20px -16px var(--s-4);padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:var(--fs-sm);text-align:center;text-decoration:none}
+.demo-banner:active{opacity:.85}
+.demo .top{margin:0 0 6px}
+.demo .top a{color:var(--accent);font-weight:600;text-decoration:none}
+.demo-nb{display:flex;align-items:center;gap:var(--s-2)}
+.demo-nb .nb-ico{width:22px;height:22px;color:var(--t,var(--accent))}
+.demo-see{margin:-4px 0 14px}
 </style>
 </head>
 <body>
@@ -579,6 +587,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 <div id="auth" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
   <h1 id="auth-title">Sign in</h1>
+  <p class="demo-see"><a href="#demo">See a demo</a></p>
   <form class="panel" id="auth-form">
     <label>Email <input id="a-email" type="email" autocomplete="email" required></label>
     <label>Password <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
@@ -734,6 +743,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
+<!-- L27: the demo notebook (#demo), read only, from app/demo/ -->
+<div id="demo" class="demo" hidden></div>
 <!-- ===== L10: session player ===== -->
 <div id="player" class="player" hidden></div>
 <div id="play-flash" class="pl-flash" hidden aria-hidden="true"></div>
@@ -818,7 +829,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // the day before west of Greenwich.
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
-  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player'];
+  const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player', 'demo'];
   const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); syncNav(); };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
   // ---------- L18: bottom sheets ----------
@@ -2743,8 +2754,116 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (hit !== '#nav-close') pageAction(ev);
   });
 
+  // ---------- L27: the demo notebook (#demo, ?demo) ----------
+  // A read-only notebook served from static files: app/demo/catalogue.json and one folder per sheet (index.html,
+  // img/). No account and no backend: no Supabase client is created while the demo shows (boot), and the demo
+  // writes nothing (no localStorage, no IndexedDB), so a real account kept on this device is left as it was.
+  // Pages: #demo (sheets and the session), #demo/<sheet>, #demo/session/<slug>. Every file is fetched on the first
+  // visit, so the service worker keeps them all and the demo then opens offline.
+  const DEMO = 'demo', demoEl = $('demo'), demoPages = new Map();
+  let demoCat = null, demoLoading = null, demoGen = 0, demoSeat = null;
+  const demoTok = () => { let t = location.hash.slice(1); try { t = decodeURIComponent(t); } catch {} return t === DEMO || t.startsWith(DEMO + '/') ? t : null; };
+  const demoSlug = x => typeof x === 'string' && /^[a-z0-9][a-z0-9-]{0,79}$/.test(x);
+  const demoFile = p => `demo/${p}`;
+  const demoGet = async (p, json) => { const r = await fetch(demoFile(p)); if (!r.ok) throw new Error(String(r.status)); return json ? r.json() : r.text(); };
+  // Only what the pages need, from a file edited by hand: bad entries are left out.
+  const demoCheck = c => {
+    const str = v => typeof v === 'string' ? v : '', rel = v => /^[\w./-]+$/.test(str(v)) && !str(v).includes('..') ? v : '';
+    const sheets = (Array.isArray(c && c.sheets) ? c.sheets : []).filter(e => e && demoSlug(e.slug) && str(e.title))
+      .map(e => ({slug: e.slug, title: e.title, summary: str(e.summary), group: str(e.group), notebook: str(e.notebook), author: str(e.author), thumbnail: rel(e.thumbnail)}));
+    const has = new Set(sheets.map(e => e.slug));
+    const sessions = (Array.isArray(c && c.sessions) ? c.sessions : []).filter(s => s && demoSlug(s.slug) && str(s.title))
+      .map(s => ({slug: s.slug, title: s.title, format: str(s.format), why: str(s.why), author: str(s.author), thumbnail: rel(s.thumbnail),
+        items: (Array.isArray(s.items) ? s.items : []).filter(it => it && has.has(it.slug)).map(it => ({slug: it.slug, dose: str(it.dose)}))}));
+    const notebooks = (Array.isArray(c && c.notebooks) ? c.notebooks : []).filter(t => t && demoSlug(t.id) && str(t.title)).map(t => ({id: t.id, title: t.title}));
+    return {title: str(c && c.title) || 'Reelbook demo', intro: str(c && c.intro), notebooks, sheets, sessions, bySlug: new Map(sheets.map(e => [e.slug, e])), sesBySlug: new Map(sessions.map(s => [s.slug, s]))};
+  };
+  // A sheet as shown: its photos from its folder, gesture first (sheet.js), links kept inside the demo.
+  const demoRender = (slug, src) => {
+    const doc = new DOMParser().parseFromString(src, 'text/html');
+    doc.querySelectorAll('img').forEach(i => { const s = i.getAttribute('src') || ''; if (/^img\/[\w.-]+$/.test(s)) i.setAttribute('src', demoFile(`${slug}/${s}`)); i.removeAttribute('loading'); });
+    if (SH) { const keep = doc.body.cloneNode(true); try { SH.arrange(doc); } catch { doc.documentElement.replaceChild(keep, doc.body); } }
+    doc.querySelectorAll('nav.top, script, style, link').forEach(n => n.remove());
+    doc.querySelectorAll('a[href]').forEach(a => {
+      const h = a.getAttribute('href') || '', x = h.slice(1);
+      if (!h.startsWith('#')) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener'); return; }
+      a.setAttribute('href', demoCat && demoCat.bySlug.has(x) ? `#${DEMO}/${x}` : h.length > 1 ? `#${DEMO}/${slug}` : `#${DEMO}`);
+    });
+    const lang = sheetLang(src);
+    return lang ? `<div lang="${esc(lang)}">${doc.body.innerHTML}</div>` : doc.body.innerHTML;
+  };
+  const demoSource = slug => {
+    if (!demoPages.has(slug)) demoPages.set(slug, demoGet(`${slug}/index.html`).catch(e => { demoPages.delete(slug); throw e; }));
+    return demoPages.get(slug);
+  };
+  // First visit: every sheet and its photos, fetched once in the background (the service worker keeps them).
+  const demoWarm = c => {
+    for (const e of c.sheets) demoSource(e.slug).then(src => {
+      for (const m of String(src).matchAll(/\bsrc="(img\/[\w.-]+)"/g)) fetch(demoFile(`${e.slug}/${m[1]}`)).catch(() => {});
+    }).catch(() => {});
+  };
+  const demoLoad = () => demoLoading || (demoLoading = (typeof fetch === 'function' ? demoGet('catalogue.json', true) : Promise.reject(new Error('no fetch')))
+    .then(c => { demoCat = demoCheck(c); demoWarm(demoCat); return demoCat; }, e => { demoLoading = null; throw e; }));
+  // The banner leads to sign-up; with an account on this device (signed in, or a session kept for the remembered
+  // backend, which the demo does not start), back to that account's notebooks.
+  const demoKnown = () => !!(user || (backend && storedUser()));
+  const demoBanner = () => `<a class="demo-banner" id="demo-signup" href="#">${demoKnown() ? 'Demo · read only · Back to my notebooks' : 'Demo · read only · Create an account'}</a>`;
+  demoEl.addEventListener('click', ev => {
+    if (!(ev.target && ev.target.closest && ev.target.closest('#demo-signup'))) return;
+    ev.preventDefault();
+    if (!demoKnown()) { setMode('up'); signupBackendChosen = false; }
+    location.hash = '';
+  });
+  const demoThumb = (base, rel) => rel ? demoFile(base ? `${base}/${rel}` : rel) : '';
+  const demoCard = (e, extra = {}) => card(e, `#${DEMO}/${e.slug}`, demoThumb(e.slug, e.thumbnail), {...extra, meta: (extra.meta || [{txt: e.group}, {txt: e.author}]).filter(m => m.txt)});
+  const demoNb = t => ({...(libById.get(t.id) || {}), id: t.id, title: t.title});
+  const demoHome = c => {
+    const out = [`<div class="wrap"><p class="eyebrow">Read only</p><h1>${esc(c.title)}</h1>${c.intro ? `<p class="lead">${esc(c.intro)}</p>` : ''}</div>`];
+    if (c.sessions.length) out.push(`<section><h2>Sessions <span class="n">${c.sessions.length}</span></h2><div class="grid">${c.sessions.map(s => card({title: s.title, summary: s.why}, `#${DEMO}/session/${s.slug}`, demoThumb('', s.thumbnail), {big: true, fmt: s.format, meta: [{txt: plural(s.items.length, 'exercise')}, {txt: s.author}].filter(m => m.txt)})).join('')}</div></section>`);
+    const nbs = [...c.notebooks, ...[...new Set(c.sheets.map(e => e.notebook))].filter(id => !c.notebooks.some(t => t.id === id)).map(id => ({id, title: (libById.get(id) || {}).title || 'Notebook'}))];
+    for (const t of nbs) {
+      const list = c.sheets.filter(e => e.notebook === t.id); if (!list.length) continue;
+      const nb = demoNb(t);
+      out.push(`<section><h2 class="demo-nb" style="--t:${colorOf(nb)}">${nbIcon(nb)}${esc(t.title)} <span class="n">${list.length}</span></h2><div class="grid">${list.map(e => demoCard(e)).join('')}</div></section>`);
+    }
+    return `<div class="wide">${out.join('')}</div>`;
+  };
+  const demoSession = s => {
+    const items = s.items.map((it, i) => ({n: i + 1, dose: it.dose, sheet: demoCat.bySlug.get(it.slug)})), img = demoThumb('', s.thumbnail);
+    return `<div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
+      ${s.format ? `<div class="kit"><span><b class="kit-k">Format</b> ${esc(s.format)}</span></div>` : ''}${s.why ? `<h2>Why</h2><p>${esc(s.why)}</p>` : ''}</div>
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2><div class="grid">${items.map(it => demoCard(it.sheet, {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: it.sheet.author}]})).join('')}</div></div>`;
+  };
+  // The way back: to the session a sheet was opened from, else to the demo's first page.
+  const demoBack = sheet => {
+    const s = sheet && demoSeat ? demoCat.sesBySlug.get(demoSeat) : null;
+    return s && s.items.some(it => it.slug === sheet) ? `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
+  };
+  const showDemo = async tok => {
+    const gen = ++demoGen, page = (back, body) => { demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body; };
+    show('demo'); document.title = 'Reelbook demo';
+    if (!demoCat) {
+      page('', '<p class="loading">Loading the demo…</p>');
+      try { await demoLoad(); } catch { if (gen === demoGen) page('', '<div class="wrap"><p class="empty">The demo could not be loaded. Check the connection, then reload the page.</p></div>'); return; }
+      if (gen !== demoGen) return;
+    }
+    const rest = tok.slice(DEMO.length + 1), ses = rest.startsWith('session/') ? demoCat.sesBySlug.get(rest.slice(8)) : null;
+    if (ses) { demoSeat = ses.slug; page(demoBack(null), demoSession(ses)); document.title = ses.title; return; }
+    const e = demoCat.bySlug.get(rest);
+    if (!e) { demoSeat = null; page('', demoHome(demoCat)); return; }
+    page(demoBack(rest), '<p class="loading">Loading the sheet…</p>'); document.title = e.title;
+    let html = null; try { html = typeof DOMParser === 'function' ? demoRender(rest, await demoSource(rest)) : null; } catch {}
+    if (gen !== demoGen) return;
+    page(demoBack(rest), html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html);
+  };
+
   // ---------- routing ----------
   const route = () => {
+    // L27: the demo, signed in or not; leaving it with a backend remembered starts that backend (boot skipped it).
+    const demoAt = demoTok();
+    if (demoAt) { if (user) flushNotes(); showDemo(demoAt); return; }
+    if (!demoEl.hidden && !user && mode === 'in') setMode('in'); // back from the demo: a fresh sign-in screen
+    if (backend && !sb) { boot(); return; }
     if (!user) {
       if (mode === 'up' && !signupBackendChosen) { show('setup'); return; }
       $('a-backend').textContent = backendLabel();
@@ -2806,7 +2925,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       booted = identity; peeked = false;
       resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; ended = null; signed.clear(); cache.clear(); loadError = '';
     }
-    if (!backend) { route(); return; }
+    if (!backend || demoTok()) { route(); return; } // L27: the demo creates no Supabase client
     if (!sb) {
       // keepalive on DELETE: a queue removal sent as the page goes away (pagehide) outlives the page.
       const keepaliveFetch = (input, init) => fetch(input, init && init.method === 'DELETE' ? {...init, keepalive: true} : init);
@@ -2843,6 +2962,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     }
     route();
   };
+  // L27: ?demo opens the demo too (a link to share); the address keeps only #demo.
+  if (!location.hash && /(?:^|[?&])demo(?:[=&]|$)/.test(String(location.search || '').slice(1))) {
+    try { history.replaceState(history.state, '', location.pathname + '#' + DEMO); } catch { location.hash = '#' + DEMO; }
+  }
   boot();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

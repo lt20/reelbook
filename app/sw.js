@@ -5,8 +5,10 @@
 // - Signed photos from Supabase Storage: cache-first, keyed by their URL without the token (a new token is
 //   signed at each start; the app's rbv parameter, the sheet's updated_at, stays in the key so a republished
 //   photo is fetched again; the request to Storage goes without it), PHOTO_MAX at most (oldest out), cleared on sign-out (message CLEAR_USER_CACHE), a deleted sheet's dropped (DROP_PHOTOS).
+// - The demo notebook (app/demo/, L27): same-origin files, kept like the shell as they are fetched; the app fetches
+//   them all on the first visit of #demo, so the demo opens offline afterwards. Not precached: most never open it.
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
-const VERSION = 'rb-shell-36';
+const VERSION = 'rb-shell-37';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300;
 const SHELL = ['./', './index.html', './config.js?v=7', './sessions.js?v=10', './sheet.js?v=4', './vendor/supabase.js?v=2', './manifest.webmanifest',
   './fonts/barlow-condensed-600-latin.woff2', './fonts/barlow-condensed-700-latin.woff2', './fonts/source-sans-3-latin.woff2',
