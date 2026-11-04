@@ -14,7 +14,15 @@ spec.loader.exec_module(rb)
 
 NOT_FOUND = '{"code":400,"error_code":"refresh_token_not_found","msg":"Invalid Refresh Token: Refresh Token Not Found"}'
 INVALID_GRANT = '{"error":"invalid_grant","error_description":"Invalid Refresh Token: Already Used"}'
-SIGNED_OUT = "Your computer was signed out of Reelbook (session revoked). Run: python3 ~/dev/reelbook/tools/rb.py login"
+SIGNED_OUT = "Your computer was signed out of Reelbook (session revoked). Run: python3 "
+RB = (ROOT / "tools" / "rb.py").resolve()
+
+
+def login_command(err):
+    """The rb.py path the message gives, checked to be this very script (wherever it was installed)."""
+    line = next(l for l in err.splitlines() if SIGNED_OUT in l)
+    assert line.endswith(" login"), line
+    return pathlib.Path(os.path.expanduser(line.split(SIGNED_OUT, 1)[1][:-len(" login")])).resolve()
 
 
 class FakeAuth:
@@ -69,13 +77,13 @@ class RevokedSession(unittest.TestCase):
     def test_refresh_token_not_found_says_signed_out(self):
         code, err = self.refresh(400, NOT_FOUND)
         self.assertEqual(code, 3)
-        self.assertIn(SIGNED_OUT, err)
+        self.assertEqual(login_command(err), RB, "the login command names this rb.py, wherever it lives")
         self.assertNotIn("refresh_token_not_found", err, "the raw answer is not shown")
 
     def test_invalid_grant_says_signed_out(self):
         code, err = self.refresh(400, INVALID_GRANT)
         self.assertEqual(code, 3)
-        self.assertIn(SIGNED_OUT, err)
+        self.assertEqual(login_command(err), RB, "the login command names this rb.py, wherever it lives")
 
     def test_another_refusal_keeps_the_raw_answer(self):
         code, err = self.refresh(400, '{"error_code":"validation_failed","msg":"bad apikey"}')
