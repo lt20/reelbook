@@ -34,12 +34,14 @@ test('L28 Step B — the Edge Function has one POST route, bearer auth, service-
   assert.doesNotMatch(source, /console\.(?:log|info|debug)\s*\(/, 'do not log token-bearing requests');
 });
 
+// Coordinator decision (4 Nov): CI has no deno (.github is Laurent's): these two run where deno is installed.
+const hasDeno = (() => { try { execFileSync('deno', ['--version'], {stdio: 'ignore'}); return true; } catch { return false; } })();
 const denoCheck = async body => {
   const script = `import * as core from ${JSON.stringify('file://' + corePath)};\n${body}`;
   return execFileSync('deno', ['eval', '--no-remote', script], {encoding: 'utf8', timeout: 15000});
 };
 
-test('L28 Step B — function validation accepts the app platforms and rejects invalid or unsupported links', async () => {
+test('L28 Step B — function validation accepts the app platforms and rejects invalid or unsupported links', {skip: !hasDeno && 'deno not installed'}, async () => {
   await denoCheck(`
     const good = ['https://www.instagram.com/reel/abc/', 'https://www.tiktok.com/@a/video/123', 'https://youtu.be/abc', 'https://www.youtube.com/watch?v=abc', 'https://www.facebook.com/watch/?v=123', 'https://fb.watch/abc/'];
     const bad = ['', 'not a URL', 'https://example.test/watch', 'https://youtube.com.evil.test/watch', 'javascript:alert(1)'];
@@ -48,7 +50,7 @@ test('L28 Step B — function validation accepts the app platforms and rejects i
   `);
 });
 
-test('L28 Step B — token hashing is deterministic SHA-256 and never returns the plaintext', async () => {
+test('L28 Step B — token hashing is deterministic SHA-256 and never returns the plaintext', {skip: !hasDeno && 'deno not installed'}, async () => {
   await denoCheck(`
     const token = 'reelbook-token-test';
     const digest = await core.hashToken(token);
