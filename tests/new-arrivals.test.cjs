@@ -59,8 +59,8 @@ test('the notebook tag: a notebook no longer on the account has the name the hom
   assert.ok(gone.element('portal').innerHTML.includes(`<h2>${name}</h2>`));
   const page = await app({...signedIn, tables: tables([sheet('fresh', 1)])}); await settle();
   page.go('#strength'); await settle();
-  assert.ok(page.element('view').innerHTML.includes('fresh'));
-  assert.ok(!page.element('view').innerHTML.includes('nbtag'));
+  assert.ok(page.element('groups').innerHTML.includes('href="#fresh"'));
+  assert.ok(!page.element('groups').innerHTML.includes('nbtag'));
 });
 
 test('no « New » row on a notebook page', async () => {
