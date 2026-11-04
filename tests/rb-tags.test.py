@@ -186,6 +186,9 @@ class Rules(unittest.TestCase):
 
     def test_title_beats_group_and_triceps_beats_push_up(self):
         self.assertEqual(self.tags(group="Core", title="Pompe triceps")["zone"], ["arms"])
+        self.assertEqual(self.tags(group="Core", title="Pompe-triceps")["zone"], ["arms"], "a hyphen joins words")
+        self.assertEqual(self.tags(group="Core", title="Warm-up : push-ups")["zone"], ["chest"])
+        self.assertEqual(self.tags(group="Core", title="Warm-up : push-ups")["type"], "warm-up")
         self.assertEqual(self.tags(group="Core", title="Pompes au poids du corps")["zone"], ["chest"])
         self.assertEqual(self.tags(group="Shoulders", title="Diver push-up")["zone"], ["chest"])
         self.assertEqual(self.tags(group="Mobility", slug="session-redresser-epaules-rotation", title="Rotation")["zone"], ["shoulders"],

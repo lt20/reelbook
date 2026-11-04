@@ -706,9 +706,9 @@ ZONE_WORDS = {"shoulders": r"shoulders?|epaules?", "arms": r"arms?|bras|biceps|t
               "legs": r"legs?|jambes?", "knees": r"knees?|genoux?", "ankles": r"ankles?|feet|chevilles?|pieds?",
               "neck": r"neck|nuque|cou", "full body": r"full[- ]body|corps entier"}
 # Movements that name a zone only when the title names no body area (« pompe triceps » works the arms).
-ZONE_MOVES = {"chest": r"pompes?|push-?ups?"}
+ZONE_MOVES = {"chest": r"pompes?|push[- ]?ups?"}
 GEAR_WORDS = {"mat": r"mats?|tapis", "band": r"bands?|elastiques?", "dumbbell": r"dumbbells?|halteres?",
-              "kettlebell": r"kettlebells?", "barbell": r"barbells?", "bar": r"pull-?up bar|bar|barre fixe",
+              "kettlebell": r"kettlebells?", "barbell": r"barbells?", "bar": r"pull[- ]?up bar|bar|barre fixe",
               "rings": r"rings|anneaux", "ball": r"balls?|ballon", "foam roller": r"foam roll\w*|rouleau",
               "chair": r"chairs?|chaise", "wall": r"walls?|mur", "board": r"boards?", "kite": r"kites?",
               "plate": r"plates?|disques?|discs?", "cable": r"cables?|poulies?|pulleys?", "machine": r"machines?|smith",
@@ -745,8 +745,8 @@ def derive_tags(row, vocab=None, profiles=None):
     ok = lambda k, v: not vocab.get(k) or v in vocab[k]
     theme = row.get("theme") or ""
     profile = profiles.get(theme, "gym")
-    group, title, text = _fold(row.get("group")), _fold(row.get("title")), _fold(row.get("search_text"))
-    slug = _fold(row.get("slug")).replace("-", " ")
+    # hyphens read as spaces: « Pompe-triceps » names the triceps, a slug is words joined by hyphens
+    group, title, text, slug = (_fold(row.get(k)).replace("-", " ") for k in ("group", "title", "search_text", "slug"))
     zones = {}
     if profile not in NO_ZONE_PROFILES:
         zones = _words(title, ZONE_WORDS) or _words(title, ZONE_MOVES) or _group_zones(group) or _words(slug, ZONE_WORDS)
