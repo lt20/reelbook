@@ -6,6 +6,12 @@
     rb.py themes                list the account's notebooks (id, title, description, groups, profile), JSON lines;
                                 profile (gym | technique | partner) picks the sheet template: read from the library
                                 of app/config.js by id, "gym" for a custom notebook
+    rb.py library               list the built-in notebooks of app/config.js not on this account yet, JSON lines
+    rb.py add-theme <library id>
+    rb.py add-theme --title T --description D
+                                add a notebook to the account and print its line (as `rb.py themes` does): a built-in
+                                one by id, or a custom one (id custom-<slug>, description of 30 characters or more,
+                                as in the app). Already there: prints it, adds nothing
     rb.py queue                 list queued requests (JSON lines: id, url, theme, note, created_at); a note that
                                 starts with « Redo: » is a correction asked from the app (« Something wrong? »):
                                 its line also has redo_of, {"sheets": [slugs], "sessions": [slugs]} published
@@ -179,18 +185,23 @@ def cmd_whoami(args):
 LIBRARY_JS = pathlib.Path(__file__).resolve().parent.parent / "app" / "config.js"
 PROFILES = ("gym", "technique", "partner")
 
-def library_profiles(path=None):
-    """{notebook id: profile} of the built-in notebooks of app/config.js; {} when the file cannot be read.
-    A user_themes row has no profile column: the library is the only place it is written (L16)."""
+def library_notebooks(path=None):
+    """{id: {title, sub, groups, profile}} of the built-in notebooks of app/config.js; {} when the file cannot be read."""
     try:
         src = pathlib.Path(path or LIBRARY_JS).read_text(encoding="utf-8")
     except OSError:
         return {}
     out = {}
     for m in re.finditer(r"\{\s*id:\s*'([^']+)'([^{}]*)\}", src):
-        p = re.search(r"\bprofile:\s*'([^']*)'", m.group(2))
-        out[m.group(1)] = p.group(1) if p and p.group(1) in PROFILES else "gym"
+        text = lambda key: (re.search(rf"\b{key}:\s*'([^']*)'", m.group(2)) or (None, ""))[1]
+        groups = re.search(r"\bgroups:\s*\[([^\]]*)\]", m.group(2))
+        out[m.group(1)] = {"title": text("title"), "sub": text("sub"), "groups": re.findall(r"'([^']*)'", groups.group(1)) if groups else [],
+                           "profile": text("profile") if text("profile") in PROFILES else "gym"}
     return out
+
+def library_profiles(path=None):
+    """{notebook id: profile}. A user_themes row has no profile column: the library is the only place it is written (L16)."""
+    return {i: n["profile"] for i, n in library_notebooks(path).items()}
 
 def cmd_themes(args):
     cfg = session()
@@ -201,6 +212,48 @@ def cmd_themes(args):
         print(json.dumps(r, ensure_ascii=False))
     if not rows:
         print("no notebook yet: open the app once, it creates the default ones", file=sys.stderr)
+
+def cmd_library(args):
+    on = _known_themes(session())
+    for i, n in library_notebooks().items():
+        if i not in on:
+            print(json.dumps({"id": i, "title": n["title"], "description": n["sub"], "groups": n["groups"], "profile": n["profile"]}, ensure_ascii=False))
+
+def _slugify(s):
+    """Same as slugify in app/index.html: a notebook named twice, here or in the app, gets the same id."""
+    s = "".join(c for c in unicodedata.normalize("NFD", s.lower()) if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", "-", s).strip("-")[:40]
+
+def cmd_add_theme(args):
+    usage = "usage: rb.py add-theme <library id> | rb.py add-theme --title <name> --description <what goes in it>"
+    if not args: die(usage)
+    lib, row = library_notebooks(), None
+    if args[0].startswith("--"):
+        opt = dict(zip(args[0::2], args[1::2]))
+        title, description = opt.get("--title", "").strip(), opt.get("--description", "").strip()
+        if not title or set(opt) != {"--title", "--description"}: die(usage)
+        if len(description) < 30: die("the description needs at least 30 characters: say what belongs in this notebook")
+        for i, n in lib.items():
+            if _slugify(title) in (i, _slugify(n["title"])): die(f"'{title}' is a built-in notebook: rb.py add-theme {i}")
+        row = {"id": "custom-" + (_slugify(title) or format(int(time.time()), "x")), "title": title, "description": description, "groups": [], "builtin": False}
+    elif args[0] in lib:
+        n = lib[args[0]]
+        row = {"id": args[0], "title": n["title"], "groups": n["groups"], "builtin": True}
+    else:
+        die(f"'{args[0]}' is not a built-in notebook ({', '.join(sorted(lib))}); a notebook of your own: --title and --description")
+    cfg = session()
+    fields = "id,title,description,groups,builtin"
+    rows = rest(cfg, "GET", "user_themes", params={"select": fields + ",position"}) or []
+    # the app seeds the default notebooks only on an account that has none: a first row written here would cancel them
+    if not rows: die("no notebook yet: open the app once, it creates the default ones")
+    same = [r for r in rows if r["id"] == row["id"]]
+    if same:
+        print(f"notebook '{row['id']}' is already on this account", file=sys.stderr)
+        added = same[0]
+    else:
+        row["position"] = max(r.get("position") or 0 for r in rows) + 1
+        added = rest(cfg, "POST", "user_themes", row, prefer="return=representation", params={"select": fields})[0]
+    print(json.dumps({**{k: added.get(k) for k in fields.split(",")}, "profile": library_profiles().get(row["id"], "gym")}, ensure_ascii=False))
 
 def cmd_queue(args):
     cfg = session()
@@ -272,7 +325,7 @@ def _known_themes(cfg):
 
 def _check_theme(theme, known, where):
     if known and theme not in known:
-        die(f"{where}: theme '{theme}' is not one of this account's notebooks ({', '.join(sorted(known))}); add it in the app or pick another")
+        die(f"{where}: theme '{theme}' is not one of this account's notebooks ({', '.join(sorted(known))}); add it with `rb.py add-theme`, or pick another")
 
 def _same_url(a, b):
     norm = lambda u: (u or "").strip().rstrip("/")
@@ -955,7 +1008,7 @@ def cmd_backfill_tags(args):
         last = rows[-1]["slug"]
     print(f"{seen} sheet(s) without tags, {n} {'to tag (dry run, nothing written)' if dry else 'tagged'}")
 
-COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "themes": cmd_themes, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
+COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "themes": cmd_themes, "library": cmd_library, "add-theme": cmd_add_theme, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
             "done": cmd_done, "error": cmd_error, "list": cmd_list, "delete": cmd_delete,
             "requeue-sessions": cmd_requeue_sessions, "requeue-stuck": cmd_requeue_stuck,
             "backfill-search": cmd_backfill_search, "backfill-tags": cmd_backfill_tags}
