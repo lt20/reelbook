@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500" role="img" aria-label="Standing tall, feet shoulder-width, the weight at the chest">
+  <rect x="-100" width="600" height="500" fill="#e8edf4"/>
+  <rect x="-100" y="440" width="600" height="60" fill="#cfd8e5"/>
+  <polyline points="198,280 204,360 186,440" fill="none" stroke="#7d8899" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="198,280 204,360 206,440" fill="none" stroke="#1f2a3a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="200,160 198,280" fill="none" stroke="#1f2a3a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="200,160 232,214 232,178" fill="none" stroke="#7d8899" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="200,160 232,214 232,178" fill="none" stroke="#1f2a3a" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="198" cy="112" r="25" fill="#1f2a3a"/>
+  <path d="M233,176 a13,13 0 0 1 26,0" fill="none" stroke="#e0703a" stroke-width="7"/>
+  <circle cx="246" cy="196" r="19" fill="#e0703a"/>
+</svg>

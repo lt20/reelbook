@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500" role="img" aria-label="One arm overhead, the opposite leg long">
+  <rect x="-100" width="600" height="500" fill="#e8edf4"/>
+  <rect x="-100" y="440" width="600" height="60" fill="#cfd8e5"/>
+  <rect x="40" y="432" width="340" height="10" rx="5" fill="#e0703a" opacity=".55"/>
+  <polyline points="236,414 240,330 306,332" fill="none" stroke="#7d8899" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="236,414 296,396 366,410" fill="none" stroke="#1f2a3a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="128,410 236,414" fill="none" stroke="#1f2a3a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="128,410 130,340 132,268" fill="none" stroke="#7d8899" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="128,410 96,392 46,384" fill="none" stroke="#1f2a3a" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="92" cy="400" r="25" fill="#1f2a3a"/>
+</svg>
