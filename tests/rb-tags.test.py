@@ -166,6 +166,12 @@ class Rules(unittest.TestCase):
         self.assertEqual(self.tags(title="Rowing au banc, poulie basse")["gear"], ["cable", "bench"])
         self.assertEqual(self.tags(title="Weight plate halo")["gear"], ["plate"])
 
+    def test_title_without_equipment_beats_the_slug(self):
+        self.assertEqual(self.tags(slug="session-dos-2-halteres-shrugs", title="Shrugs sans matériel")["gear"], ["none"])
+        self.assertEqual(self.tags(slug="session-dos-2-halteres-shrugs", title="Shrugs",
+                                   search_text="Au poids du corps ou avec haltères")["gear"], ["dumbbell"])
+        self.assertEqual(self.tags(title="Band pull-apart, no equipment besides the band")["gear"], ["band"])
+
     def test_no_zone_in_technique_or_partner_notebooks(self):
         self.assertEqual(self.tags(theme="fight", group="Kicks & knees", title="Coup de genou")["zone"], [])
         self.assertEqual(self.tags(theme="kitefoil", group="Transitions", title="Tack : les pieds")["zone"], [])

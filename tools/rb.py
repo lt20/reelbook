@@ -749,9 +749,12 @@ def derive_tags(row, vocab=None, profiles=None):
     zones = {}
     if profile not in NO_ZONE_PROFILES:
         zones = _words(title, ZONE_WORDS) or _words(title, ZONE_MOVES) or _group_zones(group) or _words(slug, ZONE_WORDS)
-    found = _words(title + " \n " + slug + " \n " + text, GEAR_WORDS)
-    gear = [g for g in GEAR_WORDS if g in found]
-    if not gear and re.search(GEAR_NONE, title + " \n " + slug + " \n " + text): gear = ["none"]
+    # a title that says « without equipment » beats the kit of its session's slug (« Shrugs sans matériel »)
+    if not _words(title, GEAR_WORDS) and re.search(GEAR_NONE, title): gear = ["none"]
+    else:
+        found = _words(title + " \n " + slug + " \n " + text, GEAR_WORDS)
+        gear = [g for g in GEAR_WORDS if g in found]
+        if not gear and re.search(GEAR_NONE, slug + " \n " + text): gear = ["none"]
     first = lambda d: min(d, key=d.get) if d else ""
     kind = (first(_words(title + " \n " + group + " \n " + slug, TYPE_WORDS)) or TYPE_BY_PROFILE.get(profile)
             or first(_words(text, TYPE_WORDS)) or TYPE_BY_NOTEBOOK.get(theme, ""))
