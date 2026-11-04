@@ -213,7 +213,9 @@ create index if not exists sheets_tags_idx on public.sheets using gin (tags);
 -- per account; a revoked key stays revoked. window_start / window_count: the function's rate limit (10 links a minute
 -- per key). Added after the quotas, written before their section (which closes the file): re-run this whole file to
 -- create it (idempotent, additive: nothing else changes).
--- A backend without it keeps working: Settings hides the « iPhone shortcut » section.
+-- A backend without it keeps working: Settings hides the « iPhone shortcut » section. The table is what shows that
+-- section: deploy the function first (`supabase functions deploy add-link --no-verify-jwt`), then run this section,
+-- so that no key is ever made for a function that is not there.
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.capture_tokens (

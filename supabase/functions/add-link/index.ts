@@ -5,7 +5,8 @@
 // SUPABASE_SERVICE_ROLE_KEY are set by Supabase in every Edge Function); a known, unrevoked key within its rate limit
 // queues the link as a public.requests row of its account. The logic, tested without a network, is in core.ts.
 //
-// Deployed without the gateway's JWT check (the key is not a Supabase JWT):
+// Deployed without the gateway's JWT check (the key is not a Supabase JWT), BEFORE the capture_tokens section of
+// supabase/schema.sql is run (the table is what shows Settings › iPhone shortcut in the app):
 //   supabase functions deploy add-link --no-verify-jwt
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { handle } from './core.ts';
