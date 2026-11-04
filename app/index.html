@@ -509,6 +509,11 @@ dialog.nav-menu h2{font:600 var(--fs-base) var(--body);text-transform:none;lette
 .nav-it.wake[aria-pressed="true"]::after{content:"On";font-weight:700;color:var(--ok)}
 .nav-it:not(:disabled):active{background:var(--tag)}
 dialog.nav-menu .actions{margin-top:var(--s-3)}
+/* L24: invitation to install the app, a quiet card at the top of the home page (browser tab only) */
+.install{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s-2) var(--s-3);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-3) var(--s-3) var(--s-3) var(--s-4);margin:0 0 var(--s-4)}
+.install .ic-share{flex:none;width:1.375rem;height:1.375rem;color:var(--accent)}
+.install p{flex:1 1 12rem;margin:0;font-size:var(--fs-sm);line-height:1.4}
+.install .acts{display:flex;gap:var(--s-2);margin-left:auto}
 </style>
 </head>
 <body>
@@ -596,6 +601,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="actions"><button class="btn danger" type="button" id="pd-discard">Discard the link</button><button class="btn" type="button" id="pd-queue">Queue it before leaving</button><button class="btn ghost" type="button" id="pd-stay" autofocus>Keep editing</button></div>
   </dialog>
   <div class="flash" id="flash" role="status" hidden></div>
+  <!-- L24: « install the app », filled by renderInstall -->
+  <section class="install" id="install-card" aria-label="Install the app" hidden></section>
 
   <div class="search" id="search" hidden><input id="q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search your sheets" placeholder="Search your sheets"></div>
   <div id="results" hidden></div>
@@ -1344,6 +1351,43 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     ? `${/[.!?]$/.test(loadError) ? '' : '.'} Your Supabase project may be paused: open your Supabase dashboard and restore it.` : '');
   // L6: the sheets and sessions practised at least once that still exist.
   const practisedCount = () => [...lastDone.keys()].filter(k => bySlug.has(k) || v2BySlug.has(RS.sessionSlugOf(k))).length;
+  // ---------- L24: invitation to install the app ----------
+  // A quiet card at the top of the home page while the app runs in a browser tab, for a signed-in user whose catalogue
+  // loaded with at least one sheet. iOS Safari: how to do it (Share, then Add to Home Screen). Chromium: an « Install »
+  // button once the browser fires beforeinstallprompt. Other browsers: nothing. « Not now » hides it for 30 days on this
+  // device (rb.install.dismissed, an ISO date; device-level, not per user). Inside #home, so never on the auth screen, a
+  // sheet or the player. Guarded for the test harness: no matchMedia, no beforeinstallprompt.
+  const INSTALL_KEY = 'rb.install.dismissed', INSTALL_SNOOZE = 30 * 24 * 60 * 60 * 1000;
+  const SHARE_GLYPH = '<svg class="ic-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M8.5 10H6.5a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5h-2"/></svg>';
+  let installPrompt = null, installShown = '';
+  const runsInstalled = () => navigator.standalone === true || !!(typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
+  // iPhone / iPod / iPad (iPadOS asks for the desktop site: a Mac with a touch screen), Safari only (not Chrome, Firefox, Edge, Opera on iOS)
+  const iosSafari = () => {
+    const ua = String(navigator.userAgent || '');
+    return (/iP(hone|od|ad)/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) && /Version\/[\d.]+.*Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+  };
+  const installSnoozed = () => { const t = Date.parse(ls.get(INSTALL_KEY) || ''); return Number.isFinite(t) && Date.now() - t < INSTALL_SNOOZE; };
+  const renderInstall = () => {
+    const card = $('install-card'), how = installPrompt ? 'prompt' : iosSafari() ? 'ios' : '';
+    const on = !!how && !!user && !currentTheme && !loading && !loadError && sheets.length > 0 && !runsInstalled() && !installSnoozed();
+    if (!on) { card.hidden = true; card.innerHTML = ''; installShown = ''; return; }
+    if (installShown !== how) {
+      installShown = how;
+      card.innerHTML = how === 'ios'
+        ? `${SHARE_GLYPH}<p>Install Reelbook: tap Share, then Add to Home Screen</p><div class="acts"><button class="btn ghost sm" type="button" id="install-not-now">Not now</button></div>`
+        : `<p>Install Reelbook on this device: it opens full screen, like an app.</p><div class="acts"><button class="btn ghost sm" type="button" id="install-not-now">Not now</button><button class="btn sm" type="button" id="install-go">Install</button></div>`;
+      $('install-not-now').addEventListener('click', () => { ls.set(INSTALL_KEY, new Date().toISOString()); renderInstall(); });
+      if (how === 'prompt') $('install-go').addEventListener('click', async () => {
+        const p = installPrompt; installPrompt = null; // a prompt event is used once
+        try { if (p) { await p.prompt(); await p.userChoice; } } catch {}
+        renderInstall();
+      });
+    }
+    card.hidden = false;
+  };
+  window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); installPrompt = ev; renderInstall(); });
+  window.addEventListener('appinstalled', () => { installPrompt = null; renderInstall(); });
+
   const renderHome = () => {
     const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
     $('h-eyebrow').hidden = !t;
@@ -1362,6 +1406,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     renderNew(!t && !loading && !loadError && !terms.length);
     renderToTry(!t && !loading && !loadError && !terms.length);
     document.title = t ? `${one ? one + ' · ' : ''}${t.title} · Reelbook` : 'Reelbook';
+    renderInstall();
     syncNav();
   };
 
