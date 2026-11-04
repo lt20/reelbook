@@ -206,6 +206,62 @@ alter table public.sheets add column if not exists tags jsonb not null default '
 create index if not exists sheets_tags_idx on public.sheets using gin (tags);
 
 -- ---------------------------------------------------------------------------
+-- Capture keys (L28): the iPhone shortcut (Share Sheet → Reelbook) sends a video link to the Edge Function
+-- `add-link` (supabase/functions/add-link) with `Authorization: Bearer <key>`. The app creates the key in Settings,
+-- shows it once and stores only its SHA-256 (token_hash); the function looks the hash up with the service role and
+-- queues the link as a requests row of that account (the quota trigger of requests, below, applies). One active key
+-- per account; a revoked key stays revoked. window_start / window_count: the function's rate limit (10 links a minute
+-- per key). Added after the quotas, written before their section (which closes the file): re-run this whole file to
+-- create it (idempotent, additive: nothing else changes).
+-- A backend without it keeps working: Settings hides the « iPhone shortcut » section. The table is what shows that
+-- section: deploy the function first (`supabase functions deploy add-link --no-verify-jwt`), then run this section,
+-- so that no key is ever made for a function that is not there.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.capture_tokens (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  token_hash   text not null unique check (token_hash ~ '^[0-9a-f]{64}$'),
+  label        text not null default '' check (char_length(label) <= 60),
+  created_at   timestamptz not null default now(),
+  last_used_at timestamptz,
+  revoked_at   timestamptz,
+  window_start timestamptz not null default now(),
+  window_count int not null default 0
+);
+
+create unique index if not exists capture_tokens_one_active on public.capture_tokens (user_id) where revoked_at is null;
+
+alter table public.capture_tokens enable row level security;
+drop policy if exists "own capture tokens" on public.capture_tokens;
+create policy "own capture tokens" on public.capture_tokens
+  for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- The app writes a new key (label, hash) and a revocation; the hash, the dates and the rate-limit counters are
+-- written by the database and the function only (service role).
+revoke all on public.capture_tokens from anon;
+revoke insert, update on public.capture_tokens from authenticated;
+grant select, delete on public.capture_tokens to authenticated;
+grant insert (label, token_hash), update (label, revoked_at) on public.capture_tokens to authenticated;
+
+create or replace function public.capture_tokens_guard() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if tg_op = 'INSERT' then
+    new.created_at := now(); new.last_used_at := null; new.revoked_at := null;
+    new.window_start := now(); new.window_count := 0;
+  elsif old.revoked_at is not null then
+    new.revoked_at := old.revoked_at;   -- a revoked key is never used again
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists capture_tokens_guard on public.capture_tokens;
+create trigger capture_tokens_guard before insert or update on public.capture_tokens
+  for each row execute function public.capture_tokens_guard();
+revoke execute on function public.capture_tokens_guard() from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------
 -- Quotas per account (L29): what one account may add to a shared backend. Defaults: 10 video links a day
 -- (requests added since midnight UTC), 300 sheets (rows of public.sheets; the sessions table is not counted),
 -- 200 MB of photos (the account's files in the sheets bucket). A row of account_quotas overrides them for one account

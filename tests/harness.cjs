@@ -76,6 +76,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
   };
   const context = {
     URL, console,
+    crypto: globalThis.crypto, // Web Crypto, as every browser has it (L28: the shortcut key and its SHA-256)
     // timers run as microtasks; one of timerCap ms or more never fires (a test that waits for the work, not the time)
     setTimeout: (fn, ms) => { if (tables && !(ms >= timerCap)) queueMicrotask(fn); },
     location: {

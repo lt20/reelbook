@@ -28,7 +28,8 @@
     sessions: () => ({id: uid(), format: '', why: '', key_points: [], source: {}, origin: 'user', thumbnail: '', items: [], created_at: now(), updated_at: now()}),
     sheets: () => ({id: uid(), kind: 'sheet', summary: '', duration: '', thumbnail: '', source: {}, html: '', added_at: now()}),
     notes: () => ({body: '', updated_at: now()}),
-    user_themes: () => ({description: '', groups: [], builtin: false, position: 0, created_at: now()})
+    user_themes: () => ({description: '', groups: [], builtin: false, position: 0, created_at: now()}),
+    capture_tokens: () => ({id: uid(), created_at: now(), last_used_at: null, revoked_at: null}) // L28
   };
   const KEYS = {notes: ['slug'], user_themes: ['id'], sheets: ['slug'], sessions: ['slug']};
   const clone = v => JSON.parse(JSON.stringify(v));
