@@ -58,7 +58,7 @@ test('beta_waitlist: the columns and checks of the spec, unique per email whatev
 });
 
 test('both tables: RLS on, no policy, no grant to clients', () => {
-  for (const t of ['beta_settings', 'beta_waitlist']) {
+  for (const t of ['beta_settings', 'beta_waitlist', 'beta_daily']) {
     assert.match(flat, new RegExp(`alter table public\\.${t} enable row level security`), t);
     assert.match(flat, new RegExp(`revoke all on public\\.${t} from anon, authenticated`), t);
     assert.doesNotMatch(flat, new RegExp(`create policy "[^"]+" on public\\.${t}\\b`), t);
@@ -99,15 +99,18 @@ test('the waiting-list row goes once the email is confirmed, not at an unconfirm
   assert.doesNotMatch(f, /beta_settings/, 'with or without the settings row');
 });
 
-test('lock 3 and 4, links: a second before insert trigger on requests, exempt pass, project count of the day', () => {
+test('lock 3 and 4, links: a second before insert trigger on requests, a counter of the day that deletes do not lower', () => {
   assert.match(flat, /create trigger requests_beta before insert on public\.requests for each row execute function public\.beta_on_request\(\)/);
-  assert.match(flat, /create index if not exists requests_created_idx on public\.requests \(created_at\)/);
+  assert.match(flat, /create table if not exists public\.beta_daily \( day date primary key, links int not null default 0 \)/);
   const f = fn('beta_on_request');
-  assert.match(f, /if not found or public\.beta_exempt\(new\.user_id\) then return new; end if;/);
+  assert.match(f, /today date := \(now\(\) at time zone 'utc'\)::date;/);
+  assert.match(f, /if not found then return new; end if; perform pg_advisory_xact_lock\(hashtext\('reelbook beta'\), hashtext\('links'\)\); if not public\.beta_exempt\(new\.user_id\) then/);
   assert.match(f, /if not s\.captures_open then raise exception using errcode = 'P0001', message = 'beta: paused'/);
-  assert.match(f, /pg_advisory_xact_lock\(hashtext\('reelbook beta'\), hashtext\('links'\)\)/);
-  assert.ok(f.includes(`from public.requests r where r.created_at >= ${midnight};`), 'every account\'s links of the day');
-  assert.match(f, /if n >= s\.max_videos_per_day then raise exception using errcode = 'P0001', message = 'beta: project limit, try tomorrow'/);
+  assert.match(f, /select d\.links into n from public\.beta_daily d where d\.day = today;/);
+  assert.match(f, /if coalesce\(n, 0\) >= s\.max_videos_per_day then raise exception using errcode = 'P0001', message = 'beta: project limit, try tomorrow'/);
+  assert.match(f, /end if; end if; insert into public\.beta_daily as d \(day, links\) values \(today, 1\) on conflict \(day\) do update set links = d\.links \+ 1; return new;/,
+    'every link counted, exempt ones too, after the checks');
+  assert.doesNotMatch(f, /from public\.requests/, 'not the rows still there: a delete gives no slot back');
 });
 
 test('lock 3 and 4, photos: photo_quota_ok calls the beta check, which reads the whole sheets bucket', () => {
@@ -140,9 +143,9 @@ test('join_waitlist: consent, shape, only when full or closed, 200 a day, the sa
   assert.match(f, /if not found or \(s\.signups_open and s\.seats_offset \+ public\.beta_accounts\(\) < s\.seats_total\) then raise exception using errcode = 'P0001', message = 'waitlist: seats open'/);
   assert.match(f, /pg_advisory_xact_lock\(hashtext\('reelbook beta'\), hashtext\('waitlist'\)\)/);
   assert.ok(f.includes(`from public.beta_waitlist w where w.created_at >= ${midnight}; if n >= 200 then`));
-  const cap = f.indexOf('if n >= 200'), exists = f.indexOf('if not exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail))');
-  assert.ok(cap > -1 && exists > cap, 'the daily cap answers before the lookup: a refusal tells nothing about who is listed');
-  assert.match(f, /insert into public\.beta_waitlist \(first_name, email, lang, consent_at\) values \(fname, mail, lng, now\(\)\); end if; return 'ok';/);
+  const cap = f.indexOf('if n >= 200'), listed = f.indexOf("if exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail)) then return 'ok'; end if;");
+  assert.ok(listed > -1 && cap > listed, 'a listed email gets ok, even on a day the 200 are reached');
+  assert.match(f, /insert into public\.beta_waitlist \(first_name, email, lang, consent_at\) values \(fname, mail, lng, now\(\)\); return 'ok';/);
   assert.doesNotMatch(f, /update public\.beta_waitlist|on conflict/, 'a listed row is never changed');
 });
 

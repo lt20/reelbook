@@ -565,25 +565,37 @@ create trigger beta_waitlist_done after insert or update of email, email_confirm
 
 -- Locks 3 and 4 for links: a second trigger on requests, next to the per-account one (requests_quota). Only an
 -- insert adds a link to the project; every writer is checked (app, add-link function, service role). One at a time.
-create index if not exists requests_created_idx on public.requests (created_at);
+-- The links of the day are counted as they are added (beta_daily, one row per UTC day), not as the rows still there:
+-- deleting links gives no slot of the day back. Exempt accounts are counted and never refused. Counting starts
+-- with the settings row; a refused or rolled-back insert is not counted.
+create table if not exists public.beta_daily (
+  day   date primary key,
+  links int not null default 0
+);
+
+alter table public.beta_daily enable row level security;
+revoke all on public.beta_daily from anon, authenticated;
 
 create or replace function public.beta_on_request() returns trigger
 language plpgsql security definer set search_path = '' as $$
-declare s public.beta_settings; n int;
+declare s public.beta_settings; n int; today date := (now() at time zone 'utc')::date;
 begin
   select * into s from public.beta_settings b where b.id;
-  if not found or public.beta_exempt(new.user_id) then return new; end if;
-  if not s.captures_open then
-    raise exception using errcode = 'P0001', message = 'beta: paused',
-      hint = 'New videos are paused on this backend for now. What you have keeps working.';
-  end if;
+  if not found then return new; end if;
   perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('links'));
-  select count(*) into n from public.requests r
-    where r.created_at >= date_trunc('day', now() at time zone 'utc') at time zone 'utc';
-  if n >= s.max_videos_per_day then
-    raise exception using errcode = 'P0001', message = 'beta: project limit, try tomorrow',
-      hint = 'The beta takes a set number of videos a day for everyone: the count starts again at midnight UTC.';
+  if not public.beta_exempt(new.user_id) then
+    if not s.captures_open then
+      raise exception using errcode = 'P0001', message = 'beta: paused',
+        hint = 'New videos are paused on this backend for now. What you have keeps working.';
+    end if;
+    select d.links into n from public.beta_daily d where d.day = today;
+    if coalesce(n, 0) >= s.max_videos_per_day then
+      raise exception using errcode = 'P0001', message = 'beta: project limit, try tomorrow',
+        hint = 'The beta takes a set number of videos a day for everyone: the count starts again at midnight UTC.';
+    end if;
   end if;
+  insert into public.beta_daily as d (day, links) values (today, 1)
+    on conflict (day) do update set links = d.links + 1;
   return new;
 end $$;
 
@@ -625,7 +637,8 @@ $$;
 -- The waiting-list form (shown when the beta is full or closed), signed in or not. Refuses without consent, with a
 -- bad first name or email, and while a seat can be taken (or without the settings row); 200 new rows a day for the
 -- whole project at most. A new email and one already listed both get « ok », and a listed row is never changed:
--- the answer tells nothing about who is listed.
+-- the answer tells nothing about who is listed (except on a day the 200 are reached, when a listed email still gets
+-- « ok » and a new one « waitlist: full today »).
 create or replace function public.join_waitlist(first_name text, email text, lang text, consent boolean) returns text
 language plpgsql volatile security definer set search_path = '' as $$
 declare
@@ -648,14 +661,13 @@ begin
     raise exception using errcode = 'P0001', message = 'waitlist: seats open';
   end if;
   perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('waitlist'));
+  if exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail)) then return 'ok'; end if;
   select count(*) into n from public.beta_waitlist w
     where w.created_at >= date_trunc('day', now() at time zone 'utc') at time zone 'utc';
   if n >= 200 then
     raise exception using errcode = 'P0001', message = 'waitlist: full today';
   end if;
-  if not exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail)) then
-    insert into public.beta_waitlist (first_name, email, lang, consent_at) values (fname, mail, lng, now());
-  end if;
+  insert into public.beta_waitlist (first_name, email, lang, consent_at) values (fname, mail, lng, now());
   return 'ok';
 end $$;
 
