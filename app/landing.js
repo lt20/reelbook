@@ -109,6 +109,7 @@
       "ui.dn.p": "Combien de fois, et la dernière.",
       "ui.more": "+ 15 autres",
       "ui.copied": "Copiée",
+      "i2.own": "Sur ton propre Supabase, ta ligne arrive une fois le carnet créé : elle porte l’URL et la clé de ton projet. Tu la retrouves à tout moment dans les réglages.",
       "ui.copyHand": "La copie n’a pas marché : la ligne est sélectionnée, copie-la à la main (⌘C ou Ctrl+C).",
       "cu.name": "Cerceau aérien",
       "cu.desc": "Montées, figures et enchaînements au cerceau aérien, du débutant au confirmé. Un groupe par famille de figures."
@@ -203,6 +204,7 @@
       "ui.dn.p": "How many times, and the last one.",
       "ui.more": "+ 15 more",
       "ui.copied": "Copied",
+      "i2.own": "On your own Supabase, your line comes once your notebook is created: it carries your project’s URL and key. You can find it again anytime in Settings.",
       "ui.copyHand": "Copying did not work: the line is selected, copy it by hand (⌘C or Ctrl+C).",
       "cu.name": "Aerial hoop",
       "cu.desc": "Climbs, poses and sequences on the aerial hoop, beginner to advanced. One group per family of poses."

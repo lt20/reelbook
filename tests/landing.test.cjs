@@ -41,7 +41,7 @@ function landing({language, stored = {}} = {}) {
   byId('lp-cuName').value = attrsOf(html.match(/<input id="lp-cuName"[^>]*>/)[0]).value;
   byId('lp-cuDesc').value = html.match(/<textarea id="lp-cuDesc">([^<]*)<\/textarea>/)[1];
   // the install line, for « Copy the line »
-  const pre = stub(); pre.textContent = '\n' + html.match(/<pre>([^<]*)<\/pre>/)[1] + '\n';
+  const pre = stub(); pre.textContent = '\n' + html.match(/<pre\b[^>]*>([^<]*)<\/pre>/)[1] + '\n';
   byId('intro').querySelector = sel => sel === 'pre' ? pre : null;
   const documentElement = {lang: 'en', scrollHeight: 0};
   const document = {getElementById: byId, querySelectorAll: sel => lists.get(sel) || [], documentElement};
@@ -350,4 +350,49 @@ test('L30 — « Copy the line »: copied, or else selected with a message to co
   assert.equal(cmd.msg.hidden, true);
   assert.match(html, /<p class="lp-copy-msg" id="lp-copyMsg" role="status" hidden><\/p>/);
   assert.match(html, /#intro pre\{[^}]*user-select:all/, 'one tap selects the whole line');
+});
+
+test('L30 — step 2 on « On my own Supabase »: no hosted line to copy, the line comes after sign-up', async () => {
+  const page = await app();
+  const line = page.element('lp-line'), copy = page.element('lp-copy'), own = page.element('lp-ownLine');
+  assert.equal(line.hidden, false); assert.equal(copy.hidden, false); assert.equal(own.hidden, true);
+  page.element('lp-host-own').checked = true;
+  await page.fire('lp-host-own', 'change');
+  assert.equal(line.hidden, true, 'the hosted line, which would link the skill to the hosted backend, is gone');
+  assert.equal(copy.hidden, true);
+  assert.equal(own.hidden, false);
+  page.element('lp-host-own').checked = false; page.element('lp-host-hosted').checked = true;
+  await page.fire('lp-host-hosted', 'change');
+  assert.equal(line.hidden, false); assert.equal(own.hidden, true);
+  assert.match(html, /<pre id="lp-line">curl -fsSL https:\/\/lt20\.github\.io\/reelbook\/install\.sh \| bash<\/pre>/);
+});
+
+test('L30 — no hosted backend in config.js: the landing offers « On my own Supabase » only, and its button opens the project form', async () => {
+  const page = await app({win: {REELBOOK: {library: [], hosted: {name: '', url: '', anonKey: ''}, repo: 'https://github.com/lt20/reelbook'}}});
+  assert.equal(page.element('lp-host-hosted-opt').hidden, true, '« With Reelbook » is not offered');
+  assert.equal(page.element('lp-host-own').checked, true);
+  assert.equal(page.element('lp-line').hidden, true);
+  assert.equal(page.element('lp-ownLine').hidden, false);
+  page.element('lp-host-own').checked = false; // even with the radio state lost, the only path is the own project
+  await page.fire('intro-signup');
+  assert.equal(page.element('setup').hidden, false);
+  assert.equal(page.element('own-form').hidden, false, 'the project form is open');
+  assert.match(html, /#intro \.lp-opt\[hidden\]\{display:none\}/, 'the grid option really hides');
+});
+
+test('L30 — <html lang>: the landing language on the screens it translates, English on the others', async () => {
+  const docEl = {lang: 'en'};
+  const fr = landing({language: 'fr'}).RBL;
+  const page = await app({win: {RBL: fr}, docEl});
+  assert.equal(docEl.lang, 'fr', 'auth (the landing) in French');
+  await page.fire('intro-signup');
+  assert.equal(page.element('auth').hidden, false);
+  assert.equal(docEl.lang, 'fr', 'the sign-up form is translated');
+  const signedIn = await app({win: {RBL: landing({language: 'fr'}).RBL}, docEl, remembered: {mode: 'hosted'}, sessions: {'https://hosted.example.test': {id: 'u1', email: 'user@example.test'}}});
+  for (let i = 0; i < 5; i++) await Promise.resolve();
+  assert.equal(signedIn.element('home').hidden, false, 'signed in: the notebooks');
+  assert.equal(docEl.lang, 'en', 'the notebooks are English only');
+  const noLanding = {lang: 'fr'};
+  await app({docEl: noLanding});
+  assert.equal(noLanding.lang, 'en', 'without landing.js, English');
 });

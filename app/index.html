@@ -842,6 +842,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-opt span{display:block;font-size:15px;color:var(--ink-2);line-height:1.4}
 #intro pre{margin:0;background:var(--night);color:#e6e9ef;border-radius:12px;padding:14px;font:500 13.5px/1.5 var(--mono);white-space:pre-wrap;word-break:break-all;-webkit-user-select:all;user-select:all}
 #intro .lp-copy-msg{margin:0;font-size:14px;color:var(--ink)}
+#intro .lp-opt[hidden]{display:none}
 #intro code{font:600 .92em var(--mono)}
 #intro .lp-copy{align-self:flex-start;min-height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--ink);color:var(--paper);font:700 15px/1 var(--body);cursor:pointer}
 #intro .lp-copy:active{transform:scale(.97)}
@@ -1037,14 +1038,15 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   <ol class="lp-install">
     <li><h3 data-k="i1.h">Create your notebook</h3>
       <p data-k="i1.p">Choose where your sheets live. You can change it later.</p>
-      <label class="lp-opt lp-host-open"><input type="radio" name="lp-host" id="lp-host-hosted" checked><span><b data-k="i1.a">With Reelbook</b><span data-k="i1.ad">Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.</span><span class="lp-seatline" data-seats-line hidden><span data-seats></span></span></span></label>
+      <label class="lp-opt lp-host-open" id="lp-host-hosted-opt"><input type="radio" name="lp-host" id="lp-host-hosted" checked><span><b data-k="i1.a">With Reelbook</b><span data-k="i1.ad">Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.</span><span class="lp-seatline" data-seats-line hidden><span data-seats></span></span></span></label>
       <label class="lp-opt"><input type="radio" name="lp-host" id="lp-host-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="i1.bd">Your own project, your limits. Run one SQL file, then paste the URL and key.</span></span></label>
       <button type="button" class="lp-btn lp-host-cta" id="intro-signup" data-k="i1.cta">Create my notebook</button></li>
     <li><h3 data-k="i2.h">Install the skill</h3>
       <p class="lp-need" data-k="i2.n">You need Claude Pro or above with Claude Code, and Chrome with the Claude in Chrome extension.</p>
       <p data-k="i2.p">Paste this line in Terminal. It installs the <code>/reelbook</code> skill and links it to your notebook.</p>
-      <pre>curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
+      <pre id="lp-line">curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
       <button class="lp-copy" type="button" id="lp-copy" data-k="i2.copy">Copy the line</button>
+      <p id="lp-ownLine" data-k="i2.own" hidden>On your own Supabase, your line comes once your notebook is created: it carries your project’s URL and key. You can find it again anytime in Settings.</p>
       <p class="lp-copy-msg" id="lp-copyMsg" role="status" hidden></p></li>
     <li><h3 data-k="i3.h">Add it to your phone</h3>
       <p data-k="i3.p">Put Reelbook on your home screen, then the « Send to Reelbook » shortcut in the iPhone Share menu.</p>
@@ -1359,7 +1361,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
   const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player', 'demo'];
-  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); syncNav(); };
+  // L30: <html lang> is the landing's language on the screens it translates (auth, setup, welcome), English elsewhere
+  const show = id => { for (const v of views) $(v).hidden = v !== id; const de = document.documentElement; if (de) de.lang = window.RBL && (id === 'auth' || id === 'setup' || id === 'welcome') ? window.RBL.lang : 'en'; window.scrollTo(0, 0); wakeSync(); syncNav(); };
   // L30: the newcomer's screens in French or English (app/landing.js, window.RBL); English when it is not loaded
   // (the vm harness). Every T(key, english) call matches the English dictionary (tests/landing.test.cjs).
   const T = (k, en) => (window.RBL && window.RBL.t(k)) || en;
@@ -1478,8 +1481,14 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // L25: « Create an account » is the hosted backend (the main path); « Use my own Supabase » stays under the form.
   // L30: the landing's « Create my notebook » (installation, step 1) follows its radio: « On my own Supabase »
   // opens the sign-up screen with the project form, as « My own Supabase project » there.
+  // Without a hosted backend (a fork whose config.js has none), « On my own Supabase » is the only option. On that
+  // option, step 2 says the line comes after sign-up (it carries the project's URL and key), not the hosted one.
+  if (!hostedOk) { $('lp-host-own').checked = true; $('lp-host-hosted').checked = false; $('lp-host-hosted-opt').hidden = true; }
+  const paintHostChoice = () => { const own = !hostedOk || !!$('lp-host-own').checked; $('lp-line').hidden = own; $('lp-copy').hidden = own; $('lp-ownLine').hidden = !own; };
+  for (const id of ['lp-host-hosted', 'lp-host-own']) $(id).addEventListener('change', paintHostChoice);
+  paintHostChoice();
   $('intro-signup').addEventListener('click', () => {
-    if ($('lp-host-own').checked) {
+    if (!hostedOk || $('lp-host-own').checked) {
       introOpen = false; setMode('up'); signupBackendChosen = false; route();
       $('own-form').hidden = false; $('own-url').focus(); return;
     }
