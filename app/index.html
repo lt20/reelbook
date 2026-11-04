@@ -3030,7 +3030,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const route = () => {
     // L27: the demo, signed in or not; leaving it with a backend remembered starts that backend (boot skipped it).
     const demoAt = demoTok();
-    if (demoAt && !demoOwned(demoAt)) { if (user) flushNotes(); showDemo(demoAt); return; }
+    if (demoAt && !demoOwned(demoAt)) {
+      if (user) flushNotes();
+      if (edit) { if (editDirty() && !discardOk()) { undoLeave(); return; } edit = null; } // as leaving any session edit
+      showDemo(demoAt); return;
+    }
     demoShown = null;
     if (!demoEl.hidden && !user && mode === 'in') setMode('in'); // back from the demo: a fresh sign-in screen
     if (backend && !sb) { boot(); return; }
