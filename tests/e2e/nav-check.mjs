@@ -108,13 +108,14 @@ async function editPrompt(page, base, back, { untouchedFirst = false } = {}) {
   return notes.join('; ');
 }
 
-// Chips: which facets are on, and how many results the search shows.
+// Chips: which facets are on, and which sheets the search shows (their links, in order; visible cards only).
 const facetState = (page) => page.evaluate(() => ({
   hash: decodeURIComponent(location.hash.replace(/^#/, '')),
   zone: document.getElementById('facet-zone').classList.contains('on'),
   gear: document.getElementById('facet-gear').classList.contains('on'),
-  results: [...document.querySelectorAll('#results .card')].filter((c) => c.getClientRects().length).length, // shown only
+  results: [...document.querySelectorAll('#results .card')].filter((c) => c.getClientRects().length).map((c) => c.getAttribute('href')),
 }));
+const sameList = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
 
 async function facetsHistory(page, base) {
   await page.goto(at(base, ''), { waitUntil: 'load' });
@@ -133,9 +134,10 @@ async function facetsHistory(page, base) {
   const one = await facetState(page);
   await pick('gear', 'band', TWO);
   const two = await facetState(page);
-  check(one.zone && !one.gear && one.results > 0, `after shoulders: ${JSON.stringify(one)}`);
-  check(two.zone && two.gear && two.results > 0 && two.results <= one.results, `after band: ${JSON.stringify(two)}`);
-  const same = (a, b, step) => check(a.hash === b.hash && a.zone === b.zone && a.gear === b.gear && a.results === b.results,
+  check(one.zone && !one.gear && one.results.length > 0, `after shoulders: ${JSON.stringify(one)}`);
+  check(two.zone && two.gear && two.results.length > 0 && two.results.length < one.results.length
+    && two.results.every((h) => one.results.includes(h)), `after band: ${JSON.stringify(two)}`);
+  const same = (a, b, step) => check(a.hash === b.hash && a.zone === b.zone && a.gear === b.gear && sameList(a.results, b.results),
     `${step}: ${JSON.stringify(a)}, expected ${JSON.stringify(b)}`);
   const move = async (dir, want, step) => {
     await (dir === 'back' ? page.goBack() : page.goForward());
@@ -147,7 +149,7 @@ async function facetsHistory(page, base) {
   await move('back', home, 'Back twice');
   await move('forward', one, 'Forward once');
   await move('forward', two, 'Forward twice');
-  return `results ${one.results} → ${two.results}, Back ×2 / Forward ×2 follow`;
+  return `results ${one.results.length} → ${two.results.length} sheets, Back ×2 / Forward ×2 show the same sheets`;
 }
 
 const browserBack = (page) => page.goBack();
