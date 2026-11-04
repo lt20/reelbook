@@ -1,0 +1,30 @@
+{
+  "title": "Reelbook demo",
+  "intro": "A sample notebook: what your videos become once Claude has turned them into sheets. Read only.",
+  "notebooks": [
+    {"id": "strength", "title": "Strength"},
+    {"id": "kitesurf", "title": "Kitesurf"}
+  ],
+  "sheets": [
+    {"slug": "goblet-squat", "notebook": "strength", "group": "Legs", "title": "Goblet squat", "summary": "A squat with one weight at the chest: the easiest squat to learn well.", "thumbnail": "img/thumb.svg", "author": "Reelbook demo"},
+    {"slug": "push-up", "notebook": "strength", "group": "Upper body", "title": "Push-up", "summary": "Chest, shoulders and arms, with the body held in one line.", "thumbnail": "img/thumb.svg", "author": "Reelbook demo"},
+    {"slug": "dead-bug", "notebook": "strength", "group": "Core", "title": "Dead bug", "summary": "Arm and opposite leg reach out, the lower back stays on the floor.", "thumbnail": "img/thumb.svg", "author": "Reelbook demo"},
+    {"slug": "water-start", "notebook": "kitesurf", "group": "Getting up", "title": "Water start", "summary": "From sitting in the water to riding, in one dive of the kite.", "thumbnail": "img/thumb.svg", "author": "Reelbook demo"}
+  ],
+  "sessions": [
+    {
+      "slug": "ten-minute-circuit",
+      "notebook": "strength",
+      "title": "Ten-minute circuit",
+      "format": "3 rounds · 45 s rest between exercises",
+      "why": "Legs, upper body and core in ten minutes, with one kettlebell. A session is a list of sheets with a dose for each.",
+      "thumbnail": "goblet-squat/img/thumb.svg",
+      "author": "Reelbook demo",
+      "items": [
+        {"slug": "goblet-squat", "dose": "10 reps"},
+        {"slug": "push-up", "dose": "8 reps"},
+        {"slug": "dead-bug", "dose": "6 per side"}
+      ]
+    }
+  ]
+}
