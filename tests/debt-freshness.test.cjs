@@ -127,3 +127,21 @@ test('#30: a failed save at sign-out asks too, and « another backend » clears 
   assert.equal(page.storage.has('rb.draft.u1.m1'), false);
   assert.deepEqual(out, ['out']);
 });
+
+test('#30: a note write stuck past 5 s does not hold up sign-out; the draft goes only once the user agrees', async () => {
+  const asked = [];
+  let release;
+  const stuck = new Promise(ok => { release = ok; });
+  // timerCap 6000: the 5 s cap fires (at once, in the harness) while the note write waits for release()
+  const page = await openNote({timerCap: 6000, confirm: q => { asked.push(q); return true; },
+    hold: (table, ops) => table === 'notes' && ops.some(o => o[0] === 'upsert') ? stuck : null});
+  const out = signOuts(page);
+  page.element('n-text').value = 'Slow network';
+  await page.fire('n-text', 'input');
+  await page.fire('s-signout'); await settle();
+  assert.equal(asked.length, 1, 'still on its way: asked');
+  assert.equal(page.storage.has('rb.draft.u1.m1'), false);
+  assert.deepEqual(out, ['out']);
+  release(); await settle(); // the write lands later: nothing comes back on the device
+  assert.equal(page.storage.has('rb.draft.u1.m1'), false);
+});
