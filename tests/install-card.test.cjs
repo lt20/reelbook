@@ -58,3 +58,31 @@ test('Chromium: appinstalled hides the card; Not now hides it for 30 days even w
   assert.equal(later.element('install-card').hidden, true);
   assert.ok(Number.isFinite(Date.parse(later.storage.get('rb.install.dismissed'))));
 });
+
+test('Chromium: a refused prompt() keeps the card and points to the browser menu (Codex pass 2)', async () => {
+  const page = await open();
+  const ev = promptEvent();
+  ev.prompt = async () => { ev.prompted++; throw new Error('NotAllowedError'); };
+  await page.win('beforeinstallprompt', ev);
+  await page.fire('install-go');
+  await settle();
+  const card = page.element('install-card');
+  assert.equal(ev.prompted, 1);
+  assert.equal(card.hidden, false);
+  assert.match(card.innerHTML, /The install window did not open\. Install Reelbook from your browser menu instead\./);
+  assert.doesNotMatch(card.innerHTML, /id="install-go"/);
+  await page.win('beforeinstallprompt', promptEvent()); // the browser offers again: Install is back
+  assert.match(card.innerHTML, /id="install-go"/);
+});
+
+test('A notebook page does not show the invitation (Codex pass 2)', async () => {
+  const ios = {userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'};
+  const home = await open({nav: ios});
+  assert.equal(home.element('install-card').hidden, false);
+  const notebook = await open({nav: ios, hash: '#strength'});
+  assert.equal(notebook.element('home').hidden, false);
+  assert.equal(notebook.element('install-card').hidden, true);
+  home.go('#strength');
+  await settle();
+  assert.equal(home.element('install-card').hidden, true);
+});
