@@ -134,7 +134,9 @@ cmd_run() {
     notice="$(night_notice "$status" "$left" "$published")"
     notify "$(printf '%s\n' "$notice" | sed -n 1p)" "$(printf '%s\n' "$notice" | sed -n 2p)"
   else
-    notify "Night run done (claude exit $status), $left still queued; rb.py list failed" "${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"
+    rc=$?  # revoked during the run (exit 3): say so rather than « list failed »
+    if [ "$rc" = 3 ]; then log "$(rb_failed_notice 3)"; notify "$(rb_failed_notice 3) (claude exit $status)"
+    else notify "Night run done (claude exit $status), $left still queued; rb.py list failed" "${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"; fi
   fi
 }
 
