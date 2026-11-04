@@ -1,0 +1,7 @@
+[
+  {"name": "l21-01-home-covers", "hash": "", "full": true, "actions": [{"wait": "#portal .tcard .cover .nb-ico"}]},
+  {"name": "l21-02-notebook-top", "hash": "strength", "actions": [{"wait": "#groups .group-row .card"}, {"wait": "#h-ico .nb-ico"}]},
+  {"name": "l21-03-notebook-scrolled", "hash": "strength", "actions": [{"wait": "#groups .group-row .card"}, {"scroll": "#groups section >> nth=2"}, {"wait": 400}, {"wait": "#nav-bar.nb.titled"}]},
+  {"name": "l21-04-add-notebook", "hash": "", "actions": [{"wait": "#portal .tcard"}, {"click": "#add-nb"}, {"wait": "#picker:not([hidden]) .lib button .nb-ico"}, {"wait": 300}]},
+  {"name": "l21-05-home-800", "hash": "", "viewport": {"width": 800, "height": 900}, "actions": [{"wait": "#portal .tcard .cover"}, {"scroll": "#portal"}, {"wait": 300}]}
+]
