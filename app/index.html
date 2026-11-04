@@ -920,6 +920,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   let backend = rememberedBackend();
   let sb = null;
+  // D2: {client, token, exp} of the session supabase-js last gave (onAuthStateChange), for a request that cannot wait.
+  let authNow = null;
   const backendLabel = () => backend ? (backend.mode === 'hosted' ? (CFG.hosted.name || 'Reelbook hosted') : backend.url.replace(/^https?:\/\//, '')) : 'No backend selected';
   const selectBackend = (next, remember = true) => { backend = next; if (remember && next) ls.set('rb.backend', JSON.stringify(next.mode === 'hosted' ? {mode: 'hosted'} : next)); boot(); };
   const ownBackend = (urlInput, keyInput) => {
@@ -1624,13 +1626,16 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // remembers it open); a failed request can be retried; a removal waits for the « Removed · Undo » toast to end.
   let queueCount = 0, queueRows = [], lastRun = null, pendingDel = null;
   const deleting = new Set(); // ids whose DELETE is in flight: kept out of every read until it answers
+  // D2: id -> queueGen when its DELETE answered. A read sent before that answer may still hold the row: it stays out
+  // of such reads, and is forgotten by the first read sent after the answer.
+  const removed = new Map();
   // queueGen: bumped by every read and every write; a read that answers after a newer one, or after a write, is dropped.
   // queueEpoch: bumped on an account or backend change; a write answering after it touches nothing.
   let queueGen = 0, queueEpoch = 0;
   // Another account or backend: forget the previous queue before any read (a failed read keeps what is shown).
   const resetQueue = () => {
     commitDel(); // a removal waiting on its toast is sent with the previous client, not dropped
-    queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear();
+    queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear(); removed.clear();
     $('queue-undo').hidden = true; queueCount = 0; $('queue-sec').hidden = true; $('queue-summary').innerHTML = ''; $('queue').innerHTML = '';
   };
   const rowErr = new Map(), DAY = 86400000, QOPEN = 'rb.queueOpen';
@@ -1679,14 +1684,28 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       ]);
       // a failed read keeps what is shown: an empty list is only believed from a successful read
       if (list.error || gen !== queueGen) return;
-      queueRows = (list.data || []).filter(d => d.status !== 'done' && !deleting.has(String(d.id)) && !(pendingDel && String(pendingDel.row.id) === String(d.id)));
+      const gone = id => deleting.has(id) || (removed.has(id) && gen <= removed.get(id)) || (pendingDel && String(pendingDel.row.id) === id);
+      queueRows = (list.data || []).filter(d => d.status !== 'done' && !gone(String(d.id)));
+      for (const [id, g] of removed) if (gen > g) removed.delete(id);
       if (!last.error) lastRun = (last.data && last.data.processed_at) || null;
       renderQueue();
     } catch {}
   };
-  // A removal is sent when the toast's bar ends, when the page is left or hidden, or when another row is removed.
-  // If the delete fails, the row comes back where it was, with the reason.
-  const commitDel = () => {
+  // D2, a removal sent as the page goes away: supabase-js reads its session (and may refresh the token) before its
+  // request leaves, which a closing iPhone page may never reach. With the access token supabase-js last gave
+  // (authNow, still valid), the DELETE goes to PostgREST at once, keepalive; else null and supabase-js sends it.
+  const leaveDelete = id => {
+    const a = authNow;
+    if (!a || a.client !== sb || !backend || typeof fetch !== 'function' || !(a.exp * 1000 > Date.now() + 30000)) return null;
+    try {
+      return fetch(`${String(backend.url).replace(/\/+$/, '')}/rest/v1/requests?id=eq.${encodeURIComponent(id)}`, {
+        method: 'DELETE', keepalive: true, headers: {apikey: backend.key, Authorization: `Bearer ${a.token}`}
+      }).then(r => ({error: r && r.ok ? null : {}}));
+    } catch { return null; }
+  };
+  // A removal is sent when the toast's bar ends, when the page is left or hidden (leaving), or when another row is
+  // removed. If the delete fails, the row comes back where it was, with the reason.
+  const commitDel = (leaving = false) => {
     if (!pendingDel) return;
     const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
     const key = String(row.id), epoch = queueEpoch; deleting.add(key); queueGen++;
@@ -1696,7 +1715,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       if (!queueRows.some(d => String(d.id) === String(row.id))) queueRows.splice(Math.min(i, queueRows.length), 0, row);
       rowErr.set(String(row.id), `Could not remove it: ${(e && e.message) || 'try again in a moment.'}`); renderQueue();
     };
-    sb.from('requests').delete().eq('id', row.id).then(r => { if (r && r.error) restore(r.error); else deleting.delete(key); }, restore);
+    const sent = (leaving === true && leaveDelete(row.id)) || sb.from('requests').delete().eq('id', row.id);
+    sent.then(r => {
+      if (r && r.error) { restore(r.error); return; }
+      if (epoch === queueEpoch) { deleting.delete(key); removed.set(key, queueGen); }
+    }, restore);
   };
   $('queue').addEventListener('click', async ev => {
     const r = ev.target.closest('[data-retry]');
@@ -1726,9 +1749,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const {row, i} = pendingDel; pendingDel = null; $('queue-undo').hidden = true;
     queueRows.splice(Math.min(i, queueRows.length), 0, row); renderQueue();
   });
-  $('queue-undo').addEventListener('animationend', commitDel);
-  window.addEventListener('pagehide', commitDel);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(); });
+  $('queue-undo').addEventListener('animationend', () => commitDel());
+  window.addEventListener('pagehide', () => commitDel(true));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') commitDel(true); });
   // iOS Safari applies :active (the pressed state) only once the page listens to touchstart.
   document.addEventListener('touchstart', () => {}, {passive: true});
   // L29: a backend with quotas refuses a link past the account's limit (« quota: 10 links per day », SQL P0001): said
@@ -2023,8 +2046,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   // Saved: the row joins the page's entries and the latest date of its key (cards, home counter). Not saved: what is
   // in the field stays there with « Not saved. Try again. »; nothing reads as done.
-  // A try carries its own id: Save again on the same text, the same day, sends the same row, so a row stored whose answer was lost
-  // comes back as a duplicate key (23505) and counts as saved, never as a second entry.
+  // A try carries its own id: Save again on the same text sends the same row, so a row stored whose answer was lost
+  // comes back as a duplicate key (23505) and counts as saved, never as a second entry. D2: its day too is the one of
+  // the first Save, so a retry past midnight is still the same row (#32).
   const newId = () => {
     const c = typeof crypto !== 'undefined' ? crypto : null;
     if (c && c.randomUUID) return c.randomUUID();
@@ -2032,8 +2056,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const h = b.map(x => x.toString(16).padStart(2, '0')).join('');
     return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
   };
-  // A try: {id, slug, done_on, text}, the same one again for the same text the same day (see above).
-  const logAttempt = (prev, key, text) => prev && prev.text === text && prev.done_on === todayIso() ? prev : {id: newId(), slug: key, done_on: todayIso(), text};
+  // A try: {id, slug, done_on, text}, the same one again for the same text, whatever the time (see above).
+  const logAttempt = (prev, key, text) => prev && prev.text === text && prev.slug === key ? prev : {id: newId(), slug: key, done_on: todayIso(), text};
   // The write behind « Done today » and the player's « Save to log » (L11): one practice_log row (a catalogue change:
   // localGen). {entry} once stored, {} when not saved, null when signed out or another account meanwhile.
   const insertPractice = async row => {
@@ -3207,6 +3231,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
         if (client !== sb) return;
+        authNow = session && session.access_token ? {client, token: session.access_token, exp: Number(session.expires_at) || 0} : null;
         const next = session ? session.user : null;
         if (peeked && user) {
           const kept = storedUser();
