@@ -4,6 +4,7 @@ Source: the design audit of 3 Nov 2026 (six expert reviews, consolidated plan, p
 https://claude.ai/artifact/NFEons9RCq5bvS2xpFaCM5). First chantier (3 Nov): phases **P0 (fixes), P1 (usable during the
 workout) and P2 (practice loop)**, lots L0–L8. Second chantier (from 3 Nov evening, « enchaîne sur P3 et P4 en
 autonomie »): **P3 (session player) and P4 (scale and finish)**, lots L9–L20. **All lots merged on 3 Nov.**
+Third chantier (4 Nov, Laurent « go !! » on P5): **P5 (opening to tinkerers)**, lots L21–L28, same protocol.
 
 ## Protocol (Paul's, adapted to Reelbook — Laurent, 3 Nov 2026: « follow the Paul rules, as autonomous as possible »)
 
@@ -75,6 +76,34 @@ autonomie »): **P3 (session player) and P4 (scale and finish)**, lots L9–L20.
 | L20 | Type scale in rem, tokens, wordmark SVG | E10 | M | no | all others | J | `feat/p4-type` | merged #48 |
 
 Ports: L9 8779, L10 8780 … L20 8790.
+
+### P5 (third chantier, 4 Nov)
+
+| Lot | What | Audit items | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
+|---|---|---|---|---|---|---|---|---|
+| L21 | Notebook identity: cover per notebook (colour + pictogram) — protected (`app/config.js`) | O8 | M | no | — | K | `feat/p5-identity` | to do |
+| L22 | Session headings in the content language (quick version, decision 2) | O6 | S | yes | — | K | `feat/p5-lang` | to do |
+| L23 | Faceted library: structured tags — protected (schema) | O7 | L | yes | — | K | `feat/p5-facets` | to do |
+| L24 | Invitation to install the app | O4 | S | yes | — | L | `feat/p5-install-card` | to do |
+| L25 | Present before signing up | O1 | M | yes | Q P5-1 | L | `feat/p5-welcome` | to do |
+| L26 | Installation you can tap | O2 | M | no | Q P5-1 | M | `feat/p5-install` | to do |
+| L27 | Demo without an account | O3 | M | yes | Q P5-3 (content) | L | `feat/p5-demo` | to do |
+| L28 | Capture in one gesture: Paste link, then iOS shortcut — protected (schema + Edge Function) | O5 | L | yes | Q P5-4 | M | `feat/p5-capture` | to do |
+
+Ports: L21 8791 … L28 8798. Wave K touches: L21 home notebook cards + notebook header + `app/config.js` (`icon`) +
+`app/icons.svg`; L22 session page + player headings + `app/sessions.js`; L23 search view + `app/config.js`
+(`facets`) + `supabase/schema.sql` + `tools/rb.py` + `skill/reelbook/SKILL.md`. L21 and L23 both add a key to
+`app/config.js`: expect a one-line merge.
+
+Open for Laurent (4 Nov), recommendation first:
+- **Q P5-1** hosted backend before L25/L26 push newcomers to it: per-account quota migration (links per day, sheets,
+  photo storage), pushed by Laurent before L25/L26 merge.
+- **Q P5-2** privacy note for the hosted backend: drafted in `docs/privacy.md`, not linked from the app until Laurent
+  validates the text (legal).
+- **Q P5-3** demo content: L27 ships the mechanism with drawn placeholders; Laurent films 4 exercises + 1 session.
+- **Q P5-4** L28 step B needs `db push` + `supabase functions deploy add-link` by Laurent.
+
+
 
 Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in parallel): L0 8770, L1 8771 … L8 8778.
 
