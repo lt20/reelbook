@@ -1,0 +1,9 @@
+[
+  {"name": "l28-01-add-video-paste-link", "actions": [{"wait": "#portal >> text=Strength"}, {"click": "#add-video-fab"}, {"wait": 400}]},
+  {"name": "l28-02-paste-link-denied", "actions": [{"wait": "#portal >> text=Strength"}, {"click": "#add-video-fab"}, {"click": "#paste-link"}, {"wait": "#f-err"}]},
+  {"name": "l28-03-add-video-filled", "actions": [{"wait": "#portal >> text=Strength"}, {"click": "#add-video-fab"}, {"fill": "#f-url", "value": "https://www.instagram.com/reel/DeGBCfjsbTt/"}, {"wait": 200}]},
+  {"name": "l28-04-settings-shortcut", "hash": "settings", "full": true, "actions": [{"wait": "#shortcut-section"}, {"scroll": "#shortcut-section"}]},
+  {"name": "l28-05-settings-key-made", "hash": "settings", "full": true,
+   "actions": [{"wait": "#shortcut-section"}, {"fill": "#shortcut-label", "value": "My iPhone"}, {"click": "#shortcut-create"}, {"wait": "#shortcut-token"}, {"scroll": "#shortcut-section"}]},
+  {"name": "l28-06-settings-no-table", "hash": "settings", "query": "missing=capture_tokens", "full": true, "actions": [{"wait": "#s-user"}, {"wait": 400}]}
+]
