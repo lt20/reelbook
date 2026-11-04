@@ -697,16 +697,16 @@ grant execute on function public.join_waitlist(text, text, text, boolean) to ano
 -- Daily alert (L33): one ntfy notification a day at 08:00 Europe/Zurich, sent by the database itself (pg_cron +
 -- pg_net), with the figures of the beta: seats, sign-ups, photos, videos, waiting list. Counts only: never an email
 -- nor a first name. Tag « 70% » when a figure reaches 70 % of its limit, priority high from 90 %.
--- The schedule only exists where pg_cron and pg_net are enabled (Dashboard › Database › Extensions): without them
--- the block at the end does nothing and the rest of this file runs as before (own backends). Enable both BEFORE
--- running this file, or run it again after enabling them.
+-- The schedule only exists where pg_cron and pg_net are enabled (Dashboard › Database › Extensions), with Vault
+-- (supabase_vault, on by default on Supabase) for the topic: without them the block at the end does nothing and the
+-- rest of this file runs as before (own backends). Enable them BEFORE running this file, or run it again after.
 -- The ntfy topic is a secret (anybody who knows it reads the notifications): it lives in Supabase Vault, named
 -- reelbook_ntfy_topic, never in this file nor in a table clients can read. Paste it yourself in the SQL editor:
 --   select vault.create_secret('<your topic>', 'reelbook_ntfy_topic');
 -- (a topic name; a full https://… URL also works, its last segment is the topic). Without it the job fails at each
 -- run with « beta alert: no topic » (Integrations › Cron › the job's runs) and sends nothing.
--- pg_cron runs in UTC: the job runs at 06:00 and 07:00 UTC and sends once, at the run that is 08:00 in Zurich
--- (summer and winter time). By hand, at any hour: select public.beta_alert();
+-- pg_cron runs in UTC (cron.timezone, GMT by default): the job runs at 06:00 and 07:00 UTC and sends once, at the
+-- run that is 08:00 in Zurich (summer and winter time). By hand, at any hour: select public.beta_alert();
 -- Stop it: select cron.unschedule('reelbook-daily-alert');
 -- ---------------------------------------------------------------------------
 
@@ -726,16 +726,17 @@ declare
 begin
   select coalesce(sum(case when o.metadata->>'size' ~ '^[0-9]+$' then (o.metadata->>'size')::bigint end), 0)::bigint
     into photos from storage.objects o where o.bucket_id = 'sheets';
-  select coalesce(sum(d.links) filter (where d.day = today), 0)::int,
-         coalesce(sum(d.links) filter (where d.day = today - 1), 0)::int,
+  -- videos: the higher of the links still there (requests) and the links counted as added (beta_daily, only once the
+  -- settings row exists; deletes do not lower it), so neither a delete nor the day the row is added hides any
+  select (count(*) filter (where r.created_at >= midnight))::int, (count(*) filter (where r.created_at < midnight))::int
+    into videos_today, videos_yesterday from public.requests r where r.created_at >= midnight - interval '1 day';
+  select greatest(videos_today, coalesce(sum(d.links) filter (where d.day = today), 0)::int),
+         greatest(videos_yesterday, coalesce(sum(d.links) filter (where d.day = today - 1), 0)::int),
          coalesce(sum(d.waitlist), 0)::int
     into videos_today, videos_yesterday, listed_new from public.beta_daily d where d.day >= today - 1;
   select count(*)::int into listed from public.beta_waitlist;
   select * into s from public.beta_settings b where b.id;
   if not found then
-    -- beta_daily counts links only once the row exists: here, the links still there (a deleted one is not counted)
-    select (count(*) filter (where r.created_at >= midnight))::int, (count(*) filter (where r.created_at < midnight))::int
-      into videos_today, videos_yesterday from public.requests r where r.created_at >= midnight - interval '1 day';
     line := format('beta off (no settings row) · accounts %s · sign-ups today %s (yesterday %s) · photos %s GB · videos today %s (yesterday %s) · waiting list %s (+%s since yesterday)',
       accounts, signups_today, signups_yesterday, round(photos / 1073741824.0, 1), videos_today, videos_yesterday, listed, listed_new);
     return jsonb_build_object('title', 'Reelbook beta', 'message', line, 'tags', '[]'::jsonb, 'priority', 3);
@@ -781,11 +782,12 @@ end $$;
 revoke execute on function public.beta_alert_message() from public, anon, authenticated;
 revoke execute on function public.beta_alert(boolean) from public, anon, authenticated;
 
--- The schedule, only with both extensions (cron.schedule with an existing name updates that job: re-runs are safe).
+-- The schedule, only with the three extensions (cron.schedule with an existing name updates that job: re-runs are safe).
 do $$
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron')
-     and exists (select 1 from pg_extension where extname = 'pg_net') then
+     and exists (select 1 from pg_extension where extname = 'pg_net')
+     and exists (select 1 from pg_extension where extname = 'supabase_vault') then
     perform cron.schedule('reelbook-daily-alert', '0 6,7 * * *', 'select public.beta_alert(true)');
   end if;
 end $$;
