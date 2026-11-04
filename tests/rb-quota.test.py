@@ -188,6 +188,58 @@ class PhotoQuota(Base):
             self.assertNotIn("quota reached", err)
 
 
+class SessionQuota(Base):
+    SHEETS = [("s-a", pathlib.Path("/unused/s-a"), {"slug": "s-a", "theme": "strength"}),
+              ("s-b", pathlib.Path("/unused/s-b"), {"slug": "s-b", "theme": "strength"}),
+              ("s-c", pathlib.Path("/unused/s-c"), {"slug": "s-c", "theme": "strength"})]
+    META = {"slug": "session-x", "kind": "session", "theme": "strength", "title": "X", "items": [{"slug": s} for s, _, _ in SHEETS]}
+
+    def publish(self, q, existing=()):
+        published = []
+        self.fake(q=q)
+        rest = rb.rest
+        def wrapped(cfg, method, path, data=None, prefer=None, params=None, tolerate=()):
+            if method == "GET" and path == "sheets" and str((params or {}).get("slug", "")).startswith("in.("):
+                self.calls.append((method, path, data, dict(params)))
+                asked = params["slug"][4:-1].split(",")
+                return [{"slug": s} for s in existing if s in asked]
+            if path == "sessions" and method == "GET": return []
+            if path == "sessions" and method == "POST": return [{"id": "ses"}]
+            return rest(cfg, method, path, data, prefer, params, tolerate)
+        rb.rest = wrapped
+        saved = rb._read_session, rb._known_themes, rb._check_theme, rb._check_durations, rb._check_tags, rb._publish_sheet, rb._drop_v1_sessions
+        try:
+            rb._read_session = lambda d, meta: list(self.SHEETS)
+            rb._known_themes = lambda cfg: {"strength"}
+            rb._check_theme = rb._check_durations = rb._check_tags = rb._drop_v1_sessions = lambda *a: None
+            rb._publish_sheet = lambda cfg, d, meta, q=None: published.append(meta["slug"])
+            result = run(lambda: rb._publish_session(self.dir, dict(self.META)))
+        finally:
+            rb._read_session, rb._known_themes, rb._check_theme, rb._check_durations, rb._check_tags, rb._publish_sheet, rb._drop_v1_sessions = saved
+        return result, published
+
+    def test_a_session_whose_new_sheets_do_not_all_fit_publishes_none(self):
+        rb.REQUEST_ID = "r9"
+        (code, _, err), published = self.publish(quota(sheets=298))
+        self.assertEqual(code, 1)
+        self.assertEqual(published, [], "no sheet published, so none left without its session")
+        self.assertIn("this session adds 3 new sheet(s); the account has room for 2", err)
+        self.assertIn("quota reached on this backend: 300 sheets", err)
+        self.assertEqual([c[2]["status"] for c in self.calls if c[0] == "PATCH"], ["error"])
+
+    def test_sheets_the_account_already_has_do_not_count(self):
+        (code, out, err), published = self.publish(quota(sheets=299), existing=("s-a", "s-b"))
+        self.assertIsNone(code, err)
+        self.assertEqual(published, ["s-a", "s-b", "s-c"])
+        self.assertIn("published session session-x", out)
+
+    def test_backend_without_quotas(self):
+        (code, _, err), published = self.publish(None)
+        self.assertIsNone(code, err)
+        self.assertEqual(published, ["s-a", "s-b", "s-c"])
+        self.assertFalse([c for c in self.calls if c[1] == "sheets"], "no extra read")
+
+
 class RequeueSessions(Base):
     V1 = [{"slug": f"session-{i}", "kind": "session", "theme": "strength", "title": str(i), "source": {"url": f"https://v/{i}"}} for i in range(4)]
 

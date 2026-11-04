@@ -606,6 +606,16 @@ def _publish_session(d, meta):
         _check_theme(m["theme"], known, sub / "meta.json")
     _check_durations(cfg, [(sub / "meta.json", m) for _, sub, m in sheets])
     _check_tags(cfg, [(sub / "meta.json", m) for _, sub, m in sheets])
+    # Quotas (L29): all the new sheets of the session must fit before the first one is published, or the session would
+    # stop midway and leave sheets without their session in the last free slots.
+    q = _my_quota(cfg)
+    if q:
+        slugs = [m["slug"] for _, _, m in sheets]
+        have = {r.get("slug") for r in (rest(cfg, "GET", "sheets", params={"select": "slug", "slug": f"in.({','.join(slugs)})"}) or [])}
+        new = sum(1 for s in slugs if s not in have)
+        if new and q["sheets"] + new > q["max_sheets"]:
+            print(f"rb: this session adds {new} new sheet(s); the account has room for {max(q['max_sheets'] - q['sheets'], 0)}", file=sys.stderr)
+            _quota_stop(cfg, f"{q['max_sheets']} sheets")
     for _, sub, m in sheets:          # the sheets first: the session only links to them
         _publish_sheet(cfg, sub, m, _my_quota(cfg))
     th = meta.get("thumbnail", "")
