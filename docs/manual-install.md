@@ -10,5 +10,10 @@ ln -s "$PWD/skill/reelbook" ~/.claude/skills/reelbook                # Windows: 
 python3 tools/rb.py login --url … --key …                            # copy the exact command from the app's Settings page
 ```
 
+The URL and key are your backend's. For the hosted backend they are `hosted.url` and `hosted.anonKey` in the app's
+published [config.js](https://lt20.github.io/reelbook/config.js): that is where the installers read them when they
+are run without `--url` / `--key` (as text, the file is never run). The Settings page's
+« Already installed, sign in again » line carries them too.
+
 `rb.py` itself needs only the standard library. Updating later: `git pull` in `~/reelbook`
 (Windows: copy the skill folder again).

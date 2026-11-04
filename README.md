@@ -43,18 +43,25 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    device, **Sign in to my own instance** lets self-hosted users enter their Supabase URL and anon
    key once. Install the app on your phone (*Add to Home screen*).
 2. Save a video: **+ Add a video**, paste the link. It shows under *In the queue* on the home page.
-3. On your computer, paste the install line shown in the app's **Settings** page (it carries your
-   backend's URL and key). macOS / Linux:
+3. On your computer, paste the install line shown in the app's **Settings** page (**Send to my
+   computer** there mails or shares it from your phone). On the hosted backend it is the same for
+   everyone. macOS / Linux:
 
    ```
-   curl -fsSL https://lt20.github.io/reelbook/install.sh | bash -s -- --url … --key …
+   curl -fsSL https://lt20.github.io/reelbook/install.sh | bash
    ```
 
    Windows (PowerShell):
 
    ```
-   $env:REELBOOK_URL = "…"; $env:REELBOOK_KEY = "…"; irm https://lt20.github.io/reelbook/install.ps1 | iex
+   irm https://lt20.github.io/reelbook/install.ps1 | iex
    ```
+
+   The installer reads the hosted backend's URL and anon key from the app's published `config.js`
+   (as text, it never runs it). On your own Supabase project, Settings shows the line with its URL
+   and key: `… | bash -s -- --url … --key …` (Windows: set `$env:REELBOOK_URL` and
+   `$env:REELBOOK_KEY` first). `install.sh --help` lists the options; `--dry-run` shows which
+   backend would be used and installs nothing.
 
    It clones this repository into `~/reelbook`, installs Pillow in a private venv, links the
    skill into `~/.claude/skills/`, and asks for your email and password. Prefer doing it by
