@@ -40,6 +40,7 @@ const sheetDocument = {
 // promise resolving to {data, error} answers that instead of the table's rows at that time (a read made earlier).
 // `fetch`: the window's fetch (none by default: the app reads its backend through the fake client only), e.g. the
 // demo's static files (L27).
+// `href`: the page's address (default https://app.example.test/reelbook/), e.g. the published app (L26).
 // IndexedDB as the app uses it (open, one 'kv' store, get / put; a ranged delete is not supported and fails).
 const fakeIndexedDB = store => ({
   open() {
@@ -55,7 +56,7 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity, href = 'https://app.example.test/reelbook/'} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -80,7 +81,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     // timers run as microtasks; one of timerCap ms or more never fires (a test that waits for the work, not the time)
     setTimeout: (fn, ms) => { if (tables && !(ms >= timerCap)) queueMicrotask(fn); },
     location: {
-      href: 'https://app.example.test/reelbook/', origin: 'https://app.example.test', pathname: '/reelbook/',
+      href, origin: new URL(href).origin, pathname: new URL(href).pathname,
       get hash() { return currentHash; },
       set hash(v) { currentHash = !v || String(v).startsWith('#') ? String(v || '') : '#' + v; queueMicrotask(() => winListeners.hashchange && winListeners.hashchange()); }
     },
@@ -168,6 +169,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
   await Promise.resolve();
   return {
     element, clients, storage,
+    location: context.location, // e.g. a mailto: the app opened by setting location.href (L26)
     async fire(id, type = 'click') {
       const listener = element(id).listeners[type];
       assert.ok(listener, `${id} handles ${type}`);
