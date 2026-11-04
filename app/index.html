@@ -1994,6 +1994,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre)) out.push(k); } } catch {}
     return out;
   };
+  // F1: this device only. supabase-js signs out every session of the account by default (scope 'global'), which
+  // would also revoke the computer's rb.py session and make the overnight run fail.
+  const LOCAL_ONLY = {scope: 'local'};
   const signOutHere = async ({force = false} = {}) => {
     if (!sb) return true;
     const uid = user ? user.id : '';
@@ -2005,14 +2008,14 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       if (runs.length) await Promise.race([Promise.all(runs), new Promise(ok => setTimeout(ok, 5000))]);
       const left = draftKeysOf(uid), n = left.length;
       if (n && typeof window.confirm === 'function' && !window.confirm(`${n === 1 ? 'A note is' : n + ' notes are'} not saved yet. Sign out and delete ${n === 1 ? 'it' : 'them'} from this device?`)) { if (ta) ta.readOnly = ro; return false; }
-      const res = await sb.auth.signOut().catch(error => ({error}));
+      const res = await sb.auth.signOut(LOCAL_ONLY).catch(error => ({error}));
       if (res && res.error && !force) { console.warn('Sign-out failed:', res.error.message || res.error); if (ta) ta.readOnly = ro; return false; }
       left.forEach(ls.del);
       const late = draftKeysOf(uid); // typed while the sign-out was on its way (another tab): asked, never dropped silently
       if (late.length && (typeof window.confirm !== 'function' || window.confirm('A note typed during sign-out is not saved. Delete it from this device?'))) late.forEach(ls.del);
       return true;
     }
-    await sb.auth.signOut().catch(() => {});
+    await sb.auth.signOut(LOCAL_ONLY).catch(() => {});
     return true;
   };
   const wireNotes = async key => {

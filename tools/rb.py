@@ -132,10 +132,27 @@ def cmd_login(args):
     save_cfg(cfg)
     print(f"signed in as {email} on {url}")
 
+# F1: exit code of a revoked session (the refresh token is gone: signed out everywhere, password changed…).
+# tools/nightly.sh reads it to send « signed out, run rb.py login » rather than a bare failure.
+SIGNED_OUT = 3
+REVOKED = ("refresh_token_not_found", "refresh_token_already_used", "invalid_grant", "invalid refresh token",
+           "session_not_found", "session_expired")
+
+def self_path():
+    """This script's path, ~ for the home folder: the login command to give works wherever rb.py was installed."""
+    p, home = pathlib.Path(__file__).resolve(), pathlib.Path.home().resolve()
+    return f"~/{p.relative_to(home)}" if home in p.parents else str(p)
+
 def session():
     cfg = load_cfg()
     if cfg["expires_at"] < time.time() + 60:
-        tok = http("POST", f"{cfg['url']}/auth/v1/token?grant_type=refresh_token", {"apikey": cfg["anon_key"]}, {"refresh_token": cfg["refresh_token"]})
+        try:
+            tok = http("POST", f"{cfg['url']}/auth/v1/token?grant_type=refresh_token", {"apikey": cfg["anon_key"]},
+                       {"refresh_token": cfg["refresh_token"]}, tolerate=(400, 401, 403))
+        except RbHTTPError as e:
+            if any(w in e.body.lower() for w in REVOKED):
+                die(f"Your computer was signed out of Reelbook (session revoked). Run: python3 {self_path()} login", SIGNED_OUT)
+            die(f"POST {cfg['url']}/auth/v1/token → {e.code}: {e.body}")
         cfg.update(access_token=tok["access_token"], refresh_token=tok["refresh_token"], expires_at=int(time.time()) + tok.get("expires_in", 3600))
         save_cfg(cfg)
     return cfg

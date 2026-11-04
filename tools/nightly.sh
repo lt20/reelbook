@@ -68,15 +68,21 @@ night_notice() {
   fi
   printf '%s\n%s\n' "$msg" "$app"
 }
+# rb_failed_notice <rb.py exit code>: the notice when rb.py fails before the run. Exit 3 = the computer's session was
+# revoked (signed out everywhere): rb.py login is the fix. Pure, tested.
+rb_failed_notice() {
+  if [ "$1" = 3 ]; then echo "Reelbook night run: signed out, run rb.py login"
+  else echo "Night run: rb.py queue failed (exit $1)"; fi
+}
 on_battery() {
   pmset -g batt 2>/dev/null | head -1 | grep -q "Battery Power"
 }
 screen_locked() {
   [ "$(ioreg -n Root -d1 -a | plutil -extract IOConsoleUsers.0.CGSSessionScreenIsLocked raw - 2>/dev/null)" = true ]
 }
-queued() {  # number of queued requests, fails when rb.py does
+queued() {  # number of queued requests, fails with rb.py's exit code
   local out
-  out="$(cd "$REPO" && python3 tools/rb.py queue 2>/dev/null)" || return 1
+  out="$(cd "$REPO" && python3 tools/rb.py queue 2>/dev/null)" || return $?
   printf '%s\n' "$out" | grep -c '^{' || true  # grep -c exits 1 on a count of 0: an empty queue is not a failure
 }
 
@@ -91,7 +97,7 @@ cmd_check() {
 }
 
 cmd_run() {
-  local max=5 at="" n left status since published notice
+  local max=5 at="" n rc left status since published notice
   while [ $# -gt 0 ]; do
     case "$1" in
       --max) max="$2"; shift 2 ;;
@@ -105,8 +111,9 @@ cmd_run() {
   fi
   # a run that died (sleep, crash) leaves its request « processing », out of the queue for good
   (cd "$REPO" && python3 tools/rb.py requeue-stuck 2>&1) | sed "s/^/$(date '+%F %T') /"
-  if ! n="$(queued)"; then
-    log "rb.py queue failed"; notify "Night run: rb.py queue failed (signed out?)"; exit 1
+  n="$(queued)"; rc=$?
+  if [ "$rc" -ne 0 ]; then
+    log "$(rb_failed_notice "$rc")"; notify "$(rb_failed_notice "$rc")"; exit 1
   fi
   if [ "$n" -eq 0 ]; then log "queue empty"; exit 0; fi
   if on_battery; then
@@ -127,7 +134,9 @@ cmd_run() {
     notice="$(night_notice "$status" "$left" "$published")"
     notify "$(printf '%s\n' "$notice" | sed -n 1p)" "$(printf '%s\n' "$notice" | sed -n 2p)"
   else
-    notify "Night run done (claude exit $status), $left still queued; rb.py list failed" "${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"
+    rc=$?  # revoked during the run (exit 3): say so rather than « list failed »
+    if [ "$rc" = 3 ]; then log "$(rb_failed_notice 3)"; notify "$(rb_failed_notice 3) (claude exit $status)"
+    else notify "Night run done (claude exit $status), $left still queued; rb.py list failed" "${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"; fi
   fi
 }
 
@@ -174,7 +183,7 @@ cmd_uninstall() {
   echo "Uninstalled."
 }
 
-# sourced (tests/rb-queue.test.py reads night_notice): define the functions only
+# sourced (tests/rb-queue.test.py reads night_notice, tests/rb-auth.test.py rb_failed_notice): define the functions only
 [ "${BASH_SOURCE[0]}" = "$0" ] || return 0
 case "${1:-}" in
   check) cmd_check ;;
