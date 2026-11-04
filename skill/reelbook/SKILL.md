@@ -223,7 +223,7 @@ languages: translate the English column).
   values **only** from the `facets` vocabulary of `app/config.js` (`rb.py publish` refuses an unknown value on a
   new sheet). Leave a facet empty (`[]`, `null`, `""`) rather than guess. One line per facet:
   - `zone`: the body areas the exercise works, 1–2 (`shoulders`, `core`, `full body`…), `[]` for a non-body topic.
-  - `gear`: the kit you see in the video (`band`, `mat`, `kite`…), `["none"]` for bodyweight with nothing.
+  - `gear`: the kit you see in the video (`band`, `mat`, `plate`, `cable`, `machine`, `bench`, `kite`…), `["none"]` for bodyweight with nothing.
   - `minutes`: the number in `duration` (`"8 min"` → `8`), `null` when `duration` is `""`.
   - `type`: one value (`strength`, `mobility`, `stretch`, `cardio`, `skill`, `drill`, `warm-up`, `routine`), or `""`.
   An exercise sheet of a session gets its own `tags` (`minutes`: `null`, its dose lives on the session).
