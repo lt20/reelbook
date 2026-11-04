@@ -506,6 +506,37 @@ dialog.nav-menu h2{font:600 var(--fs-base) var(--body);text-transform:none;lette
 .nav-it.wake[aria-pressed="true"]::after{content:"On";font-weight:700;color:var(--ok)}
 .nav-it:not(:disabled):active{background:var(--tag)}
 dialog.nav-menu .actions{margin-top:var(--s-3)}
+/* ---- L21: notebook identity — a cover per notebook: its colour as a tinted band, its pictogram (icons.svg), its title.
+   Band: 14 % of the notebook colour over the paper; text on it: 60 % colour + 40 % ink, at least 5.8:1 on the band for
+   the 8 palette colours, light and dark. The pictogram sits in the colour itself on a paper disc (at least 3.2:1). ---- */
+.nb-ico{display:block;width:24px;height:24px;flex:none;fill:none;stroke:currentColor}
+.nb-badge{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:var(--paper);color:var(--t,var(--accent))}
+.tcard:not(.add){padding-top:0;overflow:hidden;border-top:1px solid var(--line);--band:color-mix(in srgb,var(--t,var(--accent)) 14%,var(--paper));--on-band:color-mix(in srgb,var(--t,var(--accent)) 60%,var(--ink))}
+.tcard .cover{display:flex;align-items:center;gap:var(--s-3);margin:0 -18px var(--s-1);padding:var(--s-4) 18px;background:var(--band)}
+.tcard .cover>div{display:grid;gap:2px;min-width:0}
+.tcard .cover .eyebrow{color:var(--on-band)}
+.tcard .cover h2{color:var(--on-band);overflow-wrap:anywhere}
+/* « Add a notebook »: the pictogram beside each title */
+.picker .lib button{grid-template-columns:24px 1fr;column-gap:var(--s-3);align-items:center}
+.picker .lib button .nb-ico{grid-row:span 2;color:var(--t,var(--muted))}
+.picker .lib button b,.picker .lib button span{grid-column:2}
+/* a notebook page: the title on the same cover (ink on the band), the pictogram's disc on its left */
+#h-ico{display:none}
+#home.nb{--band:color-mix(in srgb,var(--t,var(--accent)) 14%,var(--paper))}
+#home.nb #h-eyebrow{border-top:0;padding-top:0}
+#home.nb #brand-wordmark{gap:var(--s-3);padding:var(--s-4);border-radius:var(--r-lg);background:var(--band)}
+#home.nb #h-ico{display:grid;width:52px;height:52px}
+#home.nb #h-ico .nb-ico{width:30px;height:30px}
+/* compact, once the title is under the sticky bar: the bar takes the band, the pictogram before the title */
+#nav-mid{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px}
+#nav-mid #nav-title{flex:0 1 auto}
+#nav-ico{display:none;color:var(--t,var(--accent));opacity:0}
+#nav-ico .nb-ico{width:20px;height:20px}
+#nav-bar.nb #nav-ico{display:block}
+#nav-bar.nb.titled{background:color-mix(in srgb,var(--t,var(--accent)) 14%,var(--bg))}
+#nav-bar.nb.titled #nav-ico{opacity:1}
+@media (prefers-reduced-motion:no-preference){#nav-ico{transition:opacity .15s}#nav-bar.nb{transition:border-color .2s,background-color .2s}}
+@media (prefers-reduced-motion:reduce){#nav-bar,#nav-title{transition:none}}
 </style>
 </head>
 <body>
@@ -513,7 +544,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 <!-- ===== L17: sticky navigation bar (every signed-in page but home and the player) ===== -->
 <header id="nav-bar" hidden>
   <a id="nav-back" href="#">‹ Reelbook</a>
-  <span id="nav-title" aria-hidden="true"></span>
+  <span id="nav-mid"><span id="nav-ico" aria-hidden="true"></span><span id="nav-title" aria-hidden="true"></span></span>
   <button type="button" id="nav-more" aria-label="Page actions" aria-haspopup="dialog" aria-controls="nav-actions">⋯</button>
 </header>
 
@@ -571,7 +602,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   <!-- L13: a notebook page keeps its eyebrow above the bar; the home page does not (L17: the way back is in #nav-bar) -->
   <p class="eyebrow" id="h-eyebrow" hidden>Find it fast, when you need it</p>
   <header id="brand-bar">
-    <div id="brand-wordmark"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><h1 id="h-title">Reelbook</h1></div>
+    <div id="brand-wordmark"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><span class="nb-badge" id="h-ico" aria-hidden="true"></span><h1 id="h-title">Reelbook</h1></div>
     <a class="set" href="#settings">Settings</a>
   </header>
   <p class="cnt" id="count" aria-live="polite"></p>
@@ -760,7 +791,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 </dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
-<script src="config.js?v=6"></script>
+<script src="config.js?v=7"></script>
 <script src="sessions.js?v=9"></script>
 <script src="sheet.js?v=4"></script>
 <script>
@@ -772,6 +803,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   let themes = [], themeById = new Map();
   const hue = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 8; };
   const colorOf = t => `var(--p${t.color != null ? t.color : hue(t.id)})`;
+  // L21: a notebook's pictogram (icons.svg): the library's `icon` for a built-in notebook, 'custom' for one an
+  // account described itself (or a library entry without an icon). Hidden from screen readers: the title says it all.
+  const iconOf = t => { const lib = t && libById.get(t.id); return lib && /^[a-z0-9-]+$/.test(lib.icon || '') ? lib.icon : 'custom'; };
+  const nbIcon = t => `<svg class="nb-ico" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><use href="icons.svg#nb-${iconOf(t)}"/></svg>`;
   const slugify = str => str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -1129,14 +1164,14 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="${esc(e.title)}">`).join('');
       // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
       return `<a class="tcard" href="#${esc(t.id)}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
-        <p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2><p>${esc(t.sub)}</p>
+        <div class="cover"><span class="nb-badge">${nbIcon(t)}</span><div><p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2></div></div><p>${esc(t.sub)}</p>
         ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
     }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
     $('add-nb').addEventListener('click', () => { renderPicker(); $('picker').hidden = !$('picker').hidden; if (!$('picker').hidden) $('picker').scrollIntoView({block: 'start'}); });
   };
   const renderPicker = () => {
     const rest = library.filter(t => !themeById.has(t.id));
-    $('lib').innerHTML = rest.map(t => `<button type="button" data-add="${esc(t.id)}" style="--t:${colorOf(t)}"><b>${esc(t.title)}</b><span>${esc(t.sub)}</span></button>`).join('') || '<p class="hint">Every built-in notebook is already on. Describe your own below.</p>';
+    $('lib').innerHTML = rest.map(t => `<button type="button" data-add="${esc(t.id)}" style="--t:${colorOf(t)}">${nbIcon(t)}<b>${esc(t.title)}</b><span>${esc(t.sub)}</span></button>`).join('') || '<p class="hint">Every built-in notebook is already on. Describe your own below.</p>';
   };
   $('lib').addEventListener('click', async ev => {
     const b = ev.target.closest('[data-add]'); if (!b) return; const t = libById.get(b.dataset.add); if (!t) return; b.disabled = true;
@@ -1345,6 +1380,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const t = currentTheme ? themeById.get(currentTheme) : null, one = groupOf(t);
     $('h-eyebrow').hidden = !t;
     $('h-title').textContent = t ? t.title : 'Reelbook';
+    $('h-ico').innerHTML = t ? nbIcon(t) : ''; // L21: the notebook's pictogram on its cover
     $('home').classList.toggle('nb', !!t); // L13: a notebook page shows its title large, without the mark
     $('home').setAttribute('style', t ? `--t:${colorOf(t)}` : ''); // L20: its colour on the band over the title
     // L13: « How it works » leaves the home page once the account has 5 sheets (the guide stays in Settings)
@@ -2595,7 +2631,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     const t = themeById.get(nb) || (nb && (loading || loadError || !themes.length) ? libById.get(nb) || {id: nb, title: nb} : null);
     if (!t) return null;
     const one = currentTheme === t.id ? groupOf(t) : null;
-    return one ? {title: one, up: [t.id, t.title]} : {title: t.title, up: ['', 'Reelbook']};
+    return one ? {title: one, up: [t.id, t.title], nb: t} : {title: t.title, up: ['', 'Reelbook'], nb: t};
   };
   // The « ⋯ » menu of a sheet or session page. An action this page cannot do stays listed, greyed, with the reason.
   const menuHtml = () => {
@@ -2632,6 +2668,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       navBack.textContent = '‹ ' + p.up[1]; navBack.setAttribute('href', '#' + p.up[0]); navBack.setAttribute('aria-label', 'Back to ' + p.up[1]);
       navTitle.textContent = p.title; navMore.hidden = !p.menu;
     }
+    // L21: on a notebook page the compact title carries its cover (tinted bar, pictogram) once the title is under it
+    const nb = p && p.nb; navBar.classList.toggle('nb', !!nb); navBar.setAttribute('style', nb ? `--t:${colorOf(nb)}` : '');
+    $('nav-ico').innerHTML = nb ? nbIcon(nb) : '';
     paintMenu(); paintHint();
     Promise.resolve().then(watchTitle);
   };
