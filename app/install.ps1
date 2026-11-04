@@ -5,11 +5,11 @@
 # then signs the computer in (email + password). Safe to run again: it updates in place.
 # Without REELBOOK_URL / REELBOOK_KEY it signs in to the hosted backend: its url and anon key are read, as text, from
 # the app's published config.js (the file is never run). REELBOOK_CONFIG_URL reads another one (a fork, a local path).
-# REELBOOK_DRY_RUN=1 shows which backend would be used, then stops: nothing is installed.
+# REELBOOK_DRY_RUN=1 shows which backend would be used, then stops: nothing is installed. These variables are cleared
+# once read.
 $ErrorActionPreference = "Stop"
 $Dir = if ($env:REELBOOK_DIR) { $env:REELBOOK_DIR } else { Join-Path $HOME "reelbook" }
 $Repo = "https://github.com/lt20/reelbook"
-$ConfigUrl = if ($env:REELBOOK_CONFIG_URL) { $env:REELBOOK_CONFIG_URL } else { "https://lt20.github.io/reelbook/config.js" }
 
 function Say($t) { Write-Host "`n$t" -ForegroundColor White }
 function Need($cmd, $hint) { if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) { throw "missing: $cmd. $hint" } }
@@ -41,10 +41,10 @@ function Read-ReelbookConfig([string]$Source) {
 }
 
 # The arguments given (REELBOOK_URL and REELBOOK_KEY), else the hosted backend of config.js; throws when neither.
-function Resolve-ReelbookBackend {
-  if ($env:REELBOOK_URL -or $env:REELBOOK_KEY) {
-    if (-not ($env:REELBOOK_URL -and $env:REELBOOK_KEY)) { throw "Set both REELBOOK_URL and REELBOOK_KEY (the app's Settings page shows the whole line)." }
-    return @{ Url = $env:REELBOOK_URL; Key = $env:REELBOOK_KEY }
+function Resolve-ReelbookBackend([string]$Url, [string]$Key, [string]$ConfigUrl) {
+  if ($Url -or $Key) {
+    if (-not ($Url -and $Key)) { throw "Set both REELBOOK_URL and REELBOOK_KEY (the app's Settings page shows the whole line)." }
+    return @{ Url = $Url; Key = $Key }
   }
   try { $text = Read-ReelbookConfig $ConfigUrl }
   catch { throw "Could not read $ConfigUrl to find the hosted backend. Check the connection and try again, or set REELBOOK_URL and REELBOOK_KEY first." }
@@ -54,8 +54,13 @@ function Resolve-ReelbookBackend {
 }
 
 function Install-Reelbook {
-  $Backend = Resolve-ReelbookBackend
-  if ($env:REELBOOK_DRY_RUN) {
+  # The variables of a line are used once, then cleared: a later line pasted in the same PowerShell window (the short
+  # one, for the hosted backend) must not reuse the backend of an earlier one.
+  $Url = $env:REELBOOK_URL; $Key = $env:REELBOOK_KEY; $Dry = $env:REELBOOK_DRY_RUN
+  $ConfigUrl = if ($env:REELBOOK_CONFIG_URL) { $env:REELBOOK_CONFIG_URL } else { "https://lt20.github.io/reelbook/config.js" }
+  Remove-Item Env:REELBOOK_URL, Env:REELBOOK_KEY, Env:REELBOOK_CONFIG_URL, Env:REELBOOK_DRY_RUN -ErrorAction SilentlyContinue
+  $Backend = Resolve-ReelbookBackend $Url $Key $ConfigUrl
+  if ($Dry) {
     Write-Host "Backend: $($Backend.Url)"
     Write-Host "Key: $($Backend.Key)"
     Write-Host "Folder: $Dir"

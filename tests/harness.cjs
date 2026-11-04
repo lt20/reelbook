@@ -40,6 +40,7 @@ const sheetDocument = {
 // promise resolving to {data, error} answers that instead of the table's rows at that time (a read made earlier).
 // `fetch`: the window's fetch (none by default: the app reads its backend through the fake client only), e.g. the
 // demo's static files (L27).
+// `href`: the page's address (default https://app.example.test/reelbook/), e.g. the published app (L26).
 // IndexedDB as the app uses it (open, one 'kv' store, get / put; a ranged delete is not supported and fails).
 const fakeIndexedDB = store => ({
   open() {
@@ -55,7 +56,7 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, href = 'https://app.example.test/reelbook/'} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -76,7 +77,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     URL, console,
     setTimeout: fn => { if (tables) queueMicrotask(fn); },
     location: {
-      href: 'https://app.example.test/reelbook/', origin: 'https://app.example.test', pathname: '/reelbook/',
+      href, origin: new URL(href).origin, pathname: new URL(href).pathname,
       get hash() { return currentHash; },
       set hash(v) { currentHash = !v || String(v).startsWith('#') ? String(v || '') : '#' + v; queueMicrotask(() => winListeners.hashchange && winListeners.hashchange()); }
     },

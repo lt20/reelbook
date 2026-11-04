@@ -2753,8 +2753,14 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
   // L26: on the hosted backend the installers find its url and key by themselves (in the published config.js), so the
   // line is short and the same for everyone; on an own backend it carries them.
-  const installSh = () => !backend ? '' : backend.mode === 'hosted' ? `curl -fsSL ${base}install.sh | bash` : `curl -fsSL ${base}install.sh | bash -s -- --url ${backend.url} --key ${backend.key}`;
-  const installPs = () => !backend ? '' : backend.mode === 'hosted' ? `irm ${base}install.ps1 | iex` : `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex`;
+  // An app served elsewhere (a fork) names its own config.js: the installers read lt20's by default.
+  const CONFIG_URL = 'https://lt20.github.io/reelbook/config.js', ownConfig = base + 'config.js' !== CONFIG_URL;
+  const installSh = () => !backend ? '' : backend.mode === 'hosted'
+    ? `curl -fsSL ${base}install.sh | ${ownConfig ? `REELBOOK_CONFIG_URL=${base}config.js ` : ''}bash`
+    : `curl -fsSL ${base}install.sh | bash -s -- --url ${backend.url} --key ${backend.key}`;
+  const installPs = () => !backend ? '' : backend.mode === 'hosted'
+    ? `${ownConfig ? `$env:REELBOOK_CONFIG_URL = "${base}config.js"; ` : ''}irm ${base}install.ps1 | iex`
+    : `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex`;
   const installBlock = () => `<p class="hint"><b>macOS / Linux</b> (Terminal)</p><pre data-cmd="sh">${esc(installSh())}</pre>
     <div class="actions"><button class="btn sm ghost" type="button" data-copy="sh">Copy</button><span class="hint" data-copied="sh"></span></div>
     <p class="hint"><b>Windows</b> (PowerShell)</p><pre data-cmd="ps">${esc(installPs())}</pre>

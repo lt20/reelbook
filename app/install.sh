@@ -59,7 +59,8 @@ resolve_backend() {
   URL="${pair%% *}"; KEY="${pair#* }"
 }
 
-need_value() { [ $# -ge 2 ] && [ -n "$2" ] || { echo "$1 needs a value (see --help)" >&2; exit 2; }; }
+# a value, not empty and not the next option (`--url --dry-run` must not install anything)
+need_value() { [ $# -ge 2 ] && [ -n "$2" ] && [ "${2#-}" = "$2" ] || { echo "$1 needs a value (see --help)" >&2; exit 2; }; }
 while [ $# -gt 0 ]; do
   case "$1" in
     --url) need_value "$@"; URL="$2"; shift 2 ;;

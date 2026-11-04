@@ -128,6 +128,10 @@ test('install.sh refuses half a backend, a missing value and an unknown option',
   const empty = run(['--key']);
   assert.equal(empty.status, 2);
   assert.match(empty.stderr, /--key needs a value/);
+  const swallowed = run(['--url', '--dry-run', '--key', 'abc']); // the next option is not a value: stop before any step
+  assert.equal(swallowed.status, 2);
+  assert.match(swallowed.stderr, /--url needs a value/);
+  assert.equal(swallowed.stdout, '');
   const odd = run(['--force']);
   assert.equal(odd.status, 2);
   assert.match(odd.stderr, /unknown option: --force/);
@@ -142,6 +146,10 @@ test('install.ps1 takes the hosted backend from config.js as text when REELBOOK_
   assert.match(ps1, /Set both REELBOOK_URL and REELBOOK_KEY/);
   assert.match(ps1, /No hosted backend is set in \$ConfigUrl/);
   assert.match(ps1, /REELBOOK_DRY_RUN/);
+  // the variables of a line are cleared once read: a later short line in the same window uses the hosted backend
+  assert.match(ps1, /Remove-Item Env:REELBOOK_URL, Env:REELBOOK_KEY, Env:REELBOOK_CONFIG_URL, Env:REELBOOK_DRY_RUN/);
+  const body = ps1.slice(ps1.indexOf('function Install-Reelbook'));
+  assert.ok(body.indexOf('Remove-Item Env:REELBOOK_URL') < body.indexOf('Resolve-ReelbookBackend'), 'cleared before anything can fail');
   // the downloaded text goes to the parser only: never to Invoke-Expression / iex / a script block
   const code = ps1.split('\n').filter(l => !l.trim().startsWith('#')).join('\n');
   assert.doesNotMatch(code, /Invoke-Expression|\biex\b|\[scriptblock\]|ScriptBlock\]::Create|&\s*\(\s*\$text/i);
@@ -179,16 +187,26 @@ const cmds = page => [...page.element('s-install').innerHTML.matchAll(/<pre data
 const unesc = s => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const clickSend = page => page.element('settings').listeners.click({target: {closest: s => s === '[data-send]' ? {dataset: {}} : null}});
 
+const published = 'https://lt20.github.io/reelbook/';
 test('Settings on the hosted backend shows the short line, the same for everyone', async () => {
-  const page = await onHosted();
+  const page = await onHosted({href: published + '#settings'});
   await settle();
   assert.equal(page.element('settings').hidden, false);
   assert.deepEqual(cmds(page), [
-    'curl -fsSL https://app.example.test/reelbook/install.sh | bash',
-    'irm https://app.example.test/reelbook/install.ps1 | iex'
+    'curl -fsSL https://lt20.github.io/reelbook/install.sh | bash',
+    'irm https://lt20.github.io/reelbook/install.ps1 | iex'
   ]);
   assert.doesNotMatch(page.element('s-install').innerHTML, /--url|REELBOOK_URL|hosted\.example/);
   assert.match(page.element('s-install').innerHTML, /<button[^>]*data-send[^>]*>Send to my computer<\/button>/);
+});
+
+test('an app served elsewhere (a fork) names its own config.js in the short line', async () => {
+  const page = await onHosted();
+  await settle();
+  assert.deepEqual(cmds(page).map(unesc), [
+    'curl -fsSL https://app.example.test/reelbook/install.sh | REELBOOK_CONFIG_URL=https://app.example.test/reelbook/config.js bash',
+    '$env:REELBOOK_CONFIG_URL = "https://app.example.test/reelbook/config.js"; irm https://app.example.test/reelbook/install.ps1 | iex'
+  ]);
 });
 
 test('Settings on an own backend keeps the line with its url and key', async () => {
@@ -202,14 +220,14 @@ test('Settings on an own backend keeps the line with its url and key', async () 
 
 test('« Send to my computer » shares the lines and one sentence', async () => {
   const shared = [];
-  const page = await onHosted({nav: {share: async data => { shared.push(data); }}});
+  const page = await onHosted({href: published + '#settings', nav: {share: async data => { shared.push(data); }}});
   await settle();
   await clickSend(page);
   assert.equal(shared.length, 1);
   assert.equal(shared[0].title, 'Set up Reelbook');
   assert.match(shared[0].text, /^Set up Reelbook on this computer: paste one of these lines in a terminal\./);
-  assert.ok(shared[0].text.includes('\ncurl -fsSL https://app.example.test/reelbook/install.sh | bash\n'));
-  assert.ok(shared[0].text.includes('\nirm https://app.example.test/reelbook/install.ps1 | iex\n'));
+  assert.ok(shared[0].text.includes('\ncurl -fsSL https://lt20.github.io/reelbook/install.sh | bash\n'));
+  assert.ok(shared[0].text.includes('\nirm https://lt20.github.io/reelbook/install.ps1 | iex\n'));
 });
 
 test('« Send to my computer » without the share sheet opens a mail to oneself with the lines', async () => {
