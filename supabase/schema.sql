@@ -727,7 +727,8 @@ begin
   select coalesce(sum(case when o.metadata->>'size' ~ '^[0-9]+$' then (o.metadata->>'size')::bigint end), 0)::bigint
     into photos from storage.objects o where o.bucket_id = 'sheets';
   -- videos: the higher of the links still there (requests) and the links counted as added (beta_daily, only once the
-  -- settings row exists; deletes do not lower it), so neither a delete nor the day the row is added hides any
+  -- settings row exists; deletes do not lower it), so neither a delete nor the day the row is added hides any. Only
+  -- on the day the row is added, links added before it AND links deleted after it can make the figure low.
   select (count(*) filter (where r.created_at >= midnight))::int, (count(*) filter (where r.created_at < midnight))::int
     into videos_today, videos_yesterday from public.requests r where r.created_at >= midnight - interval '1 day';
   select greatest(videos_today, coalesce(sum(d.links) filter (where d.day = today), 0)::int),
