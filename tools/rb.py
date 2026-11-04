@@ -32,6 +32,11 @@
                                 fill search_text (the text the app searches) of every sheet of the account that has
                                 none yet, from its html; once, after supabase/schema.sql added the column.
                                 `publish` writes it for every new sheet
+    rb.py backfill-tags [--dry-run]
+                                derive the facet tags (zone, gear, minutes, type) of every sheet of the account that
+                                has none yet, without Claude: zone from the group (else the title), gear and type from
+                                keywords of the title and search text, minutes from duration; once, after
+                                supabase/schema.sql added the column. `publish` sends the tags of meta.json
 
 Session file: ~/.config/reelbook/config.json (chmod 600). Override with REELBOOK_CONFIG.
 
@@ -42,6 +47,9 @@ meta.json of a sheet folder (meta.json + index.html + img/):
     `duration` is the practice time or "" (a video length or a step count is refused on a new sheet, only
     warned about on a sheet already published). Optional
     `steps` (whole number >= 1): checked, kept in meta.json only (no column yet; the app shows `duration`).
+    Optional `tags` (L23, the facets of the search view): {"zone": ["shoulders"], "gear": ["band"], "minutes": 8,
+    "type": "mobility"}, values from `facets` in app/config.js (an unknown value is refused on a new sheet, only
+    warned about on a sheet already published); `minutes` defaults to the number in `duration`.
 
 meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no index.html):
     {"slug": "session-gsp-shoulders", "kind": "session", "theme": "strength", "title": "…",
@@ -55,7 +63,7 @@ meta.json of a session folder (meta.json + one sheet sub-folder per exercise, no
     `kind` and `exercises` only serve this migration now; `publish` writes kind "sheet" and leaves
     `exercises` to its default.
 """
-import json, os, re, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error
+import json, os, re, sys, time, getpass, mimetypes, pathlib, urllib.request, urllib.parse, urllib.error, unicodedata
 from html.parser import HTMLParser
 
 CFG_PATH = pathlib.Path(os.environ.get("REELBOOK_CONFIG") or "~/.config/reelbook/config.json").expanduser()
@@ -301,9 +309,95 @@ def search_text(html):
     return text
 
 NO_SEARCH_TEXT = "this backend has no sheets.search_text column: re-run supabase/schema.sql (see docs/own-supabase.md)"
+NO_TAGS = "this backend has no sheets.tags column: re-run supabase/schema.sql (see docs/own-supabase.md)"
+# The columns a sheet row can do without: a backend not migrated yet answers 400 (PostgREST PGRST204 on a write,
+# 42703 on a read) naming the column, and the row goes out without it.
+OPTIONAL_COLUMNS = {"search_text": NO_SEARCH_TEXT, "tags": NO_TAGS}
+
+def _no_column(err, col):
+    body = err.body or ""
+    return err.code == 400 and re.search(rf"\b{col}\b", body) is not None
 
 def _no_search_column(err):
-    return err.code == 400 and "search_text" in (err.body or "")
+    return _no_column(err, "search_text")
+
+# ---------------------------------------------------------------------------
+# Faceted library (L23): sheets.tags = {"zone": [], "gear": [], "minutes": n | null, "type": ""}, values from the
+# `facets` vocabulary of app/config.js (read here, one source for the app, the skill and this tool).
+# ---------------------------------------------------------------------------
+FACET_LISTS = ("zone", "gear")
+
+def facets_vocab(path=None):
+    """{"zone": [...], "gear": [...], "type": [...]} from the `facets` block of app/config.js; {} when unreadable."""
+    try:
+        src = pathlib.Path(path or LIBRARY_JS).read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    block = re.search(r"\bfacets:\s*\{(.*?)\n\s*\}", src, re.S)
+    if not block: return {}
+    out = {}
+    for key in ("zone", "gear", "type"):
+        m = re.search(rf"\b{key}:\s*\[([^\]]*)\]", block.group(1))
+        if m: out[key] = re.findall(r"'([^']*)'", m.group(1))
+    return out
+
+_UNIT = r"(h(?:ours?|eures?|r)?|min\w*|mn|s(?:ec\w*)?)(?![a-z])"
+_NUM = r"(\d+(?:[.,]\d+)?)"
+
+def _minutes(duration):
+    """The practice time of a duration in whole minutes (« 8 min » → 8, « 10–15 min » → 15, « 1 h 30 min » → 90,
+    « 45 s » → 1); None when no number carries a time unit (« 3 sets », « 20 »: never guessed)."""
+    d = (duration or "").lower()
+    per = lambda u: 60 if u[0] == "h" else 1 / 60 if u[0] == "s" else 1
+    num = lambda x: float(x.replace(",", "."))
+    # a range (« 10–15 min », « 10 to 15 min ») counts as its upper end, in the unit written after it
+    d = re.sub(rf"{_NUM}\s*(?:-|–|—|to|à)\s*{_NUM}\s*{_UNIT}", lambda m: f"{max(num(m.group(1)), num(m.group(2)))} {m.group(3)}", d)
+    parts = re.findall(rf"{_NUM}\s*{_UNIT}", d)
+    if not parts: return None
+    n = sum(num(x) * per(u) for x, u in parts)   # « 1 h 30 min » adds up; a number without a unit is ignored
+    return int(-(-n // 1)) if n > 0 else 0
+
+def _tag_problems(tags, vocab):
+    """(errors, unknown): errors = a malformed tags object (always refused), unknown = values outside the vocabulary
+    (refused on a new sheet, a warning on a sheet already published). No vocabulary: nothing is unknown."""
+    if not isinstance(tags, dict): return ["tags must be an object"], []
+    errors, unknown = [], []
+    for k, v in tags.items():
+        if k in FACET_LISTS:
+            if not isinstance(v, list) or not all(isinstance(x, str) for x in v): errors.append(f"tags.{k} must be a list of strings")
+            elif vocab.get(k): unknown += [f"{k} {json.dumps(x, ensure_ascii=False)}" for x in v if x not in vocab[k]]
+        elif k == "minutes":
+            if v is not None and (not isinstance(v, int) or isinstance(v, bool) or v < 0): errors.append("tags.minutes must be a whole number >= 0 or null")
+        elif k == "type":
+            if not isinstance(v, str): errors.append("tags.type must be a string")
+            elif v and vocab.get("type") and v not in vocab["type"]: unknown.append(f"type {json.dumps(v, ensure_ascii=False)}")
+        else:
+            unknown.append(f"facet {json.dumps(k, ensure_ascii=False)}")
+    return errors, unknown
+
+def _check_tags(cfg, sheets):
+    """Before any write, as _check_durations: `sheets` is [(meta.json path, meta)]. A malformed `tags` is refused;
+    a value outside app/config.js `facets` is refused on a new sheet, only warned about on a sheet already published."""
+    vocab, bad = facets_vocab(), []
+    for p, m in sheets:
+        if "tags" not in m: continue
+        errors, unknown = _tag_problems(m["tags"], vocab)
+        if errors: die(f"{p}: {'; '.join(errors)}")
+        if unknown: bad.append((p, m, unknown))
+    if not bad: return
+    slugs = sorted({m["slug"] for _, m, _ in bad})
+    rows = rest(cfg, "GET", "sheets", params={"select": "slug", "slug": f"in.({','.join(slugs)})"}) or []
+    old = {r.get("slug") for r in rows} & set(slugs)
+    for p, m, unknown in bad:
+        msg = f"{p}: tags hold values outside the facets of app/config.js: {', '.join(unknown)}"
+        if m["slug"] in old: print(f"rb: warning: {msg}; published anyway, the sheet existed before", file=sys.stderr)
+        else: die(msg + " (pick from the vocabulary, or leave the facet empty)")
+
+def _sheet_tags(meta):
+    """The tags sent with a sheet, as written in meta.json; `minutes` from `duration` when the skill left it out."""
+    tags = dict(meta["tags"])
+    if "minutes" not in tags: tags["minutes"] = _minutes(meta.get("duration", ""))
+    return tags
 
 def _check_durations(cfg, sheets):
     """L15, new sheets only: refuse a duration that is a video length or a step count, before any write.
@@ -334,16 +428,19 @@ def _publish_sheet(cfg, d, meta):
            "summary": meta.get("summary", ""), "duration": meta.get("duration", ""), "thumbnail": meta.get("thumbnail", "img/thumb.jpg"),
            "source": meta.get("source", {}), "html": (d / "index.html").read_text()}
     row["search_text"] = search_text(row["html"])
+    if "tags" in meta: row["tags"] = _sheet_tags(meta)   # no tags in meta.json: an update keeps the ones it had
     post = lambda r, tolerate=(): rest(cfg, "POST", "sheets", r, prefer="resolution=merge-duplicates,return=representation",
                                        params={"on_conflict": "user_id,slug"}, tolerate=tolerate)
-    try:
-        out = post(row, (400,))
-    except RbHTTPError as e:
-        # a backend not migrated yet (PostgREST PGRST204, unknown column): the sheet still goes out, unindexed
-        if not _no_search_column(e): die(f"POST sheets → {e}")
-        print(f"rb: {NO_SEARCH_TEXT}; {slug} published without it", file=sys.stderr)
-        row.pop("search_text")
-        out = post(row)
+    while True:
+        try:
+            out = post(row, (400,))
+            break
+        except RbHTTPError as e:
+            # a backend not migrated yet (PostgREST PGRST204, unknown column): the sheet still goes out without it
+            col = next((c for c in OPTIONAL_COLUMNS if c in row and _no_column(e, c)), None)
+            if not col: die(f"POST sheets → {e}")
+            print(f"rb: {OPTIONAL_COLUMNS[col]}; {slug} published without it", file=sys.stderr)
+            row.pop(col)
     # stderr: a progress line (L14 acceptance test reads the stub's last stdout line); the run still shows it
     print(f"published {slug}: {n} image(s), {len(row.get('search_text') or '')} characters of search text, row {out[0]['id']}", file=sys.stderr)
 
@@ -420,6 +517,7 @@ def _publish_session(d, meta):
     for _, sub, m in sheets:
         _check_theme(m["theme"], known, sub / "meta.json")
     _check_durations(cfg, [(sub / "meta.json", m) for _, sub, m in sheets])
+    _check_tags(cfg, [(sub / "meta.json", m) for _, sub, m in sheets])
     for _, sub, m in sheets:          # the sheets first: the session only links to them
         _publish_sheet(cfg, sub, m)
     th = meta.get("thumbnail", "")
@@ -448,6 +546,7 @@ def cmd_publish(args):
     cfg = session()
     _check_theme(meta["theme"], _known_themes(cfg), meta_p)
     _check_durations(cfg, [(meta_p, meta)])
+    _check_tags(cfg, [(meta_p, meta)])
     _publish_sheet(cfg, d, meta)
 
 def cmd_list(args):
@@ -587,10 +686,87 @@ def cmd_backfill_search(args):
         last = rows[-1]["slug"]
     print(f"{seen} sheet(s) without search text, {n} {'to fill (dry run, nothing written)' if dry else 'filled'}")
 
+# ---------------------------------------------------------------------------
+# facet backfill (once, after the tags column is added): tags derived without Claude (decision 6)
+# ---------------------------------------------------------------------------
+
+def _fold(s):
+    return "".join(c for c in unicodedata.normalize("NFD", str(s or "")) if not unicodedata.combining(c)).lower()
+
+# Keywords on folded text (English, with the French of older sheets). A zone comes from the group (the library's
+# groups: Shoulders, Abs, Ankles & feet…), else from the title; gear from the title and search text; the type is the
+# keyword met first in the title (or the group), else in the search text.
+ZONE_WORDS = {"shoulders": r"shoulders?|epaules?", "arms": r"arms?|bras|biceps|triceps", "chest": r"chest|pecs?|pectoraux",
+              "back": r"back|spine|dos", "core": r"core|abs|abdos?|abdominaux", "hips": r"hips?|glutes?|hanches?|fessiers?",
+              "legs": r"legs?|jambes?", "knees": r"knees?|genoux?", "ankles": r"ankles?|feet|chevilles?|pieds?",
+              "neck": r"neck|nuque|cou", "full body": r"full[- ]body|corps entier"}
+GEAR_WORDS = {"mat": r"mats?|tapis", "band": r"bands?|elastiques?", "dumbbell": r"dumbbells?|halteres?",
+              "kettlebell": r"kettlebells?", "barbell": r"barbells?", "bar": r"pull-?up bar|bar|barre fixe",
+              "rings": r"rings|anneaux", "ball": r"balls?|ballon", "foam roller": r"foam roll\w*|rouleau",
+              "chair": r"chairs?|chaise", "wall": r"walls?|mur", "board": r"boards?", "kite": r"kites?"}
+GEAR_NONE = r"no equipment|bodyweight|body weight|sans materiel|poids du corps"
+TYPE_WORDS = {"strength": r"strength\w*|renforcement|musculation", "mobility": r"mobility|mobilite", "stretch": r"stretch\w*|etirements?",
+              "cardio": r"cardio\w*|hiit", "skill": r"skills?", "drill": r"drills?|educatifs?",
+              "warm-up": r"warm[- ]?ups?|echauffement", "routine": r"routines?"}
+
+def _words(text, table):
+    """{value: position of its first keyword in text} for the values of `table` met in text."""
+    out = {}
+    for value, pat in table.items():
+        m = re.search(rf"(?<![\w-])(?:{pat})(?![\w-])", text)
+        if m: out[value] = m.start()
+    return out
+
+def derive_tags(row, vocab=None):
+    """The tags of a published sheet from what it already holds: group, title, search text, duration. Values outside
+    the vocabulary of app/config.js are dropped (a vocabulary change never writes an unknown value)."""
+    vocab = facets_vocab() if vocab is None else vocab
+    ok = lambda k, v: not vocab.get(k) or v in vocab[k]
+    group, title, text = _fold(row.get("group")), _fold(row.get("title")), _fold(row.get("search_text"))
+    zones = _words(group, ZONE_WORDS) or _words(title, ZONE_WORDS)
+    found = _words(title + " \n " + text, GEAR_WORDS)
+    gear = [g for g in GEAR_WORDS if g in found]
+    if not gear and re.search(GEAR_NONE, title + " " + text): gear = ["none"]
+    first = lambda d: min(d, key=d.get) if d else ""
+    kind = first(_words(title + " " + group, TYPE_WORDS)) or first(_words(text, TYPE_WORDS))
+    return {"zone": [z for z in ZONE_WORDS if z in zones and ok("zone", z)], "gear": [g for g in gear if ok("gear", g)],
+            "minutes": _minutes(row.get("duration")), "type": kind if kind and ok("type", kind) else ""}
+
+def cmd_backfill_tags(args):
+    if any(a != "--dry-run" for a in args): die("usage: rb.py backfill-tags [--dry-run]")
+    dry = "--dry-run" in args
+    cfg = session()
+    vocab = facets_vocab()
+    cols = ["slug", "theme", '"group"', "title", "duration", "search_text", "tags"]
+    PAGE, last, seen, n = 200, None, 0, 0   # keyset on slug (writes do not shift it)
+    while True:
+        params = {"select": ",".join(cols), "user_id": f"eq.{cfg['user_id']}", "tags": "eq.{}", "order": "slug", "limit": str(PAGE)}
+        if last is not None: params["slug"] = f"gt.{last}"
+        try:
+            rows = rest(cfg, "GET", "sheets", params=params, tolerate=(400,)) or []
+        except RbHTTPError as e:
+            if _no_column(e, "tags"): die(NO_TAGS + ", then run this again")
+            if _no_column(e, "search_text") and "search_text" in cols: cols.remove("search_text"); continue
+            die(f"GET sheets → {e}")
+        for r in rows:
+            if r.get("tags"): continue   # tagged meanwhile, or a server ignoring the filter
+            seen += 1
+            tags = derive_tags(r, vocab)
+            if not (tags["zone"] or tags["gear"] or tags["type"] or tags["minutes"] is not None): continue
+            n += 1
+            print(f"{r['slug']}: {json.dumps(tags, ensure_ascii=False)}" + (" (dry run)" if dry else ""))
+            if not dry:
+                rest(cfg, "PATCH", "sheets", {"tags": tags}, prefer="return=minimal",
+                     # tags=eq.{}: a sheet republished since the read keeps the tags publish wrote
+                     params={"slug": f"eq.{r['slug']}", "user_id": f"eq.{cfg['user_id']}", "tags": "eq.{}"})
+        if len(rows) < PAGE: break
+        last = rows[-1]["slug"]
+    print(f"{seen} sheet(s) without tags, {n} {'to tag (dry run, nothing written)' if dry else 'tagged'}")
+
 COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "themes": cmd_themes, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
             "done": cmd_done, "error": cmd_error, "list": cmd_list, "delete": cmd_delete,
             "requeue-sessions": cmd_requeue_sessions, "requeue-stuck": cmd_requeue_stuck,
-            "backfill-search": cmd_backfill_search}
+            "backfill-search": cmd_backfill_search, "backfill-tags": cmd_backfill_tags}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:

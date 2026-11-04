@@ -193,3 +193,14 @@ create policy "own practice log" on public.practice_log
 -- ---------------------------------------------------------------------------
 
 alter table public.sheets add column if not exists search_text text not null default '';
+
+-- ---------------------------------------------------------------------------
+-- Faceted library (L23): the structured tags of a sheet, {"zone": [], "gear": [], "minutes": n | null, "type": ""},
+-- values from the fixed vocabulary of app/config.js (`facets`), written by `rb.py publish` from meta.json. Sheets
+-- published before it hold {} until `rb.py backfill-tags` derives them (group, title, search text, duration).
+-- Added after the full-text search: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- A backend without it keeps working: the app searches as before, without the facet chips.
+-- ---------------------------------------------------------------------------
+
+alter table public.sheets add column if not exists tags jsonb not null default '{}'::jsonb;
+create index if not exists sheets_tags_idx on public.sheets using gin (tags);
