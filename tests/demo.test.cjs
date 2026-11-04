@@ -84,13 +84,35 @@ test('L27 — with an account kept on this device, the banner leads back to its 
   const page = await app({hash: '#demo', tables: {}, fetch, stored, sessions: {[hostedUrl]: {id: 'u1'}}});
   await settle();
   assert.match(page.element('demo').innerHTML, /Demo · read only · Back to my notebooks/);
-  assert.equal(page.clients.length, 0);
+  assert.equal(page.element('demo').hidden, false);
+  // the account's own backend starts as without the demo; the demo itself writes nothing to it
+  assert.equal(page.clients.length, 1);
+  assert.equal(page.clients[0].calls.length, 0);
   click(page, 'demo-signup');
   await settle();
-  // signed in again (a first start on this device shows the welcome page, as without the demo)
+  // the account's home page, already loaded behind the demo
   for (const v of ['demo', 'auth', 'setup']) assert.equal(page.element(v).hidden, true, v);
-  assert.equal(page.element('welcome').hidden, false);
+  assert.equal(page.element('home').hidden, false);
   assert.equal(page.clients.length, 1);
+});
+
+test('L27 — an account\'s own sheet « demo » keeps #demo; the other demo pages stay the demo', async () => {
+  const {fetch} = files();
+  const tables = {
+    user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}],
+    sheets: [{slug: 'demo', kind: 'sheet', theme: 'strength', group: 'Arms', title: 'Demo', summary: '', html: '<h1>Demo</h1>', exercises: []}],
+    sessions: [], requests: [], notes: []
+  };
+  const stored = {['rb.auth.' + hostedUrl.replace(/\W/g, '')]: JSON.stringify({user: {id: 'u1'}}), 'rb.backend': JSON.stringify({mode: 'hosted'})};
+  const page = await app({hash: '#demo', tables, fetch, stored, sessions: {[hostedUrl]: {id: 'u1'}}, dom: true});
+  await settle();
+  assert.equal(page.element('demo').hidden, true);
+  assert.equal(page.element('view').hidden, false);
+  assert.match(page.element('view').innerHTML, /<h1>Demo<\/h1>/);
+  page.go('#demo/session/ten-minute-circuit'); await settle();
+  assert.equal(page.element('demo').hidden, false);
+  page.go('#demo'); await settle();
+  assert.equal(page.element('demo').hidden, true);
 });
 
 test('L27 — a missing catalogue says so; bad entries and markup in it are left out or escaped', async () => {

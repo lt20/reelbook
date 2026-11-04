@@ -2916,7 +2916,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // Pages: #demo (sheets and the session), #demo/<sheet>, #demo/session/<slug>. Every file is fetched on the first
   // visit, so the service worker keeps them all and the demo then opens offline.
   const DEMO = 'demo', demoEl = $('demo'), demoPages = new Map();
-  let demoCat = null, demoLoading = null, demoGen = 0, demoSeat = null;
+  let demoCat = null, demoLoading = null, demoGen = 0, demoSeat = null, demoShown = null;
+  // An account's own sheet or notebook named « demo » keeps its address (#demo, #demo/play…), once its catalogue is
+  // known: a sheet titled « Demo » gets that slug.
+  const demoOwned = t => !!user && (bySlug.has(DEMO) || themeById.has(DEMO)) && (t === DEMO || t.startsWith(DEMO + '/play'));
   const demoTok = () => { let t = location.hash.slice(1); try { t = decodeURIComponent(t); } catch {} return t === DEMO || t.startsWith(DEMO + '/') ? t : null; };
   const demoSlug = x => typeof x === 'string' && /^[a-z0-9][a-z0-9-]{0,79}$/.test(x);
   const demoFile = p => `demo/${p}`;
@@ -2968,7 +2971,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const demoLoad = () => demoLoading || (demoLoading = (typeof fetch === 'function' ? demoGet('catalogue.json', true) : Promise.reject(new Error('no fetch')))
     .then(c => { demoCat = demoCheck(c); demoWarm(demoCat).catch(() => {}); return demoCat; }, e => { demoLoading = null; throw e; }));
   // The banner leads to sign-up; with an account on this device (signed in, or a session kept for the remembered
-  // backend, which the demo does not start), back to that account's notebooks.
+  // backend), back to that account's notebooks.
   const demoKnown = () => !!(user || (backend && storedUser()));
   const demoBanner = () => `<a class="demo-banner" id="demo-signup" href="#">${demoKnown() ? 'Demo · read only · Back to my notebooks' : 'Demo · read only · Create an account'}</a>`;
   demoEl.addEventListener('click', ev => {
@@ -3004,7 +3007,10 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   const showDemo = async tok => {
     const gen = ++demoGen, page = (back, body) => { demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body; };
-    show('demo'); document.title = 'Reelbook demo';
+    // Drawn again on the same page (the account's catalogue arrived): only the banner may change, the reader keeps
+    // the scroll.
+    if (demoShown === tok && !demoEl.hidden && demoCat) { const b = $('demo-signup'); if (b) b.outerHTML = demoBanner(); return; }
+    demoShown = tok; show('demo'); document.title = 'Reelbook demo';
     if (!demoCat) {
       page('', '<p class="loading">Loading the demo…</p>');
       try { await demoLoad(); } catch { if (gen === demoGen) page('', '<div class="wrap"><p class="empty">The demo could not be loaded. Check the connection, then reload the page.</p></div>'); return; }
@@ -3024,7 +3030,8 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const route = () => {
     // L27: the demo, signed in or not; leaving it with a backend remembered starts that backend (boot skipped it).
     const demoAt = demoTok();
-    if (demoAt) { if (user) flushNotes(); showDemo(demoAt); return; }
+    if (demoAt && !demoOwned(demoAt)) { if (user) flushNotes(); showDemo(demoAt); return; }
+    demoShown = null;
     if (!demoEl.hidden && !user && mode === 'in') setMode('in'); // back from the demo: a fresh sign-in screen
     if (backend && !sb) { boot(); return; }
     if (!user) {
@@ -3089,7 +3096,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       booted = identity; peeked = false;
       resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; ended = null; signed.clear(); cache.clear(); loadError = '';
     }
-    if (!backend || demoTok()) { route(); return; } // L27: the demo creates no Supabase client
+    // L27: a visitor's demo creates no Supabase client; a device with an account kept starts it as usual (its own
+    // sheet « demo » may live at #demo, and the banner leads back to it).
+    if (!backend || (demoTok() && !storedUser())) { route(); return; }
     if (!sb) {
       // keepalive on DELETE: a queue removal sent as the page goes away (pagehide) outlives the page.
       const keepaliveFetch = (input, init) => fetch(input, init && init.method === 'DELETE' ? {...init, keepalive: true} : init);
