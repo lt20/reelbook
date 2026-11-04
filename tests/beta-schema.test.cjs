@@ -22,7 +22,7 @@ test('the beta section exists and comes after the quotas (it reads account_quota
   assert.ok(start > sql.indexOf('create or replace function public.my_quota'));
 });
 
-test('additive and idempotent: nothing dropped but the triggers it recreates; the only delete is the waiting list at sign-up', () => {
+test('additive and idempotent: nothing dropped but the triggers it recreates; the only delete is the waiting list at a confirmed sign-up', () => {
   assert.doesNotMatch(code, /\bdrop\s+(table|column|function|index|schema|policy)\b/i);
   assert.doesNotMatch(code, /\b(truncate|alter\s+table\s+\S+\s+drop)\b/i);
   assert.deepEqual([...flat.matchAll(/delete from (\S+)/g)].map(m => m[1]), ['public.beta_waitlist']);
@@ -69,7 +69,7 @@ test('both tables: RLS on, no policy, no grant to clients', () => {
 
 test('exempt accounts: an account_quotas note starting with « exempt », read by the seat count too', () => {
   assert.match(fn('beta_exempt'), /from public\.account_quotas q where q\.user_id = uid and lower\(q\.note\) like 'exempt%'/);
-  assert.match(fn('beta_accounts'), /from auth\.users u where not exists \(select 1 from public\.account_quotas q where q\.user_id = u\.id and lower\(q\.note\) like 'exempt%'\)/);
+  assert.match(fn('beta_accounts'), /and not exists \(select 1 from public\.account_quotas q where q\.user_id = u\.id and lower\(q\.note\) like 'exempt%'\)/);
   assert.doesNotMatch(code, /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, 'no user id in the file');
   assert.doesNotMatch(code, /insert into public\.account_quotas/, 'the migration never guesses an account');
 });
@@ -80,11 +80,23 @@ test('lock 2: before insert on auth.users, off without the row, closed / full / 
   assert.match(f, /if exists \(select 1 from public\.beta_settings\) then perform pg_advisory_xact_lock\(hashtext\('reelbook beta'\), hashtext\('signup'\)\);/);
   assert.match(f, /if not s\.signups_open then raise exception using errcode = 'P0001', message = 'beta: closed'/);
   assert.match(f, /if s\.seats_offset \+ public\.beta_accounts\(\) >= s\.seats_total then raise exception using errcode = 'P0001', message = 'beta: full'/);
-  assert.ok(f.includes(`where u.created_at >= ${midnight} and not public.beta_exempt(u.id)`), 'sign-ups of the day, UTC, exempt ones out');
-  assert.match(f, /if n >= s\.signups_per_day then raise exception using errcode = 'P0001', message = 'beta: closed today'/);
-  assert.ok(f.indexOf('end if; end if; if new.email is not null then delete from public.beta_waitlist w where lower(w.email) = lower(new.email)') > -1,
-    'the waiting-list row goes after the checks, with or without the settings row');
-  assert.doesNotMatch(f, /is_anonymous|deleted_at|email_confirmed_at/, 'only columns every Supabase Auth version has');
+  assert.ok(f.includes(`if public.beta_accounts(${midnight}) >= s.signups_per_day then raise exception using errcode = 'P0001', message = 'beta: closed today'`),
+    'sign-ups of the day, UTC, counted like the seats');
+  assert.doesNotMatch(f, /delete from/, 'an unconfirmed sign-up deletes nothing');
+});
+
+test('who takes a seat: confirmed accounts, or pending ones for an hour; never the exempt ones', () => {
+  const f = fn('beta_accounts');
+  assert.match(f, /^create or replace function public\.beta_accounts\(since timestamptz default '-infinity'\) returns int language sql stable/);
+  assert.match(f, /where u\.created_at >= since and \(u\.email_confirmed_at is not null or u\.phone_confirmed_at is not null or u\.created_at > now\(\) - interval '1 hour'\)/);
+  assert.doesNotMatch(f, /is_anonymous|deleted_at/, 'only columns every recent Supabase Auth has');
+});
+
+test('the waiting-list row goes once the email is confirmed, not at an unconfirmed sign-up', () => {
+  assert.match(flat, /create trigger beta_waitlist_done after insert or update of email, email_confirmed_at on auth\.users for each row execute function public\.beta_waitlist_done\(\)/);
+  const f = fn('beta_waitlist_done');
+  assert.match(f, /if new\.email is not null and new\.email_confirmed_at is not null and \(tg_op = 'INSERT' or old\.email_confirmed_at is null or new\.email is distinct from old\.email\) then delete from public\.beta_waitlist w where lower\(w\.email\) = lower\(new\.email\);/);
+  assert.doesNotMatch(f, /beta_settings/, 'with or without the settings row');
 });
 
 test('lock 3 and 4, links: a second before insert trigger on requests, exempt pass, project count of the day', () => {
@@ -137,9 +149,9 @@ test('join_waitlist: consent, shape, only when full or closed, 200 a day, the sa
 test('functions: security definer with an empty search_path; internals closed; beta_seats and join_waitlist public', () => {
   const fns = [...code.matchAll(/create or replace function (public\.\w+)\(/g)].map(m => m[1]).sort();
   assert.deepEqual(fns, ['public.beta_accounts', 'public.beta_exempt', 'public.beta_on_request', 'public.beta_on_signup',
-    'public.beta_seats', 'public.beta_settings_touch', 'public.beta_upload_ok', 'public.join_waitlist']);
+    'public.beta_seats', 'public.beta_settings_touch', 'public.beta_upload_ok', 'public.beta_waitlist_done', 'public.join_waitlist']);
   for (const name of fns) assert.match(fn(name.slice(7)), /security definer set search_path = ''/, name);
-  for (const sig of ['beta_settings_touch\\(\\)', 'beta_exempt\\(uuid\\)', 'beta_accounts\\(\\)', 'beta_on_signup\\(\\)', 'beta_on_request\\(\\)', 'beta_upload_ok\\(uuid\\)']) {
+  for (const sig of ['beta_settings_touch\\(\\)', 'beta_exempt\\(uuid\\)', 'beta_accounts\\(timestamptz\\)', 'beta_on_signup\\(\\)', 'beta_waitlist_done\\(\\)', 'beta_on_request\\(\\)', 'beta_upload_ok\\(uuid\\)']) {
     assert.match(flat, new RegExp(`revoke execute on function public\\.${sig} from public, anon, authenticated;`), sig);
   }
   assert.match(flat, /revoke execute on function public\.beta_seats\(\) from public; grant execute on function public\.beta_seats\(\) to anon, authenticated;/);

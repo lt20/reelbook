@@ -421,10 +421,12 @@ revoke execute on function public.enforce_sheet_quota() from public, anon, authe
 -- ---------------------------------------------------------------------------
 -- Beta locks (L32): what the whole project may hold, on the hosted backend during the beta. OFF until a row of
 -- beta_settings exists: without it, sign-ups, links and photos behave exactly as before (an own backend never adds
--- it; the only thing that runs is a delete in the empty waiting list at each sign-up). With the row:
+-- it; the only thing that runs is a delete in the empty waiting list when an email is confirmed). With the row:
 --   lock 2  a sign-up is refused when signups_open is false (« beta: closed »), when seats_offset + the accounts
 --           reach seats_total (« beta: full »; the offset is counted as taken from the start, inside the total), or
---           when signups_per_day accounts were created today, UTC (« beta: closed today »);
+--           when signups_per_day accounts were created today, UTC (« beta: closed today »). An account counts once
+--           confirmed, or while its confirmation is pending (created less than an hour ago, Supabase's default link
+--           lifetime): sign-ups with addresses nobody confirms hold no seat and no slot of the day for long;
 --   lock 3  a new link is refused once the project has max_videos_per_day links today, UTC (« beta: project limit,
 --           try tomorrow »), a new or changed photo once the sheets bucket holds max_photos_gb (« beta: project limit
 --           of photos »; like the per-account limit, the last uploads may pass it by a file or two);
@@ -440,8 +442,9 @@ revoke execute on function public.enforce_sheet_quota() from public, anon, authe
 --   values (50, 14, 10, 10, 300) on conflict (id) do nothing;
 -- Deleting the row lifts every lock at once. The locks also refuse accounts added from the dashboard
 -- (Authentication › Add user, invites): raise seats_total, or set signups_open, for that.
--- Waiting list: beta_waitlist, filled only through join_waitlist() and only while the beta is full or closed; a
--- sign-up deletes the row of its email. Nobody but the project owner reads it (dashboard, SQL editor).
+-- Waiting list: beta_waitlist, filled only through join_waitlist() and only while the beta is full or closed; an
+-- account whose email is confirmed deletes the row of that email (an unconfirmed sign-up with someone else's address
+-- deletes nothing). Nobody but the project owner reads it (dashboard, SQL editor).
 -- Messages: links and photos get them through PostgREST and Storage like the quotas; auth.signUp does not (Supabase
 -- Auth answers « Database error saving new user », HTTP 500, to any error of the insert): the app reads
 -- beta_seats() before a sign-up.
@@ -477,8 +480,8 @@ drop trigger if exists beta_settings_touch on public.beta_settings;
 create trigger beta_settings_touch before update on public.beta_settings
   for each row execute function public.beta_settings_touch();
 
--- The waiting list (decision 20): first name and email, only to say a seat is free. Deleted at sign-up (trigger
--- below) or on request (by the owner, in the table editor). Not readable nor writable by clients: join_waitlist().
+-- The waiting list (decision 20): first name and email, only to say a seat is free. Deleted at sign-up, once the
+-- email is confirmed (trigger below), or on request (by the owner, in the table editor). Not readable nor writable by clients: join_waitlist().
 create table if not exists public.beta_waitlist (
   id         bigint generated always as identity primary key,
   first_name text not null check (char_length(first_name) between 1 and 60),
@@ -501,20 +504,24 @@ language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.account_quotas q where q.user_id = uid and lower(q.note) like 'exempt%')
 $$;
 
--- The accounts that take a seat: every row of auth.users (unconfirmed ones too) but the exempt ones.
-create or replace function public.beta_accounts() returns int
+-- The accounts that take a seat (created since `since`): confirmed (email or phone), or created less than an hour ago
+-- and still waiting for their confirmation; never the exempt ones. A confirmation sent later (« resend ») may let a
+-- seat be taken past the total by such an account: the trigger only sees the insert.
+create or replace function public.beta_accounts(since timestamptz default '-infinity') returns int
 language sql stable security definer set search_path = '' as $$
   select count(*)::int from auth.users u
-  where not exists (select 1 from public.account_quotas q where q.user_id = u.id and lower(q.note) like 'exempt%')
+  where u.created_at >= since
+    and (u.email_confirmed_at is not null or u.phone_confirmed_at is not null or u.created_at > now() - interval '1 hour')
+    and not exists (select 1 from public.account_quotas q where q.user_id = u.id and lower(q.note) like 'exempt%')
 $$;
 
--- Lock 2, and the waiting list kept to its promise. Runs as the owner for Supabase Auth (supabase_auth_admin) at
--- every new account: sign-up, OAuth, invite, dashboard. Sign-ups are checked one at a time (advisory lock, held to
--- the end of the transaction; each statement after it sees the sign-up committed before), so that two at once
--- cannot both take the last seat. A refusal rolls the whole sign-up back, the delete included.
+-- Lock 2. Runs as the owner for Supabase Auth (supabase_auth_admin) at every new account: sign-up, OAuth, invite,
+-- dashboard. Sign-ups are checked one at a time (advisory lock, held to the end of the transaction; each statement
+-- after it sees the sign-up committed before), so that two at once cannot both take the last seat. A refusal rolls
+-- the whole sign-up back: no account is created.
 create or replace function public.beta_on_signup() returns trigger
 language plpgsql security definer set search_path = '' as $$
-declare s public.beta_settings; n int;
+declare s public.beta_settings;
 begin
   if exists (select 1 from public.beta_settings) then
     perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('signup'));
@@ -527,16 +534,10 @@ begin
       raise exception using errcode = 'P0001', message = 'beta: full',
         hint = 'Every seat of the beta is taken: join the waiting list, or use your own Supabase project.';
     end if;
-    select count(*) into n from auth.users u
-      where u.created_at >= date_trunc('day', now() at time zone 'utc') at time zone 'utc'
-        and not public.beta_exempt(u.id);
-    if n >= s.signups_per_day then
+    if public.beta_accounts(date_trunc('day', now() at time zone 'utc') at time zone 'utc') >= s.signups_per_day then
       raise exception using errcode = 'P0001', message = 'beta: closed today',
         hint = 'Enough sign-ups for today: the count starts again at midnight UTC.';
     end if;
-  end if;
-  if new.email is not null then
-    delete from public.beta_waitlist w where lower(w.email) = lower(new.email);
   end if;
   return new;
 end $$;
@@ -544,6 +545,23 @@ end $$;
 drop trigger if exists beta_signup on auth.users;
 create trigger beta_signup before insert on auth.users
   for each row execute function public.beta_on_signup();
+
+-- The waiting list kept to its promise: deleted when the person signs up, i.e. once the email is confirmed (at the
+-- insert when confirmation is off or for OAuth, at the confirmation otherwise, and after a confirmed email change).
+-- Not at an unconfirmed sign-up: anybody can type someone else's address. With or without the settings row.
+create or replace function public.beta_waitlist_done() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.email is not null and new.email_confirmed_at is not null
+     and (tg_op = 'INSERT' or old.email_confirmed_at is null or new.email is distinct from old.email) then
+    delete from public.beta_waitlist w where lower(w.email) = lower(new.email);
+  end if;
+  return null;
+end $$;
+
+drop trigger if exists beta_waitlist_done on auth.users;
+create trigger beta_waitlist_done after insert or update of email, email_confirmed_at on auth.users
+  for each row execute function public.beta_waitlist_done();
 
 -- Locks 3 and 4 for links: a second trigger on requests, next to the per-account one (requests_quota). Only an
 -- insert adds a link to the project; every writer is checked (app, add-link function, service role). One at a time.
@@ -644,8 +662,9 @@ end $$;
 -- Internal functions: run by the triggers and policies as their owner, never by a client.
 revoke execute on function public.beta_settings_touch() from public, anon, authenticated;
 revoke execute on function public.beta_exempt(uuid) from public, anon, authenticated;
-revoke execute on function public.beta_accounts() from public, anon, authenticated;
+revoke execute on function public.beta_accounts(timestamptz) from public, anon, authenticated;
 revoke execute on function public.beta_on_signup() from public, anon, authenticated;
+revoke execute on function public.beta_waitlist_done() from public, anon, authenticated;
 revoke execute on function public.beta_on_request() from public, anon, authenticated;
 revoke execute on function public.beta_upload_ok(uuid) from public, anon, authenticated;
 -- Public: the seats line and the waiting-list form.
