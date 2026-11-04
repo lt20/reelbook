@@ -134,6 +134,14 @@ Deno.test('a lost race on the counters reads again; three lost races answer 429'
   eq(res.status, 429); eq(s.inserts(), []);
 });
 
+Deno.test('a list of URLs, or one link per line: the first one is queued', async () => {
+  for (const url of [[reel, 'https://youtu.be/b'], `${reel}\nhttps://youtu.be/b`]) {
+    const s = stub([await token()]);
+    eq((await handle(post({ url }), s.client, () => T0)).status, 201);
+    eq((s.inserts()[0][2] as Row).url, reel);
+  }
+});
+
 Deno.test("the database's quota message is sent back as is", async () => {
   const s = stub([await token()], { insertError: { code: 'P0001', message: 'quota: 10 links per day' } });
   const res = await handle(post({ url: reel }), s.client, () => T0);

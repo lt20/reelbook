@@ -74,6 +74,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
   };
   const context = {
     URL, console,
+    crypto: globalThis.crypto, // Web Crypto, as every browser has it (L28: the shortcut key and its SHA-256)
     setTimeout: fn => { if (tables) queueMicrotask(fn); },
     location: {
       href: 'https://app.example.test/reelbook/', origin: 'https://app.example.test', pathname: '/reelbook/',

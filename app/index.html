@@ -165,6 +165,8 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .howto{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px var(--s-4)}
 .howto h2{margin:0 0 10px}
 .howto ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:var(--fs-base);line-height:1.45}
+.sc-steps{margin:0 0 var(--s-3);padding-left:22px;display:grid;gap:10px;line-height:1.45}
+.sc-steps pre{margin:6px 0 4px}.sc-steps .actions{display:flex;margin:0 0 6px}
 .howto li>strong{font-family:var(--display);font-size:var(--fs-md);letter-spacing:.01em;text-transform:uppercase;display:block}
 .howto .tip{margin:var(--s-3) 0 0;font-size:var(--fs-sm);color:var(--muted)}
 /* ---- cards ---- */
@@ -763,6 +765,33 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-cli">Copy</button><span class="hint" data-copied="s-cli"></span></div>
     <p class="hint">The computer keeps its own session in <code>~/.config/reelbook/</code>; signing out here does not sign it out.</p>
   </div>
+  <!-- L28: the iPhone shortcut's key (capture_tokens, Edge Function add-link); hidden on a backend without that table -->
+  <section class="panel" id="shortcut-section" aria-labelledby="shortcut-h" hidden>
+    <h2 id="shortcut-h">iPhone shortcut</h2>
+    <p class="hint">Send a video to your queue from the Share Sheet of Instagram, TikTok, YouTube or Safari, without opening Reelbook. The shortcut uses a key that can add links to your queue, nothing else.</p>
+    <div id="shortcut-none">
+      <label for="shortcut-label">Name of the key</label>
+      <div class="addrow"><input id="shortcut-label" type="text" maxlength="60" autocomplete="off" placeholder="iPhone"><button class="btn" type="button" id="shortcut-create">Create a key</button></div>
+    </div>
+    <div id="shortcut-active" hidden>
+      <p id="shortcut-info"></p>
+      <div class="actions"><button class="btn ghost sm" type="button" id="shortcut-revoke">Revoke the key</button></div>
+    </div>
+    <div id="shortcut-new" hidden>
+      <p><b>Copy the key now: it is shown only once.</b></p>
+      <pre id="shortcut-token"></pre>
+      <div class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-token">Copy</button><span class="hint" data-copied="shortcut-token"></span></div>
+    </div>
+    <p class="err" id="shortcut-err" hidden></p>
+    <p><b>Build the shortcut once</b> <span class="hint">· in the Shortcuts app on the iPhone.</span></p>
+    <ol class="sc-steps">
+      <li>Tap <b>+</b> for a new shortcut and name it <b>Add to Reelbook</b>. In its details (ⓘ), turn on <b>Show in Share Sheet</b>.</li>
+      <li>Add the action <b>Get URLs</b> from <b>Shortcut Input</b>.</li>
+      <li>Add the action <b>Get contents of URL</b> with this URL:<pre id="shortcut-url"></pre><span class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-url">Copy</button><span class="hint" data-copied="shortcut-url"></span></span>Tap <b>Show More</b>: Method <b>POST</b>; Headers: add <code>Authorization</code> with the key as its value (it starts with <code>Bearer</code>); Request Body <b>JSON</b>: add a text field <code>url</code> set to <b>URLs</b>.</li>
+      <li>Add the action <b>Show Notification</b> with <b>Contents of URL</b>: it reads « Queued in Reelbook. », or why not.</li>
+    </ol>
+    <p class="hint">Then, in Instagram or TikTok: Share › Add to Reelbook. A lost phone, or a key shared by mistake: revoke it here, create a new one and paste it in the shortcut.</p>
+  </section>
 </div>
 
 <!-- ===== Sheet view ===== -->
@@ -2812,8 +2841,61 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     el.textContent = `Usage: ${q.requests_today}/${q.max_requests_per_day} links today · ${q.sheets}/${q.max_sheets} sheets · ${mbOf(q.storage_bytes)}/${q.max_storage_mb} MB`;
     el.hidden = false;
   };
+  // L28: Settings › iPhone shortcut. One active key per account (capture_tokens): made here, its secret shown once
+  // (only its SHA-256 is stored; nothing kept on the device), revoked here. The section shows only once a select on
+  // capture_tokens answers: a backend without the table never sees it, and nothing is written to it.
+  const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+  const webCrypto = () => { const c = typeof crypto !== 'undefined' ? crypto : null; return c && c.getRandomValues && c.subtle ? c : null; };
+  const sha256 = async (c, s) => hex(new Uint8Array(await c.subtle.digest('SHA-256', Uint8Array.from(s, ch => ch.charCodeAt(0)))));
+  let scActive = null;
+  const scErr = msg => { const e = $('shortcut-err'); e.textContent = msg || ''; e.hidden = !msg; };
+  const paintShortcut = () => {
+    const t = scActive;
+    $('shortcut-none').hidden = !!t; $('shortcut-active').hidden = !t;
+    $('shortcut-info').textContent = t ? `Key « ${t.label || 'iPhone'} », made ${fmtDate(t.created_at)} · ${t.last_used_at ? 'last used ' + fmtDate(t.last_used_at) : 'not used yet'}.` : '';
+    $('shortcut-url').textContent = backend ? backend.url.replace(/\/+$/, '') + '/functions/v1/add-link' : '';
+  };
+  const loadShortcut = async () => {
+    const uid = user && user.id;
+    if (!sb || !uid) { $('shortcut-section').hidden = true; return; }
+    let r;
+    try { r = await sb.from('capture_tokens').select('id,label,created_at,last_used_at,revoked_at').is('revoked_at', null).order('created_at', {ascending: false}); } catch (e) { r = {error: e}; }
+    if (!user || user.id !== uid) return;
+    if (!r || r.error || !Array.isArray(r.data)) { $('shortcut-section').hidden = true; return; }
+    scActive = r.data.find(t => !t.revoked_at) || null;
+    paintShortcut(); $('shortcut-section').hidden = false;
+  };
+  const SC_FAIL = 'Could not save it right now. Try again in a moment.';
+  $('shortcut-create').addEventListener('click', async () => {
+    const c = webCrypto(), uid = user && user.id; scErr('');
+    if (!uid) return;
+    if (!c) return scErr('This browser cannot make a key here: open Reelbook from its https address.');
+    const b = new Uint8Array(32); c.getRandomValues(b);
+    const key = 'rb_' + hex(b), label = $('shortcut-label').value.trim().slice(0, 60) || 'iPhone';
+    $('shortcut-create').disabled = true;
+    try {
+      const {error} = await sb.from('capture_tokens').insert({label, token_hash: await sha256(c, key)});
+      if (!user || user.id !== uid) return;
+      if (error) { scErr(error.code === '23505' ? 'This account has a key already: revoke it to make a new one.' : SC_FAIL); await loadShortcut(); return; }
+      $('shortcut-token').textContent = 'Bearer ' + key; $('shortcut-new').hidden = false; $('shortcut-label').value = '';
+      await loadShortcut();
+    } catch { scErr(SC_FAIL); } finally { $('shortcut-create').disabled = false; }
+  });
+  $('shortcut-revoke').addEventListener('click', async () => {
+    const t = scActive, uid = user && user.id; scErr('');
+    if (!t || !uid) return;
+    $('shortcut-revoke').disabled = true;
+    try {
+      const {error} = await sb.from('capture_tokens').update({revoked_at: new Date().toISOString()}).eq('id', t.id);
+      if (!user || user.id !== uid) return;
+      if (error) return scErr(SC_FAIL);
+      $('shortcut-new').hidden = true; $('shortcut-token').textContent = '';
+      await loadShortcut();
+    } catch { scErr(SC_FAIL); } finally { $('shortcut-revoke').disabled = false; }
+  });
   const renderSettings = () => {
     renderUsage();
+    $('shortcut-token').textContent = ''; $('shortcut-new').hidden = true; scErr(''); loadShortcut(); // a key is shown once
     $('s-sessions').hidden = sessionsOk;
     // Old one-page sessions left on an older backend: hidden by the app, rebuilt as v2 by requeue-sessions + /reelbook.
     $('s-v1').hidden = !v1Hidden;
