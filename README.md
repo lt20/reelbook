@@ -140,7 +140,7 @@ security (`supabase/schema.sql`):
 | Table / bucket | Holds |
 | --- | --- |
 | `requests` | pasted links: `url`, `status` (queued → processing → done / error), `theme` hint, `slug` |
-| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html`, `search_text` (the sheet's visible text, at most 4 000 characters, that search reads) (`kind` and `exercises` are left from the old one-page sessions and only serve their migration, below) |
+| `sheets` | one row per sheet: `slug`, `theme`, `group`, `title`, `summary`, `duration`, `thumbnail`, `source`, `html`, `search_text` (the sheet's visible text, at most 4 000 characters, that search reads), `tags` (`{"zone": [], "gear": [], "minutes": n, "type": ""}`, the facets of the search view, values from `facets` in `app/config.js`) (`kind` and `exercises` are left from the old one-page sessions and only serve their migration, below) |
 | `sessions` | one row per session: `slug`, `theme`, `title`, `format`, `why`, `key_points`, `source`, `origin` (`video` or `user`), `thumbnail`, `items` (ordered `{slug, dose}`, each slug a sheet) |
 | `notes` | your personal note per sheet (key: its slug) and per session (key: `session/<slug>`) |
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
@@ -158,6 +158,11 @@ Search in the text of the sheets came after that: re-run `supabase/schema.sql` t
 `python3 tools/rb.py backfill-search` (add `--dry-run` first to see the list; it writes only sheets whose
 `search_text` is empty, and new sheets get it from `rb.py publish`). Until then search reads titles,
 summaries, groups, notebooks, authors and your notes, as before.
+The facet chips of the search view (Zone, Gear, Time, Type) came next: re-run `supabase/schema.sql` to add the
+`sheets.tags` column, then tag the sheets you already have once with `python3 tools/rb.py backfill-tags`
+(`--dry-run` first; it derives the tags from each sheet's group, title, text and duration, without Claude, and
+writes only sheets that have none). New sheets get their tags from the skill through `rb.py publish`. Until then
+the app searches as before, without the chips.
 A backend that still holds old one-page sessions (`sheets` rows with `kind = 'session'`, before
 sessions were made of sheets): the app hides them and Settings counts them. Run
 `python3 tools/rb.py requeue-sessions` (add `--dry-run` first to see the list), then `/reelbook`:
