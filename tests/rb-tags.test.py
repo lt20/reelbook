@@ -90,7 +90,7 @@ class Vocabulary(unittest.TestCase):
 class Minutes(unittest.TestCase):
     def test_durations(self):
         for text, n in [("8 min", 8), ("10–15 min", 15), ("10 to 15 minutes", 15), ("1 h", 60), ("1 h 30 min", 90),
-                        ("45 s", 1), ("20", 20), ("", None), ("3 sets", 3), ("2,5 min", 3)]:
+                        ("45 s", 1), ("20", None), ("", None), ("3 sets", None), ("4 rounds, 5 min", 5), ("2,5 min", 3)]:
             self.assertEqual(rb._minutes(text), n, text)
 
 

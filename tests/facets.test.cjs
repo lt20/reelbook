@@ -56,6 +56,21 @@ test('a hash with unknown or inherited keys is ignored (Codex pass 1): the home 
   assert.equal(has(page, 'mat-flow'), false);
 });
 
+test('each choice writes the hash; going back through those hashes restores each earlier selection (Codex pass 2)', async () => {
+  const hashes = [];
+  const page = await open();
+  await pick(page, 'type', 'strength'); hashes.push(page.element('facet-type').textContent);
+  await pick(page, 'gear', 'mat');
+  assert.equal(page.element('results').innerHTML.includes('href="#'), false, 'strength AND mat: nothing');
+  page.go('#search?type=strength'); await settle(); // Back to the entry the first choice made
+  assert.ok(has(page, 'band-row'));
+  assert.equal(page.element('facet-gear').textContent, 'Gear');
+  assert.match(hashes[0], /strength/);
+  page.go(''); await settle(); // Back to the start: no facet, no text, no results
+  assert.equal(page.element('results').hidden, true);
+  assert.equal(page.element('facet-type').textContent, 'Type');
+});
+
 test('the time bucket goes through the hash; a value from an old link stays listed to untick; Clear empties one facet', async () => {
   const page = await open({hash: '#search?time=' + encodeURIComponent('10–20') + '&zone=elbow'});
   assert.equal(page.element('facets').hidden, false);

@@ -341,19 +341,20 @@ def facets_vocab(path=None):
         if m: out[key] = re.findall(r"'([^']*)'", m.group(1))
     return out
 
+_UNIT = r"(h(?:ours?|eures?|r)?|min\w*|mn|s(?:ec\w*)?)(?![a-z])"
+_NUM = r"(\d+(?:[.,]\d+)?)"
+
 def _minutes(duration):
-    """The practice time of a duration in whole minutes (« 8 min » → 8, « 10–15 min » → 15, « 1 h » → 60,
-    « 45 s » → 1), None when it holds no number."""
+    """The practice time of a duration in whole minutes (« 8 min » → 8, « 10–15 min » → 15, « 1 h 30 min » → 90,
+    « 45 s » → 1); None when no number carries a time unit (« 3 sets », « 20 »: never guessed)."""
     d = (duration or "").lower()
-    parts = re.findall(r"(\d+(?:[.,]\d+)?)\s*(h(?:ours?|eures?|r)?\b|min\w*|mn\b|s(?:ec\w*)?\b)?", d)
+    per = lambda u: 60 if u[0] == "h" else 1 / 60 if u[0] == "s" else 1
+    num = lambda x: float(x.replace(",", "."))
+    # a range (« 10–15 min », « 10 to 15 min ») counts as its upper end, in the unit written after it
+    d = re.sub(rf"{_NUM}\s*(?:-|–|—|to|à)\s*{_NUM}\s*{_UNIT}", lambda m: f"{max(num(m.group(1)), num(m.group(2)))} {m.group(3)}", d)
+    parts = re.findall(rf"{_NUM}\s*{_UNIT}", d)
     if not parts: return None
-    per = {"h": 60, "m": 1, "s": 1 / 60}
-    unit, values = 1, []
-    for num, u in reversed(parts):       # « 10–15 min »: a number without a unit takes the next one's
-        if u: unit = per[u[0]]
-        values.append(float(num.replace(",", ".")) * unit)
-    # a range (« 10–15 min », « 10 to 15 min ») is its upper end; else the parts add up (« 1 h 30 min »)
-    n = max(values) if re.search(r"\d\s*(?:-|–|—|to|à)\s*\d", d) else sum(values)
+    n = sum(num(x) * per(u) for x, u in parts)   # « 1 h 30 min » adds up; a number without a unit is ignored
     return int(-(-n // 1)) if n > 0 else 0
 
 def _tag_problems(tags, vocab):
