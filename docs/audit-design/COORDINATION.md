@@ -150,12 +150,12 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
 
 | Lot | What | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
 |---|---|---|---|---|---|---|---|
-| L32 | Beta locks 2 3 4 + waiting list in the database — protected (schema) | M | no | — | N | `feat/p6-beta-locks` | to do |
-| L30 | Bilingual landing (mockup v2) + FR/EN for sign-up, `#setup`, `#welcome` | L | no | — | N | `feat/p6-landing` | to do |
-| L33 | Daily ntfy alert from the database — protected (schema) | S | no | L32 merged | O | `feat/p6-alert` | to do |
+| L32 | Beta locks 2 3 4 + waiting list in the database — protected (schema) | M | no | — | N | `feat/p6-beta-locks` | #74 closed 5 Nov: shipped inside #76 |
+| L30 | Bilingual landing (mockup v2) + FR/EN for sign-up, `#setup`, `#welcome` | L | no | — | N | `feat/p6-landing` | #75 ready 5 Nov, Laurent merges as is (v2); v3 = L36 |
+| L33 | Daily ntfy alert from the database — protected (schema) | S | no | L32 merged | O | `feat/p6-alert` | #76 (L32 + L33) ready 5 Nov, Laurent merges and deploys |
 | L31 | Hosting cards, seats, full state with the waiting-list form, refusal messages; `docs/hosted.md`, README | M | no | L30, L32 merged | O | `feat/p6-hosting` | to do |
 | L34 | iPhone captures FR/EN + business test for Laurent (local base, up to the 51st sign-up and the waiting list) | S | no | L31 | P | `test/p6-launch` | to do |
-| L36 | Landing v3 (/skill hero with three steps, sports band, new order) + Codex's MMA photos — scope to confirm | M | no | L30 merged | O | `feat/p6-mma-photos` | to do |
+| L36 | Landing v3 (/skill hero with three steps, sports band, new order) + Codex's MMA and yoga photos — scope confirmed 5 Nov | M | no | L30 merged | O | `feat/p6-mma-photos` | to do |
 | L35 | Later: whole app in French | L | — | decision 13 | — | — | later |
 
 Specs: `docs/audit-design/lots/L30.md` … `L34.md`, `L36.md`. Ports: L30 8800, L31 8801, L32 8802, L33 8803, L34 8804.
