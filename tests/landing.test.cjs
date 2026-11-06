@@ -325,18 +325,23 @@ test('L36 — the beta follows beta_seats(): open without an answer, the count w
     h.checked = true;
     assert.equal(p.RBL.seats(full), true);
     assert.equal(p.RBL.full, true);
-    assert.equal(p.byId('lp-betaLine').textContent, 'Bêta complète · inscris-toi sur la liste d’attente');
+    // no waiting list before L31: nothing promises a sign-up (Codex, pass 1)
+    assert.equal(p.byId('lp-betaLine').textContent, 'Bêta complète');
+    assert.equal(p.byId('lp-wl').hidden, true, 'no form that records nothing'); assert.equal(p.byId('lp-wlP').hidden, true);
     assert.equal(p.byId('lp-host-full').hidden, false); assert.equal(p.byId('lp-host-hosted-opt').hidden, true);
     assert.equal(h.checked, false, 'the hosted option is no longer picked');
     assert.equal(c.textContent, 'Connecter mon Supabase'); assert.equal(c.hidden, true, 'until « Sur mon Supabase » is picked');
     own.checked = true; own.listeners.change();
     assert.equal(c.hidden, false);
-    assert.ok(p.lists.get('#intro [data-k="cta"]').every(b => b.textContent === 'Rejoindre la liste d’attente'));
+    assert.ok(p.lists.get('#intro [data-k="cta"]').every(b => b.textContent === 'Créer mon carnet'), 'the buttons lead to step 1');
     assert.ok(p.byId('lp-installList').classes.has('lp-full'));
   }
   const p = landing({language: 'en'}); p.RBL.seats({taken: 50, total: 50});
   assert.equal(p.byId('lp-wlH').textContent, 'Beta full: 50 of 50'); assert.equal(p.byId('lp-lockN').textContent, '50');
-  assert.ok(p.lists.get('#intro [data-k="cta"]').every(b => b.textContent === 'Join the waiting list'));
+  assert.equal(p.byId('lp-betaLine').textContent, 'Beta full');
+  // L31 turns the waiting list on with one switch, and the mockup's full wording comes back
+  assert.match(landingJs, /\n  const WAITLIST = false;\n/);
+  assert.equal(p.RBL.t('beta.full'), 'Beta full · join the waiting list'); assert.equal(p.RBL.t('cta.full'), 'Join the waiting list');
   assert.equal(p.byId('intro-signup').textContent, 'Connect my Supabase');
   // nothing in the markup says a number of seats, and the visitor has no switch
   assert.doesNotMatch(intro.replace(/<b data-k="wl.h"[^>]*>[^<]*<\/b>|id="lp-lockN"[^>]*>50</g, ''), /\b(14|50) (places|of|sur)\b/);

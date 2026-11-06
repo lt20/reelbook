@@ -105,6 +105,7 @@
       "h1": "Un <span class=\"lp-slash\">/skill</span> Claude Code qui transforme tes vidéos de technique en carnet d’entraînement.",
       "seats": "{taken} places prises sur {total}",
       "beta.full": "Bêta complète · inscris-toi sur la liste d’attente",
+      "beta.closed": "Bêta complète",
       "cta.full": "Rejoindre la liste d’attente",
       "i1.cta.full": "Connecter mon Supabase",
       "ui.nbs": "Mes carnets",
@@ -216,6 +217,7 @@
       "i2.src": "Read the script before you run it ↗",
       "seats": "{taken} of {total} spots taken",
       "beta.full": "Beta full · join the waiting list",
+      "beta.closed": "Beta full",
       "cta.full": "Join the waiting list",
       "i1.cta.full": "Connect my Supabase",
       "ui.nbs": "My notebooks",
@@ -573,20 +575,25 @@
     return {taken: tk, total: tot, full: tk >= tot || o.open === false};
   };
   const isFull = () => !!(seatData && seatData.full);
+  // The waiting list (its table and its sending) comes with L31. Until then a full beta promises no sign-up: the card
+  // says the beta is full, without the form, the hero line without « join the waiting list », the buttons lead to
+  // step 1, where « On my own Supabase » stays open. L31 sets this to true once « Notify me » records something.
+  const WAITLIST = false;
   // « Create my notebook » of step 1 hides on a full beta until « On my own Supabase » is picked
   const syncCta = () => { const cta = $('intro-signup'), own = $('lp-host-own'); if (cta) cta.hidden = isFull() && !(own && own.checked); };
   const paintSeats = () => {
     const s = seatData, fullB = isFull(), n = s ? fill(t('seats'), s) : '';
     const bar = $('lp-seatsBar');
     if (bar) { bar.hidden = !s; const i = bar.querySelector ? bar.querySelector('i') : null; if (s && i && i.style) i.style.width = Math.round(100 * s.taken / s.total) + '%'; }
-    setText('lp-betaLine', fullB ? t('beta.full') : s ? t('beta') + ' · ' + n : t('beta'));
+    setText('lp-betaLine', fullB ? t(WAITLIST ? 'beta.full' : 'beta.closed') : s ? t('beta') + ' · ' + n : t('beta'));
     const line = $('lp-seatline'); if (line) { line.hidden = !s; line.textContent = n; }
     if (fullB) { const o = $('lp-host-hosted-opt'), r = $('lp-host-hosted'); if (o) o.hidden = true; if (r) r.checked = false; }
     const card = $('lp-host-full'); if (card) card.hidden = !fullB;
     if (s) { setText('lp-wlH', fill(t('wl.h'), s)); setText('lp-lockN', s.total); }
+    const wl = $('lp-wl'), wlp = $('lp-wlP'); if (wl) wl.hidden = !WAITLIST; if (wlp) wlp.hidden = !WAITLIST;
     toggle($('lp-installList'), 'lp-full', fullB);
     setText('intro-signup', t(fullB ? 'i1.cta.full' : 'i1.cta'));
-    all('#intro [data-k="cta"]').forEach(b => { b.textContent = t(fullB ? 'cta.full' : 'cta'); });
+    all('#intro [data-k="cta"]').forEach(b => { b.textContent = t(fullB && WAITLIST ? 'cta.full' : 'cta'); });
     syncCta();
   };
   const seats = d => { seatData = seatsOf(d); paintSeats(); return !!seatData; };
