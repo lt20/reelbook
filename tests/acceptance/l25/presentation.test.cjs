@@ -20,6 +20,8 @@ function visibleText(markup) {
   return markup.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// L30 replaced the L25 presentation with the landing of mockup v2 (docs/audit-design/lots/L30.md, decision 13):
+// the five cases below follow its copy (English by default) and keep L25's intent; the others are L25's as written.
 test('First screen when nobody is signed in: Reelbook is introduced before the account actions', async () => {
   const page = await app();
   assert.equal(page.element('auth').hidden, false);
@@ -27,41 +29,37 @@ test('First screen when nobody is signed in: Reelbook is introduced before the a
   assert.equal(page.element('setup').hidden, true);
   assert.equal(page.element('home').hidden, true);
   const intro = introMarkup();
-  const summary = visibleText(elementMarkup('intro-summary'));
+  const summary = visibleText(intro.match(/<p\b[^>]*\bdata-k="sub"[^>]*>([\s\S]*?)<\/p>/)[1]);
   assert.match(summary, /Reelbook/i);
-  assert.equal((summary.match(/[.!?](?=\s|$)/g) || []).length, 1, 'the explanation is one sentence');
-  assert.ok(intro.indexOf('id="intro-summary"') < intro.indexOf('id="intro-step-link"'));
-  assert.ok(intro.indexOf('id="intro-step-workout"') < intro.indexOf('What you need'));
-  assert.ok(intro.indexOf('What you need') < intro.indexOf('Create an account'));
+  assert.ok(intro.indexOf('data-k="sub"') < intro.indexOf('id="lp-how"'), 'what Reelbook is, then how it works');
+  assert.ok(intro.indexOf('id="lp-how"') < intro.indexOf('data-k="i2.n"'), 'how it works, then what you need');
+  assert.ok(intro.indexOf('data-k="i2.n"') > intro.indexOf('id="lp-install"'));
+  assert.ok(intro.indexOf('id="lp-install"') < intro.indexOf('id="intro-signup"'), 'the installation leads to the account');
 });
 
-test('First screen: three illustrated steps explain link, computer sheet, then workout without video frames', () => {
+test('First screen: the skill route explains the link, the computer making the sheet, then the notebook, without video frames', () => {
   const intro = introMarkup();
-  const steps = ['intro-step-link', 'intro-step-claude', 'intro-step-workout'];
-  assert.deepEqual([...intro.matchAll(/\bid="intro-step-(?:link|claude|workout)"/g)].map(m => m[0]), steps.map(id => `id="${id}"`));
-  const [link, claude, workout] = steps.map(elementMarkup);
-  assert.match(visibleText(link), /paste.*link/i);
-  assert.match(visibleText(claude), /Claude.*computer.*sheet/i);
-  assert.match(visibleText(workout), /read.*workout/i);
-  for (const step of [link, claude, workout]) {
-    assert.match(step, /<svg\b|<img\b[^>]*\bsrc="[^"]+\.svg"/i, 'each step has a drawn illustration');
-    assert.doesNotMatch(step, /<video\b|<iframe\b|\bposter=|<img\b[^>]*\bsrc="[^"]+\.(?:jpg|jpeg|png|webp)"/i);
-  }
+  const route = intro.slice(intro.indexOf('id="lp-how"'), intro.indexOf('id="lp-install"'));
+  const steps = [...route.matchAll(/<li><div class="lp-stage"[\s\S]*?<\/li>/g)].map(m => m[0]);
+  assert.equal(steps.length, 5);
+  assert.match(visibleText(steps[0]), /send the video/i);
+  assert.match(visibleText(steps[1]), /Claude/);
+  assert.match(visibleText(steps[3]), /sequence of images/i);
+  assert.match(visibleText(steps[4]), /notebook/i);
+  assert.doesNotMatch(intro, /<video\b|<iframe\b|\bposter=|<img\b[^>]*\bsrc="[^"]+\.(?:jpg|jpeg|png|webp)"/i);
 });
 
-test('What you need: Claude Pro or above with Claude Code, Chrome extension, and a computer that stays on', () => {
-  const intro = visibleText(introMarkup());
-  const needs = intro.slice(intro.indexOf('What you need'));
+test('What you need: Claude Pro or above with Claude Code, and Chrome with the Claude in Chrome extension', () => {
+  const needs = visibleText(introMarkup().match(/<p\b[^>]*\bdata-k="i2.n"[^>]*>([\s\S]*?)<\/p>/)[1]);
   assert.match(needs, /Claude Pro or above/);
   assert.match(needs, /Claude Code/);
   assert.match(needs, /Chrome/);
   assert.match(needs, /Claude in Chrome/);
-  assert.match(needs, /computer.*stays on/i);
 });
 
 test('Create an account: the main path uses the hosted backend', async () => {
   const page = await app();
-  assert.match(visibleText(elementMarkup('intro-signup')), /^Create an account$/);
+  assert.match(visibleText(elementMarkup('intro-signup')), /^Create my notebook$/);
   await page.fire('intro-signup');
   assert.equal(page.element('intro').hidden, true);
   assert.equal(page.element('setup').hidden, true);
@@ -73,7 +71,7 @@ test('Create an account: the main path uses the hosted backend', async () => {
 
 test('Sign in: a new visitor can open the hosted sign-in form from the introduction', async () => {
   const page = await app();
-  assert.match(visibleText(elementMarkup('intro-signin')), /^Sign in$/);
+  assert.match(visibleText(elementMarkup('intro-signin')), /\bSign in$/);
   await page.fire('intro-signin');
   assert.equal(page.element('intro').hidden, true);
   assert.equal(page.element('auth').hidden, false);

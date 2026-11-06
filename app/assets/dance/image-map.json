@@ -1,0 +1,20 @@
+{
+  "notice": "Visuels fictifs générés ; aucune image n'est extraite d'un Reel réel.",
+  "pirouette_en_dehors": {
+    "card": "pirouette-en-dehors/card.jpg",
+    "steps": [
+      {"label": "Préparation en quatrième", "image": "pirouette-en-dehors/01-preparation-v2.jpg"},
+      {"label": "Relevé, retiré", "image": "pirouette-en-dehors/02-montee-retire.jpg"},
+      {"label": "Le regard fixe un point", "image": "pirouette-en-dehors/03-premier-quart.jpg"},
+      {"label": "Le tour", "image": "pirouette-en-dehors/04-rotation-regard.jpg"},
+      {"label": "Le retour de la tête", "image": "pirouette-en-dehors/05-sortie.jpg"},
+      {"label": "Réception", "image": "pirouette-en-dehors/06-reception-v2.jpg"}
+    ],
+    "notes_image": "pirouette-en-dehors/03-premier-quart.jpg"
+  },
+  "chaines_en_diagonale": {"card": "chaines-en-diagonale-card.jpg", "portrait": "chaines-en-diagonale.jpg"},
+  "fouette_preparation": {"card": "fouette-preparation-card.jpg", "portrait": "fouette-preparation.jpg"},
+  "grand_jete": {"card": "grand-jete-card.jpg", "portrait": "grand-jete.jpg"},
+  "combo_heels": {"card": "combo-heels-card.jpg", "portrait": "combo-heels.jpg"},
+  "port_de_bras_lent": {"card": "port-de-bras-lent-card.jpg", "portrait": "port-de-bras-lent.jpg"}
+}
