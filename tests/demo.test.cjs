@@ -28,8 +28,13 @@ test('L27 — the demo home lists the sheets and the session from catalogue.json
   await settle();
   const html = page.element('demo').innerHTML;
   const cat = JSON.parse(fs.readFileSync(path.join(demoDir, 'catalogue.json'), 'utf8'));
-  for (const e of cat.sheets) assert.match(html, new RegExp(`href="#demo/${e.slug}"`), e.slug);
+  // L38: the home page shows the notebooks (.tcard) and the session; each sheet is on its notebook's page
+  for (const t of cat.notebooks) assert.match(html, new RegExp(`class="tcard" href="#demo/notebook/${t.id}"`), t.id);
   for (const s of cat.sessions) assert.match(html, new RegExp(`href="#demo/session/${s.slug}"`), s.slug);
+  for (const t of cat.notebooks) {
+    page.go(`#demo/notebook/${t.id}`); await settle();
+    for (const e of cat.sheets.filter(x => x.notebook === t.id)) assert.match(page.element('demo').innerHTML, new RegExp(`href="#demo/${e.slug}"`), e.slug);
+  }
   assert.match(html, /src="demo\/goblet-squat\/img\/thumb\.svg"/);
   assert.ok(asked.length > 1 && asked.every(u => u.startsWith('demo/')), 'only the demo files are fetched');
   // the first visit hands the service worker every demo file to keep (sw.js, KEEP_DEMO), absolute URLs
@@ -143,7 +148,8 @@ test('L27 — a missing catalogue says so; bad entries and markup in it are left
   const html = page.element('demo').innerHTML;
   assert.doesNotMatch(html, /<img src=x/);
   assert.doesNotMatch(html, /secret/);
-  assert.match(html, /Fine &lt;b&gt;/);
+  page.go('#demo/notebook/strength'); await settle();
+  assert.match(page.element('demo').innerHTML, /Fine &lt;b&gt;/);
   assert.doesNotMatch(html, /\.\.\/\.\.\/x\.svg/);
   assert.match(html, /1 exercise\b/);
 });

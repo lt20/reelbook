@@ -562,8 +562,25 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 .demo-banner:active{opacity:.85}
 .demo .top{margin:0 0 6px}
 .demo .top a{color:var(--accent);font-weight:600;text-decoration:none}
-.demo-nb{display:flex;align-items:center;gap:var(--s-2)}
-.demo-nb .nb-ico{width:22px;height:22px;color:var(--t,var(--accent))}
+/* L38: the demo drawn like an account (.tcard, .portal, .group-row, .card, .seat, .seq as they are); only what the
+   real pages scope by id (#brand-wordmark, #count, #home.nb, #groups) has its .demo twin here */
+.demo-brand{display:flex;align-items:center;gap:var(--s-2);min-height:44px;margin:0 0 2px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1}
+.demo-brand img{display:block;width:28px;height:28px;flex:none}
+.demo-brand h1{font:inherit;letter-spacing:inherit;color:inherit;margin:0;min-width:0;overflow-wrap:anywhere}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .demo-brand img{content:url("icons/reelbook-mark-light.svg")}}
+:root[data-theme="dark"] .demo-brand img{content:url("icons/reelbook-mark-light.svg")}
+.demo .cnt{font-size:13px;color:var(--muted);margin:0 0 14px}
+.demo-intro{margin:0 0 var(--s-4);max-width:640px;color:var(--muted);font-size:var(--fs-base)}
+.demo section>h2,.demo .sh2 h2{font-size:var(--fs-lg);margin:22px 0 var(--s-2)}
+.demo section{scroll-margin-top:calc(96px + env(safe-area-inset-top,0px))}
+.demo .group-chips{top:var(--demo-bar,41px)}
+.demo-nbp{--band:color-mix(in srgb,var(--t,var(--accent)) 14%,var(--paper))}
+.demo-nbp>.eyebrow{margin:0 0 var(--s-2);color:color-mix(in srgb,var(--t,var(--accent)) 75%,var(--ink))}
+.demo-cover{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-4);border-radius:var(--r-lg);background:var(--band);color:var(--ink);font-family:var(--display);font-size:var(--fs-display);font-weight:700;letter-spacing:-.01em;line-height:.95}
+.demo-cover .nb-badge{width:52px;height:52px}
+.demo-cover .nb-ico{width:30px;height:30px}
+.demo-cover h1{font:inherit;letter-spacing:inherit;color:inherit;margin:0;min-width:0;text-wrap:balance;overflow-wrap:anywhere}
+.demo-nbp .cnt{font-size:var(--fs-sm);margin-top:var(--s-1)}
 /* L24: invitation to install the app, a quiet card at the top of the home page (browser tab only) */
 .install{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s-2) var(--s-3);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-3) var(--s-3) var(--s-3) var(--s-4);margin:0 0 var(--s-4)}
 .install .ic-share{flex:none;width:1.375rem;height:1.375rem;color:var(--accent)}
@@ -1338,7 +1355,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <script src="config.js?v=9"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
-<script src="landing.js?v=1"></script>
+<script src="landing.js?v=2"></script>
 <script>
 (() => {
   'use strict';
@@ -1770,16 +1787,19 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const hint = ex.length ? `${ex.join(', ')}… or one you describe yourself.` : 'Describe one yourself.';
     return `<button type="button" class="tcard add" id="add-nb">${rest.length ? `<p class="eyebrow">${rest.length} more to pick from</p>` : ''}<h2>+ Add a notebook</h2><p>${esc(hint)}</p></button>`;
   };
+  // A notebook's card: `list` its sheets, newest first, as [title, photo url]; `nS` its sessions (L38: the demo too).
+  const tcard = (t, href, list, nS, empty) => {
+    const n = list.length, cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (nS ? ` · ${plural(nS, 'session')}` : '');
+    const thumbs = list.slice(0, 3).map(([title, src]) => `<img src="${esc(src)}" alt="${esc(title)}">`).join('');
+    // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
+    return `<a class="tcard" href="${href}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
+        <div class="cover"><span class="nb-badge">${nbIcon(t)}</span><div><p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2></div></div><p>${esc(t.sub)}</p>
+        ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${empty}</p>`}</a>`;
+  };
   const renderPortal = () => {
     $('portal').innerHTML = themes.map(t => {
-      const list = sheets.filter(e => e.theme === t.id);
-      const n = list.length, sessions = v2Sessions.filter(s => s.theme === t.id).length;
-      const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (sessions ? ` · ${plural(sessions, 'session')}` : '');
-      const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="${esc(e.title)}">`).join('');
-      // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
-      return `<a class="tcard" href="#${esc(t.id)}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
-        <div class="cover"><span class="nb-badge">${nbIcon(t)}</span><div><p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2></div></div><p>${esc(t.sub)}</p>
-        ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
+      const list = sheets.filter(e => e.theme === t.id).sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).map(e => [e.title, thumb(e.slug, e.thumbnail)]);
+      return tcard(t, `#${esc(t.id)}`, list, v2Sessions.filter(s => s.theme === t.id).length, loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.');
     }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
     $('add-nb').addEventListener('click', () => { renderPicker(); $('picker').hidden = !$('picker').hidden; if (!$('picker').hidden) $('picker').scrollIntoView({block: 'start'}); });
   };
@@ -3719,7 +3739,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       .map(e => ({slug: e.slug, title: e.title, summary: str(e.summary), group: str(e.group), notebook: str(e.notebook), author: str(e.author), thumbnail: rel(e.thumbnail)}));
     const has = new Set(sheets.map(e => e.slug));
     const sessions = (Array.isArray(c && c.sessions) ? c.sessions : []).filter(s => s && demoSlug(s.slug) && str(s.title))
-      .map(s => ({slug: s.slug, title: s.title, format: str(s.format), why: str(s.why), author: str(s.author), thumbnail: rel(s.thumbnail),
+      .map(s => ({slug: s.slug, notebook: str(s.notebook), title: s.title, format: str(s.format), why: str(s.why), author: str(s.author), thumbnail: rel(s.thumbnail),
         items: (Array.isArray(s.items) ? s.items : []).filter(it => it && has.has(it.slug)).map(it => ({slug: it.slug, dose: str(it.dose)}))}));
     const notebooks = (Array.isArray(c && c.notebooks) ? c.notebooks : []).filter(t => t && demoSlug(t.id) && str(t.title)).map(t => ({id: t.id, title: t.title}));
     return {title: str(c && c.title) || 'Reelbook demo', intro: str(c && c.intro), notebooks, sheets, sessions, bySlug: new Map(sheets.map(e => [e.slug, e])), sesBySlug: new Map(sessions.map(s => [s.slug, s]))};
@@ -3759,39 +3779,82 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const demoLoad = () => demoLoading || (demoLoading = (typeof fetch === 'function' ? demoGet('catalogue.json', true) : Promise.reject(new Error('no fetch')))
     .then(c => { demoCat = demoCheck(c); demoWarm(demoCat).catch(() => {}); return demoCat; }, e => { demoLoading = null; throw e; }));
   // The banner leads to sign-up; with an account on this device (signed in, or a session kept for the remembered
-  // backend), back to that account's notebooks.
+  // backend), back to that account's notebooks. L38: it speaks the language chosen on the landing (L30: rb.lang,
+  // window.RBL); the rest of the demo, like the app, stays English.
   const demoKnown = () => !!(user || (backend && storedUser()));
-  const demoBanner = () => `<a class="demo-banner" id="demo-signup" href="#">${demoKnown() ? 'Demo · read only · Back to my notebooks' : 'Demo · read only · Create an account'}</a>`;
+  const demoBanner = () => {
+    const fr = !!window.RBL && window.RBL.lang === 'fr';
+    const txt = demoKnown() ? T('demo.back', 'Demo · read only · Back to my notebooks') : T('demo.up', 'Demo · read only · Create an account');
+    return `<a class="demo-banner" id="demo-signup" href="#"${fr ? ' lang="fr"' : ''}>${esc(txt)}</a>`;
+  };
   demoEl.addEventListener('click', ev => {
-    if (!(ev.target && ev.target.closest && ev.target.closest('#demo-signup'))) return;
+    const at = sel => ev.target && ev.target.closest ? ev.target.closest(sel) : null;
+    // L38: a group chip of a demo notebook page scrolls to its row, as on an account's notebook page
+    const chip = at('a[data-grp]'), sec = chip && document.getElementById(chip.dataset.grp);
+    if (sec) {
+      ev.preventDefault(); sec.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
+      for (const a of demoEl.querySelectorAll('.group-chips a')) { a.classList.toggle('on', a === chip); if (a === chip) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); }
+      return;
+    }
+    if (!at('#demo-signup')) return;
     ev.preventDefault();
     if (!demoKnown()) { setMode('up'); signupBackendChosen = false; }
     location.hash = '';
   });
+  // L38: the demo drawn with the app's own pieces: notebooks as on an account's home (.tcard, colour and pictogram
+  // of the library by notebook id), a notebook page with one row of photo cards per group (decision 7), the session
+  // and the sheets as their real pages. Addresses: #demo, #demo/notebook/<id>, #demo/session/<slug>, #demo/<sheet>.
   const demoThumb = (base, rel) => rel ? demoFile(base ? `${base}/${rel}` : rel) : '';
-  const demoCard = (e, extra = {}) => card(e, `#${DEMO}/${e.slug}`, demoThumb(e.slug, e.thumbnail), {...extra, meta: (extra.meta || [{txt: e.group}, {txt: e.author}]).filter(m => m.txt)});
+  const demoIn = slug => demoCat.sessions.filter(s => s.items.some(it => it.slug === slug)).length;
+  const demoCard = (e, extra = {}) => card(e, `#${DEMO}/${e.slug}`, demoThumb(e.slug, e.thumbnail), {...extra, meta: (extra.meta || [...(demoIn(e.slug) ? [{txt: `in ${plural(demoIn(e.slug), 'session')}`, cls: 'session'}] : []), {txt: e.author}]).filter(m => m.txt)});
+  const demoSesCard = s => card({title: s.title, summary: s.why}, `#${DEMO}/session/${s.slug}`, demoThumb('', s.thumbnail), {big: true, fmt: s.format, meta: [{txt: plural(s.items.length, 'exercise')}, {txt: s.author}].filter(m => m.txt)});
   const demoNb = t => ({...(libById.get(t.id) || {}), id: t.id, title: t.title});
+  // The notebooks shown: those of catalogue.json, then any other a sheet or the session names, when they hold something.
+  const demoNbs = c => [...c.notebooks, ...[...new Set([...c.sheets, ...c.sessions].map(x => x.notebook))].filter(id => id && !c.notebooks.some(t => t.id === id)).map(id => ({id, title: (libById.get(id) || {}).title || 'Notebook'}))]
+    .filter(t => c.sheets.some(e => e.notebook === t.id) || c.sessions.some(s => s.notebook === t.id)).map(demoNb);
+  const demoNbHref = id => `#${DEMO}/notebook/${esc(id)}`;
   const demoHome = c => {
-    const out = [`<div class="wrap"><p class="eyebrow">Read only</p><h1>${esc(c.title)}</h1>${c.intro ? `<p class="lead">${esc(c.intro)}</p>` : ''}</div>`];
-    if (c.sessions.length) out.push(`<section><h2>Sessions <span class="n">${c.sessions.length}</span></h2><div class="grid">${c.sessions.map(s => card({title: s.title, summary: s.why}, `#${DEMO}/session/${s.slug}`, demoThumb('', s.thumbnail), {big: true, fmt: s.format, meta: [{txt: plural(s.items.length, 'exercise')}, {txt: s.author}].filter(m => m.txt)})).join('')}</div></section>`);
-    const nbs = [...c.notebooks, ...[...new Set(c.sheets.map(e => e.notebook))].filter(id => !c.notebooks.some(t => t.id === id)).map(id => ({id, title: (libById.get(id) || {}).title || 'Notebook'}))];
-    for (const t of nbs) {
-      const list = c.sheets.filter(e => e.notebook === t.id); if (!list.length) continue;
-      const nb = demoNb(t);
-      out.push(`<section><h2 class="demo-nb" style="--t:${colorOf(nb)}">${nbIcon(nb)}${esc(t.title)} <span class="n">${list.length}</span></h2><div class="grid">${list.map(e => demoCard(e)).join('')}</div></section>`);
-    }
-    return `<div class="wide">${out.join('')}</div>`;
+    const nbs = demoNbs(c), nS = c.sessions.length;
+    const tcards = nbs.map(t => tcard(t, demoNbHref(t.id), c.sheets.filter(e => e.notebook === t.id && e.thumbnail).map(e => [e.title, demoThumb(e.slug, e.thumbnail)]), c.sessions.filter(s => s.notebook === t.id).length, '')).join('');
+    return `<div class="wide"><header class="demo-brand"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><h1>${esc(c.title)}</h1></header>
+      <p class="cnt">${esc(`${plural(c.sheets.length, 'sheet')}${nS ? ` · ${plural(nS, 'session')}` : ''} · ${plural(nbs.length, 'notebook')}`)}</p>${c.intro ? `<p class="demo-intro">${esc(c.intro)}</p>` : ''}
+      ${tcards ? `<div class="portal">${tcards}</div>` : ''}
+      ${nS ? `<section><h2>Sessions <span class="n">${nS}</span></h2><div class="group-row">${c.sessions.map(demoSesCard).join('')}</div></section>` : ''}</div>`;
+  };
+  const demoNotebook = (c, t) => {
+    const list = c.sheets.filter(e => e.notebook === t.id), ses = c.sessions.filter(s => s.notebook === t.id);
+    const byGroup = new Map((t.groups || []).map(g => [g, []]));
+    for (const e of list) { const g = e.group || t.title; if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(e); }
+    const groups = [...byGroup].filter(([, l]) => l.length);
+    const chips = groups.length > 1 ? `<nav class="group-chips" aria-label="Groups">${groups.map(([g, l], i) => `<a href="${demoNbHref(t.id)}" data-grp="demo-grp-${i}">${esc(g)} ${l.length}</a>`).join('')}</nav>` : '';
+    return `<div class="wide demo-nbp" style="--t:${colorOf(t)}"><p class="eyebrow">Find it fast, when you need it</p>
+      <div class="demo-cover"><span class="nb-badge" aria-hidden="true">${nbIcon(t)}</span><h1>${esc(t.title)}</h1></div>
+      <p class="cnt">${esc(`${plural(list.length, 'sheet')}${ses.length ? ` · ${plural(ses.length, 'session')}` : ''}`)}</p>${chips}
+      ${ses.length ? `<section><div class="sh2"><h2>Sessions <span class="n">${ses.length}</span></h2></div><div class="group-row">${ses.map(demoSesCard).join('')}</div></section>` : ''}
+      ${groups.map(([g, l], i) => `<section id="demo-grp-${i}"><h2>${esc(g)} <span class="n">${l.length}</span></h2><div class="group-row">${l.map(e => demoCard(e)).join('')}</div></section>`).join('')}</div>`;
   };
   const demoSession = s => {
     const items = s.items.map((it, i) => ({n: i + 1, dose: it.dose, sheet: demoCat.bySlug.get(it.slug)})), img = demoThumb('', s.thumbnail);
     return `<div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
-      ${s.format ? `<div class="kit"><span><b class="kit-k">Format</b> ${esc(s.format)}</span></div>` : ''}${s.why ? `<h2>Why</h2><p>${esc(s.why)}</p>` : ''}</div>
+      ${s.format ? `<div class="kit"><span><b class="kit-k">Format</b> ${esc(s.format)}</span></div>` : ''}${s.why ? `<h2>Why</h2><p class="lead">${esc(s.why)}</p>` : ''}</div>
       <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2><div class="grid">${items.map(it => demoCard(it.sheet, {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: it.sheet.author}]})).join('')}</div></div>`;
   };
-  // The way back: to the session a sheet was opened from, else to the demo's first page.
+  // The session a sheet is opened from (still listing it), else null.
+  const demoSeatOf = sheet => { const s = sheet && demoSeat ? demoCat.sesBySlug.get(demoSeat) : null; return s && s.items.some(it => it.slug === sheet) ? s : null; };
+  // The way back: to the session a sheet was opened from (with its place and dose, as in the app), else to the
+  // sheet's notebook page, else to the demo's first page.
   const demoBack = sheet => {
-    const s = sheet && demoSeat ? demoCat.sesBySlug.get(demoSeat) : null;
-    return s && s.items.some(it => it.slug === sheet) ? `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
+    const s = demoSeatOf(sheet), e = sheet && demoCat.bySlug.get(sheet), nb = e && demoNbs(demoCat).find(t => t.id === e.notebook);
+    if (!s) return nb ? `<p class="top"><a href="${demoNbHref(nb.id)}">‹ ${esc(nb.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
+    const n = s.items.findIndex(it => it.slug === sheet), dose = s.items[n].dose;
+    return `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p><p class="seat">${n + 1}/${s.items.length}${dose ? ' · ' + esc(dose) : ''}</p>`;
+  };
+  // Previous / next at the bottom of a sheet opened from the session; the last one leads back to the session.
+  const demoSeq = sheet => {
+    const s = demoSeatOf(sheet); if (!s) return '';
+    const n = s.items.findIndex(it => it.slug === sheet), prev = s.items[n - 1], next = s.items[n + 1], nx = next && demoCat.bySlug.get(next.slug);
+    return `<div class="wrap"><nav class="seq" aria-label="Exercises of the session">${prev ? `<a class="prev" href="#${DEMO}/${esc(prev.slug)}">← Previous</a>` : ''}`
+      + (nx ? `<a class="next" href="#${DEMO}/${esc(nx.slug)}">Next: ${esc(nx.title)} →</a>` : `<a class="next" href="#${DEMO}/session/${esc(s.slug)}">Back to the session</a>`) + '</nav></div>';
   };
   const showDemo = async tok => {
     const gen = ++demoGen, page = (back, body) => { demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body; };
@@ -3806,12 +3869,14 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     }
     const rest = tok.slice(DEMO.length + 1), ses = rest.startsWith('session/') ? demoCat.sesBySlug.get(rest.slice(8)) : null;
     if (ses) { demoSeat = ses.slug; page(demoBack(null), demoSession(ses)); document.title = ses.title; return; }
+    const nb = rest.startsWith('notebook/') ? demoNbs(demoCat).find(t => t.id === rest.slice(9)) : null;
+    if (nb) { demoSeat = null; page(`<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`, demoNotebook(demoCat, nb)); document.title = `${nb.title} · Reelbook demo`; return; }
     const e = demoCat.bySlug.get(rest);
     if (!e) { demoSeat = null; page('', demoHome(demoCat)); return; }
     page(demoBack(rest), '<p class="loading">Loading the sheet…</p>'); document.title = e.title;
     let html = null; try { html = typeof DOMParser === 'function' ? demoRender(rest, await demoSource(rest)) : null; } catch {}
     if (gen !== demoGen) return;
-    page(demoBack(rest), html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html);
+    page(demoBack(rest), (html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html) + demoSeq(rest));
   };
 
   // ---------- routing ----------
