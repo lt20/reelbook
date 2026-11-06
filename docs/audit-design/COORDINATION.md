@@ -61,16 +61,20 @@ committed: third-party frames).
     remembered). The rest of the app stays English (L35 later). Reopens decision 2 for those screens only.
 14. Hosting is asked explicitly at step 1 of the installation: two cards, Reelbook hosted preselected.
 15. Beta open to all, **50 seats**, 10 sign-ups per day; project-wide caps 10 GB of photos and 300 videos per day;
-    per-account limits unchanged (L29). **The counter starts at 14 taken (14/50)** — Laurent, 4 Nov. Applied by
-    default, to confirm: 14 is an offset counted inside the 50 (so the beta is full after 36 real sign-ups).
+    per-account limits unchanged (L29). **The counter starts at 14 taken (14/50)** — Laurent, 4 Nov: 14 is an offset
+    counted inside the 50, so the beta is full after **36 real sign-ups** (confirmed by Laurent, 4 Nov).
 16. Seats shown (« 14 places prises sur 50 »).
 17. Daily alert by ntfy sent by the database itself (pg_cron + pg_net), thresholds 70 % and 90 %.
 18. Inactive accounts: nothing is deleted; reconsider at 80 % full.
-19. Landing pictures: in the app (public repo, decision 4) the MMA example stays drawn until Laurent films; the dance
-    example uses Laurent's generated images (`app/assets/dance/`, fictional, never credited as TikTok frames).
+19. Landing pictures: in the app (public repo, decision 4) no third-party frame. The dance example uses Laurent's
+    generated images (`app/assets/dance/`, fictional, never credited as TikTok frames). The MMA example: Codex is
+    generating photos (Laurent, 4 Nov); until they land, drawn placeholders, swapped without code once they arrive.
+    **Delivered 5 Nov**: six kick steps (same two athletes, same studio) and six library cards, generated, in the
+    served mockup since 5 Nov; they go into the app with L36. Mockup v3 (5 Nov): https://claude.ai/artifact/MEw2gCwTShE1uzHrbdnZF4.
 20. **After the 50th sign-up: a waiting list** (first name + email) that Laurent can read and export — Laurent, 4 Nov.
-    Personal data: the consent sentence and the privacy note paragraph are **to be validated by Laurent** (legal);
-    the PR that shows the form stays draft until then.
+    Consent sentence of the mockup **validated by Laurent** (4 Nov), with a « Waiting list » paragraph in the
+    `docs/privacy.md` draft. Laurent reads and exports `beta_waitlist` from the Supabase dashboard (CSV) and writes to
+    people himself; the daily ntfy alert gives the count and the new entries. No automatic email.
 
 ## Lots
 
@@ -146,14 +150,17 @@ Specs: `docs/audit-design/lots/<lot>.md`. Preview ports (one per lot, to run in 
 
 | Lot | What | Size | Acceptance by Codex | Depends on | Wave | Branch | Status |
 |---|---|---|---|---|---|---|---|
-| L32 | Beta locks 2 3 4 + waiting list in the database — protected (schema) | M | no | — | N | `feat/p6-beta-locks` | to do |
-| L30 | Bilingual landing (mockup v2) + FR/EN for sign-up, `#setup`, `#welcome` | L | no | — | N | `feat/p6-landing` | to do |
-| L33 | Daily ntfy alert from the database — protected (schema) | S | no | L32 merged | O | `feat/p6-alert` | to do |
-| L31 | Hosting cards, seats, full state with the waiting-list form, refusal messages; `docs/hosted.md`, README | M | no | L30, L32 merged; consent text validated (decision 20) | O | `feat/p6-hosting` | to do |
+| L32 | Beta locks 2 3 4 + waiting list in the database — protected (schema) | M | no | — | N | `feat/p6-beta-locks` | #74 closed 5 Nov: shipped inside #76 |
+| L30 | Bilingual landing (mockup v2) + FR/EN for sign-up, `#setup`, `#welcome` | L | no | — | N | `feat/p6-landing` | #75 ready 5 Nov, Laurent merges as is (v2); v3 = L36 |
+| L33 | Daily ntfy alert from the database — protected (schema) | S | no | L32 merged | O | `feat/p6-alert` | #76 (L32 + L33) ready 5 Nov, Laurent merges and deploys. **6 Nov: the live site lets anyone sign up past 50 (no cap on main); Laurent can't handle it now — the cap needs #76 merged + schema.sql + own account `exempt` + the `beta_settings` row (see REVIEW-2026-11-06.md)** |
+| L31 | Hosting cards, seats, full state with the waiting-list form, refusal messages; `docs/hosted.md`, README | M | no | L30, L32 merged | O | `feat/p6-hosting` | to do |
 | L34 | iPhone captures FR/EN + business test for Laurent (local base, up to the 51st sign-up and the waiting list) | S | no | L31 | P | `test/p6-launch` | to do |
+| L36 | Landing v3 (/skill hero with three steps, sports band, new order) + Codex's MMA and yoga photos — scope confirmed 5 Nov | M | no | L30 merged | O | `feat/p6-mma-photos` | to do; review 6 Nov applied, see REVIEW-2026-11-06.md |
+| L37 | #demo v2 content: the five v3 examples as demo sheets + one session (replaces the stick figures) | M | no | L30 merged | O | `feat/p6-demo-content` | decided 6 Nov (« OK recos »), to do |
+| L38 | #demo v2 dressing: `.tcard` notebooks, session list, FR/EN banner | M | no | L30 merged | O | `feat/p6-demo-ui` | decided 6 Nov, to do (parallel to L37) |
 | L35 | Later: whole app in French | L | — | decision 13 | — | — | later |
 
-Specs: `docs/audit-design/lots/L30.md` … `L34.md`. Ports: L30 8800, L31 8801, L32 8802, L33 8803, L34 8804.
+Specs: `docs/audit-design/lots/L30.md` … `L34.md`, `L36.md`. Ports: L30 8800, L31 8801, L32 8802, L33 8803, L34 8804.
 Files: L32 and L33 `supabase/schema.sql`, `tests/*schema*.cjs`, `docs/privacy.md`, `README.md` (schema note) — one
 after the other. L30 `app/index.html` (welcome/intro, auth, setup copy, new landing), `app/assets/**`, `app/sw.js`
 (shell list). L31 `app/index.html` (setup step 1, auth), `docs/hosted.md`, `README.md`. Another session has open
