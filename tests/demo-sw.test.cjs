@@ -38,7 +38,7 @@ function worker() {
 test('KEEP_DEMO keeps the listed demo files, which then answer offline', async () => {
   const w = worker();
   await w.dispatch('message', {data: {type: 'KEEP_DEMO', urls: [base + 'catalogue.json', base + 'push-up/img/02-lower.svg']}});
-  assert.deepEqual([...w.stores.get('rb-demo-1').keys()], [base + 'catalogue.json', base + 'push-up/img/02-lower.svg']);
+  assert.deepEqual([...w.stores.get('rb-demo-2').keys()], [base + 'catalogue.json', base + 'push-up/img/02-lower.svg']);
   w.offline();
   const r = await w.dispatch('fetch', {request: {url: base + 'push-up/img/02-lower.svg', method: 'GET', mode: 'cors'}});
   assert.equal(r.ok, true);
@@ -55,6 +55,6 @@ test('a new shell version keeps the demo cache', async () => {
   await w.dispatch('message', {data: {type: 'KEEP_DEMO', urls: [base + 'catalogue.json']}});
   w.stores.set('rb-shell-1', new Map());
   await w.dispatch('activate', {});
-  assert.ok(w.stores.has('rb-demo-1'));
+  assert.ok(w.stores.has('rb-demo-2'));
   assert.ok(!w.stores.has('rb-shell-1'));
 });

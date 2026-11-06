@@ -45,7 +45,7 @@ app/demo/
    its folder, `author` = the credit shown on the card). The session goes under `sessions`: its `items` list sheet
    slugs in order, each with its `dose`; its `thumbnail` is a path from this folder
    (`spinning-back-kick/img/thumb.jpg`).
-4. **Delete** the folders you no longer list, and their entries.
+4. **Delete** the folders you no longer list, and their entries, and bump the demo cache (below).
 5. Check the credit line at the bottom of each sheet (`<footer>`), then open `#demo` in a browser before merging.
 
 Rules: no frame from someone else's video (the repo is public); five sheets keep the acceptance test
@@ -53,3 +53,6 @@ Rules: no frame from someone else's video (the repo is public); five sheets keep
 An entry the app cannot read (a slug with other characters, a path with `..`) is skipped, not shown broken.
 
 The service worker keeps every demo file after the first visit, so a new demo shows on the visitor's next start.
+When you swap the content, bump the demo cache name in `app/sw.js` (`DEMO = 'rb-demo-N'`, and in
+`tests/demo-sw.test.cjs`): otherwise a device that had the old demo starts offline on the new catalogue without its
+sheets (Codex, L37). This is the one line of code a content swap needs.
