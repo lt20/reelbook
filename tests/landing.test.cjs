@@ -486,3 +486,15 @@ test('L36 — the pause button stops the sheet and the band, and says what it do
   page.RBL.setLang('en');
   assert.equal(page.byId('lp-pp').attrs['aria-label'], 'Play the animations');
 });
+
+test('L36 — the copy is the v3 mockup\'s, word for word, in French and in English', () => {
+  const mock = fs.readFileSync(path.join(ROOT, 'docs/audit-design/mockups/p6-landing.html'), 'utf8');
+  const {DICT} = landing().RBL;
+  const scoped = s => s.replace(/class="([^"]*)"/g, (m, v) => 'class="' + v.split(/\s+/).map(c => 'lp-' + c).join(' ') + '"');
+  const STATE = new Set(['beta', 'i1.seats', 'wl.h']); // written from beta_seats(), checked in the beta test
+  const enStart = mock.indexOf('var EN={'), en = new Function('return ' + mock.slice(enStart + 7, mock.indexOf('\n  };', enStart)) + '\n}')();
+  let n = 0;
+  for (const [k, v] of Object.entries(en)) if (!k.startsWith('nav.') && !STATE.has(k)) { assert.equal(DICT.en[k], scoped(v), `en: ${k}`); n++; }
+  for (const m of mock.slice(0, mock.indexOf('<script>')).matchAll(/<(\w+)\b[^>]*\bdata-k="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g)) if (!STATE.has(m[2])) { assert.equal(DICT.fr[m[2]], scoped(m[3]), `fr: ${m[2]}`); n++; }
+  assert.ok(n > 150, `${n} strings compared`);
+});

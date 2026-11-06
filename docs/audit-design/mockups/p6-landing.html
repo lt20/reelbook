@@ -1,9 +1,12 @@
 <!DOCTYPE html>
+<!-- Copy of the served v3 landing mockup (https://claude.ai/artifact/MEw2gCwTShE1uzHrbdnZF4), 6 Nov 2026, HTML only:
+     its img/ pictures are not in this folder (decision 4). The app's resized copies are in app/assets/<example>/ (L36),
+     and app/landing.js carries this page's copy and data (converted, see its @gen-start block). Preview the full beta: ?places=50. -->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reelbook accueil v2</title>
+<title>Reelbook accueil v3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -21,7 +24,6 @@
   --m:clamp(16px,4vw,48px);
   color-scheme:light;
 }
-body[data-ex="dance"]{--nb:#b23a6e}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--ground)}
 body{color:var(--ink);font:400 18px/1.55 var(--body);-webkit-font-smoothing:antialiased}
@@ -46,7 +48,7 @@ p{margin:0}
 .bar nav{display:flex;gap:22px;flex-wrap:wrap}
 .bar nav a{color:var(--ink);text-decoration:none;font-weight:600;font-size:16px}
 .bar nav a:hover{color:var(--blue)}
-.bar nav a{position:relative;padding-block:6px}
+.bar nav a{position:relative;padding-block:10px}
 .bar nav a[aria-current="true"]{color:var(--blue)}
 .bar nav a[aria-current="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:3px;border-radius:2px;background:var(--coral,#c54b38)}
 /* libellés à largeur fixe : FR et EN occupent la même place, rien ne bouge au changement de langue */
@@ -60,7 +62,7 @@ html[lang="fr"] .l2>[lang="en"],html[lang="en"] .l2>[lang="fr"]{visibility:hidde
 html{scroll-padding-top:84px}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 .seg{display:inline-flex;background:var(--step);border-radius:999px;padding:3px}
-.seg button{border:0;background:none;font:700 14px/1 var(--body);color:var(--ink-2);min-width:44px;min-height:38px;padding:0 12px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s}
+.seg button{border:0;background:none;font:700 14px/1 var(--body);color:var(--ink-2);min-width:44px;min-height:44px;padding:0 12px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
 .wm svg{flex:none}
 @media (max-width:760px){
@@ -71,23 +73,74 @@ html{scroll-padding-top:84px}
   .topbar .wm{font-size:24px}.topbar .wm svg{width:26px;height:26px}
   html{scroll-padding-top:116px}
 }
+@media (max-width:374px){
+  .topbar .wm .wm-t{display:none}
+  .topbar .bar nav{gap:4px}
+  .topbar .bar nav a{font-size:14px}
+}
 
 /* héros */
 .hero{padding-block:clamp(28px,5vw,64px) 0}
-.hero h1{font-size:clamp(60px,13.2vw,196px);font-weight:800;line-height:.84;text-transform:uppercase;letter-spacing:-.025em}
-.hero-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(28px,4vw,64px);margin-top:clamp(24px,3vw,44px);align-items:start}
-.pitch{display:flex;flex-direction:column;gap:28px;padding-top:8px}
+.hero h1{font-size:clamp(34px,5.4vw,80px);font-weight:800;line-height:.9;text-transform:uppercase;letter-spacing:-.02em;max-width:none}
+.hero h1 .slash{color:var(--coral)}
+.pitch{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,4vw,64px);margin-top:clamp(24px,3vw,40px);align-items:start}
+.pitch-side{display:flex;flex-direction:column;gap:18px}
+@media (max-width:900px){.pitch{grid-template-columns:minmax(0,1fr)}}
+.flow-head{display:flex;justify-content:space-between;align-items:end;gap:12px 24px;flex-wrap:wrap;margin-top:clamp(44px,5vw,72px)}
+.flow-head h2{font-size:clamp(36px,4.6vw,68px);text-transform:uppercase;line-height:.92}
+.flow-head .ex-switch{margin-bottom:0}
+.flow{list-style:none;padding:0;margin:22px 0 0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.55fr) minmax(0,1fr);gap:16px;counter-reset:fl}
+.flow>li{background:var(--paper);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.fl-vis{height:300px;display:flex;align-items:center;justify-content:center}
+.flow h3{font-size:26px;text-transform:uppercase;line-height:1}
+.flow h3 .n{color:var(--coral);margin-right:8px}
+.flow p{font-size:16px;line-height:1.45;color:var(--ink-2);margin:0}
+.flow .mini-phone{width:150px;height:280px}
+@media (max-width:900px){.flow{grid-template-columns:minmax(0,1fr)}.fl-vis{height:auto}}
+.msheet{display:grid;grid-template-columns:minmax(0,210px) minmax(0,1fr);gap:16px;width:100%;margin:0}
+.msheet .shot{position:relative;aspect-ratio:4/5;border-radius:4px;overflow:hidden;background:#222}
+.msheet .shot>div{position:absolute;inset:0;opacity:0;transition:opacity .35s ease}
+.msheet .shot>div.on{opacity:1}
+.msheet .shot img,.msheet .shot svg{width:100%;height:100%;object-fit:cover;overflow:hidden}
+.msheet .pp{position:absolute;right:2px;bottom:2px;z-index:3;width:44px;height:44px;padding:0;border:0;background:none;cursor:pointer;display:grid;place-items:center}
+.msheet .pp span{width:30px;height:30px;border-radius:50%;background:rgba(18,20,23,.62);display:grid;place-items:center}
+.msheet .pp svg{width:14px;height:14px;fill:#fff}
+.msheet .pp .i-play,.msheet .pp.paused .i-pause{display:none}.msheet .pp.paused .i-play{display:block}
+.anim-off .track{animation-play-state:paused}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.msheet .num{position:absolute;left:10px;top:8px;font:800 40px/1 var(--display);color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.35);z-index:2}
+body[data-ex="dance"] .msheet .num{color:#6e1f45;text-shadow:none}
+.msheet .side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.msheet .crumb{font-size:13px;color:var(--ink-2);font-weight:600}
+.msheet .title{font:700 22px/1 var(--display)}
+.msheet .step-name{font:800 26px/.95 var(--display);text-transform:uppercase;color:var(--blue);margin-top:auto}
+.msheet .cue{font-size:14.5px;line-height:1.4;min-height:5.6em}
+.dots{display:flex;flex-wrap:wrap;margin-left:-8px}
+.dots button{width:26px;height:26px;padding:0;border:0;background:none;cursor:pointer;display:grid;place-items:center}
+.dots button::before{content:"";width:8px;height:8px;border-radius:50%;background:#8f8a80}
+.msheet .dots{flex-wrap:nowrap;gap:0}
+#thumbs button{width:32px;height:44px;flex:0 1 32px;min-width:0}
+.dots button[aria-current="true"]::before{background:var(--blue);width:10px;height:10px}
+@media (max-width:420px){.msheet{grid-template-columns:minmax(0,130px) minmax(0,1fr);gap:12px}.msheet .step-name{font-size:21px}.msheet .cue{min-height:0}}
+.msess{width:100%;background:var(--ink);color:#fff;border-radius:6px;padding:16px}
+.msess .m{font-size:12.5px;color:#c9ccd1}
+.msess .st{display:block;font:700 22px/1.05 var(--display);margin:4px 0 12px}
+.msess ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.msess li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13.5px;line-height:1.25}
+.msess li .pic{border-radius:6px}
+.msess .dose{font-size:12.5px;color:#c9ccd1;white-space:nowrap}
+.msess .done{display:block;margin-top:14px;text-align:center;background:var(--blue);border-radius:999px;padding:9px;font-weight:700;font-size:14px}
 .pitch .sub{font-size:clamp(20px,1.7vw,24px);line-height:1.42;max-width:30ch}
 .cta-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .beta{font-size:16px;color:var(--ink-2);display:flex;gap:10px;align-items:center}
 .beta .seats{display:inline-block;width:96px;height:8px;border-radius:8px;background:var(--step);position:relative;overflow:hidden;flex:none}
 .beta .seats i{position:absolute;inset:0 auto 0 0;width:28%;background:var(--coral);border-radius:8px}
 .fit{font-size:16px;color:var(--ink-2)}
-@media (max-width:900px){.hero-grid{grid-template-columns:minmax(0,1fr)}}
 
 .ex-switch{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .ex-switch span{font-size:15px;font-weight:600;color:var(--ink-2)}
-.ex-switch .seg button{min-width:88px}
+.ex-switch .seg{flex-wrap:wrap;border-radius:22px;max-width:100%}
+.ex-switch .seg button{min-width:0;padding:0 14px}
 .ex-switch .seg button[aria-pressed="true"]{background:var(--nb);color:#fff}
 
 /* lecteur de fiche */
@@ -136,6 +189,44 @@ body[data-ex="dance"] .player .shot .num{color:#6e1f45;text-shadow:none}
 .ui-badge svg{width:20px;height:20px}
 .ui-title{font:700 26px/1 var(--display)}
 .ui-count{margin-left:auto;font-size:14px;color:var(--ink-2)}
+.devices{margin:0;container-type:inline-size;min-width:0}
+.dv-stage{position:relative;padding-bottom:17cqw}
+.dv-tab{width:80cqw;aspect-ratio:1.43;overflow:hidden;box-sizing:border-box;background:var(--ground);border:1.4cqw solid #1b1d1f;border-radius:3.6cqw;padding:2.2cqw;box-shadow:0 2cqw 5cqw rgba(0,0,0,.18);font-family:var(--body)}
+.dv-bar{display:flex;align-items:baseline;gap:2cqw;margin:0 .4cqw 1.8cqw}
+.dv-bar b{font:800 3cqw/1 var(--display);color:var(--blue)}.dv-bar span{font-size:1.7cqw;font-weight:700;color:var(--ink-2)}
+.dv-add{display:flex;justify-content:space-between;align-items:center;margin:0 .4cqw 1.8cqw;padding:1cqw 1cqw 1cqw 1.6cqw;border:.15cqw solid var(--line);border-radius:99px;background:var(--paper);font-size:1.4cqw;color:var(--ink-2)}
+.dv-add i{font-style:normal;width:2.6cqw;height:2.6cqw;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.8cqw}
+.dv-sub{margin:0 0 .9cqw;font-size:1.25cqw;line-height:1.3;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5cqw}
+.dv-nb{background:var(--paper);border:.15cqw solid var(--line);border-radius:1.6cqw;overflow:hidden;padding:0 1.2cqw 1.2cqw}
+.dv-cv{display:flex;align-items:center;gap:1.2cqw;margin:0 -1.2cqw 1cqw;padding:1.2cqw;background:color-mix(in srgb,var(--t) 14%,var(--paper))}
+.dv-cv i{width:3.8cqw;height:3.8cqw;border-radius:50%;background:var(--paper);color:var(--t);display:grid;place-items:center;flex:none}
+.dv-cv i svg{width:2.2cqw;height:2.2cqw}
+.dv-cv span{display:grid;min-width:0}
+.dv-cv small{font-size:1.15cqw;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb,var(--t) 60%,var(--ink))}
+.dv-cv b{font:700 2.3cqw/1.05 var(--display);color:color-mix(in srgb,var(--t) 60%,var(--ink));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-th{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6cqw}
+.dv-th img,.dv-row img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:.8cqw}
+.dv-th img{aspect-ratio:1}
+.dv-ph{position:absolute;right:0;bottom:0;width:24cqw;aspect-ratio:9/19.5;background:var(--ground);border:1.2cqw solid #1b1d1f;border-radius:4.2cqw;overflow:hidden;box-shadow:0 2cqw 6cqw rgba(0,0,0,.28);font-family:var(--body)}
+.dv-ph .dv-cv{margin:0 0 1cqw;padding:2.6cqw 1.4cqw 1.4cqw}
+.dv-ph .dv-cv b{font-size:2.1cqw;white-space:normal}
+.dv-g{padding:0 0 1.2cqw 1.4cqw}
+.dv-g>b{display:block;font-size:1.35cqw;margin-bottom:.6cqw}.dv-g>b span{color:var(--ink-2);font-weight:600}
+.dv-row{display:grid;grid-template-columns:repeat(3,8.6cqw);gap:.6cqw}
+.devices figcaption{margin-top:-10cqw;max-width:72cqw;font-size:15px;font-weight:700;color:var(--ink-2)}
+.tcs{display:grid;gap:16px;min-width:0}
+.tc{--band:color-mix(in srgb,var(--t) 14%,var(--paper));--on-band:color-mix(in srgb,var(--t) 60%,var(--ink));background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:0 18px 18px;font-family:var(--body);min-width:0}
+.tc .cover{display:flex;align-items:center;gap:14px;margin:0 -18px 12px;padding:16px 18px;background:var(--band)}
+.tc .nbb{width:46px;height:46px;border-radius:50%;background:var(--paper);color:var(--t);display:grid;place-items:center;flex:none}
+.tc .nbb svg{width:22px;height:22px}
+.tc .eb{margin:0;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--on-band)}
+.tc h3{font:700 clamp(26px,2.6vw,34px)/1 var(--display);color:var(--on-band);margin:2px 0 0}
+.tc .sub2{margin:0 0 12px;color:var(--ink-2);font-size:15.5px}
+.th3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.th3 figure{margin:0;min-width:0}
+.th3 img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+.th3 figcaption{font-size:13px;line-height:1.25;font-weight:700;margin-top:6px}
 .grp{margin-top:14px;min-width:0}
 .grp-h{display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-bottom:8px}
 .grp-h span{color:var(--ink-2);font-weight:600}
@@ -168,6 +259,27 @@ body[data-ex="dance"] .player .shot .num{color:#6e1f45;text-shadow:none}
 
 /* carnets : bibliothèque + carnet perso (fond en ton décalé) */
 .field-step{background:var(--step);margin-top:clamp(96px,12vw,180px);padding-block:clamp(72px,9vw,140px)}
+.sports{margin-top:clamp(40px,5vw,72px);padding-block:clamp(28px,3.5vw,44px);overflow:hidden}
+.sports-head{display:flex;justify-content:space-between;align-items:end;gap:14px 32px;flex-wrap:wrap}
+.own-row{display:flex;flex-direction:column;align-items:flex-end;gap:10px;margin:0;font-size:15.5px;color:var(--ink-2);text-align:right}
+@media (max-width:900px){.own-row{align-items:flex-start;text-align:left}}
+@media (max-width:420px){.ex-switch .seg button{padding:0 9px;font-size:13.5px}}
+@media (max-width:360px){.ex-switch .seg button{padding:0 6px;font-size:12.5px}.ex-switch .seg{flex-wrap:nowrap}.chrome .url{white-space:normal;overflow-wrap:anywhere;text-overflow:clip;font-size:10px}}
+.flow-sec .flow-head{margin-top:clamp(40px,5vw,72px)}
+.sports h2{font-size:clamp(30px,4.2vw,60px);text-transform:uppercase;line-height:.95}
+.marquee{overflow:hidden;margin-top:18px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.track{display:flex;width:max-content;animation:marq 45s linear infinite}
+.marquee:hover .track,.marquee:focus-within .track{animation-play-state:paused}
+.track .set{display:flex;gap:8px;padding-right:8px}
+@keyframes marq{to{transform:translateX(-50%)}}
+.lib-t{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px 0 12px;border-radius:999px;background:var(--paper);font-weight:600;font-size:15.5px;white-space:nowrap}
+.lib-t i{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none}
+.lib-t i svg{width:18px;height:18px}
+.own{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 20px 0 8px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;font-size:15.5px;text-decoration:none;transition:background .2s}
+.own i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--coral);color:#fff;font-style:normal;font-weight:800;font-size:20px;line-height:1}
+.own:hover{background:var(--coral)}
+.own:hover i{background:#fff;color:var(--coral)}
+.hero .lede .brand,.lede .brand{color:var(--blue);font-weight:800}
 .nbs{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(20px,3vw,40px);margin-top:clamp(36px,4vw,56px);align-items:start}
 @media (max-width:900px){.nbs{grid-template-columns:minmax(0,1fr)}}
 .lib{display:flex;flex-wrap:wrap;gap:8px}
@@ -207,6 +319,7 @@ body[data-ex="dance"] .player .shot .num{color:#6e1f45;text-shadow:none}
 /* chapitre entraînement (fond sombre) */
 .field-dark{background:var(--night);color:var(--night-ink);margin-top:clamp(96px,12vw,180px);padding-block:clamp(72px,9vw,140px)}
 .field-dark .lede{color:var(--night-ink)}
+.field-dark :focus-visible{outline-color:#7fa6ea}
 .field-dark [data-ui]{background:var(--night-2);border-color:#30343b;color:var(--night-ink)}
 .session-ui .meta{font-size:15px;color:var(--night-2ink)}
 .session-ui .st{font:700 32px/1 var(--display);margin:4px 0 6px}
@@ -217,7 +330,7 @@ body[data-ex="dance"] .player .shot .num{color:#6e1f45;text-shadow:none}
 .session-ui li small{font-size:13.5px;color:var(--night-2ink)}
 .session-ui li small i{font-style:normal;color:#fff;background:#3a3f47;border-radius:6px;padding:1px 6px;margin-right:6px}
 .session-ui .dose{font:700 17px/1 var(--body);color:#fff;background:#30343b;padding:8px 10px;border-radius:999px;white-space:nowrap}
-.session-ui .done{margin-top:16px;width:100%;min-height:52px;border:0;border-radius:999px;background:#7fa6ea;color:#0f1a30;font:700 17px/1 var(--body);cursor:pointer}
+.session-ui .done{display:flex;align-items:center;justify-content:center;margin-top:16px;width:100%;min-height:52px;border:0;border-radius:999px;background:#7fa6ea;color:#0f1a30;font:700 17px/1 var(--body)}
 .session-ui .done:active{transform:scale(.98)}
 @media (max-width:520px){.session-ui li{grid-template-columns:60px 1fr}.session-ui .dose{grid-column:2;justify-self:start}}
 .progress{margin-top:clamp(36px,4vw,56px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2vw,28px)}
@@ -226,7 +339,8 @@ body[data-ex="dance"] .player .shot .num{color:#6e1f45;text-shadow:none}
 .shelf p{font-size:15.5px;color:var(--night-2ink);margin-bottom:14px}
 .shelf .items{display:grid;gap:12px}
 .shelf .it{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center}
-.shelf .it b{font-size:15.5px;line-height:1.25;display:block;margin-bottom:6px}
+.shelf .it b{font-size:15.5px;line-height:1.25;display:block;margin-bottom:4px}
+.shelf .ynb{display:block;font-size:12.5px;color:var(--night-2ink);margin-bottom:6px}
 .field-dark .tag-try{background:#3a3f47;color:#fff}
 .field-dark .tag-done{background:#1d3326;color:#8fd3a6}
 .sub-sec{margin-top:clamp(96px,10vw,150px)}
@@ -291,8 +405,9 @@ body[data-ex="dance"] .player .shot .num{color:#6e1f45;text-shadow:none}
 .opt:has(input:checked){border-color:var(--blue)}
 .opt input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--blue)}
 .opt .seatline{margin-top:6px;font-weight:700;color:var(--coral);font-size:14px}
-.peek{align-self:flex-start}.peek button{font-size:13px;min-height:32px}
-.opt[hidden]{display:none}
+
+.opt[hidden],.host-cta[hidden],[data-os-pane][hidden]{display:none}
+.install .seg{align-self:flex-start;background:var(--paper)}
 .opt.host-full,.opt.host-full:has(input:checked){cursor:default;border-color:var(--coral)}
 .host-full .lock-ic{width:22px;height:22px;border-radius:50%;background:var(--coral);color:#fff;font:800 10px/22px var(--body);text-align:center}
 .wl{display:grid;gap:10px;margin-top:12px}
@@ -325,115 +440,108 @@ code{font:600 .92em var(--mono)}
 .close-row{display:flex;justify-content:space-between;align-items:end;gap:28px;flex-wrap:wrap;margin-top:36px}
 .close-row p{font-size:clamp(20px,1.7vw,24px);max-width:34ch}
 .foot{font-size:14px;color:var(--ink-2);margin-top:56px;line-height:1.5}
+.foot a{color:inherit}
+.oss{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;margin:clamp(20px,2.5vw,32px) 0 0;padding:14px 18px;border-radius:12px;background:var(--paper);font-size:15.5px;line-height:1.45}
+.oss-ic{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:#fff}.oss-ic svg{width:20px;height:20px}
+.oss span[data-k]{flex:1 1 320px}.oss a{font-weight:700;color:var(--blue);white-space:nowrap}
+.install .src{margin:8px 0 0;font-size:14.5px}.install .src a{color:var(--blue);font-weight:600}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none !important;transition:none !important}
   .seq > div{opacity:1}
+  .marquee{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
+  .track .set[aria-hidden]{display:none}
+  .msheet .pp{display:none}
 }
 </style>
 </head>
 <body data-ex="mma">
 
 <div class="topbar" id="topbar"><header class="frame bar">
-  <a class="wm" href="#top" aria-label="Reelbook"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg>reelbook</a>
-  <nav aria-label="Sections"><a href="#train"><span class="l2"><span lang="fr">S'entraîner</span><span lang="en">Train</span></span></a><a href="#how"><span class="l2"><span lang="fr">Comment ça marche</span><span lang="en">How it works</span></span></a><a href="#install"><span class="l2"><span lang="fr">Installation</span><span lang="en">Setup</span></span></a></nav>
+  <a class="wm" href="#top" aria-label="Reelbook"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm-t">reelbook</span></a>
+  <nav aria-label="Sections" data-al-en="Sections"><a href="#train"><span class="l2"><span lang="fr">S’entraîner</span><span lang="en">Train</span></span></a><a href="#how"><span class="l2"><span lang="fr">Comment ça marche</span><span lang="en">How it works</span></span></a><a href="#install"><span class="l2"><span lang="fr">Installation</span><span lang="en">Setup</span></span></a></nav>
   <div class="seg lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
   <a class="btn quiet" href="#signin"><span class="l2"><span lang="fr">Se connecter</span><span lang="en">Sign in</span></span></a>
 </header></div>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="nb-strength" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12h10M2.5 10v4M21.5 10v4"/><rect x="4" y="7" width="3" height="10" rx="1"/><rect x="17" y="7" width="3" height="10" rx="1"/></symbol><symbol id="nb-yoga" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5c2.6 2.9 2.6 8.1 0 11-2.6-2.9-2.6-8.1 0-11z"/><path d="M12 15.5c-4 0-7-2.4-7.6-6 3.2 0 6 2 7.6 6zM12 15.5c4 0 7-2.4 7.6-6-3.2 0-6 2-7.6 6z"/><path d="M5 19.5h14"/></symbol><symbol id="nb-fight" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 15V8.5A4.5 4.5 0 0 1 13 4h.5A4.5 4.5 0 0 1 18 8.5V12a3 3 0 0 1-3 3z"/><path d="M8.5 13H7a2.25 2.25 0 0 1 0-4.5h1.5M8.5 10.75H12"/><rect x="8.5" y="15" width="9" height="5" rx="1"/></symbol><symbol id="nb-kitesurf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5Q12 .5 21 9.5l-2.5 1.5Q12 5 5.5 11z"/><path d="M5.5 11l5.5 8.5M18.5 11L13 19.5M9 19.5h6"/></symbol><symbol id="nb-kitefoil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="3.5" rx="1.75"/><path d="M12 8v9M5.5 17h12"/><path d="M14.5 17q2.75-2.5 6 0-3 1.75-6 0zM3.5 15.5l2 1.5-2 1.5"/></symbol><symbol id="nb-wingfoil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 16Q5.5 5 12 4q6.5 1 9.5 12-9.5-4.5-19 0z"/><path d="M12 4v8M9.5 20h5"/></symbol><symbol id="nb-wakeboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-30 12 11)"><rect x="3" y="8" width="18" height="6" rx="3"/><path d="M8.5 9.5v3M15.5 9.5v3"/></g><path d="M3 20.5c1.5 0 2.25-1.25 3.75-1.25S9 20.5 10.5 20.5"/></symbol><symbol id="nb-surf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18C3 10.5 8 5 14 5c4 0 7 3 7 6.5 0 2-1.6 3.5-3.5 3.5S14 13.6 14 12c0-1.5 1.5-2.2 2.75-1.5"/><path d="M3 18h18"/></symbol><symbol id="nb-swim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="17" cy="7.5" r="2"/><path d="M4.5 12.5L9 8.5l3.5 3.5"/><path d="M2.5 16.5c1.6 0 2.4-1.5 4-1.5s2.4 1.5 4 1.5 2.4-1.5 4-1.5 2.4 1.5 4 1.5M2.5 20.5c1.6 0 2.4-1.5 4-1.5s2.4 1.5 4 1.5 2.4-1.5 4-1.5 2.4 1.5 4 1.5"/></symbol><symbol id="nb-run" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5V9a1 1 0 0 1 1-1h1.5L7 10h3l1.5-2.5h2L15 11l4.5 2.4A2.5 2.5 0 0 1 21 15.7v1.8z"/><path d="M3 14.5h18M11 11.5l1 1M13 10.5l1 1"/></symbol><symbol id="nb-bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="15.5" r="3.5"/><circle cx="18.5" cy="15.5" r="3.5"/><path d="M5.5 15.5L9.5 9h6.5M5.5 15.5H12L16 9l2.5 6.5M9.5 9L12 15.5M9.5 9 9 6.5M7.5 6.5h3M16 9l-.5-3h2.5"/></symbol><symbol id="nb-hike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 19.5L9 8l4.5 7.5 3-4.5 5 8.5z"/><path d="M7.25 11h3.5"/><circle cx="17.5" cy="5" r="1.75"/></symbol><symbol id="nb-climb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9V7.5a4.5 4.5 0 0 0-9 0v9a4.5 4.5 0 0 0 9 0V15"/><path d="M16.5 9l-2.5 5.5"/></symbol><symbol id="nb-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M9.75 4.75 12 7l2.25-2.25M9.75 19.25 12 17l2.25 2.25"/><path transform="rotate(60 12 12)" d="M12 3v18M9.75 4.75 12 7l2.25-2.25M9.75 19.25 12 17l2.25 2.25"/><path transform="rotate(120 12 12)" d="M12 3v18M9.75 4.75 12 7l2.25-2.25M9.75 19.25 12 17l2.25 2.25"/></symbol><symbol id="nb-ride" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4C3.5 8 4 16 8 19c2.4 1.7 5.6 1.7 8 0 4-3 4.5-11 1.5-15h-3c2 3.5 2 9.5 0 11.8-1.4 1.4-3.6 1.4-5 0-2-2.3-2-8.3 0-11.8z"/><path d="M6.6 10.5h.01M17.4 10.5h.01M7.4 14.5h.01M16.6 14.5h.01"/></symbol><symbol id="nb-racket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9.5" cy="9.5" rx="5" ry="6.5" transform="rotate(-45 9.5 9.5)"/><path d="M14.1 14.1L20 20M6.5 6.5l6 6M6 11.5l5.5-5.5"/><circle cx="19" cy="5" r="2"/></symbol><symbol id="nb-golf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 19.5v-16l8 3-8 3"/><path d="M3 19.5c1.5-1 3.3-1.5 5-1.5s3.5.5 5 1.5"/><circle cx="17.5" cy="17" r="1.75"/></symbol><symbol id="nb-pilates" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5.2 9.3a7 7 0 0 1 13.6 0M5.2 14.7a7 7 0 0 0 13.6 0"/><rect x="3" y="9.25" width="3" height="5.5" rx="1"/><rect x="18" y="9.25" width="3" height="5.5" rx="1"/></symbol><symbol id="nb-barre" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5h4l-.5 6.5h-3z"/><path d="M3.5 14.5 12 10l8.5 4.5-2.1.6-2.1-.8-2.1.8-2.2-.8-2.1.8-2.1-.8-2.1.8z"/><path d="M10.5 15.8v4.7M13.5 15.8v4.7"/></symbol><symbol id="nb-pole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M9 3h6M8 21h8"/><path d="M14.5 8.4c2 .4 3.5 1.2 3.5 2.1 0 1.4-2.7 2.5-6 2.5s-6-1.1-6-2.5c0-.9 1.5-1.7 3.5-2.1"/></symbol><symbol id="nb-dance" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5.5l10-2V16M9 9.5l10-2"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></symbol><symbol id="nb-mobility" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-13.7 5.6M4 12a8 8 0 0 1 13.7-5.6"/><path d="M17.7 2.5v4h-4M6.3 21.5v-4h4"/><circle cx="12" cy="12" r="2"/></symbol><symbol id="nb-prenatal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3.5a7.5 7.5 0 0 1 7.5 7.5H13z"/><path d="M3.5 11h17a6 6 0 0 1-6 6h-5a6 6 0 0 1-6-6zM3.5 11 2 8"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></symbol><symbol id="nb-floor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.75"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="nb-breath" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h10a3 3 0 1 0-3-3M3 15h13a3 3 0 1 1-3 3M3 12h16.5"/></symbol><symbol id="nb-cook" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11.5h14V17a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM3 11.5h18"/><path d="M9.5 8.5c-.8-.8-.8-1.7 0-2.5s.8-1.7 0-2.5M14.5 8.5c-.8-.8-.8-1.7 0-2.5s.8-1.7 0-2.5"/></symbol><symbol id="nb-nutrition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1.5-1.1-5.3-1.6-6.6 1.9-1.3 3.6.5 8.5 3.3 9.9 1.3.6 2.1.2 3.3-.3 1.2.5 2 .9 3.3.3 2.8-1.4 4.6-6.3 3.3-9.9C17.3 6.4 13.5 6.9 12 8z"/><path d="M12 8c0-2 .8-3.5 2.5-4.5"/></symbol><symbol id="nb-beauty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M12 15v6.5M9 9a3 3 0 0 1 3-3"/></symbol><symbol id="nb-crafts" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6.5" r="2.5"/><circle cx="6" cy="17.5" r="2.5"/><path d="M8.1 7.9 20 17.5M8.1 16.1 20 6.5"/></symbol><symbol id="nb-custom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v18H6.5A1.5 1.5 0 0 1 5 19.5z"/><path d="M8.5 3v18M11.5 8h4.5M11.5 11.5h4.5"/></symbol></svg>
 <main id="top">
+
+
+
+
+
 <section class="frame hero" aria-labelledby="h1">
-  <h1 id="h1" data-k="h1">Du reel au geste.</h1>
-  <div class="hero-grid">
-    <div class="pitch">
-      <p class="sub" data-k="sub">Reelbook réunit tes vidéos de technique dans un carnet d'entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.</p>
-      <div class="cta-row"><a class="btn" href="#install" data-k="cta">Créer mon carnet</a><a class="btn quiet" href="#how" data-k="cta2">Voir comment ça marche</a></div>
+  <h1 id="h1" data-k="h1">Un <span class="slash">/skill</span> Claude Code qui transforme tes vidéos de technique en carnet d’entraînement.</h1>
+  <div class="pitch">
+    <p class="sub" data-k="sub">Reelbook réunit tes vidéos de technique dans un carnet d’entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.</p>
+    <div class="pitch-side">
+      <div class="cta-row"><a class="btn" href="#carnet" data-k="cta">Créer mon carnet</a><a class="btn quiet" href="#how" data-k="cta2">Voir comment ça marche</a></div>
       <p class="beta"><span class="seats" aria-hidden="true"><i></i></span><span data-k="beta">Gratuit pendant la bêta · 14 places prises sur 50</span></p>
-      <p class="fit" data-k="fit">Pour TikTok, Instagram, YouTube et Facebook. Fonctionne avec ton abonnement Claude.</p>
+      <p class="fit" data-k="fit">Il te faut Claude Pro (ou plus) avec Claude Code, et Chrome sur ton ordinateur. Pour TikTok, Instagram, YouTube et Facebook.</p>
     </div>
-    <div>
-      <div class="ex-switch"><span data-k="ex.l">Voir un exemple :</span>
-        <div class="seg ex" role="group" aria-label="Exemple"><button type="button" data-ex="mma" aria-pressed="true">MMA</button><button type="button" data-ex="dance" aria-pressed="false" data-k="ex.dance">Danse</button></div></div>
-      <figure class="player" aria-label="Une fiche Reelbook">
-        <div class="shot" id="shot"><span class="num" id="num" aria-hidden="true">1</span></div>
+  </div>
+</section>
+
+<section class="field-step sports" aria-labelledby="v6">
+  <div class="frame sports-head">
+    <h2 id="v6" data-k="v6.h">Tes activités, tes carnets.</h2>
+    <p class="own-row"><span data-k="v6.q">29 carnets prêts à l’emploi. Le tien n’y est pas ?</span><a class="own" href="#install"><i aria-hidden="true">+</i><span data-k="v6.own">Crée ta propre activité</span></a></p>
+  </div>
+  <div class="marquee"><div class="track" id="lib"></div></div>
+</section>
+
+<section class="frame flow-sec" aria-labelledby="flow-h">
+  <div class="flow-head">
+    <h2 id="flow-h" data-k="flow.h">Du reel au geste.</h2>
+    <div class="ex-switch"><span data-k="ex.l">Voir un exemple :</span>
+        <div class="seg ex" role="group" aria-label="Exemple" data-al-en="Example"><button type="button" data-ex="mma" aria-pressed="true">MMA</button><button type="button" data-ex="dance" aria-pressed="false" data-k="ex.dance">Danse</button><button type="button" data-ex="stretch" aria-pressed="false" data-k="ex.stretch">Étirement</button><button type="button" data-ex="snow" aria-pressed="false" data-k="ex.snow">Snowboard</button><button type="button" data-ex="hiit" aria-pressed="false" data-k="ex.hiit">HIIT</button></div></div>
+  </div>
+  <ol class="flow" aria-labelledby="flow-h">
+    <li><div class="fl-vis" aria-hidden="true"><div class="mini-phone"><div class="screen"><div class="bg" data-share></div><div class="sheet"><span class="app"></span><span class="app rb"><svg viewBox="0 0 256 256"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg></span><span class="app"></span></div></div></div></div>
+      <h3><span class="n" aria-hidden="true">1</span><span data-k="f1.h">Tu repères une vidéo, tu l’envoies à Reelbook</span></h3>
+      <p data-k="f1.p">Sur TikTok, Instagram, YouTube ou Facebook : Partager, puis Reelbook. Dix secondes, et tu continues de scroller.</p></li>
+    <li><div class="fl-vis"><figure class="msheet" aria-label="Une fiche Reelbook" data-al-en="A Reelbook sheet">
+        <div class="shot" id="shot"><span class="num" id="num" aria-hidden="true">1</span><button class="pp" id="pp" type="button" aria-label="Mettre en pause les animations"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M6 4h4v16H6zM14 4h4v16h-4z"/><path class="i-play" d="M7 4l13 8-13 8z"/></svg></span></button></div>
         <figcaption class="side">
           <span class="crumb" id="pCrumb"></span>
           <span class="title" id="pTitle"></span>
           <span class="step-name" id="stepName"></span>
-          <span class="cue" id="cue" aria-live="polite"></span>
-          <div class="thumbs" id="thumbs"></div>
-          <label class="scrub-l" for="scrub"><span data-k="p.scrub">Fais défiler le geste</span><span id="scrubN">1 / 6</span></label>
-          <input class="scrub" id="scrub" type="range" min="1" max="6" step="1" value="1">
-          <a class="src" id="pSrc" href="#top"></a>
+          <span class="cue" id="cue" aria-live="off"></span>
+          <div class="dots" id="thumbs"></div>
         </figcaption>
-      </figure>
-      <p class="drawn" id="drawn" hidden data-k="drawn">Vue danse : images de démonstration générées, pas une vraie vidéo.</p>
-    </div>
-  </div>
+      </figure></div>
+      <h3><span class="n" aria-hidden="true">2</span><span data-k="f2.h">Elle devient une fiche</span></h3>
+      <p data-k="f2.p">Le geste découpé en images, avec les consignes à retenir, un dosage et le lien vers la vidéo.</p></li>
+    <li><div class="fl-vis" aria-hidden="true"><div class="msess" id="sessionMini"></div></div>
+      <h3><span class="n" aria-hidden="true">3</span><span data-k="f3.h">Tes fiches font tes séances</span></h3>
+      <p data-k="f3.p">Mélange les fiches de tous tes carnets, donne à chacune son dosage, et entraîne-toi fiche après fiche.</p></li>
+  </ol>
+  <p class="drawn" id="drawn"></p>
 </section>
 
 <section class="frame sec" aria-labelledby="v1">
   <div class="split">
     <div class="txt">
       <h2 id="v1" data-k="v1.h">Tout au même endroit.</h2>
-      <p class="lede" data-k="v1.p">Le reel de ton coach sur Instagram, la vidéo YouTube d'une championne, le TikTok repéré dans le métro : tout arrive au même endroit, rangé par activité et par thème.</p>
+      <p class="lede" data-k="v1.p">Le reel de ton coach sur Instagram, la vidéo YouTube d’une championne, le TikTok repéré dans le métro : tout arrive au même endroit, rangé par activité et par thème. Tu y cherches par zone du corps ou par matériel, et les notes de ton coach restent à côté du geste.</p>
     </div>
-    <div data-ui id="nbUi" aria-label="Un carnet Reelbook"></div>
+    <figure class="devices" id="nbUi" role="img" aria-label="Six carnets Reelbook sur une tablette, un carnet ouvert sur un téléphone" data-al-en="Six Reelbook notebooks on a tablet, one notebook open on a phone"></figure>
   </div>
-</section>
-
-<section class="field-step" aria-labelledby="v6">
-  <div class="frame">
-    <div class="head2">
-      <h2 id="v6" data-k="v6.h">Tes activités, tes carnets.</h2>
-      <p class="lede" data-k="v6.p">Reelbook connaît déjà une trentaine d'activités et range chaque fiche tout seul dans le bon carnet. La tienne n'y est pas ? Crée ton carnet et décris-le en une phrase : Claude s'en sert pour trier.</p>
-    </div>
-    <div class="nbs">
-      <div>
-        <div class="lib" id="lib"></div>
-        <p class="lib-cap" data-k="v6.cap">Les carnets intégrés, choisis en un tap. Les groupes à l'intérieur (Tours, Clinch, Transitions…) se créent au fil des fiches.</p>
-      </div>
-      <form data-ui class="custom" aria-label="Créer un carnet" onsubmit="return false">
-        <h3 data-k="cu.h">Ton propre carnet</h3>
-        <label for="cuName"><span data-k="cu.n">Nom du carnet</span><input id="cuName" type="text" value="Cerceau aérien"></label>
-        <label for="cuDesc"><span data-k="cu.d">Ce qui va dedans</span><textarea id="cuDesc">Montées, figures et enchaînements au cerceau aérien, du débutant au confirmé. Un groupe par famille de figures.</textarea></label>
-        <span class="hint" data-k="cu.hint">Écrit pour Claude : de quoi parlent les vidéos et comment tu veux les ranger.</span>
-        <button class="btn" type="button" data-k="cu.b">Créer le carnet</button>
-      </form>
-    </div>
-  </div>
-</section>
-
-<section class="frame sec" aria-labelledby="v2">
-  <div class="split rev">
-    <div class="txt">
-      <h2 id="v2" data-k="v2.h">Le bon geste au bon moment.</h2>
-      <p class="lede" id="v2p"></p>
-    </div>
-    <div data-ui class="search-ui" id="searchUi" aria-label="La recherche de Reelbook"></div>
-  </div>
-</section>
-
-<section class="frame sec" aria-labelledby="v5">
-  <div class="head2">
-    <h2 id="v5" data-k="v5.h">Tes notes, à côté du geste.</h2>
-    <p class="lede" data-k="v5.p">Une correction du coach, une sensation, le côté qui coince : tu l'écris dans la fiche, elle s'enregistre toute seule. Et le lien vers la vidéo d'origine reste toujours là, pour la revoir au besoin.</p>
-  </div>
-  <div data-ui class="notes-ui" id="notesUi" aria-label="Une fiche avec ses notes"></div>
 </section>
 
 <section class="field-dark" id="train" aria-labelledby="v3">
   <div class="frame split">
     <div class="txt">
       <h2 id="v3" data-k="v3.h">Tes fiches font tes séances.</h2>
-      <p class="lede" data-k="v3.p">Pioche dans tous tes carnets et mélange-les : la technique, la mobilité, l'échauffement dans la même séance. Mets les exercices dans l'ordre, donne à chacun son dosage, puis suis la séance fiche après fiche.</p>
+      <p class="lede" data-k="v3.p">Pioche dans tous tes carnets et mélange-les : la technique, la mobilité, l’échauffement dans la même séance. Mets les exercices dans l’ordre, donne à chacun son dosage, puis suis la séance fiche après fiche.</p>
     </div>
-    <div data-ui class="session-ui" id="sessionUi" aria-label="Une séance Reelbook"></div>
+    <div data-ui class="session-ui" id="sessionUi" role="img" aria-label="Une séance Reelbook" data-al-en="A Reelbook session"></div>
   </div>
   <div class="frame sub-sec">
     <div class="head2">
       <h2 data-k="v4.h">Ta progression, fiche par fiche.</h2>
-      <p class="lede" data-k="v4.p">Les nouvelles fiches t'attendent en haut de l'accueil, celles que tu n'as jamais essayées remontent d'elles-mêmes, et chaque « Fait aujourd'hui » s'ajoute au compteur de la fiche.</p>
+      <p class="lede" data-k="v4.p">Les nouvelles fiches t’attendent en haut de l’accueil, celles que tu n’as jamais essayées remontent d’elles-mêmes, et chaque « Fait aujourd’hui » s’ajoute au compteur de la fiche.</p>
     </div>
     <div class="progress" id="progressUi"></div>
   </div>
@@ -442,18 +550,18 @@ code{font:600 .92em var(--mono)}
 <section class="frame sec" id="how" aria-labelledby="how-h">
   <div class="head2">
     <h2 id="how-h" data-k="how.h">Un skill Claude fait le travail.</h2>
-    <p class="lede" data-k="how.p">Reelbook est un skill pour Claude Code. Avec l'extension Claude in Chrome, il ouvre les vidéos que tu lui as envoyées, les découpe en séquence d'images et range chaque fiche dans ton carnet.</p>
+    <p class="lede" data-k="how.p"><strong class="brand">Reelbook</strong> est un skill pour Claude Code. Avec l’extension Claude in Chrome, il ouvre les vidéos que tu lui as envoyées, les découpe en séquence d’images et range chaque fiche dans le bon carnet.</p>
   </div>
   <ol class="route">
     <li class="dot" aria-hidden="true"></li>
-    <li><div class="stage" aria-hidden="true"><div class="mini-phone"><div class="screen"><div class="bg" data-frame="2"></div><div class="sheet"><span class="app"></span><span class="app rb"><svg viewBox="0 0 256 256"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg></span><span class="app"></span></div></div></div></div>
-      <div><h3 data-k="r1.h">Tu envoies la vidéo</h3><p data-k="r1.p">Depuis TikTok ou Instagram : Partager, puis Reelbook. Elle rejoint ta file.</p></div></li>
+    <li><div class="stage" aria-hidden="true"><div class="mini-phone"><div class="screen"><div class="bg" data-share></div><div class="sheet"><span class="app"></span><span class="app rb"><svg viewBox="0 0 256 256"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg></span><span class="app"></span></div></div></div></div>
+      <div><h3 data-k="r1.h">Tu envoies la vidéo</h3><p data-k="r1.p">Depuis TikTok, Instagram, YouTube ou Facebook : Partager, puis Reelbook. Elle rejoint ta file.</p></div></li>
     <li><div class="stage" aria-hidden="true"><div class="term"><div class="tb"><i></i><i></i><i></i></div><span class="c">&gt;</span> <span class="k">/reelbook</span><br><span data-k="t.l1">3 vidéos dans la file</span><br><span data-k="t.l2">ouverture dans Chrome</span> <span class="cur"></span></div></div>
-      <div><h3 data-k="r2.h">Claude s'en charge</h3><p data-k="r2.p">Tape <code>/reelbook</code> dans Claude Code, ou laisse-le tourner la nuit sur ton Mac.</p></div></li>
+      <div><h3 data-k="r2.h">Claude s’en charge</h3><p data-k="r2.p">Tape <code>/reelbook</code> dans Claude Code, ou laisse-le tourner la nuit sur ton ordinateur.</p></div></li>
     <li><div class="stage" aria-hidden="true"><div class="chrome"><div class="tb"><i></i><i></i><span class="url" id="rUrl">instagram.com/reel/…</span></div><div class="vid"><div data-frame="3" style="width:100%;height:100%"></div><span class="scan"></span></div></div></div>
-      <div><h3 data-k="r3.h">Chrome ouvre et analyse</h3><p data-k="r3.p">L'extension Claude in Chrome lit la vidéo comme toi : le geste, les consignes, les sous-titres.</p></div></li>
+      <div><h3 data-k="r3.h">Chrome ouvre et analyse</h3><p data-k="r3.p">L’extension Claude in Chrome lit la vidéo comme toi : le geste, les consignes, les sous-titres.</p></div></li>
     <li><div class="stage" aria-hidden="true"><div class="seq"><div data-frame="0"></div><div data-frame="1"></div><div data-frame="2"></div><div data-frame="3"></div><div data-frame="4"></div><div data-frame="5"></div></div></div>
-      <div><h3 data-k="r4.h">Le geste, découpé</h3><p data-k="r4.p">Les moments clés deviennent une séquence d'images, avec les points à retenir, un dosage et le lien vers la vidéo.</p></div></li>
+      <div><h3 data-k="r4.h">Le geste, découpé</h3><p data-k="r4.p">Les moments clés deviennent une séquence d’images, avec les points à retenir, un dosage et le lien vers la vidéo.</p></div></li>
     <li><div class="stage" aria-hidden="true"><div class="nb" id="routeNb"></div></div>
       <div><h3 data-k="r5.h">Rangée dans ton carnet</h3><p data-k="r5.p">Dans le bon carnet, le bon groupe. Prête à être retrouvée, annotée, ajoutée à une séance.</p></div></li>
   </ol>
@@ -462,27 +570,32 @@ code{font:600 .92em var(--mono)}
 <section class="frame sec" id="install" aria-labelledby="inst-h">
   <div class="head2">
     <h2 id="inst-h" data-k="inst.h">Installer Reelbook.</h2>
-    <p class="lede" data-k="inst.p">Trois choses à faire une fois : ton compte, le skill sur ton ordinateur, l'app sur ton téléphone.</p>
+    <p class="lede" data-k="inst.p">Avant de commencer : Claude Pro avec Claude Code, Chrome avec l’extension Claude in Chrome, Git et Python 3.9+. Ensuite, trois choses à faire une fois : ton compte, le skill sur ton ordinateur, l’app sur ton téléphone.</p>
   </div>
+  <p class="oss"><span class="oss-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></span><span data-k="oss.p"><b>Reelbook est open source.</b> Le skill, l’app et le serveur sont publics sur GitHub, sous licence MIT : tu peux lire ce que tu installes, et l’héberger toi-même.</span><a href="https://github.com/lt20/reelbook" target="_blank" rel="noopener" data-k="oss.a">Voir le code sur GitHub ↗</a></p>
   <ol class="install">
-    <li><h3 data-k="i1.h">Crée ton carnet</h3>
-      <p data-k="i1.p">Choisis où vivent tes fiches. Tu peux changer plus tard.</p>
-      <div class="seg peek" role="group" aria-label="Aperçu"><button type="button" data-full="0" aria-pressed="true" data-k="pk.open">Places libres</button><button type="button" data-full="1" aria-pressed="false" data-k="pk.full">Bêta complète</button></div>
-      <label class="opt host-open"><input type="radio" name="host" checked><span><b data-k="i1.a">Chez Reelbook</b><span data-k="i1.ad">Rien à configurer. Gratuit pendant la bêta : 300 fiches, 200 Mo de photos, 10 vidéos par jour.</span><span class="seatline" data-k="i1.seats">14 places prises sur 50</span></span></label>
-      <div class="opt host-full" hidden><span class="lock-ic" aria-hidden="true">50</span><span><b data-k="wl.h">Bêta complète : 50 sur 50</b><span data-k="wl.p">Laisse ton prénom et ton e-mail : on te prévient dès qu'une place se libère.</span>
-        <form class="wl" onsubmit="return false"><label><span data-k="wl.n">Prénom</span><input type="text" autocomplete="given-name" value="Camille"></label><label><span data-k="wl.e">E-mail</span><input type="email" autocomplete="email" value="camille@exemple.fr"></label>
-        <label class="consent"><input type="checkbox" checked><span data-k="wl.c">J'accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d'une place libre, et rien d'autre. Effacés à mon inscription ou sur simple demande.</span></label>
+    <li id="carnet"><h3 data-k="i1.h">Crée ton carnet</h3>
+      <p data-k="i1.p">Choisis où vivent tes fiches. Tu pourras changer plus tard.</p>
+      <label class="opt host-open"><input type="radio" name="host" checked><span><b data-k="i1.a">Chez Reelbook</b><span data-k="i1.ad">Rien à configurer. Gratuit pendant la bêta : 300 fiches, 200 Mo de photos, 10 vidéos par jour.</span><span class="seatline" data-k="i1.seats">14 places prises sur 50</span></span></label>
+      <div class="opt host-full" hidden><span class="lock-ic" aria-hidden="true">50</span><span><b data-k="wl.h">Bêta complète : 50 sur 50</b><span data-k="wl.p">Laisse ton prénom et ton e-mail : on te prévient dès qu’une place se libère.</span>
+        <form class="wl" onsubmit="return false"><label><span data-k="wl.n">Prénom</span><input type="text" autocomplete="given-name" placeholder="Camille"></label><label><span data-k="wl.e">E-mail</span><input type="email" autocomplete="email" placeholder="camille@exemple.fr"></label>
+        <label class="consent"><input type="checkbox"><span data-k="wl.c">J’accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d’une place libre, et rien d’autre. Effacés à mon inscription ou sur simple demande.</span></label>
         <button class="btn" type="submit" data-k="wl.cta">Me prévenir</button></form></span></div>
-      <label class="opt"><input type="radio" name="host"><span><b data-k="i1.b">Sur mon Supabase</b><span data-k="i1.bd">Ton propre projet, tes limites. Un fichier SQL à lancer, puis l'adresse et la clé.</span></span></label>
+      <label class="opt"><input type="radio" name="host"><span><b data-k="i1.b">Sur mon Supabase</b><span data-k="i1.bd">Ton propre projet, tes limites. Un fichier SQL à lancer, puis colle l’adresse et la clé.</span></span></label>
       <a class="btn host-cta" href="#signup" data-k="i1.cta">Créer mon carnet</a></li>
     <li><h3 data-k="i2.h">Installe le skill</h3>
-      <p class="need" data-k="i2.n">Il te faut Claude Pro ou plus avec Claude Code, et Chrome avec l'extension Claude in Chrome.</p>
-      <p data-k="i2.p">Colle cette ligne dans le Terminal. Elle installe le skill <code>/reelbook</code> et le relie à ton carnet.</p>
-      <pre>curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
-      <button class="copy" type="button" id="copy" data-k="i2.copy">Copier la ligne</button></li>
-    <li><h3 data-k="i3.h">Ajoute-le au téléphone</h3>
-      <p data-k="i3.p">Mets Reelbook sur ton écran d'accueil, puis le raccourci « Envoyer à Reelbook » dans le menu Partager de l'iPhone.</p>
-      <p data-k="i3.p2">Sur Android, colle simplement le lien dans l'app.</p>
+      <p class="need" data-k="i2.n">Il te faut Claude Pro ou plus avec Claude Code, et Chrome avec l’extension Claude in Chrome.</p>
+      <div class="seg os" role="group" aria-label="Système" data-al-en="Operating system"><button type="button" data-os="unix" aria-pressed="true">macOS / Linux</button><button type="button" data-os="win" aria-pressed="false">Windows</button></div>
+      <p data-k="i2.p" data-os-pane="unix">Colle cette ligne dans le Terminal. Elle installe le skill <code>/reelbook</code> et le relie à ton compte.</p>
+      <p data-k="i2.pw" data-os-pane="win" hidden>Colle cette ligne dans PowerShell. Elle installe le skill <code>/reelbook</code> et le relie à ton compte.</p>
+      <pre data-os-pane="unix">curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
+      <pre data-os-pane="win" hidden>irm https://lt20.github.io/reelbook/install.ps1 | iex</pre>
+      <button class="copy" type="button" id="copy" data-k="i2.copy">Copier la ligne</button><span class="vh" id="copyMsg" aria-live="polite"></span>
+      <p class="src" data-os-pane="unix"><a href="https://github.com/lt20/reelbook/blob/main/app/install.sh" target="_blank" rel="noopener" data-k="i2.src">Lire le script avant de le lancer ↗</a></p>
+      <p class="src" data-os-pane="win" hidden><a href="https://github.com/lt20/reelbook/blob/main/app/install.ps1" target="_blank" rel="noopener" data-k="i2.src">Lire le script avant de le lancer ↗</a></p></li>
+    <li><h3 data-k="i3.h">Ajoute Reelbook à ton téléphone</h3>
+      <p data-k="i3.p">Mets Reelbook sur ton écran d’accueil, puis le raccourci « Envoyer à Reelbook » dans le menu Partager de l’iPhone.</p>
+      <p data-k="i3.p2">Sur Android, colle simplement le lien dans l’app.</p>
       <a class="btn quiet" href="#shortcut" style="align-self:flex-start;background:var(--paper)" data-k="i3.cta">Ajouter le raccourci</a></li>
   </ol>
 </section>
@@ -490,20 +603,20 @@ code{font:600 .92em var(--mono)}
 <section class="frame sec" id="daily" aria-labelledby="daily-h">
   <h2 id="daily-h" data-k="d.h">Au quotidien.</h2>
   <ol class="daily">
-    <li><span class="verb" data-k="d1.v">Envoie</span><p data-k="d1.p">Une technique te plaît dans ton fil : Partager, Reelbook. Dix secondes, et tu continues à scroller.</p></li>
-    <li><span class="verb" data-k="d2.v">Lance</span><p data-k="d2.p"><code>/reelbook</code> dans Claude Code quand tu veux, ou chaque nuit tout seul. Le matin, tes fiches sont là.</p></li>
-    <li><span class="verb" data-k="d3.v">Organise</span><p data-k="d3.p">Déplace une fiche d'un groupe à l'autre, ajoute tes notes, compose une séance à partir de plusieurs carnets.</p></li>
-    <li><span class="verb" data-k="d4.v">Entraîne-toi</span><p data-k="d4.p">Ouvre la fiche ou la séance sur ton téléphone : le geste d'abord, en images, puis les détails. Coche « Fait aujourd'hui ».</p></li>
+    <li><span class="verb" data-k="d1.v">Envoie</span><p data-k="d1.p">Une technique te plaît dans ton fil : Partager, Reelbook. Dix secondes, et tu continues à scroller.</p></li>
+    <li><span class="verb" data-k="d2.v">Lance</span><p data-k="d2.p"><code>/reelbook</code> dans Claude Code quand tu veux, ou laisse-le tourner chaque nuit. Le matin, tes fiches sont là.</p></li>
+    <li><span class="verb" data-k="d3.v">Organise</span><p data-k="d3.p">Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets.</p></li>
+    <li><span class="verb" data-k="d4.v">Entraîne-toi</span><p data-k="d4.p">Ouvre la fiche ou la séance sur ton téléphone : le geste d’abord, en images, puis les détails. Coche « Fait aujourd’hui ».</p></li>
   </ol>
 </section>
 
 <section class="frame close" aria-labelledby="close-h">
   <h2 id="close-h" class="big">reelbook</h2>
   <div class="close-row">
-    <p data-k="c.p">Tes vidéos de technique, enfin prêtes pour l'entraînement. Gratuit pendant la bêta, 50 places.</p>
-    <a class="btn" href="#install" data-k="cta">Créer mon carnet</a>
+    <p data-k="c.p">Tes vidéos de technique, enfin prêtes pour l’entraînement. Gratuit pendant la bêta, 50 places.</p>
+    <a class="btn" href="#carnet" data-k="cta">Créer mon carnet</a>
   </div>
-  <p class="foot" data-k="foot">Les fiches sont faites pour un usage personnel et gardent toujours le lien vers la vidéo et son auteur. Photos MMA de cette page : captures d'un reel de Natan Levy ; vue danse : images de démonstration générées. À remplacer par nos propres vidéos avant la mise en ligne.</p>
+  <p class="foot" data-k="foot">Les fiches personnelles gardent le lien vers leur vidéo et leur auteur. Les visuels de cette page sont des démonstrations générées. Reelbook est open source, sous licence MIT : <a href="https://github.com/lt20/reelbook" target="_blank" rel="noopener">github.com/lt20/reelbook</a>.</p>
 </section>
 </main>
 
@@ -516,7 +629,7 @@ code{font:600 .92em var(--mono)}
     pole:'<path d="M12 3v18M9 3h6M8 21h8"/><path d="M14.5 8.4c2 .4 3.5 1.2 3.5 2.1 0 1.4-2.7 2.5-6 2.5s-6-1.1-6-2.5c0-.9 1.5-1.7 3.5-2.1"/>',
     dot:'<circle cx="12" cy="12" r="4"/>'
   };
-  var icon=function(k){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[k]||IC.dot)+'</svg>'};
+  var icon=function(k){return IC[k]?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>':'<svg aria-hidden="true"><use href="#nb-'+k+'"/></svg>'};
 
   /* silhouettes de danse, style pictogramme (boîte 60 x 80) */
   var DP={
@@ -553,173 +666,246 @@ code{font:600 .92em var(--mono)}
   var T=function(fr,en){return {fr:fr,en:en}};
   var EX={
     mma:{
-      nb:'Fight techniques', icon:'fight', count:T('5 fiches','5 sheets'), url:'instagram.com/reel/…',
-      crumb:'Fight techniques › Kicks & knees', title:T('Coup de pied tournant au foie','Spinning kick to the liver'),
-      src:T('Vidéo d’origine : Natan Levy sur Instagram ↗','Original video: Natan Levy on Instagram ↗'),
+      nb:'Fight techniques', icon:'fight', col:'#b4432f', hc:T('8 fiches · 1 séance','8 sheets · 1 session'), sub:T('Frappes, défense, clinch, déplacements.','Striking, defence, clinch, footwork.'), count:T('5 fiches','5 sheets'), url:'reelbook.demo/mma',
+      mine:'fight', fk:'kick', share:[4,'18% 50%'], drawn:T('Séquence générée et mise en scène : les mêmes sportifs et le même studio dans les six étapes, sans vidéo réelle.','Generated staged sequence: the same athletes and studio in all six steps, not footage from a real video.'),
+      crumb:'Fight techniques › Coups de pied et genoux', crumbEn:'Fight techniques › Kicks & knees', title:T('Coup de pied retourné','Spinning back kick'),
+      src:T('Démonstration générée · séquence mise en scène','Generated demo · staged sequence'),
       frames:['k01','k02','k03','k04','k05','k06'].map(function(f){return 'img/'+f+'.jpg'}),
-      alts:T(['En garde, face à la cible','Les pieds croisés','Le tour','Le genou monte','Le coup de pied','Sur la pao'],['On guard','Feet crossed','The turn','Knee up','The kick','On the pad']),
-      steps:{fr:[["Départ","En garde, pieds écartés, face à la cible. Si tu tournes comme ça, tu perds l'équilibre : il faut le préparer."],["Croise les pieds","Premier temps : les pieds se croisent, avant de tourner. Le regard reste sur la cible."],["Le tour","Tu tournes sur les pieds croisés, équilibré, le regard déjà tourné vers la cible."],["Le genou monte","Le genou se lève pendant que tu finis le tour, le haut du corps accompagne."],["Le coup","La jambe part tendue vers la cible, le buste bascule : le pied vise le foie."],["Sur la pao","Même geste sur la pao tenue par un partenaire : tour, regard et coup n'en font plus qu'un."]],
-             en:[["Start","On guard, feet apart, facing the target. Turn from here and you lose your balance: set it up first."],["Cross your feet","First beat: the feet cross before you turn. Your eyes stay on the target."],["The turn","You turn on crossed feet, balanced, eyes already back on the target."],["Knee up","The knee lifts as you finish the turn, the upper body follows."],["The kick","The leg shoots out at the target, the torso tips back: the foot aims for the liver."],["On the pad","Same move on a pad held by a partner: turn, look and kick become one."]]},
+      alts:T(['En garde, face à la cible','Les pieds croisés','Le tour','Le genou levé','Le coup','Sur la pao'],['On guard','Feet crossed','The turn','Knee up','The kick','On the pad']),
+      steps:{fr:[["Départ","En garde, pieds écartés, face à la cible. Si tu tournes comme ça, tu perds l’équilibre : prépare d’abord le tour."],["Croise les pieds","Premier temps : les pieds se croisent, avant de tourner. Le regard reste sur la cible."],["Le tour","Tu tournes sur les pieds croisés, équilibré, le regard déjà tourné vers la cible."],["Le genou monte","Le genou se lève pendant que tu finis le tour : c’est lui qui arme le coup. Le haut du corps accompagne."],["Le coup part","Le buste s’incline et la jambe se tend vers la pao, le talon devant."],["Le coup au foie, sur la pao","Le talon frappe la pao tenue par le partenaire, au niveau du foie. Tour, genou et coup n’en font plus qu’un."]],
+             en:[["Start","On guard, feet apart, facing the target. Turn from here and you lose your balance: set it up first."],["Cross your feet","First beat: the feet cross before you turn. Your eyes stay on the target."],["The turn","You turn on crossed feet, balanced, eyes already back on the target."],["The knee rises","The knee comes up as you finish the turn: that's what chambers the kick. The upper body follows."],["The kick goes out","The torso leans and the leg extends toward the pad, heel first."],["Kick to the liver, on the pad","The heel lands on the pad your partner holds, at liver height. Turn, knee and kick become one."]]},
       items:{
-        neck:{t:T('Prise de nuque : le genou à la ceinture','Neck clinch: knee to the belt'),img:'img/t-defense-prise-de-nuque.jpg',m:T('10 min · Instagram','10 min · Instagram'),g:'Clinch & grappling'},
+        neck:{t:T('Prise de nuque : le genou à la ceinture','Neck clinch: knee to the belt'),img:'img/t-defense-prise-de-nuque.jpg',m:T('10 min · Instagram','10 min · Instagram'),g:'Clinch & grappling'},
         osoto:{t:T('Osoto gari en MMA','Osoto gari for MMA'),img:'img/t-osoto-gari-mma.jpg',m:T('10 min · Instagram','10 min · Instagram'),g:'Clinch & grappling'},
         crav:{t:T('Sortir d’une cravate debout','Escaping a standing headlock'),img:'img/t-sortie-cravate-debout.jpg',m:T('5 min · Instagram','5 min · Instagram'),g:'Clinch & grappling'},
-        kick:{t:T('Coup de pied tournant au foie','Spinning kick to the liver'),img:'img/t-coup-de-pied-tournant-foie.jpg',m:T('6 min · Instagram','6 min · Instagram'),g:'Kicks & knees'},
-        foot:{t:T('Footwork boxe : le pas dans le cerceau','Boxing footwork: the hoop step'),img:'img/t-footwork-drills-boxe.jpg',m:T('4 combinaisons · YouTube','4 combos · YouTube'),g:'Footwork'},
-        hips:{t:T('Flow hanches : squat large, cosaque, assis','Hip flow: wide squat, cossack, floor sit'),img:'img/t-flow-hanches.jpg',m:T('3 min · Instagram','3 min · Instagram'),g:'Hips'}
+        kick:{t:T('Coup de pied retourné','Spinning back kick'),img:'img/t-coup-de-pied-tournant-foie.jpg',m:T('6 min · Instagram','6 min · Instagram'),g:'Kicks & knees'},
+        foot:{t:T('Footwork boxe : le pas dans le cerceau','Boxing footwork: the hoop step'),img:'img/t-footwork-drills-boxe.jpg',m:T('4 combinaisons · YouTube','4 combos · YouTube'),g:'Footwork'},
+        hips:{t:T('Flow hanches : squat large, cosaque, assis','Hip flow: wide squat, cossack, floor sit'),img:'img/t-flow-hanches.jpg',m:T('3 min · Instagram','3 min · Instagram'),g:'Hips'}
       },
+      groupNames:{fr:{'Clinch & grappling':'Corps à corps','Kicks & knees':'Coups de pied et genoux','Footwork':'Déplacements','Hips':'Hanches'},en:{'Clinch & grappling':'Clinch & grappling','Kicks & knees':'Kicks & knees','Footwork':'Footwork','Hips':'Hips'}},
       groups:[['Clinch & grappling',['neck','osoto','crav']]], pair:[['Kicks & knees',['kick']],['Footwork',['foot']]],
-      search:{q:T('clinch','clinch'),chip:T('Zone : haut du corps','Zone: upper body'),mark:T('Clinch','Clinch'),res:['neck','crav','osoto'],note:T('ta note : « garder les coudes serrés »','your note: « keep the elbows tight »'),
-        lede:T('Tu prépares le sparring de jeudi. Tape « clinch », filtre par zone ou par matériel : les fiches sortent, avec les notes que tu y as laissées la dernière fois.','Thursday is sparring. Type « clinch », filter by body zone or gear: your sheets come up, with the notes you left on them last time.')},
-      session:{title:T('Jeudi : clinch et kicks','Thursday: clinch and kicks'),format:T('3 tours · 60 s de repos','3 rounds · 60 s rest'),
-        items:[['foot','Fight',T('3 min','3 min')],['hips','Yoga',T('2 tours','2 rounds')],['neck','Fight',T('3×5 / côté','3×5 / side')],['kick','Fight',T('8 / côté','8 / side')]]},
+      search:{q:T('clinch','clinch'),chip:T('Zone : haut du corps','Zone: upper body'),mark:T('Clinch','Clinch'),res:['neck','crav','osoto'],note:T('ta note : « garder les coudes serrés »','your note: “keep the elbows tight”'),
+        lede:T('Tu prépares le sparring de jeudi. Tape « clinch », filtre par zone ou par matériel : les fiches sortent, avec les notes que tu y as laissées la dernière fois.','Thursday is sparring. Type “clinch”, filter by body zone or gear: your sheets come up, with the notes you left on them last time.')},
+      session:{title:T('Jeudi : clinch et kicks','Thursday: clinch and kicks'),format:T('3 tours · 60 s de repos','3 rounds · 60 s rest'),
+        items:[['foot','Fight',T('3 min','3 min')],['crav','Fight',T('5 / côté','5 / side')],['neck','Fight',T('5 / côté','5 / side')],['kick','Fight',T('8 / côté','8 / side')]]},
       progress:{nw:['kick','foot'],tr:['crav'],dn:[['osoto',T('6 fois · mardi','6 times · Tuesday')],['neck',T('3 fois · jeudi dernier','3 times · last Thursday')]]},
-      note:{frame:2,step:T('Le tour','The turn'),text:T('Croiser plus serré, sinon je pars côté gauche.\nCoach : regarder la cible AVANT de tourner.','Cross tighter, or I drift to the left.\nCoach: look at the target BEFORE turning.'),
-        who:T('Natan Levy · Instagram','Natan Levy · Instagram'),done:T('fois, la dernière mardi','times, last on Tuesday'),n:6}
+      note:{frame:2,step:T('Le tour','The turn'),text:T('Croiser plus serré, sinon je pars côté gauche.\nCoach : regarder la cible AVANT de tourner.','Cross tighter, or I drift to the left.\nCoach: look at the target BEFORE turning.'),
+        who:T('Reelbook · démonstration générée','Reelbook · generated demo'),done:T('fois, la dernière mardi','times, last on Tuesday'),n:6}
     },
     dance:{
-      nb:'Dance', icon:'dance', count:T('5 fiches','5 sheets'), url:'tiktok.com/@…/video/…',
+      nb:'Dance', icon:'dance', col:'#b23a6e', hc:T('12 fiches · 1 séance','12 sheets · 1 session'), sub:T('Pas, combinaisons, isolations, musicalité.','Steps, combos, isolations, musicality.'), count:T('5 fiches','5 sheets'), url:'tiktok.com/@…/video/…',
+      mine:'dance', fk:'pir', drawn:T('Démonstration générée : images mises en scène, pas une vraie vidéo.','Generated demo: staged images, not a real video.'),
       crumb:'Dance › Tours', crumbEn:'Dance › Turns', title:T('Pirouette en dehors','Pirouette en dehors'),
-      src:T('Vidéo d’origine : [compte] sur TikTok ↗','Original video: [account] on TikTok ↗'),
+      src:T('Vidéo d’origine : [compte] sur TikTok ↗','Original video: [account] on TikTok ↗'),
       frames:['d01','d02','d03','d04','d05','d06'].map(function(f){return 'img/'+f+'.jpg'}),
       alts:T(['Préparation en quatrième','Montée en retiré','Début du tour','Rotation, le regard sur son point','Sortie du tour','Réception en quatrième, bras ouverts'],['Preparation in fourth','Rising into retiré','Start of the turn','Rotation, eyes on the spot','Coming out of the turn','Landing in fourth, arms open']),
-      steps:{fr:[["Préparation","En quatrième position, genoux pliés, le poids entre les deux pieds. Un bras devant, l'autre ouvert."],["Relevé, retiré","Pousse dans le sol : la jambe d'appui monte, l'autre pied file au genou. Les bras se rassemblent devant toi."],["Le départ","Le corps part d'un bloc, bassin et épaules ensemble. La tête reste sur ton point le plus longtemps possible."],["Le regard","La tête fouette et revient la première sur ton point. Garde le retiré et le dos long pendant toute la rotation."],["La sortie","Le tour s'achève face à ton point. Le pied quitte le genou sans tomber, la jambe d'appui reste tendue."],["Réception","Repose le pied derrière en quatrième, plié, et ouvre les bras. Tiens la fin deux temps."]],
+      steps:{fr:[["Préparation","En quatrième position, genoux pliés, le poids entre les deux pieds. Un bras devant, l’autre ouvert."],["Relevé, retiré","Pousse dans le sol : la jambe d’appui monte, l’autre pied file au genou. Les bras se rassemblent devant toi."],["Le départ","Le corps part d’un bloc, bassin et épaules ensemble. La tête reste sur ton point le plus longtemps possible."],["Le regard","La tête fouette et revient la première sur ton point. Garde le retiré et le dos long pendant toute la rotation."],["La sortie","Le tour s’achève face à ton point. Le pied quitte le genou sans retomber d’un coup, la jambe d’appui reste tendue."],["Réception","Repose le pied derrière en quatrième, plié, et ouvre les bras. Tiens la fin deux temps."]],
              en:[["Preparation","Fourth position, knees bent, weight between both feet. One arm in front, the other open."],["Relevé, retiré","Push into the floor: the standing leg rises, the other foot slides up to the knee. The arms gather in front of you."],["The start","The body turns as one block, hips and shoulders together. The head stays on your spot as long as it can."],["Spot","The head whips round and arrives first on your spot. Keep the retiré and a long back through the whole rotation."],["The exit","The turn ends facing your spot. The foot leaves the knee without dropping, the standing leg stays straight."],["Landing","Set the foot down behind in fourth, in plié, and open the arms. Hold the finish for two counts."]]},
       items:{
         pir:{t:T('Pirouette en dehors','Pirouette en dehors'),pose:'passe',img:'img/c-pir.jpg',m:T('3 min · TikTok','3 min · TikTok'),g:'Tours'},
         chaine:{t:T('Chaînés en diagonale','Chaînés across the floor'),pose:'chaine',img:'img/c-chaine.jpg',m:T('2 min · Instagram','2 min · Instagram'),g:'Tours'},
-        fouette:{t:T('Fouetté : la préparation','Fouetté: the preparation'),pose:'fouette',img:'img/c-fouette.jpg',m:T('5 min · YouTube','5 min · YouTube'),g:'Tours'},
+        fouette:{t:T('Fouetté : la préparation','Fouetté: the preparation'),pose:'fouette',img:'img/c-fouette.jpg',m:T('5 min · YouTube','5 min · YouTube'),g:'Tours'},
         jete:{t:T('Grand jeté, sans forcer le grand écart','Grand jeté without forcing the split'),pose:'jete',img:'img/c-jete.jpg',m:T('4 min · Instagram','4 min · Instagram'),g:'Sauts'},
         heels:{t:T('Combo heels en 8 temps','Heels combo in 8 counts'),pose:'heels',img:'img/c-heels.jpg',m:T('1 min · TikTok','1 min · TikTok'),g:'Chorés'},
         pdb:{t:T('Port de bras lent','Slow port de bras'),pose:'pdb',img:'img/c-pdb.jpg',m:T('3 min · Instagram','3 min · Instagram'),g:'Échauffement'},
-        hips:{t:T('Flow hanches : squat large, cosaque, assis','Hip flow: wide squat, cossack, floor sit'),img:'img/t-flow-hanches.jpg',m:T('3 min · Instagram','3 min · Instagram'),g:'Hips'}
+        hips:{t:T('Flow hanches : squat large, cosaque, assis','Hip flow: wide squat, cossack, floor sit'),img:'img/t-flow-hanches.jpg',m:T('3 min · Instagram','3 min · Instagram'),g:'Hips'}
       },
       groupNames:{fr:{Tours:'Tours',Sauts:'Sauts',Chorés:'Chorégraphies',Échauffement:'Échauffement'},en:{Tours:'Turns',Sauts:'Jumps',Chorés:'Choreography',Échauffement:'Warm-up'}},
       groups:[['Tours',['pir','chaine','fouette']]], pair:[['Sauts',['jete']],['Chorés',['heels']]],
-      search:{q:T('tour','turn'),chip:T('Zone : jambes','Zone: legs'),mark:T('Tours','Turns'),res:['pir','chaine','fouette'],note:T('ta note : « spot sur la porte, pas sur le miroir »','your note: « spot on the door, not the mirror »'),
-        lede:T('Le cours de mardi approche. Tape « tour », filtre par zone ou par durée : les fiches sortent, avec les notes que tu y as laissées la dernière fois.','Tuesday’s class is coming. Type « turn », filter by body zone or time: your sheets come up, with the notes you left on them last time.')},
-      session:{title:T('Mardi : tours et sauts','Tuesday: turns and jumps'),format:T('2 passages · 30 s de repos','2 rounds · 30 s rest'),
-        items:[['pdb','Dance',T('2 min','2 min')],['hips','Yoga',T('2 tours','2 rounds')],['pir','Dance',T('8 / côté','8 / side')],['jete','Dance',T('4 diagonales','4 diagonals')]]},
+      search:{q:T('tour','turn'),chip:T('Zone : jambes','Zone: legs'),mark:T('Tours','Turns'),res:['pir','chaine','fouette'],note:T('ta note : « spot sur la porte, pas sur le miroir »','your note: “spot on the door, not the mirror”'),
+        lede:T('Le cours de mardi approche. Tape « tour », filtre par zone ou par durée : les fiches sortent, avec les notes que tu y as laissées la dernière fois.','Tuesday’s class is coming. Type “turn”, filter by body zone or time: your sheets come up, with the notes you left on them last time.')},
+      session:{title:T('Mardi : tours et sauts','Tuesday: turns and jumps'),format:T('2 passages · 30 s de repos','2 rounds · 30 s rest'),
+        items:[['pdb','Dance',T('2 min','2 min')],['chaine','Dance',T('2 diagonales','2 diagonals')],['pir','Dance',T('8 / côté','8 / side')],['jete','Dance',T('4 diagonales','4 diagonals')]]},
       progress:{nw:['pir','heels'],tr:['fouette'],dn:[['chaine',T('6 fois · mardi','6 times · Tuesday')],['jete',T('3 fois · jeudi dernier','3 times · last Thursday')]]},
-      note:{frame:3,step:T('Le regard','Spot'),text:T('Spot sur la porte du studio, pas sur le miroir.\nCôté gauche : mon retiré descend, le garder au genou.','Spot on the studio door, not the mirror.\nLeft side: my retiré drops, keep it at the knee.'),
+      note:{frame:3,step:T('Le regard','Spot'),text:T('Spot sur la porte du studio, pas sur le miroir.\nCôté gauche : mon retiré descend, le garder au genou.','Spot on the studio door, not the mirror.\nLeft side: my retiré drops, keep it at the knee.'),
         who:T('[compte] · TikTok','[account] · TikTok'),done:T('fois, la dernière mardi','times, last on Tuesday'),n:6}
+    },
+    stretch:{
+      nb:'Yoga & stretching', icon:'yoga', col:'#2f7a4e', url:'instagram.com/reel/…', mine:'yoga', fk:'diag', share:[4,'50% 50%'],
+      drawn:T('Démonstration générée d’après un reel Instagram : une autre personne, un autre lieu, les mêmes positions.','Generated demo based on an Instagram reel: another person, another place, the same positions.'),
+      crumb:'Yoga & stretching › Hanches', crumbEn:'Yoga & stretching › Hips', title:T('Étirement en diagonale','Diagonal stretch'),
+      frames:['st01','st02','st03','st04','st05','st06'].map(function(f){return 'img/'+f+'.jpg'}),
+      alts:T(['Talons joints, pieds ouverts à 90 degrés','Le pied recule en diagonale','Fente en diagonale, talon arrière levé','Le poids sur la jambe arrière','La main plonge vers la jambe arrière','La position tenue'],['Heels together, feet at 90 degrees','The foot steps back on a diagonal','Diagonal lunge, back heel up','Weight on the back leg','The hand dives to the back leg','Holding the position']),
+      steps:{fr:[["Talons joints","Colle tes talons l’un contre l’autre et ouvre les pieds à 90 degrés."],["Pas en diagonale","Recule un pied en diagonale, la pointe derrière le talon, sur une ligne de deux fois la largeur de tes épaules."],["Talon arrière levé","Le pied arrière reste dans l’alignement, talon levé. Les deux jambes sont fléchies."],["Poids vers l’arrière","Mets l’essentiel du poids sur la jambe arrière, le buste droit."],["Plonger vers l’arrière","Touche la jambe arrière avec la main opposée : derrière le genou, puis le mollet ou le talon. Ne tourne pas le buste, imagine que tu plonges vers l’arrière."],["Tenir 10 secondes","10 répétitions de chaque côté ; à la dernière, garde la position 10 secondes. 3 tours."]],
+             en:[["Heels together","Bring your heels together and open your feet to 90 degrees."],["Diagonal step","Step one foot back on a diagonal, toes behind the heel, on a line twice your shoulder width."],["Back heel up","The back foot stays in line, heel lifted. Both legs are bent."],["Weight back","Put most of your weight on the back leg, torso upright."],["Dive back","Reach the back leg with the opposite hand: behind the knee, then the calf or the heel. Don't twist: imagine diving backwards."],["Hold 10 seconds","10 reps per side; on the last one, hold the position for 10 seconds. 3 rounds."]]},
+      items:{
+        diag:{t:T('Étirement en diagonale','Diagonal stretch'),img:'img/st05.jpg',m:T('48 s · Instagram','48 s · Instagram'),g:'Hanches'},
+        sal:{t:T('Salutation au soleil','Sun salutation'),img:'img/y2-salutation.jpg',m:T('5 min · YouTube','5 min · YouTube'),g:'Enchaînements'},
+        pigeon:{t:T('Le pigeon','Pigeon pose'),img:'img/y2-pigeon.jpg',m:T('2 min · Instagram','2 min · Instagram'),g:'Hanches'},
+        hips:{t:T('Flow hanches : squat large, cosaque, assis','Hip flow: wide squat, cossack, floor sit'),img:'img/t-flow-hanches.jpg',m:T('3 min · Instagram','3 min · Instagram'),g:'Hanches'}
+      },
+      groupNames:{fr:{Hanches:'Hanches',Enchaînements:'Enchaînements'},en:{Hanches:'Hips',Enchaînements:'Flows'}},
+      session:{title:T('Le matin : des hanches libres','Morning: hip opener'),format:T('Une fois · à ton rythme','Once through · at your pace'),
+        items:[['sal','Yoga',T('3 tours','3 rounds')],['hips','Yoga',T('2 tours','2 rounds')],['diag','Yoga',T('3×10 / côté','3×10 / side')],['pigeon','Yoga',T('1 min / côté','1 min / side')]]}
+    },
+    snow:{
+      nb:'Ski & snowboard', icon:'snow', col:'#a4521a', url:'youtube.com/watch?v=…', mine:'snow', fk:'bsnp', share:[4,'50% 50%'],
+      drawn:T('Démonstration générée d’après une vidéo YouTube : une autre rideuse, un autre snowpark, les mêmes positions.','Generated demo based on a YouTube video: another rider, another snowpark, the same positions.'),
+      crumb:'Ski & snowboard › Park', title:T('Nose press sur un box','Nose press on a box'),
+      frames:['sb01','sb02','sb03','sb04','sb05','sb06'].map(function(f){return 'img/'+f+'.jpg'}),
+      alts:T(['L’approche du box','Le saut sur le box','À plat sur le box','Le poids passe devant','Nose press, l’arrière levé','La sortie en l’air'],['Approaching the box','Popping onto the box','Flat on the box','Weight moves forward','Nose press, tail up','Off the end, in the air']),
+      steps:{fr:[["L’approche","Arrive droit sur le box, planche à plat, genoux fléchis, bras ouverts pour l’équilibre."],["Le saut","Petit ollie au bord du box : la planche se pose à plat, dans l’axe du box."],["Sur le box","Planche à plat, le poids centré entre les pieds, genoux souples, le regard vers le bout du box."],["Le poids devant","Avance le bassin et les épaules au-dessus du pied avant : la jambe avant se plie."],["Nose press","Appuie sur le nose : l’arrière de la planche se lève. Bras ouverts, tiens l’appui jusqu’au bout du box."],["La sortie","Au bout du box, saute en ramenant la planche à plat, puis pose-toi genoux fléchis."]],
+             en:[["The approach","Ride straight at the box, board flat, knees bent, arms out for balance."],["The pop","Small ollie at the edge of the box: the board lands flat, in line with the box."],["On the box","Board flat, weight centred between your feet, soft knees, eyes on the end of the box."],["Weight forward","Move your hips and shoulders over the front foot: the front leg bends."],["Nose press","Press the nose: the tail lifts. Arms out, hold the press to the end of the box."],["The exit","At the end of the box, pop and level the board, then land with bent knees."]]},
+      items:{
+        bsnp:{t:T('Nose press sur un box','Nose press on a box'),img:'img/sb05.jpg',m:T('4 min · YouTube','4 min · YouTube'),g:'Park'},
+        ollie:{t:T('L’ollie à plat','The ollie on flat ground'),img:'img/sbt-ollie.jpg',m:T('2 min · TikTok','2 min · TikTok'),g:'Bases'},
+        rail:{t:T('50-50 sur un rail','50-50 on a rail'),img:'img/sbt-rail.jpg',m:T('3 min · Instagram','3 min · Instagram'),g:'Park'},
+        fs180:{t:T('Frontside 180 sur un kicker','Frontside 180 off a kicker'),img:'img/sbt-180.jpg',m:T('6 min · YouTube','6 min · YouTube'),g:'Sauts'}
+      },
+      groupNames:{fr:{Park:'Park',Bases:'Bases',Sauts:'Sauts'},en:{Park:'Park',Bases:'Basics',Sauts:'Jumps'}},
+      session:{title:T('Samedi : snowpark','Saturday: snowpark'),format:T('Sur la piste, puis le park','On the piste, then the park'),
+        items:[['ollie','Snow',T('5 à plat','5 on flat')],['bsnp','Snow',T('5 passages','5 runs')],['rail','Snow',T('5 passages','5 runs')],['fs180','Snow',T('3 essais','3 tries')]]}
+    },
+    hiit:{
+      nb:'Strength', icon:'strength', col:'#5f7d1a', url:'tiktok.com/@…/video/…', mine:'strength', fk:'hiit', share:[5,'50% 50%'],
+      drawn:T('Démonstration générée et mise en scène : la même personne et la même salle dans les six étapes, sans vidéo réelle.','Generated staged demo: the same person and room in all six steps, not footage from a real video.'),
+      crumb:'Strength › HIIT', title:T('Pompe, touches et squat sauté','Push-up, taps and jump squat'),
+      frames:['hi-plank','hi03','hi04','hi-foot','hi-tuck','hi06'].map(function(f){return 'img/'+f+'.jpg'}),
+      alts:T(['Planche, bras tendus','La pompe, poitrine près du sol','La touche d’épaule','La touche de pied, hanches hautes','Les pieds reviennent sous les hanches','Le squat sauté'],['High plank, arms straight','The push-up, chest near the floor','The shoulder tap','The foot touch, hips high','Feet jump in under the hips','The jump squat']),
+      steps:{fr:[["Planche","Bras tendus sous les épaules, le corps aligné de la tête aux talons, pieds écartés de la largeur des hanches."],["Pompe","Descends la poitrine près du sol, coudes vers l’arrière, puis repousse. Le bassin ne s’affaisse pas."],["Touche d’épaule","En haut, touche l’épaule opposée d’une main, puis de l’autre. Les hanches restent face au sol."],["Touche de pied","Monte les hanches en V inversé et va toucher le pied opposé d’une main. Change de côté à chaque répétition."],["Pieds sous les hanches","Saute pour ramener les pieds près des mains, en squat profond, la poitrine qui se relève."],["Squat sauté","Pousse dans le sol et saute, bras au-dessus de la tête. Reviens en planche et enchaîne : 30 secondes, 10 s de repos, 5 tours."]],
+             en:[["Plank","Arms straight under the shoulders, body in one line from head to heels, feet hip-width apart."],["Push-up","Lower your chest close to the floor, elbows back, then push up. Don't let the hips sag."],["Shoulder tap","At the top, tap the opposite shoulder with one hand, then the other. Hips stay square to the floor."],["Foot touch","Lift the hips into an inverted V and reach one hand to the opposite foot. Switch sides every rep."],["Feet in","Jump the feet in next to the hands into a deep squat, chest lifting."],["Jump squat","Drive through the floor and jump, arms overhead. Back down to the plank and go again: 30 seconds, 10 s rest, 5 rounds."]]},
+      items:{
+        hiit:{t:T('Pompe, touches et squat sauté','Push-up, taps and jump squat'),img:'img/hi04.jpg',m:T('1 min · TikTok','1 min · TikTok'),g:'HIIT'},
+        squat:{t:T('Goblet squat','Goblet squat'),img:'img/n-str-1.jpg',m:T('3 min · YouTube','3 min · YouTube'),g:'Jambes'},
+        pushup:{t:T('La pompe, sans creuser le dos','The push-up, without sagging'),img:'img/n-str-3.jpg',m:T('1 min · TikTok','1 min · TikTok'),g:'Haut du corps'},
+        dl:{t:T('Soulevé de terre','Deadlift'),img:'img/n-str-2.jpg',m:T('5 min · YouTube','5 min · YouTube'),g:'Dos'}
+      },
+      groupNames:{fr:{HIIT:'HIIT',Jambes:'Jambes','Haut du corps':'Haut du corps',Dos:'Dos'},en:{HIIT:'HIIT',Jambes:'Legs','Haut du corps':'Upper body',Dos:'Back'}},
+      session:{title:T('Lundi : HIIT et force','Monday: HIIT and strength'),format:T('Force, puis HIIT · 60 s de repos','Strength, then HIIT · 60 s rest'),
+        items:[['dl','Strength',T('3×5','3×5')],['squat','Strength',T('3×10','3×10')],['pushup','Strength',T('3×8','3×8')],['hiit','Strength',T('5 tours','5 rounds')]]}
     }
   };
 
+  var YOGA={
+    items:{
+      sal:{t:T('Salutation au soleil : la montée des bras','Sun salutation: the upward reach'),g:T('Enchaînements','Flows'),img:'img/y2-salutation.jpg'},
+      chien:{t:T('Chien tête en bas','Downward dog'),g:T('Dos','Back'),img:'img/y2-chien.jpg'},
+      corbeau:{t:T('Le corbeau','Crow pose'),g:T('Épaules','Shoulders'),img:'img/y2-corbeau.jpg'},
+      guerrier:{t:T('Guerrier II','Warrior II'),g:T('Jambes','Legs'),img:'img/y2-guerrier.jpg'},
+      pigeon:{t:T('Le pigeon','Pigeon pose'),g:T('Hanches','Hips'),img:'img/y2-pigeon.jpg'}
+    },
+    progress:{nw:['sal','chien'],tr:['corbeau'],dn:[['guerrier',T('6 fois · mardi','6 times · Tuesday')],['pigeon',T('3 fois · jeudi dernier','3 times · last Thursday')]]}
+  };
+  var PAL=['#5f7d1a','#3f8f5f','#b4432f','#1d7a8c','#c2651d','#b23a6e','#8a6a12','#6b4fa3'];
+  var WIDE={neck:'img/f-nuque.jpg',osoto:'img/f-osoto.jpg',crav:'img/f-cravate.jpg','y-sal':'img/y2-salutation.jpg','y-chien':'img/y2-chien.jpg','y-guerrier':'img/y2-guerrier.jpg'};
   var lang='fr', ex='mma', step=0, timer=null;
   var tr=function(o){return o&&typeof o==='object'&&('fr' in o)?o[lang]:o};
   var X=function(){return EX[ex]};
-  function frame(i){var e=X();return e.frames?'<img src="'+e.frames[i]+'" alt="">':dframe(e.poses[i],i)}
-  function pic(key,i){var it=X().items[key];return '<div class="pic">'+(it.img?'<img src="'+it.img+'" alt="">':dthumb(it.pose,i||0))+'</div>'}
+  function frame(i,eager){var e=X();return e.frames?'<img src="'+e.frames[i]+'" alt=""'+(eager?'':' loading="lazy" decoding="async"')+'>':dframe(e.poses[i],i)}
+  function pic(key,i){var it=X().items[key];return '<div class="pic">'+(it.img?'<img src="'+it.img+'" alt="" loading="lazy" decoding="async">':dthumb(it.pose,i||0))+'</div>'}
   function gname(g){var e=X();return e.groupNames&&e.groupNames[lang][g]||g}
   function card(key,i){var it=X().items[key];return '<div class="card">'+pic(key,i)+'<b>'+tr(it.t)+'</b><small>'+tr(it.m)+'</small></div>'}
 
-  var shot=document.getElementById('shot'), th=document.getElementById('thumbs'), scrub=document.getElementById('scrub');
+  var shot=document.getElementById('shot'), th=document.getElementById('thumbs'), cue=document.getElementById('cue');
+  function nF(){var e=X();return (e.frames||e.poses).length}
   function buildPlayer(){
-    var e=X();
+    var e=X(), N=nF();
     [].slice.call(shot.querySelectorAll('div')).forEach(function(d){d.remove()});
     th.innerHTML='';
-    for(var i=0;i<6;i++){
-      var d=document.createElement('div');d.innerHTML=frame(i);d.setAttribute('role','img');d.setAttribute('aria-label',tr(e.alts)[i]);shot.appendChild(d);
-      var b=document.createElement('button');b.type='button';b.setAttribute('aria-label',(i+1)+' / 6 · '+tr(e.alts)[i]);b.innerHTML=frame(i);
-      (function(k){b.addEventListener('click',function(){stop();show(k)})})(i);th.appendChild(b);
+    var s0=step<N?step:0;
+    for(var i=0;i<N;i++){
+      var d=document.createElement('div');d.innerHTML=frame(i,i===s0);d.setAttribute('role','img');d.setAttribute('aria-label',tr(e.alts)[i]);shot.appendChild(d);
+      var b=document.createElement('button');b.type='button';b.setAttribute('aria-label',(i+1)+' / '+N+' · '+tr(e.alts)[i]);
+      (function(k){b.addEventListener('click',function(){stop();cue.setAttribute('aria-live','polite');show(k)})})(i);th.appendChild(b);
     }
     document.getElementById('pCrumb').textContent=lang==='en'&&e.crumbEn?e.crumbEn:e.crumb;
     document.getElementById('pTitle').textContent=tr(e.title);
-    document.getElementById('pSrc').textContent=tr(e.src);
-    document.getElementById('drawn').hidden=ex!=='dance';
+    document.getElementById('drawn').textContent=tr(e.drawn);
+    if(step>=N)step=0;
     show(step);
   }
   function show(k){
     step=k; var e=X();
     [].forEach.call(shot.querySelectorAll('div'),function(d,j){d.classList.toggle('on',j===k)});
     [].forEach.call(th.children,function(b,j){b.setAttribute('aria-current',String(j===k))});
-    document.getElementById('num').textContent=k+1; document.getElementById('scrubN').textContent=(k+1)+' / 6';
+    document.getElementById('num').textContent=k+1;
     document.getElementById('stepName').textContent=e.steps[lang][k][0]; document.getElementById('cue').textContent=e.steps[lang][k][1];
-    scrub.value=k+1;
   }
   function stop(){if(timer){clearInterval(timer);timer=null}}
-  scrub.addEventListener('input',function(){stop();show(+scrub.value-1)});
 
   function renderAll(){
-    var e=X(), L=lang==='en'; document.body.dataset.ex=ex;
+    var e=X(), L=lang==='en'; document.body.dataset.ex=ex; document.body.style.setProperty('--nb',e.col);
     buildPlayer();
-    var h='<div class="ui-head"><span class="ui-badge">'+icon(e.icon)+'</span><span class="ui-title">'+e.nb+'</span><span class="ui-count">'+tr(e.count)+'</span></div>';
-    e.groups.forEach(function(g){h+='<div class="grp"><div class="grp-h">'+gname(g[0])+' <span>'+g[1].length+'</span></div><div class="row">'+g[1].map(function(k,i){return card(k,i)}).join('')+'</div></div>'});
-    h+='<div class="grp-pair">'+e.pair.map(function(g,j){return '<div class="grp"><div class="grp-h">'+gname(g[0])+' <span>'+g[1].length+'</span></div>'+g[1].map(function(k){return card(k,j+3)}).join('')+'</div>'}).join('')+'</div>';
-    document.getElementById('nbUi').innerHTML=h;
-    var s=e.search, mk=tr(s.mark);
-    document.getElementById('v2p').textContent=tr(s.lede);
-    document.getElementById('searchUi').innerHTML='<div class="field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>'+tr(s.q)+'</span><span class="caret" aria-hidden="true"></span></div>'+
-      '<div class="chips"><span class="on">'+tr(s.chip)+'</span><span>'+(L?'Gear':'Matériel')+'</span><span>'+(L?'Time':'Durée')+'</span><span>Type</span></div>'+
-      '<div class="res">'+s.res.map(function(k,i){var it=e.items[k],g=gname(it.g);var gm=g.indexOf(mk)===0?'<mark>'+mk+'</mark>'+g.slice(mk.length):g;
-        return '<a href="#top">'+pic(k,i)+'<span><b>'+tr(it.t)+'</b><small>'+gm+' · '+(i===0?tr(s.note):tr(it.m))+'</small></span></a>'}).join('')+'</div>';
-    var n=e.note;
-    document.getElementById('notesUi').innerHTML='<div class="ph">'+frame(n.frame)+'<b>'+(n.frame+1)+' · '+tr(n.step)+'</b></div>'+
-      '<div class="r"><span class="t">'+tr(e.title)+'</span>'+
-      '<label for="noteTa">'+(L?'Your notes':'Tes notes')+'</label><textarea id="noteTa">'+tr(n.text)+'</textarea>'+
-      '<span class="saved">'+(L?'Saved':'Enregistré')+'</span>'+
-      '<a class="orig" href="#top"><span class="play"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg></span><span><b>'+(L?'Watch the original video':'Revoir la vidéo d’origine')+'</b><small>'+tr(n.who)+'</small></span></a>'+
-      '<div class="count"><b>'+n.n+'</b><span>'+tr(n.done)+'</span></div></div>';
+    // « Tout au même endroit »: the app home on a tablet (six notebooks) and one notebook open on a phone
+    var SUB={fight:T('Frappes, défense, clinch.','Striking, defence, clinch.'),yoga:T('Postures, étirements, respiration.','Poses, stretches, breathing.'),dance:T('Pas, combinaisons, musicalité.','Steps, combos, musicality.'),
+      snow:T('Park, carving, hors-piste.','Park, carving, off-piste.'),cook:T('Techniques, recettes, gestes.','Techniques, recipes, skills.'),strength:T('Mouvements, programmes, charges.','Lifts, programs, loads.')};
+    var NBS=[['fight','Fight techniques',2,8,['f-nuque','f-osoto','f-cravate']],['yoga','Yoga & stretching',1,14,['y2-salutation','y2-chien','y2-guerrier']],
+      ['dance','Dance',5,12,['c-pir','c-chaine','c-jete']],['snow','Ski & snowboard',4,11,['sb05','sb03','sb01']],
+      ['cook','Cooking',6,23,['n-cook-1','n-cook-2','n-cook-3']],['strength','Strength',0,21,['n-str-1','n-str-2','n-str-3']]];
+    var mine=e.mine, nbs=NBS.filter(function(n){return n[0]===mine}).concat(NBS.filter(function(n){return n[0]!==mine}));
+    var ico=function(id){return '<svg aria-hidden="true"><use href="#nb-'+id+'"/></svg>'};
+    var sheets=function(n){return n+(L?' sheets':' fiches')};
+    var tab='<div class="dv-tab"><div class="dv-bar"><b>reelbook</b><span>'+(L?'My notebooks':'Mes carnets')+'</span></div><div class="dv-add">'+(L?'Paste a video link…':'Colle le lien d’une vidéo…')+'<i>+</i></div><div class="dv-grid">'+nbs.map(function(n){
+      return '<div class="dv-nb" style="--t:'+PAL[n[2]]+'"><div class="dv-cv"><i>'+ico(n[0])+'</i><span><small>'+sheets(n[3])+'</small><b>'+n[1]+'</b></span></div><p class="dv-sub">'+tr(SUB[n[0]])+'</p><div class="dv-th">'+n[4].map(function(f){return '<img src="img/'+f+'.jpg" alt="" loading="lazy" decoding="async">'}).join('')+'</div></div>'}).join('')+'</div></div>';
+    var prow=function(g,n,fs){return '<div class="dv-g"><b>'+g+' <span>'+n+'</span></b><div class="dv-row">'+fs.map(function(f){return '<img src="img/'+f+'.jpg" alt="" loading="lazy" decoding="async">'}).join('')+'</div></div>'};
+    var ph='<div class="dv-ph" style="--t:'+PAL[1]+'"><div class="dv-cv"><i>'+ico('yoga')+'</i><span><small>'+sheets(14)+'</small><b>Yoga &amp; stretching</b></span></div>'+
+      prow(L?'Poses':'Postures',5,['y-guerrier','y-corbeau','y-pigeon'])+prow(L?'Flows':'Enchaînements',4,['y2-salutation','y-salutation','y2-chien'])+prow(L?'Back':'Dos',2,['y-chien','y2-guerrier','y-pigeon'])+prow(L?'Hips':'Hanches',3,['y-pigeon','t-flow-hanches','y-guerrier'])+'</div>';
+    document.getElementById('nbUi').innerHTML='<div class="dv-stage">'+tab+ph+'</div><figcaption>'+(L?'6 notebooks · 89 sheets, on your phone and on your tablet.':'6 carnets · 89 fiches, sur ton téléphone et sur ta tablette.')+'</figcaption>';
     var ss=e.session;
     document.getElementById('sessionUi').innerHTML='<span class="meta">'+(L?'Session':'Séance')+' · '+e.nb+'</span><div class="st">'+tr(ss.title)+'</div><span class="meta">'+tr(ss.format)+'</span>'+
       '<ol>'+ss.items.map(function(r,i){var it=e.items[r[0]];return '<li>'+pic(r[0],i)+'<span><b>'+tr(it.t)+'</b><small><i>'+r[1]+'</i>'+gname(it.g)+'</small></span><span class="dose">'+tr(r[2])+'</span></li>'}).join('')+'</ol>'+
-      '<button class="done" type="button">'+(L?'Done today':'Fait aujourd’hui')+'</button>';
-    var p=e.progress;
+      '<span class="done">'+(L?'Done today':'Fait aujourd’hui')+'</span>';
+    document.getElementById('sessionMini').innerHTML='<span class="m">'+(L?'Session':'Séance')+' · '+tr(ss.format)+'</span><b class="st">'+tr(ss.title)+'</b>'+
+      '<ol>'+ss.items.slice(0,3).map(function(r,i){var it=e.items[r[0]];return '<li>'+pic(r[0],i)+'<span>'+tr(it.t)+'</span><span class="dose">'+tr(r[2])+'</span></li>'}).join('')+'</ol>'+
+      '<span class="done">'+(L?'Done today':'Fait aujourd’hui')+'</span>';
+    var sq=document.querySelector('.seq');if(sq){var hs='';for(var q=0;q<nF();q++)hs+='<div data-frame="'+q+'"></div>';sq.innerHTML=hs}
+    var p=YOGA.progress;
+    var ypic=function(k){return '<div class="pic"><img src="'+YOGA.items[k].img+'" alt="" loading="lazy" decoding="async"></div>'};
     var shelf=function(title,desc,rows){return '<div data-ui class="shelf"><h3>'+title+'</h3><p>'+desc+'</p><div class="items">'+rows+'</div></div>'};
-    var it2=function(k,i,tag){var it=e.items[k];return '<div class="it">'+pic(k,i)+'<span><b>'+tr(it.t)+'</b>'+tag+'</span></div>'};
+    var it2=function(k,i,tag){var it=YOGA.items[k];return '<div class="it">'+ypic(k)+'<span><b>'+tr(it.t)+'</b><small class="ynb">Yoga & stretching · '+tr(it.g)+'</small>'+tag+'</span></div>'};
     document.getElementById('progressUi').innerHTML=
       shelf(L?'New':'Nouveautés',L?'Arrived in the last few days, not opened yet.':'Arrivées ces derniers jours, pas encore ouvertes.',p.nw.map(function(k,i){return it2(k,i,'<span class="tag-new">'+(L?'New':'Nouveau')+'</span>')}).join(''))+
       shelf(L?'To try':'À essayer',L?'Saved a while ago, never practised.':'Gardées depuis un moment, jamais travaillées.',p.tr.map(function(k,i){return it2(k,i+2,'<span class="tag-try">'+(L?'Never done':'Jamais faite')+'</span>')}).join(''))+
       shelf(L?'Practised':'Déjà travaillées',L?'How many times, and the last one.':'Combien de fois, et la dernière.',p.dn.map(function(r,i){return it2(r[0],i+3,'<span class="tag-done">'+tr(r[1])+'</span>')}).join(''));
     [].forEach.call(document.querySelectorAll('[data-frame]'),function(el){el.innerHTML=frame(+el.dataset.frame)});
+    [].forEach.call(document.querySelectorAll('[data-share]'),function(el){var sh=e.share||[4,'50% 50%'];el.innerHTML=frame(sh[0]);var im=el.querySelector('img');if(im)im.style.objectPosition=sh[1]});
     document.getElementById('rUrl').textContent=e.url;
-    var fk=ex==='mma'?'kick':'pir';
+    var fk=e.fk;
     document.getElementById('routeNb').innerHTML='<div class="h"><span class="ui-badge">'+icon(e.icon)+'</span>'+e.nb+'</div><div class="g">'+gname(e.items[fk].g)+'</div>'+pic(fk,0)+'<b>'+tr(e.items[fk].t)+'</b><span class="tag-new">'+(L?'New':'Nouveau')+'</span>';
     document.querySelectorAll('.ex button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.ex===ex))});
   }
 
-  var LIB=[['Fight techniques','fight','#b4432f'],['Dance','dance','#b23a6e'],['Pole dance','pole','#b23a6e'],['Yoga & stretching','yoga','#3f8f5f'],['Pilates','dot','#b23a6e'],['Barre','dot','#b23a6e'],['Strength','dot','#5f7d1a'],['Climbing & bouldering','dot','#c2651d'],['Kitesurf','dot','#1d7a8c'],['Surfing','dot','#1d7a8c'],['Running','dot','#c2651d'],['Tennis & padel','dot','#c2651d'],['Mobility & rehab','dot','#3f8f5f'],['Cooking','dot','#8a6a12']];
-  function renderLib(){document.getElementById('lib').innerHTML=LIB.map(function(l){return '<span><i style="background:'+l[2]+'">'+icon(l[1])+'</i>'+l[0]+'</span>'}).join('')+'<span class="more">'+(lang==='en'?'+ 15 more':'+ 15 autres')+'</span>'}
+  var LIB=[['fight','Fight techniques',2],['dance','Dance',5],['pole','Pole dance',5],['yoga','Yoga & stretching',1],['pilates','Pilates',5],['barre','Barre',5],['strength','Strength',0],['climb','Climbing & bouldering',4],['kitesurf','Kitesurf',3],['surf','Surfing',3],['run','Running',4],['racket','Tennis & padel',4],['kitefoil','Kitefoil',3],['wingfoil','Wingfoil',3],['wakeboard','Wakeboard',3],['swim','Swimming',3],['bike','Cycling',4],['hike','Hiking & trail',4],['snow','Ski & snowboard',4],['ride','Horse riding',4],['golf','Golf',4],['mobility','Mobility & rehab',1],['prenatal','Prenatal & postnatal',5],['floor','Pelvic floor & core',5],['breath','Breathwork & meditation',1],['cook','Cooking',6],['nutrition','Nutrition & meal prep',6],['beauty','Beauty & skincare',7],['crafts','Sewing & crafts',7]];
+  function renderLib(){var one=LIB.map(function(l){return '<span class="lib-t" role="listitem"><i style="background:'+PAL[l[2]]+'"><svg aria-hidden="true"><use href="#nb-'+l[0]+'"/></svg></i>'+l[1]+'</span>'}).join('');
+    document.getElementById('lib').innerHTML='<div class="set" role="list">'+one+'</div><div class="set" aria-hidden="true">'+one+'</div>'}
 
   var EN={
     'nav.train':'Train','nav.how':'How it works','nav.install':'Setup','nav.signin':'Sign in',
-    'h1':'From reel to move.',
+    'h1':'A Claude Code <span class="slash">/skill</span> that turns your technique videos into a training notebook.','flow.h':'From reel to move.',
+    'f1.h':'You spot a video, send it to Reelbook','f1.p':'On TikTok, Instagram, YouTube or Facebook: Share, then Reelbook. Ten seconds, and you keep scrolling.',
+    'f2.h':'It becomes a sheet','f2.p':'The move cut into frames, with the cues to remember, a dose and the link to the video.',
+    'f3.h':'Sheets become sessions','f3.p':'Mix sheets from all your notebooks, give each one its dose, and train sheet by sheet.',
     'sub':'Reelbook gathers your technique videos into a training notebook. Each video becomes a frame-by-frame sheet, easy to find and to build sessions from.',
     'cta':'Create my notebook','cta2':'See how it works','beta':'Free during the beta · 14 of 50 spots taken',
-    'fit':'For TikTok, Instagram, YouTube and Facebook. Runs on your Claude plan.',
-    'ex.l':'See an example:','ex.dance':'Dance','p.scrub':'Scrub through the move',
-    'drawn':'Dance view: generated demo images, not a real video.',
-    'v1.h':'All in one place.','v1.p':'Your coach’s reel on Instagram, a champion’s YouTube breakdown, the TikTok you caught on the train: it all lands in one place, filed by activity and by theme.',
-    'v6.h':'Your sports, your notebooks.','v6.p':'Reelbook already knows about thirty activities and files each sheet in the right notebook on its own. Yours isn’t there? Create a notebook and describe it in a sentence: Claude uses it to sort.',
-    'v6.cap':'Built-in notebooks, one tap to add. The groups inside (Turns, Clinch, Transitions…) grow as sheets arrive.',
-    'cu.h':'Your own notebook','cu.n':'Notebook name','cu.d':'What goes in it','cu.hint':'Written for Claude: what the videos are about and how you want them grouped.','cu.b':'Create notebook',
-    'v2.h':'Right move, right time.',
-    'v5.h':'Your notes, next to the move.','v5.p':'A correction from your coach, a feeling, the side that sticks: write it in the sheet and it saves itself. And the link to the original video is always there, to watch it again when you need to.',
+    'fit':'You need Claude Pro (or higher) with Claude Code, and Chrome on your computer. For TikTok, Instagram, YouTube and Facebook.',
+    'ex.l':'See an example:','ex.dance':'Dance','ex.stretch':'Stretch','ex.snow':'Snowboard','ex.hiit':'HIIT',
+    'v1.h':'All in one place.','v1.p':'Your coach’s reel on Instagram, a champion’s YouTube breakdown, the TikTok you caught on the train: it all lands in one place, filed by activity and by theme. Search by body zone or gear, and keep your coach’s notes next to the move.',
+    'v6.h':'Your activities, your notebooks.','v6.own':'Create your own activity','v6.q':'29 ready-made notebooks. Yours isn’t there?',
     'v3.h':'Sheets become sessions.','v3.p':'Pick from all your notebooks and mix them: technique, mobility and warm-up in the same session. Put the exercises in order, give each one its dose, then follow the session sheet by sheet.',
-    'v4.h':'Your progress, sheet by sheet.','v4.p':'New sheets wait at the top of the home page, the ones you never tried come back up on their own, and every « Done today » adds to the sheet’s count.',
-    'how.h':'A Claude skill does the work.','how.p':'Reelbook is a skill for Claude Code. With the Claude in Chrome extension, it opens the videos you sent, cuts each one into a sequence of frames and files the sheet in your notebook.',
-    'r1.h':'You send the video','r1.p':'From TikTok or Instagram: Share, then Reelbook. It joins your queue.',
+    'v4.h':'Your progress, sheet by sheet.','v4.p':'New sheets wait at the top of the home page, the ones you’ve never tried resurface on their own, and every “Done today” adds to the sheet’s count.',
+    'how.h':'A Claude skill does the work.','how.p':'<strong class="brand">Reelbook</strong> is a skill for Claude Code. With the Claude in Chrome extension, it opens the videos you sent, cuts each one into a sequence of frames and files each sheet in the right notebook.',
+    'r1.h':'You send the video','r1.p':'From TikTok, Instagram, YouTube or Facebook: Share, then Reelbook. It joins your queue.',
     't.l1':'3 videos queued','t.l2':'opening in Chrome',
-    'r2.h':'Claude takes over','r2.p':'Type <code>/reelbook</code> in Claude Code, or let it run overnight on your Mac.',
+    'r2.h':'Claude takes over','r2.p':'Type <code>/reelbook</code> in Claude Code, or let it run overnight on your computer.',
     'r3.h':'Chrome opens and reads it','r3.p':'The Claude in Chrome extension watches the video the way you would: the move, the cues, the captions.',
     'r4.h':'The move, cut into frames','r4.p':'The key moments become a sequence of images, with the points to remember, a dose and the link to the video.',
     'r5.h':'Filed in your notebook','r5.p':'Right notebook, right group. Ready to find, annotate and add to a session.',
-    'inst.h':'Set up Reelbook.','inst.p':'Three things to do once: your account, the skill on your computer, the app on your phone.',
+    'inst.h':'Set up Reelbook.','inst.p':'Before you start: Claude Pro with Claude Code, Chrome with the Claude in Chrome extension, Git and Python 3.9+. Then three things to do once: your account, the skill on your computer, the app on your phone.',
     'i1.h':'Create your notebook','i1.p':'Choose where your sheets live. You can change it later.',
-    'i1.a':'With Reelbook','i1.ad':'Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.',
-    'pk.open':'Spots open','pk.full':'Beta full','i1.seats':'14 of 50 spots taken','wl.h':'Beta full: 50 of 50','wl.p':'Leave your first name and email: we will let you know as soon as a spot opens.','wl.n':'First name','wl.e':'Email','wl.c':'I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.','wl.cta':'Notify me',
+    'i1.a':'Hosted by Reelbook','i1.ad':'Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.',
+    'i1.seats':'14 of 50 spots taken','wl.h':'Beta full: 50 of 50','wl.p':'Leave your first name and email: we’ll let you know as soon as a spot opens.','wl.n':'First name','wl.e':'Email','wl.c':'I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.','wl.cta':'Notify me',
     'i1.b':'On my own Supabase','i1.bd':'Your own project, your limits. Run one SQL file, then paste the URL and key.','i1.cta':'Create my notebook',
     'i2.h':'Install the skill','i2.n':'You need Claude Pro or above with Claude Code, and Chrome with the Claude in Chrome extension.',
-    'i2.p':'Paste this line in Terminal. It installs the <code>/reelbook</code> skill and links it to your notebook.','i2.copy':'Copy the line',
-    'i3.h':'Add it to your phone','i3.p':'Put Reelbook on your home screen, then the « Send to Reelbook » shortcut in the iPhone Share menu.','i3.p2':'On Android, just paste the link in the app.','i3.cta':'Add the shortcut',
+    'i2.p':'Paste this line into Terminal. It installs the <code>/reelbook</code> skill and links it to your account.','i2.copy':'Copy the line','i2.pw':'Paste this line into PowerShell. It installs the <code>/reelbook</code> skill and links it to your account.',
+    'i3.h':'Add it to your phone','i3.p':'Put Reelbook on your home screen, then the “Send to Reelbook” shortcut in the iPhone Share menu.','i3.p2':'On Android, just paste the link in the app.','i3.cta':'Add the shortcut',
     'd.h':'Day to day.',
     'd1.v':'Send','d1.p':'A technique catches your eye in your feed: Share, Reelbook. Ten seconds, and you keep scrolling.',
     'd2.v':'Run','d2.p':'<code>/reelbook</code> in Claude Code whenever you like, or every night on its own. In the morning, your sheets are there.',
     'd3.v':'Organise','d3.p':'Move a sheet to another group, add your notes, build a session from several notebooks.',
-    'd4.v':'Train','d4.p':'Open the sheet or the session on your phone: the move first, in pictures, then the details. Tick « Done today ».',
+    'd4.v':'Train','d4.p':'Open the sheet or the session on your phone: the move first, in pictures, then the details. Tick “Done today”.',
     'c.p':'Your technique videos, ready for training at last. Free during the beta, 50 spots.',
-    'foot':'Sheets are made for personal use and always keep the link to the video and its author. MMA photos on this page: frames from a reel by Natan Levy; dance view: generated demo images. To be replaced with our own footage before launch.'
+    'foot':'Personal sheets keep the link to their video and author. The visuals on this page are generated demonstrations. Reelbook is open source, under the MIT licence: <a href="https://github.com/lt20/reelbook" target="_blank" rel="noopener">github.com/lt20/reelbook</a>.',
+    'oss.p':'<b>Reelbook is open source.</b> The skill, the app and the server are public on GitHub, under the MIT licence: you can read what you install, and host it yourself.','oss.a':'See the code on GitHub ↗','i2.src':'Read the script before you run it ↗'
   };
   var nodes=[].slice.call(document.querySelectorAll('[data-k]')),FR={};
   nodes.forEach(function(el){var k=el.getAttribute('data-k');if(!(k in FR))FR[k]=el.innerHTML});
@@ -727,28 +913,42 @@ code{font:600 .92em var(--mono)}
     lang=l; document.documentElement.lang=l; var D=l==='en'?EN:FR;
     nodes.forEach(function(el){var k=el.getAttribute('data-k');if(D[k]!=null)el.innerHTML=D[k]});
     document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.lang===l))});
-    document.getElementById('cuName').value=l==='en'?'Aerial hoop':'Cerceau aérien';
-    document.getElementById('cuDesc').value=l==='en'?'Climbs, poses and sequences on the aerial hoop, beginner to advanced. One group per family of poses.':'Montées, figures et enchaînements au cerceau aérien, du débutant au confirmé. Un groupe par famille de figures.';
-    renderLib(); renderAll(); try{localStorage.setItem('rb-v2-lang',l)}catch(e){}
+    document.querySelectorAll('[data-al-en]').forEach(function(el){if(!el.dataset.alFr)el.dataset.alFr=el.getAttribute('aria-label');el.setAttribute('aria-label',l==='en'?el.dataset.alEn:el.dataset.alFr)});
+    ppLabel();
+    renderLib(); renderAll(); if(window.__seats)window.__seats(); try{localStorage.setItem('rb-v2-lang',l)}catch(e){}
   }
   document.querySelectorAll('.lang button').forEach(function(b){b.addEventListener('click',function(){setLang(b.dataset.lang)})});
   document.querySelectorAll('.ex button').forEach(function(b){b.addEventListener('click',function(){ex=b.dataset.ex;step=0;renderAll();try{localStorage.setItem('rb-v2-ex',ex)}catch(e){}})});
+  var pp=document.getElementById('pp'), paused=false;
+  function ppLabel(){pp.classList.toggle('paused',paused);pp.setAttribute('aria-label',paused?(lang==='en'?'Play the animations':'Relancer les animations'):(lang==='en'?'Pause the animations':'Mettre en pause les animations'))}
+  function start(){stop();timer=setInterval(function(){show((step+1)%nF())},2600);cue.setAttribute('aria-live','off')}
+  pp.addEventListener('click',function(){paused=!paused;document.body.classList.toggle('anim-off',paused);if(paused){stop();cue.setAttribute('aria-live','polite')}else start();ppLabel()});
   var saved=null,sx=null;try{saved=localStorage.getItem('rb-v2-lang');sx=localStorage.getItem('rb-v2-ex')}catch(e){}
-  if(sx==='dance'||sx==='mma')ex=sx;
-  var hsh=location.hash.replace('#','');if(hsh==='danse'||hsh==='dance')ex='dance';
+  if(sx&&EX[sx])ex=sx;
+  var hsh=location.hash.replace('#',''),AL={danse:'dance',etirement:'stretch'};hsh=AL[hsh]||hsh;if(EX[hsh])ex=hsh;
   setLang(saved==='en'||saved==='fr'?saved:((navigator.language||'').slice(0,2)==='fr'?'fr':'en'));
   var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!reduce)timer=setInterval(function(){show((step+1)%6)},2600);
+  if(!reduce)start();else cue.setAttribute('aria-live','polite');
 
-  /* aperçu de l'étape 1 : places libres ou bêta complète */
-  document.querySelectorAll('.peek button').forEach(function(b){b.addEventListener('click',function(){
-    var full=b.dataset.full==='1';
-    document.querySelectorAll('.peek button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+  /* places de la bêta : l'état suit le compteur, pas un choix de l'utilisateur.
+     Aperçu de la bêta complète dans la maquette : ajouter ?places=50 à l'adresse. */
+  var SEATS={taken:14,total:50};
+  var qp=(location.search.match(/[?&]places=(\d+)/)||[])[1];if(qp)SEATS.taken=Math.min(+qp,SEATS.total);
+  function applySeats(){
+    var L=lang==='en', full=SEATS.taken>=SEATS.total, n=SEATS.taken+(L?' of ':' places prises sur ')+SEATS.total+(L?' spots taken':'');
+    document.querySelector('.beta .seats i').style.width=Math.round(100*SEATS.taken/SEATS.total)+'%';
+    document.querySelector('[data-k="beta"]').textContent=full?(L?'Beta full · join the waiting list':'Bêta complète · inscris-toi sur la liste d’attente'):(L?'Free during the beta · ':'Gratuit pendant la bêta · ')+n;
+    document.querySelector('[data-k="i1.seats"]').textContent=n;
     document.querySelector('.host-open').hidden=full;document.querySelector('.host-full').hidden=!full;
     document.querySelector('.install').classList.toggle('full',full);
-    var c=document.querySelector('.host-cta');c.textContent=full?(lang==='en'?'Connect my Supabase':'Connecter mon Supabase'):(lang==='en'?'Create my notebook':'Créer mon carnet');
-    var r=document.querySelectorAll('input[name=host]');if(full&&r[1])r[1].checked=true;if(!full&&r[0])r[0].checked=true;
-  })});
+    document.querySelector('.host-cta').textContent=full?(L?'Connect my Supabase':'Connecter mon Supabase'):(L?'Create my notebook':'Créer mon carnet');
+    var r=document.querySelectorAll('input[name=host]');if(full&&r[0].checked)r[0].checked=false;
+    syncCta();
+    document.querySelectorAll('[data-k="cta"]').forEach(function(b){b.textContent=full?(L?'Join the waiting list':'Rejoindre la liste d’attente'):(L?'Create my notebook':'Créer mon carnet')});
+  }
+  function syncCta(){var r=document.querySelectorAll('input[name=host]');document.querySelector('.host-cta').hidden=SEATS.taken>=SEATS.total&&!r[1].checked}
+  document.querySelectorAll('input[name=host]').forEach(function(i){i.addEventListener('change',syncCta)});
+  applySeats(); window.__seats=applySeats;
 
   /* barre : ombre au défilement, onglet actif, liens de maquette inertes */
   var bar=document.getElementById('topbar');
@@ -770,9 +970,14 @@ code{font:600 .92em var(--mono)}
     if(h==='#top'){e.preventDefault();window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});return}
   });
 
+  var osb=[].slice.call(document.querySelectorAll('.os button'));
+  osb.forEach(function(b){b.addEventListener('click',function(){
+    osb.forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    [].forEach.call(document.querySelectorAll('[data-os-pane]'),function(el){el.hidden=el.dataset.osPane!==b.dataset.os});
+  })});
   document.getElementById('copy').addEventListener('click',function(){
-    var b=this,t=b.textContent;
-    try{navigator.clipboard.writeText('curl -fsSL https://lt20.github.io/reelbook/install.sh | bash').then(function(){b.textContent=lang==='en'?'Copied':'Copiée';setTimeout(function(){b.textContent=t},1600)},function(){})}catch(e){}
+    var b=this,t=b.textContent,msg=document.getElementById('copyMsg'),line=document.querySelector('pre[data-os-pane]:not([hidden])').textContent;
+    try{navigator.clipboard.writeText(line).then(function(){var c=lang==='en'?'Copied':'Copiée';b.textContent=c;msg.textContent=c;setTimeout(function(){b.textContent=t;msg.textContent=''},1600)},function(){})}catch(e){}
   });
 })();
 </script>
