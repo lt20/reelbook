@@ -66,8 +66,9 @@ test('L27 — the demo session lists its exercises with their dose, in order', a
   const html = page.element('demo').innerHTML;
   assert.match(html, /Ten-minute circuit/);
   assert.match(html, /Demo · read only · Create an account/);
-  const order = [...html.matchAll(/href="#demo\/([a-z-]+)"/g)].map(m => m[1]);
-  assert.deepEqual(order, ['goblet-squat', 'push-up', 'dead-bug']);
+  // L38: each exercise opens at its place in the session (#demo/session/<slug>/<n>), as in the app
+  const order = [...html.matchAll(/href="#demo\/session\/ten-minute-circuit\/(\d+)"[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1] + ' ' + m[2]);
+  assert.deepEqual(order, ['1 Goblet squat', '2 Push-up', '3 Dead bug']);
   assert.match(html, />10 reps</);
   assert.match(html, /href="#demo">‹ Demo</);
 });

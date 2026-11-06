@@ -101,10 +101,13 @@ test('L38 — a demo notebook page: its cover, group chips, the Sessions row, on
 test('L38 — a sheet opened from the session shows its place, its dose and previous / next; otherwise its notebook', async () => {
   const page = await open('#demo/session/flow');
   await settle();
-  page.go('#demo/goblet'); await settle();
+  assert.match(page.element('demo').innerHTML, /<a class="card" href="#demo\/session\/flow\/2">/);
+  page.go('#demo/session/flow/2'); await settle();
   let html = page.element('demo').innerHTML;
   assert.match(html, /‹ Morning flow<\/a><\/p><p class="seat">2\/2 · 10 reps<\/p>/);
-  assert.match(html, /<a class="prev" href="#demo\/down-dog">← Previous<\/a><a class="next" href="#demo\/session\/flow">Back to the session<\/a>/);
+  assert.match(html, /<a class="prev" href="#demo\/session\/flow\/1">← Previous<\/a><a class="next" href="#demo\/session\/flow">Back to the session<\/a>/);
+  page.go('#demo/session/flow/9'); await settle();
+  assert.match(page.element('demo').innerHTML, /<h1>Morning flow<\/h1>/, 'a place out of the session shows the session');
   page.go('#demo'); await settle();
   page.go('#demo/spin-kick'); await settle();
   html = page.element('demo').innerHTML;
@@ -118,11 +121,34 @@ test('L38 — no editing control on any demo page, and nothing written to localS
   await settle();
   const before = JSON.stringify([...page.storage]);
   const controls = /(?:>\s*|aria-label=")(?:Move|Delete|Edit|Done today|Add to session|My notes|\+ New session|Start)(?:\s*<|\b)|<(?:textarea|input|button)\b/;
-  for (const h of ['#demo', '#demo/notebook/fight', '#demo/notebook/yoga', '#demo/session/flow', '#demo/down-dog', '#demo/spin-kick']) {
+  for (const h of ['#demo', '#demo/notebook/fight', '#demo/notebook/yoga', '#demo/session/flow', '#demo/session/flow/1', '#demo/down-dog', '#demo/spin-kick']) {
     page.go(h); await settle();
     assert.doesNotMatch(page.element('demo').innerHTML, controls, h);
     assert.equal(page.element('add-video-fab').hidden, true, h);
   }
   assert.equal(JSON.stringify([...page.storage]), before);
   assert.equal(page.clients.length, 0);
+});
+
+test('L38 — an exercise that comes twice in the session keeps its own place, dose and next', async () => {
+  const twice = {...catalogue, sessions: [{slug: 'loop', notebook: 'fight', title: 'Loop', items: [{slug: 'spin-kick', dose: '5 reps'}, {slug: 'clinch-entry', dose: '1 min'}, {slug: 'spin-kick', dose: '20 reps'}]}]};
+  const f = async url => String(url) === 'demo/catalogue.json' ? {ok: true, status: 200, json: async () => twice} : fetch(url);
+  const page = await app({hash: '#demo/session/loop/2', tables: {}, fetch: f, library, dom: true});
+  await settle();
+  assert.match(page.element('demo').innerHTML, /<a class="next" href="#demo\/session\/loop\/3">Next: Spinning back kick →<\/a>/);
+  page.go('#demo/session/loop/3'); await settle();
+  const html = page.element('demo').innerHTML;
+  assert.match(html, /<p class="seat">3\/3 · 20 reps<\/p>/);
+  assert.match(html, /<a class="prev" href="#demo\/session\/loop\/2">← Previous<\/a><a class="next" href="#demo\/session\/loop">Back to the session<\/a>/);
+});
+
+test('L38 — a notebook card counts all its sheets, those without a photo too', async () => {
+  const bare = {...catalogue, sheets: catalogue.sheets.map(e => e.slug === 'clinch-entry' || e.slug === 'down-dog' ? {...e, thumbnail: ''} : e)};
+  const f = async url => String(url) === 'demo/catalogue.json' ? {ok: true, status: 200, json: async () => bare} : fetch(url);
+  const page = await app({hash: '#demo', tables: {}, fetch: f, library, dom: true});
+  await settle();
+  const html = page.element('demo').innerHTML;
+  assert.match(html, /aria-label="Fight techniques, 2 sheets"/);
+  assert.match(html, /aria-label="Yoga &amp; stretching, 1 sheet, 1 session"/);
+  assert.doesNotMatch(html, /src="demo\/clinch-entry\//);
 });

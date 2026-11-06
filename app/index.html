@@ -573,7 +573,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 .demo-intro{margin:0 0 var(--s-4);max-width:640px;color:var(--muted);font-size:var(--fs-base)}
 .demo section>h2,.demo .sh2 h2{font-size:var(--fs-lg);margin:22px 0 var(--s-2)}
 .demo section{scroll-margin-top:calc(96px + env(safe-area-inset-top,0px))}
-.demo .group-chips{top:var(--demo-bar,41px)}
+.demo .group-chips{top:var(--demo-bar,calc(41px + env(safe-area-inset-top,0px)))}
 .demo-nbp{--band:color-mix(in srgb,var(--t,var(--accent)) 14%,var(--paper))}
 .demo-nbp>.eyebrow{margin:0 0 var(--s-2);color:color-mix(in srgb,var(--t,var(--accent)) 75%,var(--ink))}
 .demo-cover{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-4);border-radius:var(--r-lg);background:var(--band);color:var(--ink);font-family:var(--display);font-size:var(--fs-display);font-weight:700;letter-spacing:-.01em;line-height:.95}
@@ -1787,10 +1787,10 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const hint = ex.length ? `${ex.join(', ')}… or one you describe yourself.` : 'Describe one yourself.';
     return `<button type="button" class="tcard add" id="add-nb">${rest.length ? `<p class="eyebrow">${rest.length} more to pick from</p>` : ''}<h2>+ Add a notebook</h2><p>${esc(hint)}</p></button>`;
   };
-  // A notebook's card: `list` its sheets, newest first, as [title, photo url]; `nS` its sessions (L38: the demo too).
-  const tcard = (t, href, list, nS, empty) => {
-    const n = list.length, cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (nS ? ` · ${plural(nS, 'session')}` : '');
-    const thumbs = list.slice(0, 3).map(([title, src]) => `<img src="${esc(src)}" alt="${esc(title)}">`).join('');
+  // A notebook's card: `n` its sheets, `nS` its sessions, `pics` [title, photo url] newest first (L38: the demo too).
+  const tcard = (t, href, n, nS, pics, empty) => {
+    const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (nS ? ` · ${plural(nS, 'session')}` : '');
+    const thumbs = pics.slice(0, 3).map(([title, src]) => `<img src="${esc(src)}" alt="${esc(title)}">`).join('');
     // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
     return `<a class="tcard" href="${href}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
         <div class="cover"><span class="nb-badge">${nbIcon(t)}</span><div><p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2></div></div><p>${esc(t.sub)}</p>
@@ -1799,7 +1799,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const renderPortal = () => {
     $('portal').innerHTML = themes.map(t => {
       const list = sheets.filter(e => e.theme === t.id).sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).map(e => [e.title, thumb(e.slug, e.thumbnail)]);
-      return tcard(t, `#${esc(t.id)}`, list, v2Sessions.filter(s => s.theme === t.id).length, loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.');
+      return tcard(t, `#${esc(t.id)}`, list.length, v2Sessions.filter(s => s.theme === t.id).length, list, loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.');
     }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
     $('add-nb').addEventListener('click', () => { renderPicker(); $('picker').hidden = !$('picker').hidden; if (!$('picker').hidden) $('picker').scrollIntoView({block: 'start'}); });
   };
@@ -3724,7 +3724,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // Pages: #demo (sheets and the session), #demo/<sheet>, #demo/session/<slug>. Every file is fetched on the first
   // visit, so the service worker keeps them all and the demo then opens offline.
   const DEMO = 'demo', demoEl = $('demo'), demoPages = new Map();
-  let demoCat = null, demoLoading = null, demoGen = 0, demoSeat = null, demoShown = null;
+  let demoCat = null, demoLoading = null, demoGen = 0, demoShown = null;
   // An account's own sheet or notebook named « demo » keeps its address (#demo, #demo/play…), once its catalogue is
   // known: a sheet titled « Demo » gets that slug.
   const demoOwned = t => !!user && (bySlug.has(DEMO) || themeById.has(DEMO)) && (t === DEMO || t.startsWith(DEMO + '/play'));
@@ -3815,7 +3815,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const demoNbHref = id => `#${DEMO}/notebook/${esc(id)}`;
   const demoHome = c => {
     const nbs = demoNbs(c), nS = c.sessions.length;
-    const tcards = nbs.map(t => tcard(t, demoNbHref(t.id), c.sheets.filter(e => e.notebook === t.id && e.thumbnail).map(e => [e.title, demoThumb(e.slug, e.thumbnail)]), c.sessions.filter(s => s.notebook === t.id).length, '')).join('');
+    const tcards = nbs.map(t => { const list = c.sheets.filter(e => e.notebook === t.id); return tcard(t, demoNbHref(t.id), list.length, c.sessions.filter(s => s.notebook === t.id).length, list.filter(e => e.thumbnail).map(e => [e.title, demoThumb(e.slug, e.thumbnail)]), ''); }).join('');
     return `<div class="wide"><header class="demo-brand"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><h1>${esc(c.title)}</h1></header>
       <p class="cnt">${esc(`${plural(c.sheets.length, 'sheet')}${nS ? ` · ${plural(nS, 'session')}` : ''} · ${plural(nbs.length, 'notebook')}`)}</p>${c.intro ? `<p class="demo-intro">${esc(c.intro)}</p>` : ''}
       ${tcards ? `<div class="portal">${tcards}</div>` : ''}
@@ -3837,27 +3837,31 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const items = s.items.map((it, i) => ({n: i + 1, dose: it.dose, sheet: demoCat.bySlug.get(it.slug)})), img = demoThumb('', s.thumbnail);
     return `<div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
       ${s.format ? `<div class="kit"><span><b class="kit-k">Format</b> ${esc(s.format)}</span></div>` : ''}${s.why ? `<h2>Why</h2><p class="lead">${esc(s.why)}</p>` : ''}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2><div class="grid">${items.map(it => demoCard(it.sheet, {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: it.sheet.author}]})).join('')}</div></div>`;
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2><div class="grid">${items.map(it => card(it.sheet, demoAt(s, it.n), demoThumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: it.sheet.author}].filter(m => m.txt)})).join('')}</div></div>`;
   };
-  // The session a sheet is opened from (still listing it), else null.
-  const demoSeatOf = sheet => { const s = sheet && demoSeat ? demoCat.sesBySlug.get(demoSeat) : null; return s && s.items.some(it => it.slug === sheet) ? s : null; };
+  // A sheet inside the session, by its place (an exercise may come twice): #demo/session/<slug>/<n>, n from 1.
+  const demoAt = (s, n) => `#${DEMO}/session/${esc(s.slug)}/${n}`;
   // The way back: to the session a sheet was opened from (with its place and dose, as in the app), else to the
   // sheet's notebook page, else to the demo's first page.
-  const demoBack = sheet => {
-    const s = demoSeatOf(sheet), e = sheet && demoCat.bySlug.get(sheet), nb = e && demoNbs(demoCat).find(t => t.id === e.notebook);
-    if (!s) return nb ? `<p class="top"><a href="${demoNbHref(nb.id)}">‹ ${esc(nb.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
-    const n = s.items.findIndex(it => it.slug === sheet), dose = s.items[n].dose;
-    return `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p><p class="seat">${n + 1}/${s.items.length}${dose ? ' · ' + esc(dose) : ''}</p>`;
+  // `seat`: {s, n} when the sheet is opened from the session, else null.
+  const demoBack = (sheet, seat) => {
+    const e = sheet && demoCat.bySlug.get(sheet), nb = e && demoNbs(demoCat).find(t => t.id === e.notebook);
+    if (!seat) return nb ? `<p class="top"><a href="${demoNbHref(nb.id)}">‹ ${esc(nb.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
+    const {s, n} = seat, dose = s.items[n - 1].dose;
+    return `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p><p class="seat">${n}/${s.items.length}${dose ? ' · ' + esc(dose) : ''}</p>`;
   };
   // Previous / next at the bottom of a sheet opened from the session; the last one leads back to the session.
-  const demoSeq = sheet => {
-    const s = demoSeatOf(sheet); if (!s) return '';
-    const n = s.items.findIndex(it => it.slug === sheet), prev = s.items[n - 1], next = s.items[n + 1], nx = next && demoCat.bySlug.get(next.slug);
-    return `<div class="wrap"><nav class="seq" aria-label="Exercises of the session">${prev ? `<a class="prev" href="#${DEMO}/${esc(prev.slug)}">← Previous</a>` : ''}`
-      + (nx ? `<a class="next" href="#${DEMO}/${esc(nx.slug)}">Next: ${esc(nx.title)} →</a>` : `<a class="next" href="#${DEMO}/session/${esc(s.slug)}">Back to the session</a>`) + '</nav></div>';
+  const demoSeq = seat => {
+    if (!seat) return '';
+    const {s, n} = seat, next = s.items[n], nx = next && demoCat.bySlug.get(next.slug);
+    return `<div class="wrap"><nav class="seq" aria-label="Exercises of the session">${n > 1 ? `<a class="prev" href="${demoAt(s, n - 1)}">← Previous</a>` : ''}`
+      + (nx ? `<a class="next" href="${demoAt(s, n + 1)}">Next: ${esc(nx.title)} →</a>` : `<a class="next" href="#${DEMO}/session/${esc(s.slug)}">Back to the session</a>`) + '</nav></div>';
   };
   const showDemo = async tok => {
-    const gen = ++demoGen, page = (back, body) => { demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body; };
+    const gen = ++demoGen, page = (back, body) => {
+      demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body;
+      const b = $('demo-signup'); if (b && b.offsetHeight && demoEl.style && demoEl.style.setProperty) demoEl.style.setProperty('--demo-bar', `${b.offsetHeight}px`);
+    };
     // Drawn again on the same page (the account's catalogue arrived): only the banner may change, the reader keeps
     // the scroll.
     if (demoShown === tok && !demoEl.hidden && demoCat) { const b = $('demo-signup'); if (b) b.outerHTML = demoBanner(); return; }
@@ -3867,16 +3871,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       try { await demoLoad(); } catch { if (gen === demoGen) page('', '<div class="wrap"><p class="empty">The demo could not be loaded. Check the connection, then reload the page.</p></div>'); return; }
       if (gen !== demoGen) return;
     }
-    const rest = tok.slice(DEMO.length + 1), ses = rest.startsWith('session/') ? demoCat.sesBySlug.get(rest.slice(8)) : null;
-    if (ses) { demoSeat = ses.slug; page(demoBack(null), demoSession(ses)); document.title = ses.title; return; }
+    const rest = tok.slice(DEMO.length + 1), [sSlug, sN] = rest.startsWith('session/') ? rest.slice(8).split('/') : [];
+    const ses = sSlug ? demoCat.sesBySlug.get(sSlug) : null, n = ses && /^[1-9]\d{0,2}$/.test(sN || '') && +sN <= ses.items.length ? +sN : 0;
+    if (ses && !n) { page(demoBack(null, null), demoSession(ses)); document.title = ses.title; return; }
+    const seat = n ? {s: ses, n} : null, slug = seat ? ses.items[n - 1].slug : rest;
     const nb = rest.startsWith('notebook/') ? demoNbs(demoCat).find(t => t.id === rest.slice(9)) : null;
-    if (nb) { demoSeat = null; page(`<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`, demoNotebook(demoCat, nb)); document.title = `${nb.title} · Reelbook demo`; return; }
-    const e = demoCat.bySlug.get(rest);
-    if (!e) { demoSeat = null; page('', demoHome(demoCat)); return; }
-    page(demoBack(rest), '<p class="loading">Loading the sheet…</p>'); document.title = e.title;
-    let html = null; try { html = typeof DOMParser === 'function' ? demoRender(rest, await demoSource(rest)) : null; } catch {}
+    if (nb) { page(`<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`, demoNotebook(demoCat, nb)); document.title = `${nb.title} · Reelbook demo`; return; }
+    const e = demoCat.bySlug.get(slug);
+    if (!e) { page('', demoHome(demoCat)); return; }
+    page(demoBack(slug, seat), '<p class="loading">Loading the sheet…</p>'); document.title = e.title;
+    let html = null; try { html = typeof DOMParser === 'function' ? demoRender(slug, await demoSource(slug)) : null; } catch {}
     if (gen !== demoGen) return;
-    page(demoBack(rest), (html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html) + demoSeq(rest));
+    page(demoBack(slug, seat), (html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html) + demoSeq(seat));
   };
 
   // ---------- routing ----------
