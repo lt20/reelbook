@@ -1,5 +1,5 @@
-// L30: the bilingual landing (app/landing.js) and the FR / EN screens of a newcomer. landing.js runs here in a `vm`
-// with a small fake DOM: elements by id, and the [data-k] / [data-ka] nodes of index.html.
+// L30, L36: the bilingual landing (app/landing.js, mockup v3) and the FR / EN screens of a newcomer. landing.js runs
+// here in a `vm` with a small fake DOM: elements by id, and the nodes of index.html it looks up by selector.
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -10,11 +10,12 @@ const {app, html, ownUrl, ownKey} = require('./harness.cjs');
 const ROOT = path.join(__dirname, '..');
 const landingJs = fs.readFileSync(path.join(ROOT, 'app/landing.js'), 'utf8');
 const attrsOf = tag => Object.fromEntries([...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(m => [m[1], m[2]]));
+const intro = html.slice(html.indexOf('<div id="intro"'), html.indexOf('id="auth-title"'));
 
 function stub(attrs = {}) {
   const el = {
-    attrs: {...attrs}, innerHTML: '', textContent: '', hidden: 'hidden' in attrs, value: '', style: {}, listeners: {},
-    classList: {toggle() {}},
+    attrs: {...attrs}, innerHTML: '', textContent: '', hidden: 'hidden' in attrs, value: '', style: {}, listeners: {}, classes: new Set(),
+    classList: {toggle(c, on) { if (on) el.classes.add(c); else el.classes.delete(c); }},
     getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; },
     setAttribute(k, v) { this.attrs[k] = String(v); },
     removeAttribute(k) { delete this.attrs[k]; },
@@ -29,20 +30,23 @@ function landing({language, stored = {}} = {}) {
   const storage = new Map(Object.entries(stored));
   const ids = new Map(), lists = new Map();
   const byId = id => { if (!ids.has(id)) ids.set(id, stub({id})); return ids.get(id); };
+  // the nodes landing.js looks up by selector, from the real markup (an element with an id is the same object)
+  const fromHtml = re => [...html.matchAll(re)].map(m => {
+    const a = attrsOf(m[0]), hidden = /\shidden(?=[\s>/])/.test(m[0]);
+    return a.id ? Object.assign(byId(a.id), {attrs: {...byId(a.id).attrs, ...a}, hidden}) : Object.assign(stub(a), {hidden});
+  });
+  for (const m of intro.matchAll(/<[a-z][\w]*\b[^>]*\bid="([^"]+)"[^>]*>/g)) fromHtml(new RegExp(m[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'));
   byId('intro').hidden = false;
-  // the nodes landing.js looks up by selector, from the real markup
-  const fromHtml = re => [...html.matchAll(re)].map(m => { const a = attrsOf(m[0]); return a.id ? Object.assign(byId(a.id), {attrs: {...byId(a.id).attrs, ...a}}) : stub(a); });
   lists.set('[data-k]', fromHtml(/<[a-z][\w]*\b[^>]*\bdata-k="[^"]+"[^>]*>/g));
   lists.set('[data-ka]', fromHtml(/<[a-z][\w]*\b[^>]*\bdata-ka="[^"]+"[^>]*>/g));
+  lists.set('#intro [data-k="cta"]', lists.get('[data-k]').filter(el => el.attrs['data-k'] === 'cta'));
   lists.set('#intro .lp-lang button', fromHtml(/<button\b[^>]*\bdata-lang="[^"]+"[^>]*>/g));
   lists.set('#intro .lp-ex button', fromHtml(/<button\b[^>]*\bdata-ex="[^"]+"[^>]*>/g));
-  for (const k of ['data-seats-line', 'data-seats', 'data-seats-bar']) lists.set(`[${k}]`, fromHtml(new RegExp(`<[a-z]+\\b[^>]*\\b${k}(?=[\\s>])[^>]*>`, 'g')));
-  // the « Your own notebook » fields hold the markup's English example, as in the browser
-  byId('lp-cuName').value = attrsOf(html.match(/<input id="lp-cuName"[^>]*>/)[0]).value;
-  byId('lp-cuDesc').value = html.match(/<textarea id="lp-cuDesc">([^<]*)<\/textarea>/)[1];
-  // the install line, for « Copy the line »
-  const pre = stub(); pre.textContent = '\n' + html.match(/<pre\b[^>]*>([^<]*)<\/pre>/)[1] + '\n';
-  byId('intro').querySelector = sel => sel === 'pre' ? pre : null;
+  lists.set('#intro .lp-os button', fromHtml(/<button\b[^>]*\bdata-os="[^"]+"[^>]*>/g));
+  lists.set('#intro [data-os-pane]', fromHtml(/<[a-z]+\b[^>]*\bdata-os-pane="[^"]+"[^>]*>/g));
+  const pres = lists.get('#intro [data-os-pane]').filter(el => el.attrs.id && /^lp-line/.test(el.attrs.id));
+  for (const p of pres) p.textContent = '\n' + html.match(new RegExp(`<pre\\b[^>]*id="${p.attrs.id}"[^>]*>([^<]*)</pre>`))[1] + '\n';
+  lists.set('#intro pre[data-os-pane]', pres);
   const documentElement = {lang: 'en', scrollHeight: 0};
   const document = {getElementById: byId, querySelectorAll: sel => lists.get(sel) || [], documentElement};
   const window = {
@@ -52,9 +56,11 @@ function landing({language, stored = {}} = {}) {
   };
   const timers = [];
   vm.runInNewContext(landingJs, {window, document, console, setTimeout: fn => timers.push(fn)});
-  const click = el => el.listeners.click({preventDefault() {}, target: el, currentTarget: el});
-  return {RBL: window.RBL, byId, lists, storage, documentElement, click, window, document, pre, timers};
+  const click = (el, target) => el.listeners.click({preventDefault() {}, target: target || el, currentTarget: el});
+  return {RBL: window.RBL, byId, lists, storage, documentElement, click, window, document, pre: pres[0], pres, timers};
 }
+const dk = (page, k) => page.lists.get('[data-k]').find(el => el.attrs['data-k'] === k);
+const imgs = s => [...s.matchAll(/<img src="([^"]+)"/g)].map(m => m[1]);
 
 test('L30 — language: saved choice, else navigator.language, else English', () => {
   const {pickLang} = landing().RBL;
@@ -74,8 +80,7 @@ test('L30 — a French browser gets the French landing; the choice is saved and 
   assert.equal(page.RBL.lang, 'fr');
   assert.equal(page.documentElement.lang, 'fr');
   const h1 = page.lists.get('[data-k]').find(el => el.attrs['data-k'] === 'h1');
-  assert.equal(h1.innerHTML, 'Du reel au geste.');
-  assert.equal(page.byId('lp-cuName').value, 'Cerceau aérien');
+  assert.match(h1.innerHTML, /^Un <span class="lp-slash">\/skill<\/span> Claude Code/);
   const heard = [];
   page.RBL.onChange(l => heard.push(l));
   const en = page.lists.get('#intro .lp-lang button').find(b => b.attrs['data-lang'] === 'en');
@@ -83,7 +88,7 @@ test('L30 — a French browser gets the French landing; the choice is saved and 
   assert.equal(page.RBL.lang, 'en');
   assert.equal(page.documentElement.lang, 'en');
   assert.equal(page.storage.get('rb.lang'), 'en', 'saved on the device, not per user');
-  assert.equal(h1.innerHTML, 'From reel to move.');
+  assert.match(h1.innerHTML, /^A Claude Code <span class="lp-slash">\/skill<\/span>/);
   assert.equal(en.attrs['aria-pressed'], 'true');
   assert.deepEqual(heard, ['en'], 'the app script relabels what it writes');
   // next visit: the saved choice beats the browser's language
@@ -110,26 +115,6 @@ test('L30 — every data-k / data-ka key is in both dictionaries, and the HTML d
   assert.ok(DICT.fr['s.blurb'] && !('s.blurb' in DICT.en), 'English keeps the blurb of config.js');
 });
 
-test('L30 — seats: hidden without an answer, « 14 places prises sur 50 » with one', () => {
-  const page = landing({language: 'fr'});
-  const lines = page.lists.get('[data-seats-line]'), texts = page.lists.get('[data-seats]'), bar = page.lists.get('[data-seats-bar]')[0];
-  assert.equal(lines.length, 2, 'the hero line and the hosting option');
-  assert.ok(lines.every(l => l.hidden) && bar.hidden, 'hidden until beta_seats() answers');
-  for (const answer of [null, undefined, {}, {taken: null, total: 50}, {taken: 3, total: 0}, 'x', []]) {
-    assert.equal(page.RBL.seats(answer), false);
-    assert.ok(lines.every(l => l.hidden) && bar.hidden, `hidden for ${JSON.stringify(answer)}`);
-  }
-  assert.equal(page.RBL.seats({taken: 14, total: 50, open: true}), true);
-  assert.ok(lines.every(l => !l.hidden) && !bar.hidden);
-  assert.deepEqual(texts.map(t => t.textContent), ['14 places prises sur 50', '14 places prises sur 50']);
-  assert.equal(bar.bar.style.width, '28%');
-  page.RBL.setLang('en');
-  assert.deepEqual(texts.map(t => t.textContent), ['14 of 50 spots taken', '14 of 50 spots taken']);
-  assert.equal(page.RBL.seats([{taken: 50, total: 50, open: false}]), true, 'a set-returning function answers an array');
-  assert.equal(texts[0].textContent, '50 of 50 spots taken');
-  assert.doesNotMatch(html.slice(html.indexOf('id="intro"'), html.indexOf('id="auth-title"')), /\b14\b/, 'no seat number in the markup');
-});
-
 test('L30 — the app asks beta_seats() on the hosted backend, once, and hides the line when it cannot answer', async () => {
   const fake = () => { const got = []; return {got, RBL: {t: () => null, onChange() {}, seats: d => got.push(d)}}; };
   const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
@@ -152,85 +137,16 @@ test('L30 — the app asks beta_seats() on the hosted backend, once, and hides t
   assert.equal(calls, 0);
 });
 
-test('L30 — MMA / Dance: drawings or MMA photos from the manifest, Laurent\'s generated dance images, saved choice', () => {
-  const page = landing({language: 'en'});
-  const shot = page.byId('lp-shot'), intro = page.byId('intro');
-  assert.equal(page.RBL.example, 'mma');
-  assert.match(shot.innerHTML, /<svg\b/);
-  assert.doesNotMatch(shot.innerHTML, /<img\b/, 'MMA stays drawn while the manifest is empty');
-  assert.equal(page.byId('lp-drawn').textContent, 'MMA view: placeholder drawings, not a real video.');
-  const dance = page.lists.get('#intro .lp-ex button').find(b => b.attrs['data-ex'] === 'dance');
-  page.click(dance);
-  assert.equal(page.RBL.example, 'dance');
-  assert.equal(intro.attrs['data-ex'], 'dance');
-  assert.equal(page.storage.get('rb.landing.ex'), 'dance');
-  assert.equal(dance.attrs['aria-pressed'], 'true');
-  assert.match(shot.innerHTML, /src="assets\/dance\/pirouette-en-dehors\/01-preparation-v2\.jpg"/);
-  assert.match(page.byId('lp-nbUi').innerHTML, /assets\/dance\/chaines-en-diagonale-card\.jpg/);
-  assert.equal(page.byId('lp-drawn').textContent, 'Dance view: generated demo images, not a real video.');
-  assert.equal(page.byId('lp-pTitle').textContent, 'Pirouette en dehors');
-  assert.equal(landing({stored: {'rb.landing.ex': 'dance'}}).RBL.example, 'dance', 'the example chosen last time');
-  // MMA photos once listed: all six steps, else the drawings; a card on its own; nothing but relative paths
-  page.RBL.setExample('mma');
-  const steps = [1, 2, 3, 4, 5, 6].map(n => `coup-de-pied-tournant-foie/0${n}.jpg`);
-  page.RBL.readManifest({steps, cards: {neck: 'prise-de-nuque-card.jpg', kick: 'https://example.com/x.jpg'}});
-  page.RBL.setExample('mma');
-  assert.match(shot.innerHTML, /src="assets\/mma\/coup-de-pied-tournant-foie\/01\.jpg"/);
-  assert.match(page.byId('lp-nbUi').innerHTML, /src="assets\/mma\/prise-de-nuque-card\.jpg"/);
-  assert.doesNotMatch(page.byId('lp-nbUi').innerHTML, /example\.com/);
-  assert.equal(page.byId('lp-drawn').textContent, 'MMA view: generated demo images, not a real video.');
-  page.RBL.readManifest({steps: steps.slice(0, 5)});
-  page.RBL.setExample('mma');
-  assert.doesNotMatch(shot.innerHTML, /<img\b/, 'five steps out of six: drawn');
-  page.RBL.readManifest({steps: steps.map(s => '../' + s)});
-  page.RBL.setExample('mma');
-  assert.doesNotMatch(shot.innerHTML, /<img\b/);
-});
-
-test('L30 — no third-party picture: relative files only, all in the repo, none from a real video', () => {
-  const landingMarkup = html.slice(html.indexOf('<div id="intro"'), html.indexOf('id="auth-title"'));
-  for (const src of [...landingMarkup.matchAll(/\bsrc="([^"]+)"/g), ...landingJs.matchAll(/\bsrc="([^"]+)"/g)].map(m => m[1])) assert.doesNotMatch(src, /^(?:https?:)?\/\//, src);
-  const used = [...landingJs.matchAll(/'((?:pirouette-en-dehors\/)?[\w-]+)(?:\.jpg)?'/g)].map(m => m[1]);
-  const dance = path.join(ROOT, 'app/assets/dance');
-  const files = [];
-  const walk = d => { for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (fs.statSync(p).isDirectory()) walk(p); else files.push(path.relative(dance, p)); } };
-  walk(dance);
-  const jpgs = files.filter(f => f.endsWith('.jpg')).sort();
-  assert.equal(jpgs.length, 12, 'the six pirouette steps and six cards');
-  for (const f of jpgs) {
-    assert.ok(landingJs.includes(path.basename(f, '.jpg')), `${f} is used`);
-    assert.ok(fs.statSync(path.join(dance, f)).size < 200 * 1024, `${f} is resized`);
-  }
-  for (const f of ['README.md', 'image-map.json', 'pirouette-en-dehors/README.md']) assert.ok(files.includes(f), f);
-  assert.ok(used.length);
-  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'app/assets/mma/image-map.json'), 'utf8'));
-  for (const f of [...manifest.steps, ...Object.values(manifest.cards)]) assert.ok(fs.existsSync(path.join(ROOT, 'app/assets/mma', f)), `listed and present: ${f}`);
-  assert.ok(fs.existsSync(path.join(ROOT, 'app/assets/mma/README.md')));
-  for (const f of ['app/index.html', 'app/landing.js']) assert.doesNotMatch(fs.readFileSync(path.join(ROOT, f), 'utf8'), /Natan Levy|img\/[kt]\d|img\/t-/, `${f}: no third-party frame or credit`);
-});
-
 test('L30 — the service worker shell has landing.js at the version index.html loads, under a new cache VERSION', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'app/sw.js'), 'utf8');
   const v = html.match(/<script src="landing\.js\?v=(\d+)"><\/script>/);
   assert.ok(v, 'index.html loads landing.js before the app script');
   assert.ok(html.indexOf('landing.js?v=') < html.indexOf('<script>\n'));
   assert.ok(sw.includes(`'./landing.js?v=${v[1]}'`));
-  assert.doesNotMatch(sw, /assets\/(?:dance|mma)/, 'the pictures stay out of the shell');
+  assert.doesNotMatch(sw, /assets\//, 'the pictures stay out of the shell');
+  assert.ok(Number(sw.match(/const VERSION = 'rb-shell-(\d+)'/)[1]) >= 42, 'cache VERSION bumped (L36)');
 });
 
-test('L30 — the notes example is read-only: nothing typed there can be lost by a FR / EN switch', () => {
-  const page = landing({language: 'fr'});
-  const ui = page.byId('lp-notesUi');
-  for (const lang of ['fr', 'en']) {
-    page.RBL.setLang(lang);
-    const ta = /<textarea\b[^>]*>/.exec(ui.innerHTML);
-    assert.ok(ta, `${lang}: the example has its note`);
-    assert.match(ta[0], /\breadonly\b/, `${lang}: « ${page.RBL.t('ui.saved')} » is shown, so the note cannot be edited`);
-  }
-  assert.match(html, /#intro \.lp-notes-ui textarea\{[^}]*cursor:default/, 'no text cursor over it');
-});
-
-// Supabase's auth errors (supabase-js 2.x: code, status, English message), as the sign-in / sign-up form shows them
 const AUTH_ERRORS = {
   in: [
     [{code: 'invalid_credentials', status: 400, message: 'Invalid login credentials'}, 'E-mail ou mot de passe incorrect.', 'Wrong email or password.'],
@@ -299,23 +215,6 @@ test('L30 — installation « On my own Supabase » + « Create my notebook »: 
   assert.deepEqual(JSON.parse(page.storage.get('rb.backend')), {mode: 'own', url: ownUrl, key: ownKey});
 });
 
-test('L30 — « Your own notebook »: the example follows FR / EN, what the visitor typed stays', () => {
-  const page = landing({language: 'en'});
-  const name = page.byId('lp-cuName'), desc = page.byId('lp-cuDesc');
-  assert.equal(name.value, 'Aerial hoop');
-  page.RBL.setLang('fr');
-  assert.equal(name.value, 'Cerceau aérien', 'untouched: the example is translated');
-  assert.match(desc.value, /^Montées, figures/);
-  name.value = 'Pole dance'; desc.value = 'Mes figures à la barre.';
-  page.RBL.setLang('en');
-  assert.equal(name.value, 'Pole dance', 'typed: kept');
-  assert.equal(desc.value, 'Mes figures à la barre.');
-  desc.value = '';
-  page.RBL.setLang('fr');
-  assert.equal(desc.value, '', 'emptied: stays empty');
-  assert.equal(name.value, 'Pole dance');
-});
-
 test('L30 — « Copy the line »: copied, or else selected with a message to copy it by hand', async () => {
   const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
   const run = async (clipboard, {copyCommand = false} = {}) => {
@@ -354,7 +253,7 @@ test('L30 — « Copy the line »: copied, or else selected with a message to co
 
 test('L30 — step 2 on « On my own Supabase »: no hosted line to copy, the line comes after sign-up', async () => {
   const page = await app();
-  const line = page.element('lp-line'), copy = page.element('lp-copy'), own = page.element('lp-ownLine');
+  const line = page.element('lp-lines'), copy = page.element('lp-lines'), own = page.element('lp-ownLine'); // L36: both systems' lines, the copy button and the script links
   assert.equal(line.hidden, false); assert.equal(copy.hidden, false); assert.equal(own.hidden, true);
   page.element('lp-host-own').checked = true;
   await page.fire('lp-host-own', 'change');
@@ -364,20 +263,20 @@ test('L30 — step 2 on « On my own Supabase »: no hosted line to copy, the li
   page.element('lp-host-own').checked = false; page.element('lp-host-hosted').checked = true;
   await page.fire('lp-host-hosted', 'change');
   assert.equal(line.hidden, false); assert.equal(own.hidden, true);
-  assert.match(html, /<pre id="lp-line">curl -fsSL https:\/\/lt20\.github\.io\/reelbook\/install\.sh \| bash<\/pre>/);
+  assert.match(html, /<pre data-os-pane="unix" id="lp-line">curl -fsSL https:\/\/lt20\.github\.io\/reelbook\/install\.sh \| bash<\/pre>/);
 });
 
 test('L30 — no hosted backend in config.js: the landing offers « On my own Supabase » only, and its button opens the project form', async () => {
   const page = await app({win: {REELBOOK: {library: [], hosted: {name: '', url: '', anonKey: ''}, repo: 'https://github.com/lt20/reelbook'}}});
   assert.equal(page.element('lp-host-hosted-opt').hidden, true, '« With Reelbook » is not offered');
   assert.equal(page.element('lp-host-own').checked, true);
-  assert.equal(page.element('lp-line').hidden, true);
+  assert.equal(page.element('lp-lines').hidden, true);
   assert.equal(page.element('lp-ownLine').hidden, false);
   page.element('lp-host-own').checked = false; // even with the radio state lost, the only path is the own project
   await page.fire('intro-signup');
   assert.equal(page.element('setup').hidden, false);
   assert.equal(page.element('own-form').hidden, false, 'the project form is open');
-  assert.match(html, /#intro \.lp-opt\[hidden\]\{display:none\}/, 'the grid option really hides');
+  assert.match(html, /#intro \[hidden\]\{display:none!important\}/, 'the grid option really hides');
 });
 
 test('L30 — <html lang>: the landing language on the screens it translates, English on the others', async () => {
@@ -395,4 +294,195 @@ test('L30 — <html lang>: the landing language on the screens it translates, En
   const noLanding = {lang: 'fr'};
   await app({docEl: noLanding});
   assert.equal(noLanding.lang, 'en', 'without landing.js, English');
+});
+
+test('L36 — the beta follows beta_seats(): open without an answer, the count with one, the waiting list at the limit', () => {
+  const page = landing({language: 'fr'});
+  const line = page.byId('lp-betaLine'), bar = page.byId('lp-seatsBar'), seat = page.byId('lp-seatline');
+  const card = page.byId('lp-host-full'), hostedOpt = page.byId('lp-host-hosted-opt'), hosted = page.byId('lp-host-hosted');
+  const cta = page.byId('intro-signup'), ctas = page.lists.get('#intro [data-k="cta"]');
+  hosted.checked = true;
+  const open = () => {
+    assert.equal(card.hidden, true, 'no waiting list'); assert.equal(cta.hidden, false);
+    assert.equal(cta.textContent, 'Créer mon carnet'); assert.ok(ctas.length >= 2 && ctas.every(b => b.textContent === 'Créer mon carnet'));
+  };
+  assert.equal(line.textContent, 'Gratuit pendant la bêta'); assert.equal(bar.hidden, true); assert.equal(seat.hidden, true); open();
+  for (const answer of [null, undefined, {}, {taken: null, total: 50}, {taken: 3, total: 0}, 'x', []]) {
+    assert.equal(page.RBL.seats(answer), false);
+    assert.equal(line.textContent, 'Gratuit pendant la bêta', `no count for ${JSON.stringify(answer)}`);
+    assert.ok(bar.hidden && seat.hidden); open();
+  }
+  assert.equal(page.RBL.seats({taken: 14, total: 50, open: true}), true);
+  assert.equal(line.textContent, 'Gratuit pendant la bêta · 14 places prises sur 50');
+  assert.equal(seat.hidden, false); assert.equal(seat.textContent, '14 places prises sur 50');
+  assert.equal(bar.hidden, false); assert.equal(bar.bar.style.width, '28%'); open();
+  page.RBL.setLang('en');
+  assert.equal(line.textContent, 'Free during the beta · 14 of 50 spots taken');
+  assert.equal(seat.textContent, '14 of 50 spots taken');
+  // at the limit (or closed): the waiting-list card, « On my own Supabase » the way in, the buttons say so
+  for (const full of [{taken: 50, total: 50, open: true}, [{taken: 61, total: 50}], {taken: 3, total: 50, open: false}]) {
+    const p = landing({language: 'fr'}), h = p.byId('lp-host-hosted'), own = p.byId('lp-host-own'), c = p.byId('intro-signup');
+    h.checked = true;
+    assert.equal(p.RBL.seats(full), true);
+    assert.equal(p.RBL.full, true);
+    assert.equal(p.byId('lp-betaLine').textContent, 'Bêta complète · inscris-toi sur la liste d’attente');
+    assert.equal(p.byId('lp-host-full').hidden, false); assert.equal(p.byId('lp-host-hosted-opt').hidden, true);
+    assert.equal(h.checked, false, 'the hosted option is no longer picked');
+    assert.equal(c.textContent, 'Connecter mon Supabase'); assert.equal(c.hidden, true, 'until « Sur mon Supabase » is picked');
+    own.checked = true; own.listeners.change();
+    assert.equal(c.hidden, false);
+    assert.ok(p.lists.get('#intro [data-k="cta"]').every(b => b.textContent === 'Rejoindre la liste d’attente'));
+    assert.ok(p.byId('lp-installList').classes.has('lp-full'));
+  }
+  const p = landing({language: 'en'}); p.RBL.seats({taken: 50, total: 50});
+  assert.equal(p.byId('lp-wlH').textContent, 'Beta full: 50 of 50'); assert.equal(p.byId('lp-lockN').textContent, '50');
+  assert.ok(p.lists.get('#intro [data-k="cta"]').every(b => b.textContent === 'Join the waiting list'));
+  assert.equal(p.byId('intro-signup').textContent, 'Connect my Supabase');
+  // nothing in the markup says a number of seats, and the visitor has no switch
+  assert.doesNotMatch(intro.replace(/<b data-k="wl.h"[^>]*>[^<]*<\/b>|id="lp-lockN"[^>]*>50</g, ''), /\b(14|50) (places|of|sur)\b/);
+  assert.doesNotMatch(landingJs + intro, /[?&]places=|data-seats-toggle/);
+  // the waiting list has no table yet (L31): its button is visible and inactive
+  assert.match(intro, /<button class="lp-btn" type="submit" data-k="wl.cta" disabled aria-disabled="true">/);
+});
+
+test('L36 — five examples: each step has its frame, its dot and its words, from the example\'s data', () => {
+  const page = landing({language: 'fr', stored: {'rb.landing.ex': 'snow'}});
+  assert.deepEqual([...page.RBL.examples], ['mma', 'dance', 'stretch', 'snow', 'hiit']);
+  assert.equal(page.RBL.example, 'snow', 'the saved choice');
+  assert.deepEqual(page.lists.get('#intro .lp-ex button').map(b => b.attrs['data-ex']), [...page.RBL.examples], 'one button per example');
+  for (const x of page.RBL.examples) {
+    page.RBL.setExample(x);
+    assert.equal(page.storage.get('rb.landing.ex'), x);
+    const shot = page.byId('lp-shot').innerHTML, dots = page.byId('lp-thumbs').innerHTML;
+    const frames = (shot.match(/<div role="img"/g) || []).length, nDots = (dots.match(/<button /g) || []).length;
+    assert.ok(frames >= 2, `${x}: frames`);
+    assert.equal(nDots, frames, `${x}: as many dots as frames`);
+    assert.equal((page.byId('lp-seq').innerHTML.match(/data-frame=/g) || []).length, frames, `${x}: the route's strip too`);
+    for (const lang of ['fr', 'en']) {
+      page.RBL.setLang(lang);
+      for (let i = 0; i < frames; i++) {
+        page.click(page.byId('lp-thumbs'), {closest: () => ({getAttribute: () => String(i)})});
+        assert.equal(page.RBL.step, i);
+        assert.ok(page.byId('lp-stepName').textContent && page.byId('lp-cue').textContent, `${x} ${lang} step ${i + 1}: words`);
+        assert.equal(page.byId('lp-num').textContent, String(i + 1));
+      }
+      assert.ok(page.byId('lp-pTitle').textContent && page.byId('lp-drawn').textContent && page.byId('lp-pCrumb').textContent);
+    }
+    page.RBL.setLang('fr');
+    assert.equal(page.byId('intro').attrs['data-ex'], x);
+    assert.ok(page.byId('lp-sessionUi').innerHTML.includes('<ol>') && page.byId('lp-sessionMini').innerHTML.includes('<ol>'));
+    assert.ok(page.byId('lp-rUrl').textContent, `${x}: the address in Chrome`);
+  }
+  // the step count follows the data, never a fixed 6
+  assert.doesNotMatch(landingJs.slice(landingJs.indexOf('// @gen-end')), /%\s*6\b|<\s*6\b|=== 6\b/);
+});
+
+test('L36 — every picture the landing can show is in the repo, resized; nothing unused, nothing third-party', () => {
+  const page = landing({language: 'en'});
+  const shown = new Set(imgs(intro));
+  for (const x of page.RBL.examples) for (const lang of ['fr', 'en']) {
+    page.RBL.setExample(x); page.RBL.setLang(lang);
+    for (const id of ['lp-shot', 'lp-nbUi', 'lp-sessionUi', 'lp-sessionMini', 'lp-progressUi', 'lp-routeNb']) imgs(page.byId(id).innerHTML).forEach(s => shown.add(s));
+    for (const el of [...page.lists.get('[data-k]')]) imgs(el.innerHTML).forEach(s => shown.add(s));
+  }
+  // [data-frame] / [data-share] fill the same frames as the sheet
+  assert.ok(shown.size > 60, `${shown.size} pictures`);
+  for (const src of shown) {
+    assert.match(src, /^assets\/(mma|dance|stretch|snow|hiit|yoga|notebooks)\/[\w-]+\.jpg$/, src);
+    const f = path.join(ROOT, 'app', src);
+    assert.ok(fs.existsSync(f), `exists: ${src}`);
+    assert.ok(fs.statSync(f).size < (src.endsWith('-t.jpg') ? 40 : 160) * 1024, `resized: ${src}`);
+  }
+  const files = [];
+  for (const d of fs.readdirSync(path.join(ROOT, 'app/assets'))) {
+    const dir = path.join(ROOT, 'app/assets', d);
+    if (!fs.statSync(dir).isDirectory() || d === 'og') continue;
+    const map = JSON.parse(fs.readFileSync(path.join(dir, 'image-map.json'), 'utf8'));
+    assert.ok(fs.existsSync(path.join(dir, 'README.md')), `${d}/README.md`);
+    for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.jpg'))) {
+      files.push(`assets/${d}/${f}`);
+      assert.ok(map.files[f], `${d}/${f} listed in image-map.json`);
+    }
+  }
+  assert.deepEqual(files.filter(f => !shown.has(f)), [], 'no picture shipped that the landing never shows');
+  assert.doesNotMatch(files.join(' '), /\/(ki\d|n-kite-|hi0[125]\.|c-fouette|c-heels|t-osoto-gari-mma|ref-|orig-)/, 'the unused and reference files stay out');
+});
+
+test('L36 — no request to another host, no third-party credit or reel address in the app', () => {
+  for (const s of [...imgs(intro), ...imgs(landingJs)]) assert.doesNotMatch(s, /^(?:https?:)?\/\//, s);
+  assert.doesNotMatch(intro + landingJs, /<(?:img|script|link|iframe|source|video)\b[^>]*\b(?:src|href)="(?:https?:)?\/\//, 'no resource from another host');
+  assert.doesNotMatch(html.slice(0, html.indexOf('</head>')), /fonts\.googleapis|fonts\.gstatic|<script[^>]+src="https?:/, 'fonts and scripts are the app\'s');
+  assert.doesNotMatch(landingJs, /url\((?:https?:)?\/\//);
+  for (const f of fs.readdirSync(path.join(ROOT, 'app')).filter(f => /\.(js|html|json|webmanifest)$/.test(f))) {
+    const s = fs.readFileSync(path.join(ROOT, 'app', f), 'utf8');
+    assert.doesNotMatch(s, /Natan Levy|instagram\.com\/reel/, `${f}: no third-party credit or reel address`);
+  }
+  // the links out of the page are to the project's own repository, in a new tab
+  for (const m of intro.matchAll(/<a\b[^>]*href="(https?:[^"]+)"[^>]*>/g)) {
+    assert.match(m[1], /^https:\/\/github\.com\/lt20\/reelbook(\/|$)/, m[1]);
+    assert.match(m[0], /target="_blank" rel="noopener"/);
+  }
+});
+
+test('L36 — <head>: title, description, canonical, Open Graph and Twitter card with an absolute 1200×630 image', () => {
+  const head = html.slice(0, html.indexOf('</head>'));
+  const meta = (k, v) => { const m = head.match(new RegExp(`<meta (?:property|name)="${k}" content="([^"]*)">`)); return m && m[1]; };
+  assert.match(head, /<title>Reelbook · [^<]+<\/title>/);
+  assert.ok(meta('description').length > 60);
+  assert.match(head, /<link rel="canonical" href="https:\/\/lt20\.github\.io\/reelbook\/">/);
+  assert.equal(meta('og:locale'), 'fr_FR'); assert.equal(meta('og:locale:alternate'), 'en_GB');
+  assert.equal(meta('og:url'), 'https://lt20.github.io/reelbook/');
+  const og = meta('og:image');
+  assert.match(og, /^https:\/\/lt20\.github\.io\/reelbook\/assets\/og\/[\w-]+\.jpg$/);
+  assert.equal(meta('og:image:width'), '1200'); assert.equal(meta('og:image:height'), '630');
+  assert.equal(meta('twitter:card'), 'summary_large_image'); assert.equal(meta('twitter:image'), og);
+  const file = path.join(ROOT, 'app', og.replace('https://lt20.github.io/reelbook/', ''));
+  const jpg = fs.readFileSync(file);
+  let i = 2, size = null;
+  while (i < jpg.length) { const marker = jpg[i + 1], len = jpg.readUInt16BE(i + 2); if (marker >= 0xc0 && marker <= 0xc2) { size = [jpg.readUInt16BE(i + 7), jpg.readUInt16BE(i + 5)]; break; } i += 2 + len; }
+  assert.deepEqual(size, [1200, 630], 'the preview picture is 1200 × 630');
+  assert.ok(jpg.length < 300 * 1024);
+  assert.match(head, /<link rel="icon" href="icons\/reelbook-app\.svg"/);
+});
+
+test('L36 — the landing\'s #signin, #signup and #shortcut open the app\'s screens', async () => {
+  for (const [id, href] of [['intro-signin', '#signin'], ['intro-signup', '#signup'], ['intro-shortcut', '#shortcut']]) assert.match(intro, new RegExp(`<a [^>]*href="${href}" id="${id}"`), id);
+  const a = await app();
+  await a.fire('intro-signin');
+  assert.equal(a.element('intro').hidden, true); assert.equal(a.element('auth-form').hidden, false);
+  assert.equal(a.element('auth-title').textContent, 'Sign in');
+  const b = await app();
+  await b.fire('intro-shortcut');
+  assert.equal(b.element('intro').hidden, true, 'the sign-in form');
+  assert.equal(b.element('auth-form').hidden, false);
+  assert.equal(b.location.hash.replace('#', ''), 'settings', 'Settings › iPhone shortcut, once signed in');
+  const c = await app();
+  await c.fire('intro-signup');
+  assert.equal(c.element('auth-title').textContent, 'Create an account');
+});
+
+test('L36 — step 2, macOS / Linux or Windows: one line in view, the one « Copy the line » copies', async () => {
+  const page = landing({language: 'en'});
+  const [unix, win] = page.lists.get('#intro .lp-os button');
+  const panes = page.lists.get('#intro [data-os-pane]');
+  assert.ok(panes.filter(p => p.attrs['data-os-pane'] === 'unix').every(p => !p.hidden) && panes.filter(p => p.attrs['data-os-pane'] === 'win').every(p => p.hidden));
+  page.click(win);
+  assert.equal(win.attrs['aria-pressed'], 'true'); assert.equal(unix.attrs['aria-pressed'], 'false');
+  assert.ok(panes.filter(p => p.attrs['data-os-pane'] === 'win').every(p => !p.hidden) && panes.filter(p => p.attrs['data-os-pane'] === 'unix').every(p => p.hidden));
+  let wrote = null;
+  page.window.navigator.clipboard = {writeText: async s => { wrote = s; }};
+  page.click(page.byId('lp-copy'));
+  for (let i = 0; i < 5; i++) await Promise.resolve();
+  assert.equal(wrote, 'irm https://lt20.github.io/reelbook/install.ps1 | iex');
+});
+
+test('L36 — the pause button stops the sheet and the band, and says what it does', () => {
+  const page = landing({language: 'fr'});
+  const pp = page.byId('lp-pp');
+  assert.equal(pp.attrs['aria-label'], 'Mettre en pause les animations');
+  page.click(page.byId('intro'), {closest: sel => sel === '#lp-pp' ? pp : null});
+  assert.equal(pp.attrs['aria-label'], 'Relancer les animations');
+  assert.ok(page.byId('lp-top').classes.has('lp-anim-off'));
+  page.RBL.setLang('en');
+  assert.equal(page.byId('lp-pp').attrs['aria-label'], 'Play the animations');
 });

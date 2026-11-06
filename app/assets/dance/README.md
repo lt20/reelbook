@@ -1,26 +1,13 @@
-# Visuels de démonstration Dance
+# Visuels de l’accueil : Danse
 
-Images générées avec l'outil imagegen intégré pour illustrer les emplacements Dance de l'artifact « Reelbook accueil v2 ». Ce sont des scènes fictives photoréalistes, **pas des captures de vidéos réelles**. Les liens « vidéo d'origine » et les noms de plateformes dans la maquette sont des exemples ; ils ne sont pas les sources de ces images.
+Images **générées** (Codex, 5-6 nov. 2026) pour l’accueil v3 (lot L36, `app/landing.js`), copiées de
+`outputs/site-artifact/img/` (hors dépôt, mêmes noms). Scènes fictives : aucune image n’est une capture d’une vidéo
+tierce ; les poses de certaines séquences suivent une vidéo de référence, la personne, les vêtements et le lieu
+sont remplacés (voir `docs/audit-design/lots/L36.md`). Laurent a validé leur publication dans le dépôt public (6 nov.).
 
-| Emplacement dans la maquette | Image horizontale (carte, recherche, séance) | Image verticale (fiche potentielle) |
-| --- | --- | --- |
-| Pirouette en dehors | `pirouette-en-dehors/card.jpg` | Voir les six images sélectionnées dans `pirouette-en-dehors/README.md` |
-| Chaînés en diagonale | `chaines-en-diagonale-card.jpg` | `chaines-en-diagonale.jpg` |
-| Fouetté : la préparation | `fouette-preparation-card.jpg` | `fouette-preparation.jpg` |
-| Grand jeté, sans forcer le grand écart | `grand-jete-card.jpg` | `grand-jete.jpg` |
-| Combo heels en 8 temps | `combo-heels-card.jpg` | `combo-heels.jpg` |
-| Port de bras lent (séance) | `port-de-bras-lent-card.jpg` | `port-de-bras-lent.jpg` |
+- `<nom>.jpg` : étape d’une séquence (la fiche animée, le téléphone de partage, Chrome), 640 px de large.
+- `<nom>-t.jpg` : vignette (séances, tablette, téléphone, progression), 240 px de large.
 
-Les images verticales sont proches du format 4:5. Les cartes horizontales sont en 3:2, avec le corps entier visible dans le cadrage. Pour la recherche, reprendre la carte horizontale ; pour « Tes notes », utiliser l'étape 3 de la pirouette. La séance réutilise la carte de la pirouette, celle du grand jeté et celle du port de bras. Le « Flow hanches » est une fiche Yoga distincte déjà photographiée dans la maquette.
-
-## Prompts de génération
-
-- Pirouette : « Danseuse adulte en justaucorps bordeaux, short noir, collants et chaussons roses, studio de danse lumineux avec fenêtre, miroir et parquet ; six arrêts sur image cohérents d'une vidéo de téléphone : préparation en quatrième, montée en retiré, regard, tour, retour de la tête, réception. » Chaque étape a pris la précédente comme référence visuelle.
-- Chaînés : « Même danseuse et studio, série de tours chaînés en déplacement diagonal, pieds rapprochés sur demi-pointe, bras en transition, regard vers la direction de déplacement. »
-- Fouetté : « Même danseuse et studio, préparation du fouetté avec jambe de travail étendue à la seconde et pied d'appui relevé. »
-- Grand jeté : « Même danseuse et studio, grand jeté modéré en plein vol, corps entier dans l'image, mouvement naturel. »
-- Combo heels : « Danseuse adulte aux cheveux bouclés lâchés, haut prune, pantalon anthracite et talons de danse noirs, studio moderne, pose d'un combo en huit temps. »
-- Port de bras : « Même danseuse de ballet et studio, échauffement lent des bras, un bras au-dessus de la tête et l'autre ouvert à la seconde. »
-- Variantes carte : « Même scène, photographie horizontale 3:2 prise de plus loin, danseuse entièrement visible avec de l'espace autour. »
-
-Contrainte commune : photographie naturelle façon Reel filmé au téléphone, anatomie plausible, sans texte, logo, interface ou filigrane. Les gestes doivent être revus par une personne compétente en danse avant tout usage comme consigne technique.
+Refaire : `sips --resampleWidth 640 -s format jpeg -s formatOptions 70 <source> --out <nom>.jpg` (240 et `-t` pour une
+vignette ; jamais `sips -c`, qui recadre au centre). La liste et les poids sont dans `image-map.json`. Ces fichiers ne
+sont pas dans le cache de l’app (`app/sw.js`) : ils se chargent à la demande.

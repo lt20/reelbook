@@ -1,0 +1,87 @@
+{
+  "notice": "Visuels de démonstration générés (Codex, 5-6 nov. 2026) pour l’accueil v3 (L36). Aucun n’est une capture d’une vidéo tierce ; droit de publication dans le dépôt public acquis (Laurent, 6 nov.).",
+  "source": "outputs/site-artifact/img/ (hors dépôt), mêmes noms de fichier",
+  "sizes": {
+    "frame": "640 px de large, JPEG q70",
+    "thumbnail": "240 px de large, JPEG q70, suffixe -t"
+  },
+  "files": {
+    "t-flow-hanches-t.jpg": {
+      "source": "t-flow-hanches.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 240,
+      "bytes": 18516
+    },
+    "y-chien-t.jpg": {
+      "source": "y-chien.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 12402
+    },
+    "y-corbeau-t.jpg": {
+      "source": "y-corbeau.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 12122
+    },
+    "y-guerrier-t.jpg": {
+      "source": "y-guerrier.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 12261
+    },
+    "y-pigeon-t.jpg": {
+      "source": "y-pigeon.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 12618
+    },
+    "y-salutation-t.jpg": {
+      "source": "y-salutation.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 11553
+    },
+    "y2-chien-t.jpg": {
+      "source": "y2-chien.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 13467
+    },
+    "y2-corbeau-t.jpg": {
+      "source": "y2-corbeau.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 12994
+    },
+    "y2-guerrier-t.jpg": {
+      "source": "y2-guerrier.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 16646
+    },
+    "y2-pigeon-t.jpg": {
+      "source": "y2-pigeon.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 11069
+    },
+    "y2-salutation-t.jpg": {
+      "source": "y2-salutation.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 10968
+    }
+  }
+}
