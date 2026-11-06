@@ -1,10 +1,10 @@
 [
   {"name": "l27-01-auth-see-demo", "query": "noauth", "hash": "", "actions": [{"wait": "#auth:not([hidden]) #intro-demo:not([hidden])"}]},
   {"name": "l27-02-demo-home", "query": "noauth", "hash": "demo", "full": true, "actions": [{"wait": "#demo .card img"}, {"wait": 400}]},
-  {"name": "l27-03-demo-sheet", "query": "noauth", "hash": "demo/goblet-squat", "full": true, "actions": [{"wait": "#demo .steps img"}, {"wait": 400}]},
-  {"name": "l27-04-demo-technique", "query": "noauth", "hash": "demo/water-start", "full": true, "actions": [{"wait": "#demo .steps img"}, {"wait": 400}]},
-  {"name": "l27-05-demo-session", "query": "noauth", "hash": "demo/session/ten-minute-circuit", "full": true, "actions": [{"wait": "#demo .grid .card img"}, {"wait": 400}]},
-  {"name": "l27-06-from-session", "query": "noauth", "hash": "demo/session/ten-minute-circuit", "actions": [{"wait": "#demo .grid .card"}, {"click": "#demo .grid .card >> nth=1"}, {"wait": "#demo .steps img"}, {"wait": 300}]},
+  {"name": "l27-03-demo-sheet", "query": "noauth", "hash": "demo/pirouette-en-dehors", "full": true, "actions": [{"wait": "#demo .steps img"}, {"wait": 400}]},
+  {"name": "l27-04-demo-technique", "query": "noauth", "hash": "demo/spinning-back-kick", "full": true, "actions": [{"wait": "#demo .steps img"}, {"wait": 400}]},
+  {"name": "l27-05-demo-session", "query": "noauth", "hash": "demo/session/sampler", "full": true, "actions": [{"wait": "#demo .grid .card img"}, {"wait": 400}]},
+  {"name": "l27-06-from-session", "query": "noauth", "hash": "demo/session/sampler", "actions": [{"wait": "#demo .grid .card"}, {"click": "#demo .grid .card >> nth=1"}, {"wait": "#demo .steps img"}, {"wait": 300}]},
   {"name": "l27-07-create-account", "query": "noauth", "hash": "demo", "actions": [{"wait": "#demo .card"}, {"click": "#demo-signup"}, {"wait": "#setup:not([hidden])"}]},
   {"name": "l27-08-query-demo", "query": "demo", "hash": "", "actions": [{"wait": "#demo .card img"}]},
   {"name": "l27-09-signed-in-demo", "hash": "demo", "actions": [{"wait": "#demo .card img"}, {"wait": 400}]}
