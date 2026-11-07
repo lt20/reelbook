@@ -129,5 +129,95 @@ class NightlyNotice(unittest.TestCase):
         self.assertEqual(fake.paths, ["/auth/v1/token?grant_type=refresh_token"])
 
 
+class LoginMarksTheComputer(unittest.TestCase):
+    """L43: rb.py login writes reelbook_cli_at in user_metadata (read by #welcome). A failure never blocks the login."""
+    TOKEN = {"access_token": "at", "refresh_token": "rt", "expires_in": 3600, "user": {"id": "u1"}}
+
+    def login(self, put):
+        seen = []
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def answer(self, status, body):
+                self.send_response(status)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def do_POST(self):
+                self.rfile.read(int(self.headers.get("Content-Length") or 0))
+                seen.append(("POST", self.path, None, None))
+                self.answer(200, json.dumps(LoginMarksTheComputer.TOKEN).encode())
+
+            def do_PUT(self):
+                body = self.rfile.read(int(self.headers.get("Content-Length") or 0))
+                seen.append(("PUT", self.path, json.loads(body), {k.lower(): v for k, v in self.headers.items()}))
+                if put is None:  # the connection drops, no answer at all
+                    self.close_connection = True
+                    return
+                self.answer(put, b'{"msg":"nope"}')
+
+            def log_message(self, *a): pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        url = f"http://127.0.0.1:{server.server_port}"
+        return self.run_login(url), seen
+
+    def run_login(self, url):
+        out, err = io.StringIO(), io.StringIO()
+        old_env = {k: os.environ.get(k) for k in ("REELBOOK_EMAIL", "REELBOOK_PASSWORD")}
+        os.environ.update(REELBOOK_EMAIL="user@example.test", REELBOOK_PASSWORD="pw")
+        old = rb.CFG_PATH
+        with tempfile.TemporaryDirectory() as tmp:
+            rb.CFG_PATH = pathlib.Path(tmp) / "config.json"
+            try:
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    rb.cmd_login(["--url", url, "--key", "the-key"])
+                cfg = json.loads(rb.CFG_PATH.read_text())
+            finally:
+                rb.CFG_PATH = old
+                for k, v in old_env.items():
+                    if v is None: os.environ.pop(k, None)
+                    else: os.environ[k] = v
+        return out.getvalue(), err.getvalue(), cfg
+
+    def test_success_writes_the_date_with_the_session(self):
+        (out, err, cfg), seen = self.login(200)
+        self.assertEqual([s[:2] for s in seen], [("POST", "/auth/v1/token?grant_type=password"), ("PUT", "/auth/v1/user")])
+        body, headers = seen[1][2], seen[1][3]
+        self.assertEqual(list(body), ["data"])
+        self.assertEqual(list(body["data"]), ["reelbook_cli_at"], "merged by GoTrue: nothing else in the metadata is touched")
+        self.assertRegex(body["data"]["reelbook_cli_at"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+        self.assertEqual(headers["apikey"], "the-key")
+        self.assertEqual(headers["authorization"], "Bearer at")
+        self.assertIn("signed in as user@example.test", out)
+        self.assertEqual(err, "")
+        self.assertEqual(cfg["access_token"], "at")
+
+    def test_a_refused_write_is_silent_and_the_login_stands(self):
+        for status in (401, 403, 404, 500):
+            (out, err, cfg), seen = self.login(status)
+            self.assertEqual(seen[-1][:2], ("PUT", "/auth/v1/user"))
+            self.assertEqual(out.strip().count("\n"), 0, "one line: signed in")
+            self.assertIn("signed in as user@example.test", out)
+            self.assertEqual(err, "")
+            self.assertEqual(cfg["refresh_token"], "rt")
+
+    def test_a_dropped_connection_is_silent_and_the_login_stands(self):
+        (out, err, cfg), seen = self.login(None)
+        self.assertIn("signed in as user@example.test", out)
+        self.assertEqual(err, "")
+        self.assertEqual(cfg["user_id"], "u1")
+
+    def test_an_unreachable_server_is_silent(self):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            rb.mark_cli_login("http://127.0.0.1:9", "k", "t")
+        self.assertEqual((out.getvalue(), err.getvalue()), ("", ""))
+
+
 if __name__ == "__main__":
     unittest.main()

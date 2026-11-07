@@ -656,9 +656,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-topbar{position:sticky;top:0;z-index:50;background:rgba(243,241,236,.9);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid transparent;}
 #intro .lp-topbar.lp-scrolled{border-bottom-color:rgba(27,29,31,.1);box-shadow:0 6px 20px -14px rgba(27,29,31,.35)}
 #intro .lp-topbar .lp-bar{padding-block:12px;flex-wrap:nowrap}
-#intro .lp-seg{display:inline-flex;background:var(--step);border-radius:999px;padding:3px}
-#intro .lp-seg button{border:0;background:none;font:700 14px/1 var(--body);color:var(--ink-2);min-width:44px;min-height:44px;padding:0 12px;border-radius:999px;cursor:pointer;}
-#intro .lp-seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+:is(#intro,#welcome) .lp-seg{display:inline-flex;background:var(--step);border-radius:999px;padding:3px}
+:is(#intro,#welcome) .lp-seg button{border:0;background:none;font:700 14px/1 var(--body);color:var(--ink-2);min-width:44px;min-height:44px;padding:0 12px;border-radius:999px;cursor:pointer;}
+:is(#intro,#welcome) .lp-seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
 #intro .lp-wm svg{flex:none}
 @media (max-width:760px){
 #intro .lp-topbar .lp-bar{flex-wrap:wrap;row-gap:2px;padding-block:8px 4px;gap:12px}
@@ -1089,6 +1089,48 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 .intro-demo{display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);color:var(--accent);font-weight:600}
 .auth-adv{margin-top:var(--s-3)}
 .auth-adv a{display:inline-block;padding:var(--s-2) 0}
+/* L43: #welcome, the steps (mockup docs/audit-design/mockups/p7-signup.html) */
+#welcome{--step:#e9e6df;--ink-2:var(--ink);--ground:var(--bg)}
+:root[data-theme="dark"] #welcome{--step:#24282f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #welcome{--step:#24282f}}
+#welcome .wtop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px}
+#welcome .wtop .eyebrow{margin:0}
+#w-h1{font-size:var(--fs-2xl)}
+#welcome .steps{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:none;gap:10px}
+#welcome .steps>li{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 14px}
+#welcome .steps>li.now{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+#welcome .steps>li.done{background:transparent}
+#welcome .steps .n{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:700 18px/1 var(--display);background:var(--step);color:var(--ink)}
+#welcome .steps>li.now .n{background:var(--accent);color:var(--accent-ink)}
+#welcome .steps>li.done .n{background:var(--ok-bg);color:var(--ok)}
+#welcome .steps h3{font:700 var(--fs-lg)/1.05 var(--display);margin:4px 0 2px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+#welcome .steps .chip{font:600 var(--fs-xs) var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+#welcome .steps>li.done .chip{color:var(--ok)}
+#welcome .steps>li.now .chip{color:var(--accent)}
+#welcome .steps p{font-size:var(--fs-sm);color:var(--muted);margin:0}
+#welcome .steps .body,#welcome .steps .col{min-width:0;display:grid;gap:8px}
+#welcome .steps .body>*{min-width:0}
+#welcome .steps .body .actions{margin-top:2px}
+#welcome .steps .src{font-size:var(--fs-xs);margin:0}
+#welcome .steps .tick{display:flex;gap:10px;align-items:center;min-height:44px;margin:0;font-size:var(--fs-sm);font-weight:600;color:var(--ink);cursor:pointer}
+#welcome .steps .tick input{flex:none;width:22px;height:22px;min-height:0;padding:0;margin:0;accent-color:var(--accent)}
+#welcome .steps ol.two{margin:0;padding-left:20px;display:grid;gap:4px;font-size:var(--fs-sm);color:var(--muted)}
+#welcome .steps .sys{display:inline-flex;align-items:center;gap:6px;font:600 var(--fs-xs) var(--body);color:var(--muted);background:var(--step);border-radius:999px;padding:4px 10px;width:max-content}
+#welcome .steps .sys::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok)}
+#welcome .steps .qrrow{display:grid;grid-template-columns:minmax(0,1fr) 128px;gap:14px;align-items:start}
+#welcome .steps .qr{display:grid;gap:4px;justify-items:center;font-size:var(--fs-xs);color:var(--muted);text-align:center;overflow-wrap:anywhere}
+#welcome .steps .qr .box{background:#fff;padding:6px;border:1px solid var(--line);border-radius:8px;display:grid}
+#welcome .steps .qr img{width:112px;height:112px;display:block}
+#welcome .guide{margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:0 18px}
+#welcome .guide summary{font:700 var(--fs-lg)/1 var(--display);text-transform:uppercase;letter-spacing:.02em;padding:16px 0;min-height:44px;box-sizing:border-box;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+#welcome .guide summary::-webkit-details-marker{display:none}
+#welcome .guide summary::after{content:"+";font:600 20px/1 var(--body);color:var(--muted)}
+#welcome .guide[open] summary::after{content:"–"}
+#welcome .guide .g{display:grid;gap:2px;padding:0 0 16px}
+#welcome .guide h3{font:700 var(--fs-base)/1.2 var(--body);margin:0 0 2px}
+#welcome .guide p{font-size:var(--fs-sm);margin:0}
+#welcome .endrow{margin-top:14px}
+#welcome .endrow .btn{width:100%}
 </style>
 </head>
 <body>
@@ -1390,36 +1432,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 
 <!-- ===== Welcome (after sign-up, and from "Setup guide") ===== -->
 <div id="welcome" class="wrap" hidden>
-  <p class="eyebrow" data-k="w.eyebrow">Welcome to Reelbook</p>
-  <h1 data-k="w.h1">How it works</h1>
-  <div class="panel">
-    <h2 data-k="w.1h">1 · Save videos on your phone</h2>
-    <p data-k="w.1p">A video is worth keeping: tap <b>+ Add a video</b> and paste the link. It waits in the queue. That is all the phone does.</p>
-  </div>
-  <div class="panel">
-    <h2 data-k="w.2h">2 · Claude turns them into sheets</h2>
-    <p data-k="w.2p">Every now and then, when a few videos are waiting, you run the Reelbook skill on your computer. Claude opens each video, watches it, picks the key frames and writes a sheet: photos, why it matters, key points, the steps in order.</p>
-    <p><b data-k="w.need">What you need on that computer</b></p>
-    <ul>
-      <li data-k="w.need1"><a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> (terminal, desktop app or VS Code), Pro plan or above.</li>
-      <li data-k="w.need2">Chrome with the <a href="https://claude.com/chrome" target="_blank" rel="noopener">Claude in Chrome</a> extension.</li>
-      <li data-k="w.need3">Being signed in to Instagram, TikTok and/or Facebook in that Chrome (YouTube needs no sign-in).</li>
-    </ul>
-    <p><b data-k="w.run">How a run goes</b></p>
-    <ul>
-      <li data-k="w.run1">Open Claude Code and type <code>/reelbook</code>. Claude reads your queue and processes the videos one by one.</li>
-      <li data-k="w.run2">Keep Chrome open, not minimised, with the video tab in front: the video does not play in the background.</li>
-      <li data-k="w.run3">Expect 10 to 15 minutes per sheet. You can leave the computer to it.</li>
-      <li data-k="w.run4">On a Mac, it can run every night instead: <code>tools/nightly.sh install</code> in the Reelbook folder. Leave the Mac plugged in with Chrome open; a locked screen is fine.</li>
-    </ul>
-  </div>
-  <div class="panel">
-    <h2 data-k="w.3h">3 · Set up the computer, once</h2>
-    <p class="hint" data-k="w.3p">Paste one line in a terminal. It installs the code, the Python tools and the skill, then asks for the email and password you just chose.</p>
-    <div id="w-install"></div>
-    <p class="hint" data-k="w.3again">You can find these lines again anytime in Settings.</p>
-  </div>
-  <div class="actions" style="margin-top:14px"><button class="btn" type="button" id="w-done" data-k="w.done">Open my notebooks</button></div>
+  <div class="wtop"><p class="eyebrow" data-k="w.eyebrow">Welcome to Reelbook</p><div class="lp-seg lp-lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="false">FR</button><button type="button" data-lang="en" aria-pressed="true">EN</button></div></div>
+  <p class="flash" id="w-flash" role="status" hidden></p>
+  <h1 id="w-h1" aria-live="polite">Three more steps. You only do this once.</h1>
+  <ol class="steps" id="w-steps"></ol>
+  <div class="actions endrow"><button class="btn ghost" type="button" id="w-done" data-k="w.done">Open my notebooks</button></div>
+  <details class="guide"><summary data-k="w.gh">How it works</summary>
+    <div class="g"><h3 data-k="w.g1h">On your phone, send</h3><p data-k="w.g1p">A technique catches your eye in your feed: Share, Reelbook. The video waits in the queue. That’s all the phone does.</p></div>
+    <div class="g"><h3 data-k="w.g2h">On your computer, run</h3><p data-k="w.g2p">Type <code>/reelbook</code> in Claude Code whenever you like. Keep Chrome open in the foreground, signed in to Instagram, TikTok or Facebook if your videos come from there (YouTube needs nothing). Claude watches each video and writes the sheet: photos, why, key points, the steps in order. On a Mac it can also run every night: <code>tools/nightly.sh install</code>.</p></div>
+    <div class="g"><h3 data-k="w.g3h">When you train, open the sheet</h3><p data-k="w.g3p">Move a sheet to another group, add your notes, build a session from several notebooks. On the mat, open the sheet: the move first, in pictures. Tick <b>Done today</b>.</p></div>
+  </details>
 </div>
 
 <!-- ===== Settings ===== -->
@@ -1553,7 +1575,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <script src="config.js?v=9"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
-<script src="landing.js?v=3"></script>
+<script src="landing.js?v=4"></script>
 <script>
 (() => {
   'use strict';
@@ -1963,6 +1985,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       // A link to a sheet the cached catalogue did not hold opens now.
       const tok = decodeURIComponent(location.hash.slice(1)), ses = RS.sessionSlugOf(tok);
       if (!$('home').hidden) { if (bySlug.has(tok) || (ses && v2BySlug.has(ses))) route(); else renderHome(); }
+      else if (!$('welcome').hidden) paintWelcome(); // L43: a sheet that just arrived ticks its steps
     } else if (!loadError && !sheets.length && !ls.get(welcomeKey()) && !location.hash) { location.hash = 'welcome'; } else route();
     refreshQueue();
   };
@@ -2491,6 +2514,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     $('queue').innerHTML = rows.map(queueRow).join('') + (lastRun
       ? `<p class="qpc">Last run: ${daysAgo(lastRun)}</p>`
       : '<p class="qpc">No computer has processed a video yet. <a href="#welcome">Set up your computer</a></p>');
+    if (!$('welcome').hidden) paintWelcome(); // L43: a processed request means a computer is linked
   };
   const toggleQueue = () => { ls.set(QOPEN, String(!queueOpen())); renderQueue(); $('queue-toggle').focus(); };
   // One read for the list, one for the latest done request (the computer's last run). The read filters are
@@ -3705,11 +3729,11 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const installPs = () => !backend ? '' : backend.mode === 'hosted'
     ? `${ownConfig ? `$env:REELBOOK_CONFIG_URL = "${base}config.js"; ` : ''}irm ${base}install.ps1 | iex`
     : `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex`;
-  const installBlock = (tt = (k, en) => en) => `<p class="hint"><b>macOS / Linux</b> (Terminal)</p><pre data-cmd="sh">${esc(installSh())}</pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="sh">${tt('w.copy', 'Copy')}</button><span class="hint" data-copied="sh"></span></div>
+  const installBlock = () => `<p class="hint"><b>macOS / Linux</b> (Terminal)</p><pre data-cmd="sh">${esc(installSh())}</pre>
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="sh">Copy</button><span class="hint" data-copied="sh"></span></div>
     <p class="hint"><b>Windows</b> (PowerShell)</p><pre data-cmd="ps">${esc(installPs())}</pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="ps">${tt('w.copy', 'Copy')}</button><span class="hint" data-copied="ps"></span></div>
-    <div class="actions"><button class="btn sm ghost" type="button" data-send>${tt('w.send', 'Send to my computer')}</button></div>`;
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="ps">Copy</button><span class="hint" data-copied="ps"></span></div>
+    <div class="actions"><button class="btn sm ghost" type="button" data-send>Send to my computer</button></div>`;
   // L26: « Send to my computer »: the two lines and one sentence, through the share sheet (mail, messages, AirDrop),
   // else a mail to the signed-in address. A share closed by the person (AbortError) does nothing more.
   const installText = () => `Set up Reelbook on this computer: paste one of these lines in a terminal.\n\nmacOS / Linux (Terminal):\n${installSh()}\n\nWindows (PowerShell):\n${installPs()}\n`;
@@ -3722,9 +3746,154 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     location.href = installMail();
   };
   const copyHandler = root => async ev => { if (ev.target.closest('[data-send]')) return sendInstall(); const b = ev.target.closest('[data-copy]'); if (!b) return; const pre = root.querySelector(`[data-cmd="${b.dataset.copy}"]`) || $(b.dataset.copy); const out = root.querySelector(`[data-copied="${b.dataset.copy}"]`); try { await navigator.clipboard.writeText(pre.textContent); out.textContent = 'Copied.'; } catch { out.textContent = 'Select and copy the command above.'; } };
+  // ---------- L43: #welcome, the steps (docs/audit-design/P7-signup.md, « Mockup review ») ----------
+  // Shown as done only what the app really knows. Computer: reelbook_cli_at in user_metadata (written by rb.py login,
+  // read with getUser() on arrival and whenever the page regains focus), a sheet, or a request a computer took.
+  // Phone: home-screen mode on this phone or tablet, else the person's tick (per user, decision 8). First sheet: a
+  // sheet exists. route() runs inside onAuthStateChange: wSync, which calls Supabase, always leaves through a timer.
+  // Guarded for the test harness: no matchMedia, no navigator.share, no navigator.clipboard, no getUser.
   const welcomeKey = () => 'rb.welcome.' + (user ? user.id : '');
-  const renderWelcome = () => { $('w-install').innerHTML = installBlock(T); };
-  $('welcome').addEventListener('click', copyHandler($('welcome')));
+  const wKey = k => `rb.welcome.${k}.${user ? user.id : ''}`;
+  const NEW_ACCOUNT = 24 * 60 * 60 * 1000;
+  let wCli = null, wBanner = null, wOs = null, wSyncing = false, wPainted = '', wSendFailed = false;
+  // a phone or a tablet has no terminal; iPadOS asks for the desktop site: a Mac with a touch screen
+  const wMobile = () => {
+    const ua = String(navigator.userAgent || '');
+    return !!(navigator.userAgentData && navigator.userAgentData.mobile) || /Android|iPhone|iPad|iPod|Mobile/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  };
+  const wSystem = () => {
+    const p = String((navigator.userAgentData && navigator.userAgentData.platform) || navigator.userAgent || '');
+    return /Windows/i.test(p) ? 'win' : /mac/i.test(p) ? 'mac' : /Linux|X11|CrOS|Chrome OS/i.test(p) ? 'linux' : '';
+  };
+  // One read of what is known; the page draws nothing else.
+  const wFacts = () => {
+    const meta = user && user.user_metadata, read = wCli && user && wCli.uid === user.id ? wCli.at : null;
+    const sheet = sheets.length > 0, mobile = wMobile(), installed = mobile && runsInstalled(), ticked = ls.get(wKey('phone')) === '1';
+    const computer = !!(meta && meta.reelbook_cli_at) || !!read || sheet || !!lastRun || queueRows.some(r => r.processed_at);
+    return {computer, phone: installed || ticked, sheet, mobile, sent: mobile && !computer ? ls.get(wKey('sent')) : null};
+  };
+  // « Account created » on the first arrival only: a new account, on this device, before any step is done. The read
+  // of the catalogue must be over (a sheet may yet come); a date the session does not give claims nothing.
+  const wBannerOn = f => {
+    if (!user) return false;
+    if (wBanner === user.id) return !f.computer && !f.phone && !f.sheet;
+    if (loading || f.computer || f.phone || f.sheet || ls.get(wKey('seen')) || ls.get(welcomeKey())) return false;
+    if (!(Date.now() - Date.parse(user.created_at || '') < NEW_ACCOUNT)) return false;
+    ls.set(wKey('seen'), '1'); wBanner = user.id;
+    return true;
+  };
+  const wStep = (n, cls, title, chip, body) => `<li class="${cls}"${cls === 'now' ? ' aria-current="step"' : ''}><span class="n">${cls === 'done' ? '✓' : n}</span><div class="body"><h3><span>${title}</span><span class="chip">${chip}</span></h3>${body}</div></li>`;
+  const wLink = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${text}</a>`;
+  const wNeedUrl = () => CFG.repo + '#what-you-need';
+  const wComputerBody = f => {
+    if (f.computer) return `<p>${T('w.pc.done', 'Linked. The install line stays in <b>Settings</b>.')}</p>`;
+    if (f.sent === 'shared') return `<p>${T('w.pc.sent', 'Line sent. Paste it into Terminal when you’re at your computer; this step will tick itself. It also stays in <b>Settings</b>.')}</p>`;
+    if (f.sent === 'copied') return `<p>${T('w.pc.copied', 'Line copied. Send it to yourself, then paste it into Terminal when you’re at your computer; this step will tick itself. It also stays in <b>Settings</b>.')}</p>`;
+    const ask = `<p>${T('w.pc.ask', 'It will ask for your Reelbook email and password. The password stays hidden as you type: that’s normal.')}</p>`;
+    if (f.mobile) {
+      return `<p>${T('w.pc.why', 'This one can’t be done on a phone: your computer is what watches the videos and writes the sheets. Send yourself the install line and paste it when you’re at your computer.')}</p>${ask}
+        <p class="src">${wLink(wNeedUrl(), T('w.pc.needm', 'What the computer needs: Claude Code, Chrome with Claude in Chrome, Git, Python 3.9+ ↗'))}</p>
+        <div class="actions"><button class="btn" type="button" data-w="send">${T('w.send', 'Send myself the line')}</button></div>
+        ${wSendFailed ? `<pre id="w-line">${esc(wInstallText())}</pre><p role="alert">${T('w.pc.nosend', 'Sharing and copying did not work: select the text above and send it to yourself.')}</p>` : ''}`;
+    }
+    const sys = wSystem(), win = (wOs || (sys === 'win' ? 'win' : 'unix')) === 'win';
+    const chip = win ? (sys === 'win' ? T('w.sys.win', 'Windows detected') : '') : sys === 'mac' ? T('w.sys.mac', 'macOS detected') : sys === 'linux' ? T('w.sys.linux', 'Linux detected') : '';
+    return `<p>${win ? T('w.pc.leadw', 'It is what watches the videos and writes the sheets. Paste this line into PowerShell: it installs <code>/reelbook</code> and links it to your account.') : T('w.pc.lead', 'It is what watches the videos and writes the sheets. Paste this line into Terminal: it installs <code>/reelbook</code> and links it to your account.')}</p>
+        ${chip ? `<span class="sys">${chip}</span>` : ''}
+        <pre id="w-line">${esc(win ? installPs() : installSh())}</pre>
+        <div class="actions"><button class="btn" type="button" data-w="copy">${T('i2.copy', 'Copy the line')}</button><button class="btn ghost sm" type="button" data-w="os">${win ? T('w.os.unix', 'On a Mac or Linux? Terminal') : T('w.os.win', 'On Windows? PowerShell')}</button></div>
+        <p id="w-copymsg" role="status" hidden></p>${ask}
+        <p class="src">${wLink(wNeedUrl(), T('w.pc.need', 'What you need: Claude Code, Chrome with Claude in Chrome, Git, Python 3.9+ ↗'))} · ${wLink(`${CFG.repo}/blob/main/app/install.${win ? 'ps1' : 'sh'}`, T('w.pc.script', 'Read the script first ↗'))}</p>`;
+  };
+  const wPhoneBody = (f, now) => {
+    if (f.phone) return `<p>${f.mobile ? T('w.ph.done', 'Done on this phone.') : T('w.ph.donepc', 'Done on your phone.')}</p>`;
+    const short = T('w.ph.2', 'Add the “Send to Reelbook” shortcut to the iPhone Share menu. On Android, paste the link in the app.');
+    const tick = `<label class="tick"><input type="checkbox" id="w-tick"><span>${T('w.ph.tick', 'Done on my phone')}</span></label>`;
+    if (f.mobile) {
+      return `<ol class="two"><li>${T('w.ph.1', 'Put Reelbook on your home screen and sign in there.')}</li><li>${short}</li></ol>
+        <div class="actions"><button class="${now ? 'btn' : 'btn ghost sm'}" type="button" data-w="shortcut">${T('i3.cta', 'Add the shortcut')}</button></div>${tick}`;
+    }
+    const address = base.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `<div class="qrrow"><div class="col"><ol class="two"><li>${T('w.ph.1d', 'Open Reelbook on your phone, put it on your home screen and sign in there.')}</li><li>${short}</li></ol>${tick}</div>
+        <div class="qr">${ownConfig ? '' : `<div class="box"><img src="icons/welcome-qr.svg" width="112" height="112" alt="QR: ${esc(address)}"></div>`}<span>${esc(address)}</span></div></div>`;
+  };
+  const wSheetBody = f => {
+    if (!f.sheet) return `<p>${T('w.fs.p', 'Share a video from Instagram, TikTok, YouTube or Facebook, or tap <b>+ Add a video</b> and paste the link. Then type <code>/reelbook</code> in Claude Code on your computer: the sheet lands in your notebooks.')}</p>`;
+    const n = sheets.length;
+    return `<p>${n === 1 ? T('w.fs.done1', '1 sheet in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.') : T('w.fs.donen', '{n} sheets in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.').replace('{n}', () => n)}</p>`;
+  };
+  const paintWelcome = () => {
+    if (!user) return;
+    const f = wFacts(), left = [f.computer, f.phone, f.sheet].filter(d => !d).length;
+    const now = !f.computer && !f.sent ? 1 : !f.phone ? 2 : !f.sheet ? 3 : 0;
+    const cls = (n, done) => done ? 'done' : now === n ? 'now' : '';
+    const chipOf = done => done ? T('w.chip.done', 'Done') : T('w.chip.todo', 'To do');
+    const flash = wBannerOn(f), fl = $('w-flash');
+    fl.hidden = !flash; fl.innerHTML = flash ? T('w.flash', 'Account created for <b>{email}</b>.').replace('{email}', () => esc(user.email || '')) : '';
+    $('w-h1').textContent = left === 3 ? T('w.left3', 'Three more steps. You only do this once.') : left === 2 ? T('w.left2', 'Two steps left') : left === 1 ? T('w.left1', 'One step left') : T('w.left0', 'All set');
+    const chip1 = f.computer ? chipOf(true) : f.sent === 'shared' ? T('w.chip.sent', 'Sent') : f.sent === 'copied' ? T('w.chip.copied', 'Copied') : chipOf(false);
+    const html = wStep(1, cls(1, f.computer), T('w.pc.t', 'Your computer'), chip1, wComputerBody(f))
+      + wStep(2, cls(2, f.phone), T('w.ph.t', 'Your phone'), chipOf(f.phone), wPhoneBody(f, now === 2))
+      + wStep(3, cls(3, f.sheet), T('w.fs.t', 'Your first sheet'), chipOf(f.sheet), wSheetBody(f));
+    // Redrawn only when it changed: a focus read does not undo « Copied », a selection or the keyboard's place.
+    if (html !== wPainted) { wPainted = html; $('w-steps').innerHTML = html; }
+    $('w-done').className = left ? 'btn ghost' : 'btn';
+  };
+  const wSync = async () => {
+    const c = sb, uid = user && user.id;
+    if (!c || !uid || wSyncing || !c.auth || typeof c.auth.getUser !== 'function') return;
+    wSyncing = true;
+    let r = null;
+    try { r = await c.auth.getUser(); } catch { r = null; }
+    wSyncing = false;
+    const u = r && !r.error && r.data && r.data.user;
+    if (!u || c !== sb || !user || user.id !== uid || u.id !== uid) return; // offline, or another account since: what is known stays
+    wCli = {uid, at: (u.user_metadata && u.user_metadata.reelbook_cli_at) || null};
+    if (!$('welcome').hidden) paintWelcome();
+  };
+  const renderWelcome = () => { paintWelcome(); setTimeout(wSync, 0); };
+  // Back from the terminal: the login, a sheet or a processed request tick their steps by themselves.
+  const wOnFocus = () => {
+    if (!user || $('welcome').hidden || document.visibilityState === 'hidden' || wSyncing) return;
+    wSync(); refreshQueue();
+    if (!sheets.length && !loading) reload({shown: true});
+  };
+  window.addEventListener('focus', wOnFocus);
+  document.addEventListener('visibilitychange', wOnFocus);
+  if (window.RBL) window.RBL.onChange(() => { if (user && !$('welcome').hidden) paintWelcome(); });
+  const wInstallText = () => `${T('w.sendtext', 'Set up Reelbook on your computer: paste one of these lines in a terminal.')}\n\nmacOS / Linux (Terminal):\n${installSh()}\n\nWindows (PowerShell):\n${installPs()}\n`;
+  // « Send myself the line »: the share sheet, else the clipboard. A share closed by the person does nothing.
+  const wSend = async () => {
+    const text = wInstallText(), sent = how => { ls.set(wKey('sent'), how); wSendFailed = false; paintWelcome(); };
+    if (typeof navigator.share === 'function') {
+      try { await navigator.share({title: T('w.sendtitle', 'Set up Reelbook'), text}); return sent('shared'); }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try { await navigator.clipboard.writeText(text); return sent('copied'); } catch {}
+    wSendFailed = true; paintWelcome(); // neither: the text on screen, to select by hand
+  };
+  // « Copy the line »: the clipboard, else the page's copy command on the selected line, else it stays selected and a message says so
+  const wCopy = async btn => {
+    const pre = $('w-line'), msg = $('w-copymsg'), label = T('i2.copy', 'Copy the line');
+    const copied = () => { msg.hidden = true; msg.textContent = ''; btn.textContent = T('ui.copied', 'Copied'); setTimeout(() => { btn.textContent = label; }, 1600); };
+    try { await navigator.clipboard.writeText(pre.textContent); return copied(); } catch {}
+    let ok = false;
+    try { const range = document.createRange(), sel = window.getSelection(); range.selectNodeContents(pre); sel.removeAllRanges(); sel.addRange(range); ok = !!document.execCommand('copy'); } catch {}
+    if (ok) return copied();
+    msg.hidden = false; msg.textContent = T('ui.copyHand', 'Copying did not work: the line is selected, copy it by hand (⌘C or Ctrl+C).');
+  };
+  $('welcome').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-w]'); if (!b) return;
+    const what = b.dataset.w;
+    if (what === 'send') return wSend();
+    if (what === 'copy') return wCopy(b);
+    if (what === 'os') { wOs = (wOs || (wSystem() === 'win' ? 'win' : 'unix')) === 'win' ? 'unix' : 'win'; return paintWelcome(); }
+    if (what === 'shortcut') { wantShortcut = true; location.hash = 'settings'; }
+  });
+  $('welcome').addEventListener('change', ev => {
+    const box = ev.target; if (!box || box.id !== 'w-tick' || !box.checked) return;
+    ls.set(wKey('phone'), '1'); paintWelcome();
+  });
   $('w-done').addEventListener('click', () => { ls.set(welcomeKey(), '1'); location.hash = ''; });
   // L29: « Usage: 4/10 links today · 120/300 sheets · 80/200 MB », from my_quota(); hidden when the backend has no
   // quotas (no such function), on any error, and for an answer meant for an account signed out since.
@@ -3752,8 +3921,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     $('shortcut-info').textContent = t ? `Key « ${t.label || 'iPhone'} », made ${fmtDate(t.created_at)} · ${t.last_used_at ? 'last used ' + fmtDate(t.last_used_at) : 'not used yet'}.` : '';
     $('shortcut-url').textContent = backend ? backend.url.replace(/\/+$/, '') + '/functions/v1/add-link' : '';
   };
+  let wantShortcut = false;
   const loadShortcut = async () => {
-    const uid = user && user.id;
+    const uid = user && user.id, scroll = wantShortcut; wantShortcut = false;
     if (!sb || !uid) { $('shortcut-section').hidden = true; return; }
     let r;
     try { r = await sb.from('capture_tokens').select('id,label,created_at,last_used_at,revoked_at').is('revoked_at', null).order('created_at', {ascending: false}); } catch (e) { r = {error: e}; }
@@ -3762,6 +3932,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (!r || r.error || !Array.isArray(r.data)) { if ($('shortcut-new').hidden) $('shortcut-section').hidden = true; return; }
     scActive = r.data.find(t => !t.revoked_at) || null;
     paintShortcut(); $('shortcut-section').hidden = false;
+    if (scroll && $('shortcut-section').scrollIntoView) $('shortcut-section').scrollIntoView({block: 'start'}); // L43: « Add the shortcut »
   };
   const SC_FAIL = 'Could not save it right now. Try again in a moment.';
   $('shortcut-create').addEventListener('click', async () => {
@@ -3824,7 +3995,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (!user || !$('player').hidden) return null;
     const nbUp = id => { const th = themeById.get(id); return th ? [th.id, th.title] : ['', 'Reelbook']; };
     if (!$('settings').hidden) return {title: 'Settings', up: ['', 'Reelbook']};
-    if (!$('welcome').hidden) return {title: T('w.h1', 'How it works'), up: ['', 'Reelbook']};
+    if (!$('welcome').hidden) return {title: T('w.eyebrow', 'Welcome to Reelbook'), up: ['', 'Reelbook']};
     if (!view.hidden && shown) {
       const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown);
       if (s) return {title: s.title, up: nbUp(s.theme), menu: !edit};
@@ -4143,6 +4314,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       edit = null;
     }
     navArrive(tok);
+    if (tok !== 'welcome') wBanner = null; // L43: « Account created » is for the first arrival, not a way back to it
     if (ended && tok !== RS.ROUTE + ended.slug) ended = null; // L11: another page drops the end screen
     if (tok === 'settings') { renderSettings(); show('settings'); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }

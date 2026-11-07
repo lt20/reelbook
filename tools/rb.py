@@ -137,6 +137,18 @@ def cmd_login(args):
            "access_token": tok["access_token"], "refresh_token": tok["refresh_token"], "expires_at": int(time.time()) + tok.get("expires_in", 3600)}
     save_cfg(cfg)
     print(f"signed in as {email} on {url}")
+    mark_cli_login(url, key, cfg["access_token"])
+
+def mark_cli_login(url, key, token):
+    """L43: tells the app a computer is linked (reelbook_cli_at in user_metadata, read by #welcome). Best effort, in
+    silence: whatever goes wrong here, the login has already succeeded."""
+    data = json.dumps({"data": {"reelbook_cli_at": now()}}).encode()
+    req = urllib.request.Request(f"{url}/auth/v1/user", method="PUT", data=data,
+                                 headers={"apikey": key, "Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=10): pass
+    except urllib.error.HTTPError as e: e.close()
+    except Exception: pass
 
 # F1: exit code of a revoked session (the refresh token is gone: signed out everywhere, password changed…).
 # tools/nightly.sh reads it to send « signed out, run rb.py login » rather than a bare failure.

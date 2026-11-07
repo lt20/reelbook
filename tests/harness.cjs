@@ -42,6 +42,7 @@ const sheetDocument = {
 // demo's static files (L27).
 // `href`: the page's address (default https://app.example.test/reelbook/), e.g. the published app (L26).
 // `rpc`: (name, args, client) -> the answer of client.rpc (none by default: no database function, as before L29).
+// `getUser`: client.auth.getUser (none by default), e.g. the user_metadata #welcome reads (L43).
 // `docEl`: a document.documentElement (none by default), e.g. {lang: 'en'} to read <html lang> (L30).
 // `win`: more properties of the window, e.g. window.RBL, the landing's API (L30: app/landing.js is not loaded here).
 // IndexedDB as the app uses it (open, one 'kv' store, get / put; a ranged delete is not supported and fails).
@@ -59,7 +60,7 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity, href = 'https://app.example.test/reelbook/', win = {}, rpc = null, docEl = null} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity, href = 'https://app.example.test/reelbook/', win = {}, rpc = null, docEl = null, getUser = null} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -161,7 +162,8 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
           },
           async signInWithPassword(credentials) { client.calls.push(['in', credentials]); return {error: null}; },
           async signUp(credentials) { client.calls.push(['up', credentials]); return {data: {session: null}, error: null}; },
-          async signOut() { return {error: null}; }
+          async signOut() { return {error: null}; },
+          ...(getUser ? {getUser} : {})
         }};
         if (rpc) client.rpc = async (name, args) => rpc(name, args, client);
         clients.push(client);
