@@ -68,6 +68,13 @@ test('welcome: a brand-new account on a phone, first arrival: the banner, three 
   assert.equal(page.element('w-done').className, 'btn ghost');
 });
 
+test('welcome: an empty account arriving at the bare address lands here, with the banner', async () => {
+  const page = await open({hash: ''});
+  assert.equal(page.location.hash, '#welcome');
+  assert.equal(page.element('welcome').hidden, false);
+  assert.equal(page.element('w-flash').hidden, false);
+});
+
 test('welcome: the banner comes once, only for an account just made, and leaves with the first step done', async () => {
   // second arrival
   let page = await open({stored: {'rb.welcome.seen.u1': '1'}});
