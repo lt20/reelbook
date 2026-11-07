@@ -23,7 +23,7 @@ Exercises were not sheets: their content and photos lived only in the session pa
 | 8 | Two entry points: « + New session » in a notebook's Sessions section (title, then tick exercises from the notebook, by group, with search), and « Add to session » on a sheet page (pick a session or create one). Session page has an « Edit » mode: ↑ ↓ to reorder, dose, format, remove an item, delete the session. |
 | 9 | An exercise sheet from a video session is the light v1 section turned into a sheet (description, numbered photos, 2–3 cues, easier version, one-line summary for the card). Why / key points / dose stay on the session. The sheet shows « From the session … ». Processing time unchanged. |
 | 10 | Video sessions are editable like user sessions (order, dose, format, items); why / key points / source read-only. Reprocessing the video rewrites the session and drops the edits (said in the help). |
-| 11 | A session can be moved to another notebook (Move, Notebook menu only). Its exercises do not follow. |
+| 11 | A session can be moved to another notebook (Move, Notebook menu only). Amended 07/11: a box « Move its N exercises too » takes along its exercises in the session's notebook (ticked for a video session, unticked for one the user composed; each keeps its group); exercises in other notebooks stay. Box off: they do not follow. |
 
 ## Technical choices (made by Claude, reversible)
 
