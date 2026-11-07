@@ -794,3 +794,17 @@ begin
     perform cron.schedule('reelbook-daily-alert', '0 6,7 * * *', 'select public.beta_alert(true)');
   end if;
 end $$;
+
+-- Table rights (L44). A new Supabase project no longer grants anything on the tables of `public`: without these lines the
+-- app gets `42501 permission denied for table ...` (https://github.com/orgs/supabase/discussions/45329). Each line gives
+-- what the app and tools/rb.py use, no more; RLS above still decides which rows. A project that already has wider rights
+-- keeps them: a grant only adds, and adds nothing there.
+-- Nothing for `anon` (it only calls beta_seats and join_waitlist, granted above), and on purpose no line for beta_settings,
+-- beta_waitlist and beta_daily, which their triggers and functions reach as definer. capture_tokens has its own, above.
+grant select, insert, update, delete on public.requests to authenticated;
+grant select, insert, update, delete on public.sheets to authenticated;
+grant select, insert, update, delete on public.notes to authenticated;
+grant select, insert, update, delete on public.sessions to authenticated;
+grant select, insert, delete on public.user_themes to authenticated;   -- themes are added and removed, never edited
+grant select, insert on public.practice_log to authenticated;          -- the log only grows
+grant select on public.account_quotas to authenticated;                -- the limits are set by the operator
