@@ -449,6 +449,34 @@ test('signin, never confirmed, resend offline: stays on sign-in with the line', 
   assert.equal(s.page.element('a-err').textContent, 'You’re offline: check your connection and try again.');
 });
 
+// ---------- hosted.mailReady (L41b)
+const OFF = {cfg: {mailReady: false}};
+const atExists = async options => { const s = await auth({signUp: {data: {}, error: ERR.exists}}, options); await toSignup(s.page); type(s.page); await submit(s.page); assert.equal(titleOf(s.page), 'This address already has an account'); return s; };
+test('mailReady false, hosted backend: no « Forgot your password? » on signin nor exists, the rest as it was', async () => {
+  const s = await auth({signIn: {data: {}, error: ERR.creds}}, OFF); await toSignin(s.page);
+  assert.equal(titleOf(s.page), 'Sign in'); assert.ok(!shown(s.page, 'a-forgot-row'));
+  assert.ok(shown(s.page, 'a-adv')); assert.equal(s.page.element('a-toggle').textContent, 'Create an account');
+  type(s.page); await submit(s.page); assert.equal(s.page.element('a-err').textContent, 'Wrong email or password.');
+  assert.ok(!shown(s.page, 'a-forgot-row'), 'a failed sign-in does not bring it back');
+  const e = await atExists(OFF); assert.ok(!shown(e.page, 'a-forgot-row'));
+  assert.equal(e.page.element('a-submit').textContent, 'Sign in'); assert.equal(e.page.element('a-toggle').textContent, 'Use another address');
+});
+test('mailReady false, own backend: the link stays on signin and exists, since the setting speaks of the hosted one', async () => {
+  const s = await auth({signUp: {data: {}, error: ERR.exists}}, {...OFF, remembered: {mode: 'own', url: ownUrl, key: ownKey}}); // its sign-in form is the first thing shown
+  assert.equal(titleOf(s.page), 'Sign in'); assert.ok(shown(s.page, 'a-forgot-row'));
+  await s.page.fire('a-toggle'); await settle(); type(s.page); await submit(s.page);
+  assert.equal(titleOf(s.page), 'This address already has an account'); assert.ok(shown(s.page, 'a-forgot-row'));
+});
+test('mailReady true, or absent from a config.js still in cache: the link stays on the hosted backend', async () => {
+  for (const options of [{cfg: {mailReady: true}}, {}]) {
+    const s = await auth({}, options); await toSignin(s.page); assert.ok(shown(s.page, 'a-forgot-row'));
+    const e = await atExists(options); assert.ok(shown(e.page, 'a-forgot-row'));
+  }
+});
+test('app/config.js ships mailReady false until Laurent wires the hosted email', () => {
+  assert.match(fs.readFileSync(path.join(__dirname, '../app/config.js'), 'utf8'), /mailReady: false/);
+});
+
 // ---------- forgot, reset
 const atReset = async (answers = {}, options = {}) => {
   const s = await auth(answers, options); await toSignin(s.page); s.page.element('a-email').value = EMAIL;

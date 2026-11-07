@@ -10,7 +10,9 @@ window.REELBOOK = {
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnYXJzeWdya2ZuZnl2eGtjeGRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyODk1NjIsImV4cCI6MjEwNjg2NTU2Mn0.ThclH-X2LC4MURxf27jFsjYHXzohJ8HYrscbd8E8U3I',
     blurb: 'Free for now. A paid hosted plan is planned; no setup required.',
     // Where someone stuck on the email code can write (mailto:…, https:… or a plain address). Empty: no link (L41).
-    contact: ''
+    contact: '',
+    // false: this backend cannot send email yet, so « Forgot your password? » is not offered on it. Nothing else depends on it (L41b).
+    mailReady: false
   },
   // Notebooks turned on for a brand-new account.
   defaults: ['strength', 'yoga', 'fight'],

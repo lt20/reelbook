@@ -1849,7 +1849,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     go.classList.toggle('busy', authBusy);
     go.disabled = !backend || authBusy || !!codeLocked;
     // the links
-    $('a-forgot-row').hidden = s !== 'signin' && s !== 'exists'; $('a-forgot').textContent = A('au.forgot');
+    $('a-forgot-row').hidden = (s !== 'signin' && s !== 'exists') || (!!backend && backend.mode === 'hosted' && CFG.hosted.mailReady === false); $('a-forgot').textContent = A('au.forgot');
     $('a-nocode').hidden = s !== 'reset' || expired;
     if (s === 'reset') $('a-nocode').innerHTML = A('au.rs.none', {link: `<a href="#" data-au="create">${A('au.rs.create')}</a>`});
     const other = {signup: ['au.have', 'a.in'], signin: ['au.new', 'a.up'], exists: ['au.ex.you', 'au.ex.other'], forgot: ['', 'au.back']}[s];
