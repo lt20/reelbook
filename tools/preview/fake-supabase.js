@@ -110,6 +110,13 @@
     then(ok, ko) { return Promise.resolve().then(() => this.run()).then(ok, ko); }
   }
 
+  let seatReads = 0;
+  const fakeSeats = () => {
+    const v = params.get('seats'); seatReads++;
+    const taken = v === 'closed' ? 14 : v === 'last' ? (seatReads > 1 ? 50 : 49) : +v;
+    return {taken, total: 50, open: v !== 'closed' && taken < 50, today_left: 7};
+  };
+
   window.supabase = {
     createClient() {
       const subs = [];
@@ -117,7 +124,10 @@
       const session = () => (signedIn ? {user: U, access_token: 'fake'} : null);
       return {
         from: t => new Query(t),
-        rpc: async name => name === 'my_quota' && params.has('quota')
+        // L31: ?seats=<taken> of 50, ?seats=closed, ?seats=last (the last seat, then taken when asked again, before a sign-up)
+        rpc: async name => name === 'beta_seats' && params.has('seats') ? {data: fakeSeats(), error: null, status: 200}
+          : name === 'join_waitlist' && params.has('seats') ? {data: 'ok', error: null, status: 200}
+          : name === 'my_quota' && params.has('quota')
           ? {data: {requests_today: params.get('quota') === 'full' ? 10 : (D.requests || []).filter(r => String(r.created_at || '').slice(0, 10) === now().slice(0, 10)).length,
               max_requests_per_day: 10, sheets: (D.sheets || []).length, max_sheets: 300, storage_bytes: 80 * 1048576, max_storage_mb: 200}, error: null, status: 200}
           : {data: null, status: 404, error: {code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache (preview)`}},
