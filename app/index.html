@@ -104,6 +104,21 @@ pre{font:var(--fs-xs)/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;backgroun
 .panel ul{margin:0;padding-left:20px;display:grid;gap:var(--s-1)}
 .panel h2{margin:0}
 .choice{display:grid;gap:10px}
+/* L31: the two hosting cards of #setup, as on the landing: a radio per card, the waiting list when the beta is full */
+.host-opt{display:grid;grid-template-columns:22px 1fr;gap:var(--s-3);align-items:start;background:var(--bg);border:2px solid var(--line);border-radius:var(--r-md);padding:14px;cursor:pointer;font-weight:400;color:var(--ink)}
+.host-opt:has(input[type=radio]:checked){border-color:var(--accent)}
+.host-opt input[type=radio]{width:20px;height:20px;margin:2px 0 0;padding:0;accent-color:var(--accent)}
+.host-opt b{display:block;font-family:var(--display);font-size:var(--fs-lg);line-height:1.1;margin-bottom:var(--s-1)}
+.host-opt>span:last-child>span{display:block;font-size:var(--fs-sm);color:var(--muted);line-height:1.4}
+.host-opt .host-seats{margin-top:6px;font-weight:600;color:var(--brand-coral)}
+.host-full{cursor:default;border-color:var(--brand-coral)}
+.host-lock{width:22px;height:22px;border-radius:50%;background:var(--brand-coral);color:#fff;font:600 10px/22px var(--body);text-align:center}
+.wl-form{display:grid;gap:10px;margin-top:var(--s-3)}
+.wl-form .wl-consent{grid-template-columns:20px 1fr;align-items:start;gap:10px;font-weight:400;line-height:1.4}
+.wl-form .wl-consent input{width:20px;height:20px;margin:1px 0 0;padding:0;accent-color:var(--accent)}
+.wl-form .btn{justify-self:start}
+.host-opt .wl-done{margin-top:var(--s-2);color:var(--ink)}
+.host-opt .wl-done b{margin-bottom:var(--s-1)}
 .choice button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:14px var(--s-4);cursor:pointer;display:grid;gap:var(--s-1)}
 .choice button b{font-family:var(--display);font-size:var(--fs-lg);line-height:1}
 .choice button span{font-size:var(--fs-sm);color:var(--muted)}
@@ -624,6 +639,8 @@ html:has(#intro:not([hidden])){scroll-padding-top:84px}
 #intro .lp-lines{display:contents}
 #intro .lp-copy-msg{margin:0;font-size:14px;color:var(--ink)}
 #intro .lp-wl .lp-btn[disabled]{opacity:.55;cursor:not-allowed}
+#intro .lp-wl .lp-wl-err{font-size:14px;font-weight:700;color:var(--coral)}
+#intro .lp-wl-done{margin-top:12px;color:var(--ink)}
 #intro pre{-webkit-user-select:all;user-select:all}
 /* L36: below, the v3 mockup's stylesheet as is, scoped by the converter (classes and ids prefixed lp-, under #intro) */
 #intro{--ground:#f3f1ec; --step:#e9e6df; --paper:#fbfaf7; --ink:#1b1d1f; --ink-2:#3c4148; --line:#d8d5cd;--blue:#1f4fa3; --blue-ink:#fff; --coral:#c54b38;--night:#121417; --night-2:#1d2026; --night-3:#24282f; --night-ink:#eceae4; --night-2ink:#b9bec6;--nb:#b4432f;--display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace;--m:clamp(16px,4vw,48px);color-scheme:light;}
@@ -1108,9 +1125,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   <div class="panel">
     <h2 data-k="s.h2">Where should your new account live?</h2>
     <div class="choice">
-      <button type="button" id="pick-hosted"><b id="hosted-name">Hosted backend</b><span id="hosted-blurb">Free for now. A paid hosted plan is planned; no setup required.</span></button>
-      <button type="button" id="pick-own"><b data-k="s.own">My own Supabase project</b><span data-k="s.ownd">Free tier is enough. You run one SQL file, then paste the project URL and anon key here.</span></button>
+      <label class="host-opt" id="s-hosted-opt"><input type="radio" name="s-host" id="pick-hosted" checked><span><b data-k="i1.a">Hosted by Reelbook</b><span id="hosted-blurb">Free for now. A paid hosted plan is planned; no setup required.</span><span data-k="s.limits">300 sheets, 200 MB of photos, 10 videos a day.</span><span class="host-seats" id="s-seatline" hidden></span></span></label>
+      <div class="host-opt host-full" id="s-full" hidden><span class="host-lock" id="s-lockN" aria-hidden="true">50</span><span><b id="s-wlH"></b><span data-k="wl.p" id="s-wlP">No account is created here: leave your first name and email, we’ll let you know as soon as a spot opens.</span>
+        <form class="wl-form" id="s-wl" novalidate><label><span data-k="wl.n">First name</span><input type="text" id="s-wl-first" autocomplete="given-name" maxlength="60" placeholder="Camille"></label><label><span data-k="wl.e">Email</span><input type="email" id="s-wl-email" autocomplete="email" maxlength="254" placeholder="camille@exemple.fr"></label>
+        <label class="wl-consent"><input type="checkbox" id="s-wl-consent"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
+        <p class="err" id="s-wl-err" role="alert" hidden></p>
+        <button class="btn" type="submit" id="s-wl-go" data-k="wl.cta">Notify me</button></form>
+        <span class="wl-done" id="s-wl-done" role="status" hidden><b data-k="wl.ok.h">You’re on the list</b><span data-k="wl.ok">You’re on the list. We’ll email you as soon as a spot opens.</span></span></span></div>
+      <label class="host-opt"><input type="radio" name="s-host" id="pick-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="s.ownd">Free tier is enough. You run one SQL file, then paste the project URL and anon key here.</span></span></label>
     </div>
+    <div class="actions"><button class="btn" type="button" id="s-go">Create my notebook</button></div>
     <form id="own-form" hidden>
       <div style="display:grid;gap:10px">
         <label><span data-k="a.url">Project URL</span> <input id="own-url" type="url" placeholder="https://xxxx.supabase.co" required></label>
@@ -1244,10 +1268,12 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     <li id="lp-carnet"><h3 data-k="i1.h">Create your notebook</h3>
       <p data-k="i1.p">Choose where your sheets live. You can change it later.</p>
       <label class="lp-opt lp-host-open" id="lp-host-hosted-opt"><input type="radio" name="lp-host" id="lp-host-hosted" checked><span><b data-k="i1.a">Hosted by Reelbook</b><span data-k="i1.ad">Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.</span><span class="lp-seatline" data-k="i1.seats" id="lp-seatline" hidden></span></span></label>
-      <div class="lp-opt lp-host-full" id="lp-host-full" hidden><span class="lp-lock-ic" id="lp-lockN" aria-hidden="true">50</span><span><b data-k="wl.h" id="lp-wlH">Beta full: {total} of {total}</b><span data-k="wl.p" id="lp-wlP" hidden>Leave your first name and email: we’ll let you know as soon as a spot opens.</span>
-        <form class="lp-wl" id="lp-wl" hidden><label><span data-k="wl.n">First name</span><input type="text" autocomplete="given-name" placeholder="Camille"></label><label><span data-k="wl.e">Email</span><input type="email" autocomplete="email" placeholder="camille@exemple.fr"></label>
-        <label class="lp-consent"><input type="checkbox"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
-        <button class="lp-btn" type="submit" data-k="wl.cta" disabled aria-disabled="true">Notify me</button></form></span></div>
+      <div class="lp-opt lp-host-full" id="lp-host-full" hidden><span class="lp-lock-ic" id="lp-lockN" aria-hidden="true">50</span><span><b data-k="wl.h" id="lp-wlH">Beta full: {taken} of {total} spots taken</b><span data-k="wl.p" id="lp-wlP" hidden>No account is created here: leave your first name and email, we’ll let you know as soon as a spot opens.</span>
+        <form class="lp-wl" id="lp-wl" novalidate hidden><label><span data-k="wl.n">First name</span><input type="text" id="lp-wl-first" autocomplete="given-name" maxlength="60" placeholder="Camille"></label><label><span data-k="wl.e">Email</span><input type="email" id="lp-wl-email" autocomplete="email" maxlength="254" placeholder="camille@exemple.fr"></label>
+        <label class="lp-consent"><input type="checkbox" id="lp-wl-consent"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
+        <span class="lp-wl-err" id="lp-wl-err" role="alert" hidden></span>
+        <button class="lp-btn" type="submit" id="lp-wl-go" data-k="wl.cta">Notify me</button></form>
+        <span class="lp-wl-done" id="lp-wl-done" role="status" hidden><b data-k="wl.ok.h">You’re on the list</b><span data-k="wl.ok">You’re on the list. We’ll email you as soon as a spot opens.</span></span></span></div>
       <label class="lp-opt"><input type="radio" name="lp-host" id="lp-host-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="i1.bd">Your own project, your limits. Run one SQL file, then paste the URL and key.</span></span></label>
       <a class="lp-btn lp-host-cta" href="#signup" id="intro-signup" data-k="i1.cta">Create my notebook</a></li>
     <li><h3 data-k="i2.h">Install the skill</h3>
@@ -1294,6 +1320,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     <label><span data-k="a.email">Email</span> <input id="a-email" type="email" autocomplete="email" required></label>
     <label><span data-k="a.pass">Password</span> <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
     <p class="err" id="a-err" hidden></p>
+    <p class="hint" id="a-wl" hidden><a href="#" id="a-wl-go" data-k="cta.full">Join the waiting list</a></p>
     <p class="hint" id="a-info" hidden></p>
     <div class="actions">
       <button class="btn" type="submit" id="a-submit">Sign in</button>
@@ -1553,7 +1580,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <script src="config.js?v=9"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
-<script src="landing.js?v=3"></script>
+<script src="landing.js?v=4"></script>
 <script>
 (() => {
   'use strict';
@@ -1652,15 +1679,31 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     return {mode: 'own', url: url.origin, key};
   };
 
-  $('hosted-name').textContent = CFG.hosted.name || 'Hosted backend';
   const paintBlurb = () => { $('hosted-blurb').textContent = hostedOk ? T('s.blurb', CFG.hosted.blurb) : T('s.unavailable', 'Not available yet.'); };
   paintBlurb();
   $('pick-hosted').disabled = !hostedOk;
   $('own-guide').href = $('login-own-guide').href = CFG.repo + '/blob/main/docs/own-supabase.md';
   $('howto-repo').href = CFG.repo;
-  $('pick-hosted').addEventListener('click', () => { signupBackendChosen = true; selectBackend(hostedBackend(), false); });
-  $('pick-own').addEventListener('click', () => { $('own-form').hidden = false; $('own-url').focus(); });
-  $('own-cancel').addEventListener('click', () => { $('own-form').hidden = true; });
+  // L31: the two cards of #setup. « Hosted by Reelbook » is picked unless the project form is open, the beta is full, or
+  // there is no hosted backend; the button then reads « Connect my Supabase » and opens that form.
+  const setupOwn = () => !hostedOk || !!(seatNow && seatNow.full) || !$('own-form').hidden;
+  const paintSetup = () => {
+    const s = seatNow, full = !!(s && s.full), own = setupOwn(), go = $('s-go');
+    $('pick-own').checked = own; $('pick-hosted').checked = !own;
+    $('s-hosted-opt').hidden = full; $('s-full').hidden = !full; $('s-seatline').hidden = !s || full;
+    if (s) {
+      $('s-seatline').textContent = seatWords(T('seats', '{taken} of {total} spots taken'), s);
+      $('s-wlH').textContent = s.closed ? T('beta.closed', 'Beta full') : seatWords(T('wl.h', 'Beta full: {taken} of {total} spots taken'), s);
+      $('s-lockN').textContent = s.total;
+    }
+    go.hidden = !$('own-form').hidden;
+    go.textContent = own ? T('i1.cta.full', 'Connect my Supabase') : T('i1.cta', 'Create my notebook');
+  };
+  const ownOpen = open => { $('own-form').hidden = !open; paintSetup(); if (open) $('own-url').focus(); };
+  $('pick-hosted').addEventListener('change', () => ownOpen(false));
+  $('pick-own').addEventListener('change', () => ownOpen(true));
+  $('own-cancel').addEventListener('click', () => ownOpen(false));
+  $('s-go').addEventListener('click', () => { if (setupOwn()) ownOpen(true); else { signupBackendChosen = true; selectBackend(hostedBackend(), false); } });
   $('own-form').addEventListener('submit', ev => {
     ev.preventDefault();
     const err = $('own-err'); err.hidden = true;
@@ -1688,7 +1731,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // that has never signed in (no rb.backend stored).
   let mode = 'in', signupBackendChosen = false, authBusy = false, introOpen = !readBackend();
   const labelMode = () => { $('auth-title').textContent = mode === 'in' ? T('a.in', 'Sign in') : T('a.up', 'Create an account'); $('a-submit').textContent = mode === 'in' ? T('a.in', 'Sign in') : T('a.submitUp', 'Create account'); $('a-toggle').textContent = mode === 'in' ? T('a.up', 'Create an account') : T('a.have', 'I already have an account'); };
-  const setMode = m => { mode = m; labelMode(); $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-info').hidden = true; $('login-own-form').hidden = true; };
+  const setMode = m => { mode = m; labelMode(); $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-wl').hidden = true; $('a-info').hidden = true; $('login-own-form').hidden = true; };
   // « Sign in » asked for explicitly (setup, sign-up form): the form, never the presentation again (L25)
   const returnToSignin = () => { introOpen = false; setMode('in'); signupBackendChosen = false; selectBackend(rememberedBackend(), false); };
   $('a-toggle').addEventListener('click', () => { if (mode === 'up') returnToSignin(); else { setMode('up'); signupBackendChosen = false; route(); } });
@@ -1705,26 +1748,96 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   $('intro-signup').addEventListener('click', () => {
     if (!hostedOk || $('lp-host-own').checked) {
       introOpen = false; setMode('up'); signupBackendChosen = false; route();
-      $('own-form').hidden = false; $('own-url').focus(); return;
+      ownOpen(true); return;
     }
     introOpen = false; setMode('up'); signupBackendChosen = hostedOk;
     if (hostedOk) selectBackend(hostedBackend(), false); else route();
     $('a-email').focus();
   });
-  // L30: the seats line of the landing, from beta_seats() (L32) on the hosted backend, asked once per client. A
-  // backend without the function (PGRST202), an error or a null answer: no line, nothing else shown.
-  let seatsAsked = null;
-  const askSeats = () => {
-    const client = sb, R = window.RBL;
-    if (!R || !client || seatsAsked === client) return;
-    seatsAsked = client;
-    if (!backend || backend.mode !== 'hosted' || typeof client.rpc !== 'function') { R.seats(null); return; }
-    Promise.resolve().then(() => client.rpc('beta_seats'))
-      .then(r => { if (client === sb) R.seats(r && !r.error ? r.data : null); }, () => { if (client === sb) R.seats(null); });
+  // L30, L31: the beta, from beta_seats() (L32) on the hosted backend, asked once per client for the landing and #setup,
+  // and again before a sign-up. A backend without the function (PGRST202), an error or a null answer (no settings row):
+  // no count, no waiting list, nothing else shown. seatsOf reads the answer as landing.js does for its own painting;
+  // this script keeps its own copy because it works without landing.js.
+  const seatsOf = d => {
+    const o = Array.isArray(d) ? d[0] : d;
+    if (!o || typeof o !== 'object' || o.taken == null || o.total == null) return null;
+    const taken = Number(o.taken), total = Number(o.total);
+    if (!(Number.isFinite(taken) && Number.isFinite(total) && total > 0 && taken >= 0)) return null;
+    const tot = Math.round(total), tk = Math.min(Math.round(taken), tot);
+    return {taken: tk, total: tot, full: tk >= tot || o.open === false, closed: tk < tot && o.open === false, noneToday: o.today_left === 0};
   };
+  const seatWords = (text, s) => text.replace('{taken}', s.taken).replace('{total}', s.total);
+  const seatAnswer = async client => { try { const r = await client.rpc('beta_seats'); return r && !r.error ? r.data : null; } catch { return null; } };
+  let seatNow = null, seatsAsked = null, wlDone = false;
+  // The waiting list said yes: the form gives way to the message, on both screens. landing.js shows its form each time
+  // it paints, so this runs after it (setSeats, onChange).
+  const paintWl = () => { for (const p of ['lp', 's']) { $(p + '-wl').hidden = wlDone; $(p + '-wlP').hidden = wlDone; $(p + '-wl-done').hidden = !wlDone; } };
+  const setSeats = d => { seatNow = seatsOf(d); if (window.RBL) window.RBL.seats(d); paintHostChoice(); paintSetup(); paintWl(); };
+  const askSeats = () => {
+    const client = sb;
+    if (!client || seatsAsked === client) return;
+    seatsAsked = client;
+    if (!backend || backend.mode !== 'hosted') { setSeats(null); return; }
+    seatAnswer(client).then(d => { if (client === sb) setSeats(d); });
+  };
+  // What beta_on_signup() would answer to a new account now, in its own words (null: it would let it through).
+  const seatRefusal = s => s.full ? (s.closed ? 'beta: closed' : 'beta: full') : s.noneToday ? 'beta: closed today' : null;
+  // Auth answers « Database error saving new user » (HTTP 500) to any refusal of that trigger: beta_seats() says which.
+  // It still has seats: another error, the generic line. No answer now but one before: most likely the last seat.
+  const signupRefused = async (client, known) => {
+    const d = await seatAnswer(client), s = seatsOf(d);
+    if (s) { if (client === sb) setSeats(d); return seatRefusal(s) || 'not created'; }
+    return known ? 'beta: retry' : null;
+  };
+  const betaText = text => {
+    const m = String(text || '').trim();
+    if (/^beta: full/.test(m)) return T('a.e.full', 'The last spot has just been taken: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.');
+    if (/^beta: closed today/.test(m)) return T('a.e.today', 'Enough sign-ups for today: your account was not created. Try again tomorrow.');
+    if (/^beta: closed/.test(m)) return T('a.e.shut', 'Sign-ups are closed for now: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.');
+    if (/^beta: retry/.test(m)) return T('a.e.retry', 'Your account was not created: the beta may have just filled up. Try again in a moment.');
+    if (/^beta: project limit of photos/.test(m)) return T('a.e.projPhotos', 'The beta’s photo space is full for now: try again later.');
+    if (/^beta: project limit/.test(m)) return T('a.e.projDay', 'Reelbook has taken enough videos for today, across all accounts: try again tomorrow.');
+    return null;
+  };
+  // L31: the waiting-list form, on the landing (lp-) and in #setup (s-). The server's checks come back as words too;
+  // a new address and one already listed both get « ok », so both get the same message (join_waitlist).
+  const wlError = e => {
+    const m = String((e && e.message) || '');
+    if (/^waitlist: consent/.test(m)) return T('wl.e.consent', 'Tick the box so we can keep your first name and email.');
+    if (/^waitlist: first name/.test(m)) return T('wl.e.first', 'Enter your first name.');
+    if (/^waitlist: email/.test(m)) return T('a.e.email', 'That email address is not valid.');
+    if (/^waitlist: full today/.test(m)) return T('wl.e.today', 'Too many requests today: try again tomorrow. If you already joined, you are still on the list.');
+    if (/^waitlist: seats open/.test(m)) return T('wl.e.open', 'A spot has just opened: reload the page to create your account.');
+    return T('wl.e.fail', 'That did not work: check your connection and try again.');
+  };
+  for (const p of ['lp', 's']) {
+    const say = text => { const e = $(p + '-wl-err'); e.textContent = text || ''; e.hidden = !text; };
+    $(p + '-wl').addEventListener('submit', async ev => {
+      ev.preventDefault(); say('');
+      const first = $(p + '-wl-first'), mail = $(p + '-wl-email'), go = $(p + '-wl-go');
+      const fname = first.value.trim(), email = mail.value.trim();
+      if (!fname) { say(wlError({message: 'waitlist: first name'})); first.focus(); return; }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { say(wlError({message: 'waitlist: email'})); mail.focus(); return; }
+      if (!$(p + '-wl-consent').checked) { say(wlError({message: 'waitlist: consent'})); return; }
+      go.disabled = true;
+      let r; try { r = await sb.rpc('join_waitlist', {first_name: fname, email, lang: (window.RBL && window.RBL.lang) || 'en', consent: true}); } catch (e) { r = {error: e}; }
+      go.disabled = false;
+      if (r && !r.error) { wlDone = true; paintWl(); return; }
+      console.warn('Waiting list failed:', (r && r.error && (r.error.code || r.error.message)) || r);
+      say(wlError(r && r.error));
+    });
+  }
+  // The refusal's link: the waiting list of #setup, with the address already typed. The state is read again.
+  $('a-wl-go').addEventListener('click', ev => {
+    ev.preventDefault();
+    const email = $('a-email').value.trim();
+    setMode('up'); signupBackendChosen = false; seatsAsked = null; route();
+    if (email) $('s-wl-email').value = email;
+    $('s-wl-first').focus();
+  });
   const paintOwnLink = () => { $('a-own').textContent = backend && backend.mode === 'own' ? T('a.change', 'Change instance') : T('a.own', 'Use my own Supabase'); };
   // L30: a language picked on the landing relabels what this script writes (no route: the page keeps its scroll)
-  if (window.RBL) window.RBL.onChange(() => { labelMode(); paintBlurb(); paintOwnLink(); $('a-backend').textContent = backendLabel(); });
+  if (window.RBL) window.RBL.onChange(() => { labelMode(); paintBlurb(); paintOwnLink(); paintSetup(); paintWl(); $('lp-wl-err').hidden = $('s-wl-err').hidden = true; $('a-backend').textContent = backendLabel(); });
   $('intro-signin').addEventListener('click', () => { introOpen = false; setMode('in'); route(); $('a-email').focus(); });
   // L36: « Add the shortcut » (installation, step 3): the shortcut is made in Settings › iPhone shortcut (L28), behind
   // an account: the sign-in form now, Settings once signed in.
@@ -1735,6 +1848,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // error code of supabase-js 2.x, else by the message older servers send), any other one as a generic line.
   const authError = (e, authMode) => {
     const code = String((e && e.code) || ''), msg = String((e && e.message) || ''), status = e && e.status;
+    const refused = betaText(msg); if (refused) return refused;
     if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) return T('a.e.creds', 'Wrong email or password.');
     if (code === 'user_already_exists' || code === 'email_exists' || /already (registered|been registered|exists)/i.test(msg)) return T('a.e.exists', 'An account already exists with this email: sign in instead.');
     if (code === 'email_not_confirmed' || /email not confirmed/i.test(msg)) return T('a.e.confirm', 'Confirm your email first with the link in your inbox, then sign in.');
@@ -1747,18 +1861,29 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   $('auth-form').addEventListener('submit', async ev => {
     ev.preventDefault();
-    const err = $('a-err'), info = $('a-info'); err.hidden = true; info.hidden = true; authBusy = true; $('a-submit').disabled = true;
+    const err = $('a-err'), info = $('a-info'); err.hidden = true; $('a-wl').hidden = true; info.hidden = true; authBusy = true; $('a-submit').disabled = true;
     const email = $('a-email').value.trim(), password = $('a-pass').value, client = sb, selectedBackend = backend, authMode = mode;
     try {
       if (authMode === 'in') {
         const {error} = await client.auth.signInWithPassword({email, password}); if (client !== sb) return; if (error) throw error;
         ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
       } else {
-        const {data, error} = await client.auth.signUp({email, password, options: {emailRedirectTo: location.origin + location.pathname}}); if (client !== sb) return; if (error) throw error;
+        // L31: on the hosted backend, beta_seats() first: Auth's own refusal says nothing (signupRefused).
+        const hostedUp = selectedBackend.mode === 'hosted'; let seatsKnown = false;
+        if (hostedUp) {
+          const d = await seatAnswer(client), s = seatsOf(d); if (client !== sb || mode !== 'up') return;
+          if (s) { seatsKnown = true; setSeats(d); const refusal = seatRefusal(s); if (refusal) throw new Error(refusal); }
+        }
+        const {data, error} = await client.auth.signUp({email, password, options: {emailRedirectTo: location.origin + location.pathname}}); if (client !== sb) return;
+        if (error && hostedUp && /database error saving new user/i.test(String(error.message))) {
+          const refusal = await signupRefused(client, seatsKnown); if (client !== sb) return;
+          if (refusal) throw new Error(refusal);
+        }
+        if (error) throw error;
         ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
         if (!data.session) { setMode('in'); route(); info.textContent = T('a.created', 'Account created. Check your inbox to confirm your email, then sign in.'); info.hidden = false; }
       }
-    } catch (e) { if (client === sb) { console.warn('Auth failed:', (e && (e.code || e.message)) || e); err.textContent = authError(e, authMode); err.hidden = false; } }
+    } catch (e) { if (client === sb) { console.warn('Auth failed:', (e && (e.code || e.message)) || e); err.textContent = authError(e, authMode); err.hidden = false; $('a-wl').hidden = !/^beta: (full|closed)$/.test(String((e && e.message) || '').trim()); } }
     finally { authBusy = false; $('a-submit').disabled = !backend; }
   });
   $('s-signout').addEventListener('click', async () => { if (await signOutHere()) location.hash = ''; });
@@ -2577,7 +2702,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // L29: a backend with quotas refuses a link past the account's limit (« quota: 10 links per day », SQL P0001): said
   // in plain words instead of the generic error. null for any other error.
   const quotaText = e => {
-    const m = /^quota: (.+)$/.exec(String((e && e.message) || '').trim()); if (!m) return null;
+    const text = String((e && e.message) || '').trim(), m = /^quota: (.+)$/.exec(text);
+    if (!m) return /^beta: project limit/.test(text) ? betaText(text) : null; // L31: the limits of the whole project
     return /per day$/.test(m[1]) ? `Limit reached: ${m[1]} on this backend. You can add more tomorrow (the count starts again at midnight UTC).`
       : `Limit reached: ${m[1]} on this backend.`;
   };
@@ -4121,10 +4247,11 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (!demoEl.hidden && !user && mode === 'in') setMode('in'); // back from the demo: a fresh sign-in screen
     if (backend && !sb) { boot(); return; }
     if (!user) {
-      if (mode === 'up' && !signupBackendChosen) { show('setup'); return; }
+      if (mode === 'up' && !signupBackendChosen) { askSeats(); paintSetup(); show('setup'); return; }
       const intro = introOpen && mode === 'in'; // L25: the presentation, then the account actions
       $('intro').hidden = !intro;
-      $('auth-title').hidden = $('auth-form').hidden = $('a-adv').hidden = intro;
+      $('auth-title').hidden = $('auth-form').hidden = intro;
+      $('a-adv').hidden = intro || (mode === 'up' && !!backend && backend.mode === 'hosted'); // L31: own Supabase is chosen in #setup, or from the sign-in form
       labelMode();
       if (intro) { $('login-own-form').hidden = true; askSeats(); } // L30: the landing's seats line
       $('a-backend').textContent = backendLabel();
