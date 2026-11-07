@@ -161,6 +161,13 @@ if (mode === 'confirm-on') {
       await q.fill('#a-pass', P2); await q.click('#a-submit'); await inApp(q); await inApp(p);
       assert.equal(await p.evaluate(() => localStorage.getItem('rb.pending')), null); assert.equal(await canSignIn(a, P2), 'ok'); await q.close();
     });
+    await scene('« change address », then the link of the email: the password is still asked; the first one dies', async p => {
+      const a = addr('m'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');
+      await p.click('#a-change'); await waitTitle(p, 'Create your account');
+      await p.goto(await linkFor('signup', a, P1)); await waitTitle(p, 'Choose your password');
+      await p.fill('#a-pass', P2); await p.click('#a-submit'); await inApp(p);
+      assert.equal(await canSignIn(a, P2), 'ok'); assert.equal(await canSignIn(a, P1), 'invalid_credentials');
+    });
     await scene('a recovery link (real PASSWORD_RECOVERY): the new password first, not the app; a reload keeps asking', async p => {
       const a = addr('k'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');
       await p.fill('#a-code', await codeOf(a)); await inApp(p);

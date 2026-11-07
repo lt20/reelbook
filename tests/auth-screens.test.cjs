@@ -303,6 +303,33 @@ test('resume: a session for that address (a link opened in this tab): the addres
   assert.equal(log.length, 0);
 });
 
+test('the link of a confirmation email with nothing remembered here (another device, « change address » before it): the password is asked', async () => {
+  const {page, log} = await auth({}, {hash: '#access_token=x&type=signup', sessions: {[hostedUrl]: USER}, stored: {'rb.backend': JSON.stringify({mode: 'hosted'})}});
+  await settle();
+  assert.equal(titleOf(page), 'Choose your password'); assert.ok(shown(page, 'auth')); assert.equal(pending(page).verified, true); assert.equal(pending(page).email, EMAIL);
+  assert.equal(log.length, 0);
+});
+
+test('a session restored with no such link: the app, nothing asked', async () => {
+  const {page} = await auth({}, {hash: '#settings', sessions: {[hostedUrl]: USER}, stored: {'rb.backend': JSON.stringify({mode: 'hosted'})}});
+  await settle();
+  assert.ok(!shown(page, 'auth'));
+});
+
+test('forgot on an own backend chosen in the sign-up, new device: the backend is remembered, so the reset comes back after Mail', async () => {
+  const s = await auth({signUp: {data: {}, error: ERR.exists}});
+  await s.page.fire('intro-signin'); await settle(); await s.page.fire('a-toggle'); await settle();
+  await s.page.fire('pick-own', 'change'); s.page.element('own-url').value = ownUrl; s.page.element('own-key').value = ownKey; await s.page.fire('own-form', 'submit'); await settle();
+  type(s.page); await submit(s.page);
+  assert.equal(titleOf(s.page), 'This address already has an account');
+  await s.page.fire('a-forgot'); await settle(); await submit(s.page);
+  assert.equal(titleOf(s.page), 'New password');
+  assert.equal(JSON.parse(s.page.storage.get('rb.backend')).url, ownUrl);
+  assert.equal(pending(s.page).url, ownUrl);
+  const back = await auth({}, {stored: {'rb.backend': s.page.storage.get('rb.backend'), 'rb.pending': s.page.storage.get('rb.pending')}});
+  assert.equal(titleOf(back.page), 'New password'); assert.ok(shown(back.page, 'a-code-row'));
+});
+
 test('a code accepted over an hour ago, its password never saved: a reload still asks (the pre-registered password must not survive)', async () => {
   const {page} = await auth({}, {stored: stored({verified: true, at: Date.now() - 2 * 3600000}), sessions: {[hostedUrl]: USER}});
   await settle();

@@ -1763,6 +1763,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // only ever in heldPw (memory). flowHold: a verifyOtp is on its way; a session it brings must not open the app yet.
   // authErr, authNote: functions, so a language change rewrites them.
   let screen = 'signin', flow = null, flowHold = false, heldPw = '', authErr = null, authNote = null, resendAt = 0, codeLocked = 0, helpTimer = null, setupNote = false;
+  // The link of a confirmation email, read before supabase-js empties the address: no pending needed to know it.
+  let signupLink = /(?:^#|&)type=signup(?:&|$)/.test(String(location.hash || ''));
   const PENDING = 'rb.pending', PENDING_MS = 3600000, RESEND_MS = 60000, LOCK_MS = 300000;
   const ownNow = () => !!backend && backend.mode === 'own';
   const backHere = () => location.origin + location.pathname;
@@ -2123,6 +2125,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       const {error} = await guardedAuth(client, 'resetPasswordForEmail', {email, options: {redirectTo: backHere()}}); if (client !== sb) return;
       const soon = tooSoonSecs(error);
       if (error && !soon) throw error;
+      rememberBackend(backend); // the reset must come back here after a trip to Mail, on a new device too
       startFlow('recovery', email, 'forgot'); $('a-pass').value = '';
       if (soon) { resendAt = Date.now() + soon * 1000; authErr = () => A('au.e.soon'); }
       route(); focusAuth();
@@ -2204,6 +2207,14 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       flow = {type: 'recovery', email: next.email || '', from: 'forgot', at: Date.now(), verified: true};
       screen = 'new-password'; heldPw = ''; authErr = null; authNote = null; introOpen = false; savePending(); stopHelp(); $('a-pass').value = '';
       return false;
+    }
+    if (signupLink) {
+      signupLink = false;
+      if (next) { // whatever this device remembers: the address is proved, the password is not
+        endFlow(); flow = {type: 'signup', email: next.email || '', from: 'signup', at: Date.now(), verified: true};
+        screen = 'set-password'; authErr = null; authNote = null; introOpen = false; $('a-pass').value = ''; savePending();
+        return true;
+      }
     }
     if (!flow) return false;
     const same = !!next && String(next.email || '').toLowerCase() === flow.email.toLowerCase();
