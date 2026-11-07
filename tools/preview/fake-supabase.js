@@ -10,12 +10,22 @@
 //   ?empty=sheets,sessions,...      those tables start with no row (an empty account: ?empty=all)
 //   ?quota                          my_quota() answers (L29: the usage line of Settings); without it, PGRST202
 //   ?quota=full                     and a new link is refused: « quota: 10 links per day » (P0001, HTTP 400)
+//   ?confirm=off                    signUp gives a session at once (email confirmation off, today's hosted project)
+//   ?own                            nothing here: pick an own backend in the app; a code may be longer than 6 digits
+//   ?resend=soon|hour|offline       resend and resetPasswordForEmail answer that (L41); ?net=off: every auth call fails
+// Auth (L41), the answers measured on a real Auth (progress/2026-11-07-L41.md), by address (signUp, signIn):
+//   exists@…  HTTP 422 user_already_exists · oldexists@…  a user without identities · pending@…  sign-in: email_not_confirmed
+//   soon@…  sign-up: « after 42 seconds » · hour@…  sign-up: email rate limit · wrong@…  sign-in: invalid_credentials
+// Codes: 123456 good; 111111 otp_expired (HTTP 403, wrong and expired alike); 999999 HTTP 429 over_request_rate_limit;
+//   a password « same-password-1 » answers same_password; window.__fakeLink() is the session of an email's link.
 // Storage: a signed URL for <user id>/<slug>/<rel> is the local file files/<slug>/<rel>.
 (function () {
   const D = window.__FAKE || {};
   const U = {id: 'u1', email: 'demo@reelbook.test'};
   const params = new URLSearchParams(location.search);
-  let signedIn = !params.has('noauth');
+  // A session the fake gave survives a reload, as a real one (the resume of L41).
+  const fakeStore = {get() { try { return sessionStorage.getItem('fake.signedIn') === '1'; } catch { return false; } }, set(v) { try { if (v) sessionStorage.setItem('fake.signedIn', '1'); else sessionStorage.removeItem('fake.signedIn'); } catch { /* preview only */ } }};
+  let signedIn = !params.has('noauth') || fakeStore.get();
   const missing = new Set((params.get('missing') || '').split(',').map(s => s.trim()).filter(Boolean));
   for (const t of (params.get('empty') || '').split(',').map(s => s.trim()).filter(Boolean)) {
     if (t === 'all') { for (const k of Object.keys(D)) if (k !== 'user_themes') D[k] = []; } else D[t] = [];
@@ -119,6 +129,16 @@
       const subs = [];
       const emit = (event, session) => subs.forEach(cb => setTimeout(() => cb(event, session), 0));
       const session = () => (signedIn ? {user: U, access_token: 'fake'} : null);
+      const fakeError = o => Object.assign(new Error(o.message), {name: 'AuthApiError'}, o);
+      const SOON = {status: 429, code: 'over_email_send_rate_limit', message: 'For security purposes, you can only request this after 42 seconds.'};
+      const HOUR = {status: 429, code: 'over_email_send_rate_limit', message: 'email rate limit exceeded'};
+      const signIn = (event, email) => { signedIn = true; fakeStore.set(true); if (email) U.email = email; U.created_at = now(); emit(event, session()); };
+      window.__fakeLink = email => signIn('SIGNED_IN', email);
+      const mailAnswer = async () => {
+        const r = params.get('resend');
+        if (params.get('net') === 'off' || r === 'offline') throw fakeError({name: 'AuthRetryableFetchError', status: 0, message: 'Failed to fetch'});
+        return {data: {}, error: r === 'soon' ? fakeError(SOON) : r === 'hour' ? fakeError(HOUR) : null};
+      };
       return {
         from: t => new Query(t),
         // L31: ?seats=<taken> of 50, ?seats=closed, ?seats=last (the last seat, then taken when asked again, before a sign-up)
@@ -141,9 +161,34 @@
           onAuthStateChange(cb) { subs.push(cb); setTimeout(() => cb('INITIAL_SESSION', session()), 0); return {data: {subscription: {unsubscribe() {}}}}; },
           getSession: async () => ({data: {session: session()}, error: null}),
           getUser: async () => ({data: {user: signedIn ? U : null}, error: null}),
-          signInWithPassword: async () => { signedIn = true; emit('SIGNED_IN', session()); return {data: {session: session(), user: U}, error: null}; },
-          signUp: async () => ({data: {session: null, user: null}, error: null}),
-          signOut: async () => { signedIn = false; emit('SIGNED_OUT', null); return {error: null}; }
+          signInWithPassword: async ({email}) => {
+            if (params.get('net') === 'off') throw fakeError({name: 'AuthRetryableFetchError', status: 0, message: 'Failed to fetch'});
+            if (/^wrong@/.test(email)) return {data: {}, error: fakeError({status: 400, code: 'invalid_credentials', message: 'Invalid login credentials'})};
+            if (/^pending@/.test(email)) return {data: {}, error: fakeError({status: 400, code: 'email_not_confirmed', message: 'Email not confirmed'})};
+            signIn('SIGNED_IN', email); return {data: {session: session(), user: U}, error: null};
+          },
+          signUp: async ({email}) => {
+            if (params.get('net') === 'off') throw fakeError({name: 'AuthRetryableFetchError', status: 0, message: 'Failed to fetch'});
+            if (/^exists@/.test(email)) return {data: {}, error: fakeError({status: 422, code: 'user_already_exists', message: 'User already registered'})};
+            if (/^oldexists@/.test(email)) return {data: {session: null, user: {id: 'x', identities: []}}, error: null};
+            if (/^soon@/.test(email)) return {data: {}, error: fakeError(SOON)};
+            if (/^hour@/.test(email)) return {data: {}, error: fakeError(HOUR)};
+            if (params.get('confirm') === 'off') { signIn('SIGNED_IN', email); return {data: {session: session(), user: U}, error: null}; }
+            return {data: {session: null, user: {id: 'new', email, identities: [{}]}}, error: null};
+          },
+          resend: () => mailAnswer(),
+          resetPasswordForEmail: () => mailAnswer(),
+          verifyOtp: async ({email, token, type}) => {
+            if (params.get('net') === 'off') throw fakeError({name: 'AuthRetryableFetchError', status: 0, message: 'Failed to fetch'});
+            if (token === '999999') return {data: {}, error: fakeError({status: 429, code: 'over_request_rate_limit', message: 'Request rate limit reached'})};
+            if (token === '111111') return {data: {}, error: fakeError({status: 403, code: 'otp_expired', message: 'Token has expired or is invalid'})};
+            signIn(type === 'recovery' ? 'PASSWORD_RECOVERY' : 'SIGNED_IN', email); return {data: {session: session(), user: U}, error: null};
+          },
+          updateUser: async ({password}) => {
+            if (password === 'same-password-1') return {data: {}, error: fakeError({status: 422, code: 'same_password', message: 'New password should be different from the old password.'})};
+            emit('USER_UPDATED', session()); return {data: {user: U}, error: null};
+          },
+          signOut: async () => { signedIn = false; fakeStore.set(false); emit('SIGNED_OUT', null); return {error: null}; }
         }
       };
     }

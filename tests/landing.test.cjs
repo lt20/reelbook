@@ -151,16 +151,14 @@ const AUTH_ERRORS = {
   in: [
     [{code: 'invalid_credentials', status: 400, message: 'Invalid login credentials'}, 'E-mail ou mot de passe incorrect.', 'Wrong email or password.'],
     [{status: 400, message: 'Invalid login credentials'}, 'E-mail ou mot de passe incorrect.', 'Wrong email or password.'],
-    [{code: 'email_not_confirmed', status: 400, message: 'Email not confirmed'}, 'Confirme d’abord ton e-mail avec le lien reçu dans ta boîte, puis connecte-toi.', 'Confirm your email first with the link in your inbox, then sign in.'],
     [{code: 'over_request_rate_limit', status: 429, message: 'Request rate limit reached'}, 'Trop d’essais : réessaie dans quelques minutes.', 'Too many attempts: try again in a few minutes.'],
     [{name: 'AuthRetryableFetchError', status: 0, message: 'Failed to fetch'}, 'Le serveur n’a pas répondu : vérifie ta connexion et réessaie.', 'The server did not answer: check your connection and try again.'],
     [{code: 'some_new_code', status: 400, message: 'Some new English message'}, 'Connexion impossible.', 'Could not sign in.']
   ],
   up: [
-    [{code: 'user_already_exists', status: 422, message: 'User already registered'}, 'Un compte existe déjà avec cet e-mail : connecte-toi plutôt.', 'An account already exists with this email: sign in instead.'],
     [{code: 'weak_password', status: 422, message: 'Password should be at least 6 characters.'}, 'Ce mot de passe est trop faible : choisis-en un plus long.', 'That password is too weak: choose a longer one.'],
     [{code: 'email_address_invalid', status: 400, message: 'Email address "x@y" is invalid'}, 'Cette adresse e-mail n’est pas valide.', 'That email address is not valid.'],
-    [{code: 'over_email_send_rate_limit', status: 429, message: 'email rate limit exceeded'}, 'Trop d’essais : réessaie dans quelques minutes.', 'Too many attempts: try again in a few minutes.'],
+    [{code: 'over_email_send_rate_limit', status: 429, message: 'email rate limit exceeded'}, 'Limite d’envoi atteinte pour cette adresse : réessaie dans une heure. Rien n’a été créé.', 'Sending limit reached for this address: try again in an hour. Nothing was created.'],
     [{code: 'signup_disabled', status: 422, message: 'Signups not allowed for this instance'}, 'Ce serveur ne prend pas de nouveaux comptes.', 'This server does not take new accounts.'],
     [{code: 'unexpected_failure', status: 400, message: 'Some new English message'}, 'Impossible de créer le compte.', 'Could not create the account.']
   ]
@@ -206,7 +204,7 @@ test('L30 — installation « On my own Supabase » + « Create my notebook »: 
   await page.fire('own-form', 'submit');
   assert.equal(page.clients.at(-1).url, ownUrl);
   assert.equal(page.element('auth').hidden, false);
-  assert.equal(page.element('auth-title').textContent, 'Create an account', 'the sign-up goes on, on that project');
+  assert.equal(page.element('auth-title').textContent, 'Create your account', 'the sign-up goes on, on that project');
   assert.equal(page.storage.get('rb.backend'), undefined, 'the project is kept once the account exists');
   page.element('a-email').value = 'new@example.test';
   page.element('a-pass').value = 'example-password';
@@ -361,8 +359,8 @@ test('L36 — the beta follows beta_seats(): open without an answer, the count w
   // the coordinator's wording, and the consent text of decision 20, word for word
   const {DICT} = q.RBL;
   assert.equal(DICT.fr['wl.p'], 'Aucun compte n’est créé ici : laisse ton prénom et ton e-mail, on te prévient dès qu’une place se libère.');
-  assert.equal(DICT.fr['wl.ok.h'], 'C’est noté'); assert.equal(DICT.fr['wl.ok'], 'C’est noté : on t’écrit dès qu’une place se libère.');
-  assert.equal(DICT.en['wl.ok.h'], 'You’re on the list'); assert.equal(DICT.en['wl.ok'], 'You’re on the list. We’ll email you as soon as a spot opens.');
+  assert.equal(DICT.fr['wl.ok.h'], 'C’est noté'); assert.equal(DICT.fr['wl.ok'], 'On t’écrit dès qu’une place se libère.');
+  assert.equal(DICT.en['wl.ok.h'], 'You’re on the list'); assert.equal(DICT.en['wl.ok'], 'We’ll email you as soon as a spot opens.');
   assert.equal(DICT.fr['wl.c'], 'J’accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d’une place libre, et rien d’autre. Effacés à mon inscription ou sur simple demande.');
   assert.equal(DICT.en['wl.c'], 'I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.');
 });
@@ -480,7 +478,7 @@ test('L36 — the landing\'s #signin, #signup and #shortcut open the app\'s scre
   assert.equal(b.location.hash.replace('#', ''), 'settings', 'Settings › iPhone shortcut, once signed in');
   const c = await app();
   await c.fire('intro-signup');
-  assert.equal(c.element('auth-title').textContent, 'Create an account');
+  assert.equal(c.element('auth-title').textContent, 'Create your account');
 });
 
 test('L36 — step 2, macOS / Linux or Windows: one line in view, the one « Copy the line » copies', async () => {

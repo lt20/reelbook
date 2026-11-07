@@ -64,7 +64,7 @@ test('Create an account: the main path uses the hosted backend', async () => {
   assert.equal(page.element('intro').hidden, true);
   assert.equal(page.element('setup').hidden, true);
   assert.equal(page.element('auth').hidden, false);
-  assert.equal(page.element('auth-title').textContent, 'Create an account');
+  assert.equal(page.element('auth-title').textContent, 'Create your account');
   assert.equal(page.clients.at(-1).url, hostedUrl);
   assert.equal(page.element('hosted-blurb').textContent, 'Free for now.');
 });

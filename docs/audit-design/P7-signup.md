@@ -159,7 +159,7 @@ Applied to the mockup and binding on L41, L42, L43:
 ## Laurent's deployment (in this order, each step separately reversible)
 
 1. After L31 merges: `supabase/schema.sql`, his account `exempt`, the `beta_settings` row (comments in the file).
-2. Domain chosen, Resend set up, custom SMTP in Supabase.
+2. Domain chosen, Resend set up, custom SMTP in Supabase. Then `hosted.mailReady: true` in `app/config.js` (a one-line PR): until then « Forgot your password? » is not offered on the hosted backend, since it would fail.
 3. Before step 4, a check: `select count(*) from auth.users where email_confirmed_at is null` should be 0 or known.
 4. After L41 merges: email templates with `{{ .Token }}` (confirmation and recovery), then « Confirm email » on.
 5. After L42 merges: Turnstile widget for `lt20.github.io`, site key given to the coordinator (a one-line PR), `cli-login`
