@@ -5,8 +5,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f3f1ec" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#15171a" media="(prefers-color-scheme: dark)">
-<meta name="description" content="Turn the how-to videos you save into sheets you can read on the mat, at the beach or in the kitchen.">
-<title>Reelbook</title>
+<meta name="description" content="Reelbook réunit tes vidéos de technique dans un carnet d’entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.">
+<title>Reelbook · Un /skill Claude Code qui transforme tes vidéos de technique en carnet d’entraînement</title>
+<link rel="canonical" href="https://lt20.github.io/reelbook/">
+<!-- L36: link previews (the landing's French copy; English is the alternate locale) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Reelbook">
+<meta property="og:url" content="https://lt20.github.io/reelbook/">
+<meta property="og:title" content="Reelbook · Un /skill Claude Code qui transforme tes vidéos de technique en carnet d’entraînement">
+<meta property="og:description" content="Reelbook réunit tes vidéos de technique dans un carnet d’entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_GB">
+<meta property="og:image" content="https://lt20.github.io/reelbook/assets/og/reelbook-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="reelbook">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Reelbook · Un /skill Claude Code qui transforme tes vidéos de technique en carnet d’entraînement">
+<meta name="twitter:description" content="Reelbook réunit tes vidéos de technique dans un carnet d’entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.">
+<meta name="twitter:image" content="https://lt20.github.io/reelbook/assets/og/reelbook-og.jpg">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/reelbook-app.svg" type="image/svg+xml">
 <link rel="icon" href="icons/reelbook-icon-192.png" type="image/png" sizes="192x192">
@@ -569,18 +586,486 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 .install .ic-share{flex:none;width:1.375rem;height:1.375rem;color:var(--accent)}
 .install p{flex:1 1 12rem;margin:0;font-size:var(--fs-sm);line-height:1.4}
 .install .acts{display:flex;gap:var(--s-2);margin-left:auto}
-/* L25: the first screen on a device that has never signed in (what Reelbook is, then the account actions) */
-.intro-steps{list-style:none;margin:var(--s-5) 0 0;padding:0;display:grid;gap:var(--s-4);counter-reset:step}
-.intro-steps li{display:grid;grid-template-columns:6rem 1fr;grid-template-rows:auto 1fr;column-gap:var(--s-4);align-content:start;counter-increment:step}
-.intro-steps svg{grid-row:1/3;display:block;width:100%;height:auto;color:var(--accent);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-2)}
-.intro-steps svg .fill{fill:var(--tag)}
-.intro-steps b{font-family:var(--display);font-size:var(--fs-lg);line-height:1.05;align-self:end}
-.intro-steps b::before{content:counter(step) ". ";color:var(--muted)}
-.intro-steps span{font-size:var(--fs-sm);color:var(--muted);line-height:1.4;margin-top:var(--s-1)}
-@media (min-width:600px){.intro-steps{grid-template-columns:repeat(3,1fr)}.intro-steps li{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}.intro-steps svg{grid-row:auto;margin-bottom:var(--s-3)}.intro-steps b{align-self:start}}
-.intro-needs{margin-top:var(--s-5)}
-.intro-acts{margin-top:var(--s-5)}
-.intro-acts .btn{min-height:44px}
+/* L30: the landing (#intro), first screen of a device that has never signed in: the mockup
+   docs/audit-design/mockups/p6-landing.html (v3 since L36), scoped (lp- classes under #intro) so the app's styles do not move.
+   Its own light palette, whatever the colour scheme; the page loses its padding while it shows. */
+body:has(#intro:not([hidden])){padding:0;background:#f3f1ec}
+#auth:has(>#intro:not([hidden])){max-width:none}
+#auth:has(>#intro:not([hidden]))>.brand{display:none}
+#auth:has(>#intro:not([hidden]))
+
+.auth-demo{max-width:1280px;margin:0 auto;padding:0 clamp(16px,4vw,48px) 32px}
+html:has(#intro:not([hidden])){scroll-padding-top:84px}
+@media (max-width:760px){html:has(#intro:not([hidden])){scroll-padding-top:116px}}
+@media (prefers-reduced-motion:no-preference){html:has(#intro:not([hidden])){scroll-behavior:smooth}}
+#intro{color:var(--ink);font:400 18px/1.55 var(--body);-webkit-font-smoothing:antialiased;background:var(--ground);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+#intro [hidden]{display:none!important}
+#intro button{-webkit-tap-highlight-color:transparent}
+#intro .lp-opt input{padding:0;border:0;background:none;flex:none}
+#intro .lp-lines{display:contents}
+#intro .lp-copy-msg{margin:0;font-size:14px;color:var(--ink)}
+#intro .lp-wl .lp-btn[disabled]{opacity:.55;cursor:not-allowed}
+#intro pre{-webkit-user-select:all;user-select:all}
+/* L36: below, the v3 mockup's stylesheet as is, scoped by the converter (classes and ids prefixed lp-, under #intro) */
+#intro{--ground:#f3f1ec; --step:#e9e6df; --paper:#fbfaf7; --ink:#1b1d1f; --ink-2:#3c4148; --line:#d8d5cd;--blue:#1f4fa3; --blue-ink:#fff; --coral:#c54b38;--night:#121417; --night-2:#1d2026; --night-3:#24282f; --night-ink:#eceae4; --night-2ink:#b9bec6;--nb:#b4432f;--display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace;--m:clamp(16px,4vw,48px);color-scheme:light;}
+#intro *{box-sizing:border-box}
+#intro img,#intro svg{max-width:100%;display:block}
+#intro a{color:var(--blue)}
+#intro :focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+#intro h1,#intro h2,#intro h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.015em}
+#intro h2{font-size:clamp(44px,6.2vw,84px);font-weight:800;line-height:.9;text-transform:uppercase}
+#intro h3{font-size:26px;font-weight:700;line-height:1.05}
+#intro p{margin:0}
+#intro .lp-frame{max-width:1280px;margin:0 auto;padding-inline:var(--m)}
+#intro .lp-btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;border-radius:999px;border:0;background:var(--blue);color:var(--blue-ink);font:700 17px/1 var(--body);text-decoration:none;cursor:pointer;}
+#intro .lp-btn:hover{background:#173e82}
+#intro .lp-btn:active{transform:scale(.97)}
+#intro .lp-btn.lp-quiet{background:transparent;color:var(--ink);padding:0 14px}
+#intro .lp-btn.lp-quiet:hover{background:var(--step)}
+#intro .lp-bar{display:flex;align-items:center;gap:24px;padding-block:18px;flex-wrap:wrap}
+#intro .lp-wm{display:flex;align-items:center;gap:9px;font:800 28px/1 var(--display);color:var(--blue);text-decoration:none;letter-spacing:-.01em;margin-right:auto}
+#intro .lp-wm svg{width:30px;height:30px}
+#intro .lp-bar nav{display:flex;gap:22px;flex-wrap:wrap}
+#intro .lp-bar nav a{color:var(--ink);text-decoration:none;font-weight:600;font-size:16px}
+#intro .lp-bar nav a:hover{color:var(--blue)}
+#intro .lp-bar nav a{position:relative;padding-block:10px}
+#intro .lp-bar nav a[aria-current="true"]{color:var(--blue)}
+#intro .lp-bar nav a[aria-current="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:3px;border-radius:2px;background:var(--coral,#c54b38)}
+#intro .lp-l2{display:inline-grid;justify-items:center}
+#intro .lp-l2>span{grid-area:1/1;white-space:nowrap}
+html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="fr"]{visibility:hidden}
+#intro .lp-topbar{position:sticky;top:0;z-index:50;background:rgba(243,241,236,.9);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid transparent;}
+#intro .lp-topbar.lp-scrolled{border-bottom-color:rgba(27,29,31,.1);box-shadow:0 6px 20px -14px rgba(27,29,31,.35)}
+#intro .lp-topbar .lp-bar{padding-block:12px;flex-wrap:nowrap}
+#intro .lp-seg{display:inline-flex;background:var(--step);border-radius:999px;padding:3px}
+#intro .lp-seg button{border:0;background:none;font:700 14px/1 var(--body);color:var(--ink-2);min-width:44px;min-height:44px;padding:0 12px;border-radius:999px;cursor:pointer;}
+#intro .lp-seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+#intro .lp-wm svg{flex:none}
+@media (max-width:760px){
+#intro .lp-topbar .lp-bar{flex-wrap:wrap;row-gap:2px;padding-block:8px 4px;gap:12px}
+#intro .lp-topbar .lp-bar nav{order:5;width:100%;justify-content:space-between;gap:8px}
+#intro .lp-topbar .lp-bar nav a{font-size:15px}
+#intro .lp-topbar .lp-bar .lp-btn.lp-quiet{min-height:40px;padding:0 6px;font-size:15px}
+#intro .lp-topbar .lp-wm{font-size:24px}
+#intro .lp-topbar .lp-wm svg{width:26px;height:26px}
+}
+@media (max-width:374px){
+#intro .lp-topbar .lp-wm .lp-wm-t{display:none}
+#intro .lp-topbar .lp-bar nav{gap:4px}
+#intro .lp-topbar .lp-bar nav a{font-size:14px}
+}
+#intro .lp-hero{padding-block:clamp(28px,5vw,64px) 0}
+#intro .lp-hero h1{font-size:clamp(34px,5.4vw,80px);font-weight:800;line-height:.9;text-transform:uppercase;letter-spacing:-.02em;max-width:none}
+#intro .lp-hero h1 .lp-slash{color:var(--coral)}
+#intro .lp-pitch{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,4vw,64px);margin-top:clamp(24px,3vw,40px);align-items:start}
+#intro .lp-pitch-side{display:flex;flex-direction:column;gap:18px}
+@media (max-width:900px){
+#intro .lp-pitch{grid-template-columns:minmax(0,1fr)}
+}
+#intro .lp-flow-head{display:flex;justify-content:space-between;align-items:end;gap:12px 24px;flex-wrap:wrap;margin-top:clamp(44px,5vw,72px)}
+#intro .lp-flow-head h2{font-size:clamp(36px,4.6vw,68px);text-transform:uppercase;line-height:.92}
+#intro .lp-flow-head .lp-ex-switch{margin-bottom:0}
+#intro .lp-flow{list-style:none;padding:0;margin:22px 0 0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.55fr) minmax(0,1fr);gap:16px;counter-reset:fl}
+#intro .lp-flow>li{background:var(--paper);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+#intro .lp-fl-vis{height:300px;display:flex;align-items:center;justify-content:center}
+#intro .lp-flow h3{font-size:26px;text-transform:uppercase;line-height:1}
+#intro .lp-flow h3 .lp-n{color:var(--coral);margin-right:8px}
+#intro .lp-flow p{font-size:16px;line-height:1.45;color:var(--ink-2);margin:0}
+#intro .lp-flow .lp-mini-phone{width:150px;height:280px}
+@media (max-width:900px){
+#intro .lp-flow{grid-template-columns:minmax(0,1fr)}
+#intro .lp-fl-vis{height:auto}
+}
+#intro .lp-msheet{display:grid;grid-template-columns:minmax(0,210px) minmax(0,1fr);gap:16px;width:100%;margin:0}
+#intro .lp-msheet .lp-shot{position:relative;aspect-ratio:4/5;border-radius:4px;overflow:hidden;background:#222}
+#intro .lp-msheet .lp-shot>div{position:absolute;inset:0;opacity:0;}
+#intro .lp-msheet .lp-shot>div.lp-on{opacity:1}
+#intro .lp-msheet .lp-shot img,#intro .lp-msheet .lp-shot svg{width:100%;height:100%;object-fit:cover;overflow:hidden}
+#intro .lp-msheet .lp-pp{position:absolute;right:2px;bottom:2px;z-index:3;width:44px;height:44px;padding:0;border:0;background:none;cursor:pointer;display:grid;place-items:center}
+#intro .lp-msheet .lp-pp span{width:30px;height:30px;border-radius:50%;background:rgba(18,20,23,.62);display:grid;place-items:center}
+#intro .lp-msheet .lp-pp svg{width:14px;height:14px;fill:#fff}
+#intro .lp-msheet .lp-pp .lp-i-play,#intro .lp-msheet .lp-pp.lp-paused .lp-i-pause{display:none}
+#intro .lp-msheet .lp-pp.lp-paused .lp-i-play{display:block}
+#intro .lp-anim-off .lp-track{animation-play-state:paused}
+#intro .lp-vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+#intro .lp-msheet .lp-num{position:absolute;left:10px;top:8px;font:800 40px/1 var(--display);color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.35);z-index:2}
+#intro[data-ex="dance"] .lp-msheet .lp-num{color:#6e1f45;text-shadow:none}
+#intro .lp-msheet .lp-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+#intro .lp-msheet .lp-crumb{font-size:13px;color:var(--ink-2);font-weight:600}
+#intro .lp-msheet .lp-title{font:700 22px/1 var(--display)}
+#intro .lp-msheet .lp-step-name{font:800 26px/.95 var(--display);text-transform:uppercase;color:var(--blue);margin-top:auto}
+#intro .lp-msheet .lp-cue{font-size:14.5px;line-height:1.4;min-height:5.6em}
+#intro .lp-dots{display:flex;flex-wrap:wrap;margin-left:-8px}
+#intro .lp-dots button{width:26px;height:26px;padding:0;border:0;background:none;cursor:pointer;display:grid;place-items:center}
+#intro .lp-dots button::before{content:"";width:8px;height:8px;border-radius:50%;background:#8f8a80}
+#intro .lp-msheet .lp-dots{flex-wrap:nowrap;gap:0}
+#intro #lp-thumbs button{width:32px;height:44px;flex:0 1 32px;min-width:0}
+#intro .lp-dots button[aria-current="true"]::before{background:var(--blue);width:10px;height:10px}
+@media (max-width:420px){
+#intro .lp-msheet{grid-template-columns:minmax(0,130px) minmax(0,1fr);gap:12px}
+#intro .lp-msheet .lp-step-name{font-size:21px}
+#intro .lp-msheet .lp-cue{min-height:0}
+}
+#intro .lp-msess{width:100%;background:var(--ink);color:#fff;border-radius:6px;padding:16px}
+#intro .lp-msess .lp-m{font-size:12.5px;color:#c9ccd1}
+#intro .lp-msess .lp-st{display:block;font:700 22px/1.05 var(--display);margin:4px 0 12px}
+#intro .lp-msess ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+#intro .lp-msess li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13.5px;line-height:1.25}
+#intro .lp-msess li .lp-pic{border-radius:6px}
+#intro .lp-msess .lp-dose{font-size:12.5px;color:#c9ccd1;white-space:nowrap}
+#intro .lp-msess .lp-done{display:block;margin-top:14px;text-align:center;background:var(--blue);border-radius:999px;padding:9px;font-weight:700;font-size:14px}
+#intro .lp-pitch .lp-sub{font-size:clamp(20px,1.7vw,24px);line-height:1.42;max-width:30ch}
+#intro .lp-cta-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#intro .lp-beta{font-size:16px;color:var(--ink-2);display:flex;gap:10px;align-items:center}
+#intro .lp-beta .lp-seats{display:inline-block;width:96px;height:8px;border-radius:8px;background:var(--step);position:relative;overflow:hidden;flex:none}
+#intro .lp-beta .lp-seats i{position:absolute;inset:0 auto 0 0;width:28%;background:var(--coral);border-radius:8px}
+#intro .lp-fit{font-size:16px;color:var(--ink-2)}
+#intro .lp-ex-switch{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+#intro .lp-ex-switch span{font-size:15px;font-weight:600;color:var(--ink-2)}
+#intro .lp-ex-switch .lp-seg{flex-wrap:wrap;border-radius:22px;max-width:100%}
+#intro .lp-ex-switch .lp-seg button{min-width:0;padding:0 14px}
+#intro .lp-ex-switch .lp-seg button[aria-pressed="true"]{background:var(--nb);color:#fff}
+#intro .lp-player{background:var(--paper);border-radius:6px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);overflow:hidden;margin:0}
+#intro .lp-player .lp-shot{position:relative;background:#222;aspect-ratio:860/1100}
+#intro .lp-player .lp-shot > div{position:absolute;inset:0;opacity:0;}
+#intro .lp-player .lp-shot > div.lp-on{opacity:1}
+#intro .lp-player .lp-shot img,#intro .lp-player .lp-shot svg{width:100%;height:100%;object-fit:cover}
+#intro .lp-pic svg,#intro .lp-player .lp-shot svg,#intro .lp-notes-ui .lp-ph svg,#intro .lp-thumbs svg,#intro .lp-seq svg,#intro .lp-chrome .lp-vid svg,#intro .lp-mini-phone svg.lp-x{overflow:hidden}
+#intro .lp-player .lp-shot .lp-num{position:absolute;left:14px;top:12px;font:800 64px/1 var(--display);color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35);z-index:2}
+#intro[data-ex="dance"] .lp-player .lp-shot .lp-num{color:#6e1f45;text-shadow:none}
+#intro .lp-player .lp-side{padding:22px 22px 20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+#intro .lp-player .lp-crumb{font-size:15px;color:var(--ink-2);font-weight:600}
+#intro .lp-player .lp-title{font:700 30px/1 var(--display);letter-spacing:-.01em}
+#intro .lp-player .lp-step-name{font:800 40px/.95 var(--display);text-transform:uppercase;color:var(--blue);margin-top:auto}
+#intro .lp-player .lp-cue{font-size:17px;line-height:1.45;min-height:5.8em}
+#intro .lp-player .lp-src{font-size:14.5px;font-weight:600;color:var(--blue);text-decoration:none}
+#intro .lp-player .lp-src:hover{text-decoration:underline}
+#intro .lp-thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+#intro .lp-thumbs button{padding:0;border:0;background:none;cursor:pointer;aspect-ratio:4/5;overflow:hidden;border-radius:3px;opacity:.45;min-height:44px}
+#intro .lp-thumbs button img,#intro .lp-thumbs button svg{width:100%;height:100%;object-fit:cover}
+#intro .lp-thumbs button[aria-current="true"]{opacity:1;transform:translateY(-3px)}
+#intro .lp-thumbs button:hover{opacity:.85}
+#intro .lp-scrub{width:100%;accent-color:var(--blue);margin:0}
+#intro .lp-scrub-l{font-size:14px;color:var(--ink-2);display:flex;justify-content:space-between}
+@media (max-width:560px){
+#intro .lp-player{grid-template-columns:minmax(0,1fr)}
+#intro .lp-player .lp-shot{aspect-ratio:4/4.2}
+#intro .lp-player .lp-cue{min-height:0}
+}
+#intro .lp-drawn{font-size:13.5px;color:var(--ink-2);margin-top:10px}
+#intro .lp-sec{padding-block:clamp(96px,12vw,180px) 0}
+#intro .lp-lede{font-size:clamp(20px,1.7vw,24px);line-height:1.42;max-width:36ch}
+#intro .lp-split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(28px,5vw,80px);align-items:start}
+#intro .lp-split.lp-rev{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+#intro .lp-split.lp-rev .lp-txt{order:2}
+#intro .lp-split>*{min-width:0}
+#intro .lp-split h2{font-size:clamp(44px,4.9vw,70px)}
+#intro .lp-txt{display:flex;flex-direction:column;gap:22px;padding-top:12px}
+@media (max-width:900px){
+#intro .lp-split,#intro .lp-split.lp-rev{grid-template-columns:minmax(0,1fr)}
+#intro .lp-split.lp-rev .lp-txt{order:0}
+}
+#intro .lp-head2{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,4vw,64px);align-items:end}
+@media (max-width:900px){
+#intro .lp-head2{grid-template-columns:minmax(0,1fr)}
+}
+#intro [data-ui]{font-family:var(--body);background:var(--paper);border-radius:16px;padding:20px;border:1px solid var(--line);min-width:0}
+#intro .lp-ui-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+#intro .lp-ui-badge{width:34px;height:34px;border-radius:10px;background:var(--nb);display:grid;place-items:center;color:#fff;flex:none;}
+#intro .lp-ui-badge svg{width:20px;height:20px}
+#intro .lp-ui-title{font:700 26px/1 var(--display)}
+#intro .lp-ui-count{margin-left:auto;font-size:14px;color:var(--ink-2)}
+#intro .lp-devices{margin:0;container-type:inline-size;min-width:0}
+#intro .lp-dv-stage{position:relative;padding-bottom:17cqw}
+#intro .lp-dv-tab{width:80cqw;aspect-ratio:1.43;overflow:hidden;box-sizing:border-box;background:var(--ground);border:1.4cqw solid #1b1d1f;border-radius:3.6cqw;padding:2.2cqw;box-shadow:0 2cqw 5cqw rgba(0,0,0,.18);font-family:var(--body)}
+#intro .lp-dv-bar{display:flex;align-items:baseline;gap:2cqw;margin:0 .4cqw 1.8cqw}
+#intro .lp-dv-bar b{font:800 3cqw/1 var(--display);color:var(--blue)}
+#intro .lp-dv-bar span{font-size:1.7cqw;font-weight:700;color:var(--ink-2)}
+#intro .lp-dv-add{display:flex;justify-content:space-between;align-items:center;margin:0 .4cqw 1.8cqw;padding:1cqw 1cqw 1cqw 1.6cqw;border:.15cqw solid var(--line);border-radius:99px;background:var(--paper);font-size:1.4cqw;color:var(--ink-2)}
+#intro .lp-dv-add i{font-style:normal;width:2.6cqw;height:2.6cqw;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.8cqw}
+#intro .lp-dv-sub{margin:0 0 .9cqw;font-size:1.25cqw;line-height:1.3;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#intro .lp-dv-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5cqw}
+#intro .lp-dv-nb{background:var(--paper);border:.15cqw solid var(--line);border-radius:1.6cqw;overflow:hidden;padding:0 1.2cqw 1.2cqw}
+#intro .lp-dv-cv{display:flex;align-items:center;gap:1.2cqw;margin:0 -1.2cqw 1cqw;padding:1.2cqw;background:color-mix(in srgb,var(--t) 14%,var(--paper))}
+#intro .lp-dv-cv i{width:3.8cqw;height:3.8cqw;border-radius:50%;background:var(--paper);color:var(--t);display:grid;place-items:center;flex:none}
+#intro .lp-dv-cv i svg{width:2.2cqw;height:2.2cqw}
+#intro .lp-dv-cv span{display:grid;min-width:0}
+#intro .lp-dv-cv small{font-size:1.15cqw;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb,var(--t) 60%,var(--ink))}
+#intro .lp-dv-cv b{font:700 2.3cqw/1.05 var(--display);color:color-mix(in srgb,var(--t) 60%,var(--ink));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#intro .lp-dv-th{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6cqw}
+#intro .lp-dv-th img,#intro .lp-dv-row img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:.8cqw}
+#intro .lp-dv-th img{aspect-ratio:1}
+#intro .lp-dv-ph{position:absolute;right:0;bottom:0;width:24cqw;aspect-ratio:9/19.5;background:var(--ground);border:1.2cqw solid #1b1d1f;border-radius:4.2cqw;overflow:hidden;box-shadow:0 2cqw 6cqw rgba(0,0,0,.28);font-family:var(--body)}
+#intro .lp-dv-ph .lp-dv-cv{margin:0 0 1cqw;padding:2.6cqw 1.4cqw 1.4cqw}
+#intro .lp-dv-ph .lp-dv-cv b{font-size:2.1cqw;white-space:normal}
+#intro .lp-dv-g{padding:0 0 1.2cqw 1.4cqw}
+#intro .lp-dv-g>b{display:block;font-size:1.35cqw;margin-bottom:.6cqw}
+#intro .lp-dv-g>b span{color:var(--ink-2);font-weight:600}
+#intro .lp-dv-row{display:grid;grid-template-columns:repeat(3,8.6cqw);gap:.6cqw}
+#intro .lp-devices figcaption{margin-top:-10cqw;max-width:72cqw;font-size:15px;font-weight:700;color:var(--ink-2)}
+#intro .lp-tcs{display:grid;gap:16px;min-width:0}
+#intro .lp-tc{--band:color-mix(in srgb,var(--t) 14%,var(--paper));--on-band:color-mix(in srgb,var(--t) 60%,var(--ink));background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:0 18px 18px;font-family:var(--body);min-width:0}
+#intro .lp-tc .lp-cover{display:flex;align-items:center;gap:14px;margin:0 -18px 12px;padding:16px 18px;background:var(--band)}
+#intro .lp-tc .lp-nbb{width:46px;height:46px;border-radius:50%;background:var(--paper);color:var(--t);display:grid;place-items:center;flex:none}
+#intro .lp-tc .lp-nbb svg{width:22px;height:22px}
+#intro .lp-tc .lp-eb{margin:0;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--on-band)}
+#intro .lp-tc h3{font:700 clamp(26px,2.6vw,34px)/1 var(--display);color:var(--on-band);margin:2px 0 0}
+#intro .lp-tc .lp-sub2{margin:0 0 12px;color:var(--ink-2);font-size:15.5px}
+#intro .lp-th3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#intro .lp-th3 figure{margin:0;min-width:0}
+#intro .lp-th3 img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+#intro .lp-th3 figcaption{font-size:13px;line-height:1.25;font-weight:700;margin-top:6px}
+#intro .lp-grp{margin-top:14px;min-width:0}
+#intro .lp-grp-h{display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-bottom:8px}
+#intro .lp-grp-h span{color:var(--ink-2);font-weight:600}
+#intro .lp-row{display:grid;grid-template-columns:repeat(3,minmax(140px,1fr));gap:10px;overflow-x:auto;padding-bottom:4px}
+#intro .lp-grp-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#intro .lp-card{display:flex;flex-direction:column;gap:6px;min-width:0}
+#intro .lp-pic{aspect-ratio:3/2;border-radius:10px;overflow:hidden;width:100%}
+#intro .lp-pic img,#intro .lp-pic svg{width:100%;height:100%;object-fit:cover}
+#intro .lp-grp-pair .lp-pic{aspect-ratio:16/9}
+#intro .lp-card b{font-size:15px;line-height:1.25;font-weight:700}
+#intro .lp-card small{font-size:13px;color:var(--ink-2)}
+#intro .lp-tag-new{align-self:flex-start;display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--blue);border-radius:999px;padding:3px 9px}
+#intro .lp-tag-try{align-self:flex-start;display:inline-block;font-size:12px;font-weight:700;color:var(--ink);background:var(--step);border-radius:999px;padding:3px 9px}
+#intro .lp-tag-done{align-self:flex-start;display:inline-block;font-size:12px;font-weight:700;color:#1f6b3a;background:#e1f0e6;border-radius:999px;padding:3px 9px}
+#intro .lp-search-ui .lp-field{display:flex;align-items:center;gap:10px;border:1.5px solid var(--ink);border-radius:999px;padding:12px 18px;font-size:18px}
+#intro .lp-search-ui .lp-field svg{width:20px;height:20px;flex:none}
+#intro .lp-caret{width:2px;height:22px;background:var(--blue);animation:lp-blink 1s steps(1) infinite;margin-left:-6px}
+@keyframes lp-blink{50%{opacity:0}}
+#intro .lp-chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 6px}
+#intro .lp-chips span{font-size:14px;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid var(--line);min-height:36px;display:inline-flex;align-items:center}
+#intro .lp-chips span.lp-on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#intro .lp-res{display:grid;gap:4px;margin-top:10px}
+#intro .lp-res a{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;color:inherit;text-decoration:none;padding:8px;border-radius:12px}
+#intro .lp-res a:hover{background:var(--step)}
+#intro .lp-res .lp-pic{border-radius:8px}
+#intro .lp-res b{display:block;font-size:16px;line-height:1.25}
+#intro .lp-res small{font-size:13.5px;color:var(--ink-2)}
+#intro .lp-res mark{background:#e4eaf6;color:var(--blue);padding:0 2px;border-radius:3px}
+#intro .lp-field-step{background:var(--step);margin-top:clamp(96px,12vw,180px);padding-block:clamp(72px,9vw,140px)}
+#intro .lp-sports{margin-top:clamp(40px,5vw,72px);padding-block:clamp(28px,3.5vw,44px);overflow:hidden}
+#intro .lp-sports-head{display:flex;justify-content:space-between;align-items:end;gap:14px 32px;flex-wrap:wrap}
+#intro .lp-own-row{display:flex;flex-direction:column;align-items:flex-end;gap:10px;margin:0;font-size:15.5px;color:var(--ink-2);text-align:right}
+@media (max-width:900px){
+#intro .lp-own-row{align-items:flex-start;text-align:left}
+}
+@media (max-width:420px){
+#intro .lp-ex-switch .lp-seg button{padding:0 9px;font-size:13.5px}
+}
+@media (max-width:360px){
+#intro .lp-ex-switch .lp-seg button{padding:0 6px;font-size:12.5px}
+#intro .lp-ex-switch .lp-seg{flex-wrap:nowrap}
+#intro .lp-chrome .lp-url{white-space:normal;overflow-wrap:anywhere;text-overflow:clip;font-size:10px}
+}
+#intro .lp-flow-sec .lp-flow-head{margin-top:clamp(40px,5vw,72px)}
+#intro .lp-sports h2{font-size:clamp(30px,4.2vw,60px);text-transform:uppercase;line-height:.95}
+#intro .lp-marquee{overflow:hidden;margin-top:18px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+#intro .lp-track{display:flex;width:max-content;animation:lp-marq 45s linear infinite}
+#intro .lp-marquee:hover .lp-track,#intro .lp-marquee:focus-within .lp-track{animation-play-state:paused}
+#intro .lp-track .lp-set{display:flex;gap:8px;padding-right:8px}
+@keyframes lp-marq{to{transform:translateX(-50%)}}
+#intro .lp-lib-t{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px 0 12px;border-radius:999px;background:var(--paper);font-weight:600;font-size:15.5px;white-space:nowrap}
+#intro .lp-lib-t i{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none}
+#intro .lp-lib-t i svg{width:18px;height:18px}
+#intro .lp-own{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 20px 0 8px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;font-size:15.5px;text-decoration:none;}
+#intro .lp-own i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--coral);color:#fff;font-style:normal;font-weight:800;font-size:20px;line-height:1}
+#intro .lp-own:hover{background:var(--coral)}
+#intro .lp-own:hover i{background:#fff;color:var(--coral)}
+#intro .lp-hero .lp-lede .lp-brand,#intro .lp-lede .lp-brand{color:var(--blue);font-weight:800}
+#intro .lp-nbs{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(20px,3vw,40px);margin-top:clamp(36px,4vw,56px);align-items:start}
+@media (max-width:900px){
+#intro .lp-nbs{grid-template-columns:minmax(0,1fr)}
+}
+#intro .lp-lib{display:flex;flex-wrap:wrap;gap:8px}
+#intro .lp-lib span{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 8px;border-radius:999px;background:var(--paper);font-weight:600;font-size:15.5px}
+#intro .lp-lib span i{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#fff}
+#intro .lp-lib span i svg{width:16px;height:16px}
+#intro .lp-lib .lp-more{background:transparent;color:var(--ink-2);padding:0 8px}
+#intro .lp-lib-cap{font-size:15px;color:var(--ink-2);margin:14px 0 0}
+#intro .lp-custom{display:grid;gap:12px}
+#intro .lp-custom h3{font-size:24px}
+#intro .lp-custom label{display:grid;gap:6px;font-size:14.5px;font-weight:700}
+#intro .lp-custom input,#intro .lp-custom textarea{font:400 16.5px/1.45 var(--body);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;background:#fff;width:100%;resize:none}
+#intro .lp-custom textarea{min-height:92px}
+#intro .lp-custom .lp-hint{font-size:14px;color:var(--ink-2)}
+#intro .lp-notes-ui{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:clamp(18px,3vw,36px);padding:clamp(16px,2vw,24px);margin-top:clamp(36px,4vw,56px)}
+@media (max-width:760px){
+#intro .lp-notes-ui{grid-template-columns:minmax(0,1fr)}
+}
+#intro .lp-notes-ui .lp-ph{aspect-ratio:4/5;border-radius:10px;overflow:hidden;position:relative;max-height:520px}
+#intro .lp-notes-ui .lp-ph img,#intro .lp-notes-ui .lp-ph svg{width:100%;height:100%;object-fit:cover}
+#intro .lp-notes-ui .lp-ph b{position:absolute;left:12px;bottom:12px;background:var(--paper);border-radius:999px;padding:6px 12px;font-size:14px}
+#intro .lp-notes-ui .lp-r{display:flex;flex-direction:column;gap:16px;min-width:0}
+#intro .lp-notes-ui .lp-t{font:700 32px/1 var(--display)}
+#intro .lp-notes-ui label{font-weight:700;font-size:15px}
+#intro .lp-notes-ui textarea{font:400 18px/1.55 var(--body);color:var(--ink);border:0;border-radius:12px;background:#fff6d6;padding:16px 18px;min-height:150px;resize:none;width:100%}
+#intro .lp-notes-ui .lp-saved{font-size:14px;color:#1f6b3a;font-weight:600}
+#intro .lp-orig{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--ground);text-decoration:none;color:var(--ink)}
+#intro .lp-orig .lp-play{width:44px;height:44px;border-radius:50%;background:var(--ink);display:grid;place-items:center;flex:none}
+#intro .lp-orig .lp-play svg{width:16px;height:16px;fill:#fff}
+#intro .lp-orig b{display:block;font-size:16px}
+#intro .lp-orig small{font-size:14px;color:var(--ink-2)}
+#intro .lp-orig:hover{background:var(--step)}
+#intro .lp-count{display:flex;gap:10px;align-items:baseline}
+#intro .lp-count b{font:800 44px/1 var(--display);color:var(--blue)}
+#intro .lp-count span{font-size:16px;color:var(--ink-2)}
+#intro .lp-field-dark{background:var(--night);color:var(--night-ink);margin-top:clamp(96px,12vw,180px);padding-block:clamp(72px,9vw,140px)}
+#intro .lp-field-dark .lp-lede{color:var(--night-ink)}
+#intro .lp-field-dark :focus-visible{outline-color:#7fa6ea}
+#intro .lp-field-dark [data-ui]{background:var(--night-2);border-color:#30343b;color:var(--night-ink)}
+#intro .lp-session-ui .lp-meta{font-size:15px;color:var(--night-2ink)}
+#intro .lp-session-ui .lp-st{font:700 32px/1 var(--display);margin:4px 0 6px}
+#intro .lp-session-ui ol{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:8px}
+#intro .lp-session-ui li{display:grid;grid-template-columns:72px 1fr auto;gap:14px;align-items:center;padding:8px;border-radius:12px;background:var(--night-3)}
+#intro .lp-session-ui li .lp-pic{border-radius:8px}
+#intro .lp-session-ui li b{font-size:16px;line-height:1.25;display:block}
+#intro .lp-session-ui li small{font-size:13.5px;color:var(--night-2ink)}
+#intro .lp-session-ui li small i{font-style:normal;color:#fff;background:#3a3f47;border-radius:6px;padding:1px 6px;margin-right:6px}
+#intro .lp-session-ui .lp-dose{font:700 17px/1 var(--body);color:#fff;background:#30343b;padding:8px 10px;border-radius:999px;white-space:nowrap}
+#intro .lp-session-ui .lp-done{display:flex;align-items:center;justify-content:center;margin-top:16px;width:100%;min-height:52px;border:0;border-radius:999px;background:#7fa6ea;color:#0f1a30;font:700 17px/1 var(--body)}
+#intro .lp-session-ui .lp-done:active{transform:scale(.98)}
+@media (max-width:520px){
+#intro .lp-session-ui li{grid-template-columns:60px 1fr}
+#intro .lp-session-ui .lp-dose{grid-column:2;justify-self:start}
+}
+#intro .lp-progress{margin-top:clamp(36px,4vw,56px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2vw,28px)}
+@media (max-width:900px){
+#intro .lp-progress{grid-template-columns:minmax(0,1fr)}
+}
+#intro .lp-shelf h3{font-size:24px;text-transform:uppercase;margin-bottom:4px}
+#intro .lp-shelf p{font-size:15.5px;color:var(--night-2ink);margin-bottom:14px}
+#intro .lp-shelf .lp-items{display:grid;gap:12px}
+#intro .lp-shelf .lp-it{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center}
+#intro .lp-shelf .lp-it b{font-size:15.5px;line-height:1.25;display:block;margin-bottom:4px}
+#intro .lp-shelf .lp-ynb{display:block;font-size:12.5px;color:var(--night-2ink);margin-bottom:6px}
+#intro .lp-field-dark .lp-tag-try{background:#3a3f47;color:#fff}
+#intro .lp-field-dark .lp-tag-done{background:#1d3326;color:#8fd3a6}
+#intro .lp-sub-sec{margin-top:clamp(96px,10vw,150px)}
+#intro .lp-route{list-style:none;margin:clamp(40px,5vw,72px) 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:20px;position:relative}
+#intro .lp-route::before{content:"";position:absolute;left:0;right:0;top:268px;height:3px;background:var(--step)}
+#intro .lp-route .lp-dot{position:absolute;top:263px;left:0;width:13px;height:13px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 6px rgba(197,75,56,.18);animation:lp-travel 9s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes lp-travel{0%{left:0}20%{left:18%}40%{left:39%}60%{left:59%}80%{left:79%}100%{left:calc(100% - 13px)}}
+#intro .lp-route li:not(.lp-dot){position:relative;display:flex;flex-direction:column;gap:30px;min-width:0}
+#intro .lp-stage{height:252px;display:flex;align-items:flex-start;justify-content:center}
+#intro .lp-route h3{font-size:25px;text-transform:uppercase}
+#intro .lp-route p{font-size:16.5px;line-height:1.45;color:var(--ink-2)}
+@media (max-width:1020px){
+#intro .lp-route{grid-template-columns:minmax(0,1fr);gap:34px;padding-left:34px}
+#intro .lp-route::before{left:6px;right:auto;top:0;bottom:0;width:3px;height:auto}
+#intro .lp-route .lp-dot{left:1px;top:0;animation:lp-travelv 9s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes lp-travelv{0%{top:0}100%{top:calc(100% - 13px)}}
+#intro .lp-route li:not(.lp-dot){display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:20px;align-items:center}
+#intro .lp-stage{height:auto;justify-content:flex-start}
+}
+@media (max-width:520px){
+#intro .lp-route li:not(.lp-dot){grid-template-columns:minmax(0,1fr)}
+}
+#intro .lp-mini-phone{width:120px;height:224px;border-radius:24px;background:var(--ink);padding:8px;display:flex;flex-direction:column}
+#intro .lp-mini-phone .lp-screen{flex:1;border-radius:17px;overflow:hidden;position:relative;background:#333}
+#intro .lp-mini-phone .lp-screen .lp-bg{position:absolute;inset:0;opacity:.6}
+#intro .lp-mini-phone .lp-screen .lp-bg img,#intro .lp-mini-phone .lp-screen .lp-bg svg{width:100%;height:100%;object-fit:cover}
+#intro .lp-mini-phone .lp-sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:14px 14px 0 0;padding:10px 8px 12px;display:flex;justify-content:space-around;align-items:center}
+#intro .lp-mini-phone .lp-app{width:24px;height:24px;border-radius:7px;background:var(--step)}
+#intro .lp-mini-phone .lp-app.lp-rb{background:var(--paper);display:grid;place-items:center;box-shadow:0 0 0 2px var(--coral);animation:lp-pulse 2.2s ease-in-out infinite}
+#intro .lp-mini-phone .lp-app.lp-rb svg{width:16px;height:16px}
+@keyframes lp-pulse{50%{box-shadow:0 0 0 5px rgba(197,75,56,.35)}}
+#intro .lp-term{width:100%;max-width:220px;background:var(--night);border-radius:12px;padding:12px 12px 14px;font:500 12.5px/1.6 var(--mono);color:#cfd3da}
+#intro .lp-term .lp-tb{display:flex;gap:5px;margin-bottom:8px}
+#intro .lp-term .lp-tb i{width:8px;height:8px;border-radius:50%;background:#3a3f47}
+#intro .lp-term .lp-c{color:#ef8a76}
+#intro .lp-term .lp-k{color:#fff}
+#intro .lp-term .lp-cur{display:inline-block;width:7px;height:13px;background:#fff;vertical-align:-2px;animation:lp-blink 1s steps(1) infinite}
+#intro .lp-chrome{width:100%;max-width:220px;background:var(--paper);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+#intro .lp-chrome .lp-tb{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--step)}
+#intro .lp-chrome .lp-tb i{width:8px;height:8px;border-radius:50%;background:#c9c5bc}
+#intro .lp-chrome .lp-url{flex:1;font-size:11px;color:var(--ink-2);background:var(--paper);border-radius:999px;padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#intro .lp-chrome .lp-vid{position:relative;aspect-ratio:4/5;max-height:180px;width:100%;overflow:hidden}
+#intro .lp-chrome .lp-vid img,#intro .lp-chrome .lp-vid svg{width:100%;height:100%;object-fit:cover}
+#intro .lp-chrome .lp-scan{position:absolute;top:0;bottom:0;width:30%;left:-30%;background:linear-gradient(90deg,transparent,rgba(127,166,234,.55),transparent);animation:lp-scan 2.6s ease-in-out infinite}
+@keyframes lp-scan{to{left:100%}}
+#intro .lp-seq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%;max-width:210px}
+#intro .lp-seq > div{aspect-ratio:4/5;border-radius:4px;overflow:hidden;animation:lp-appear 9s ease infinite}
+#intro .lp-seq > div img,#intro .lp-seq > div svg{width:100%;height:100%;object-fit:cover}
+#intro .lp-seq > div:nth-child(2){animation-delay:.25s}
+#intro .lp-seq > div:nth-child(3){animation-delay:.5s}
+#intro .lp-seq > div:nth-child(4){animation-delay:.75s}
+#intro .lp-seq > div:nth-child(5){animation-delay:1s}
+#intro .lp-seq > div:nth-child(6){animation-delay:1.25s}
+@keyframes lp-appear{0%,52%{opacity:.35}62%,100%{opacity:1}}
+#intro .lp-nb{width:100%;max-width:210px;background:var(--paper);border-radius:14px;padding:12px;border:1px solid var(--line)}
+#intro .lp-nb .lp-h{display:flex;gap:8px;align-items:center;font:700 18px/1 var(--display)}
+#intro .lp-nb .lp-h .lp-ui-badge{width:26px;height:26px;border-radius:8px}
+#intro .lp-nb .lp-h .lp-ui-badge svg{width:15px;height:15px}
+#intro .lp-nb .lp-g{font-size:12.5px;font-weight:700;margin:10px 0 6px;color:var(--ink-2)}
+#intro .lp-nb .lp-pic{border-radius:8px}
+#intro .lp-nb b{display:block;font-size:13px;line-height:1.25;margin:6px 0}
+#intro .lp-install{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2vw,28px);list-style:none;padding:0;margin:clamp(40px,5vw,64px) 0 0}
+#intro .lp-install li{background:var(--step);border-radius:6px;padding:clamp(22px,2.4vw,32px);display:flex;flex-direction:column;gap:16px;min-width:0}
+#intro .lp-install p{font-size:17px;line-height:1.5}
+#intro .lp-need{font-size:16px;line-height:1.5}
+#intro .lp-opt{display:grid;grid-template-columns:22px 1fr;gap:12px;align-items:start;background:var(--paper);border-radius:12px;padding:14px;cursor:pointer;border:2px solid transparent}
+#intro .lp-opt:has(input:checked){border-color:var(--blue)}
+#intro .lp-opt input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--blue)}
+#intro .lp-opt .lp-seatline{margin-top:6px;font-weight:700;color:var(--coral);font-size:14px}
+#intro .lp-opt[hidden],#intro .lp-host-cta[hidden],#intro [data-os-pane][hidden]{display:none}
+#intro .lp-install .lp-seg{align-self:flex-start;background:var(--paper)}
+#intro .lp-opt.lp-host-full,#intro .lp-opt.lp-host-full:has(input:checked){cursor:default;border-color:var(--coral)}
+#intro .lp-host-full .lp-lock-ic{width:22px;height:22px;border-radius:50%;background:var(--coral);color:#fff;font:800 10px/22px var(--body);text-align:center}
+#intro .lp-wl{display:grid;gap:10px;margin-top:12px}
+#intro .lp-wl label{display:grid;gap:4px;font-size:14px;font-weight:700;color:var(--ink)}
+#intro .lp-wl input[type=text],#intro .lp-wl input[type=email]{font:400 16px/1.4 var(--body);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff;width:100%;height:auto;margin:0}
+#intro .lp-wl .lp-consent{grid-template-columns:20px 1fr;align-items:start;gap:10px;font-weight:400;font-size:13.5px;color:var(--ink-2);line-height:1.4}
+#intro .lp-wl .lp-consent input{margin-top:1px}
+#intro .lp-wl .lp-btn{justify-self:start;min-height:46px}
+#intro .lp-opt b{display:block;font-size:17px}
+#intro .lp-opt span{display:block;font-size:15px;color:var(--ink-2);line-height:1.4}
+#intro pre{margin:0;background:var(--night);color:#e6e9ef;border-radius:12px;padding:14px;font:500 13.5px/1.5 var(--mono);white-space:pre-wrap;word-break:break-all}
+#intro code{font:600 .92em var(--mono)}
+#intro .lp-copy{align-self:flex-start;min-height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--ink);color:var(--paper);font:700 15px/1 var(--body);cursor:pointer}
+#intro .lp-copy:active{transform:scale(.97)}
+@media (max-width:980px){
+#intro .lp-install{grid-template-columns:minmax(0,1fr)}
+}
+#intro .lp-daily{list-style:none;margin:clamp(40px,5vw,64px) 0 0;padding:0;display:grid}
+#intro .lp-daily li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(16px,4vw,64px);padding-block:26px;align-items:center}
+#intro .lp-daily .lp-verb{font:800 clamp(48px,6.4vw,92px)/.88 var(--display);text-transform:uppercase;letter-spacing:-.02em}
+#intro .lp-daily li:nth-child(1) .lp-verb{color:var(--blue)}
+#intro .lp-daily p{font-size:clamp(18px,1.5vw,21px);line-height:1.5;max-width:44ch}
+#intro .lp-daily code{background:var(--step);padding:2px 6px;border-radius:6px}
+@media (max-width:700px){
+#intro .lp-daily li{grid-template-columns:minmax(0,1fr);gap:8px;padding-block:18px}
+}
+#intro .lp-close{padding-block:clamp(96px,12vw,180px) 48px}
+#intro .lp-close .lp-big{font:800 clamp(88px,23vw,340px)/.78 var(--display);color:var(--blue);letter-spacing:-.04em;text-transform:lowercase}
+#intro .lp-close-row{display:flex;justify-content:space-between;align-items:end;gap:28px;flex-wrap:wrap;margin-top:36px}
+#intro .lp-close-row p{font-size:clamp(20px,1.7vw,24px);max-width:34ch}
+#intro .lp-foot{font-size:14px;color:var(--ink-2);margin-top:56px;line-height:1.5}
+#intro .lp-foot a{color:inherit}
+#intro .lp-oss{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;margin:clamp(20px,2.5vw,32px) 0 0;padding:14px 18px;border-radius:12px;background:var(--paper);font-size:15.5px;line-height:1.45}
+#intro .lp-oss-ic{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:#fff}
+#intro .lp-oss-ic svg{width:20px;height:20px}
+#intro .lp-oss span[data-k]{flex:1 1 320px}
+#intro .lp-oss a{font-weight:700;color:var(--blue);white-space:nowrap}
+#intro .lp-install .lp-src{margin:8px 0 0;font-size:14.5px}
+#intro .lp-install .lp-src a{color:var(--blue);font-weight:600}
+@media (prefers-reduced-motion: reduce){
+#intro *,#intro *::before,#intro *::after{animation:none !important;transition:none !important}
+#intro .lp-seq > div{opacity:1}
+#intro .lp-marquee{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
+#intro .lp-track .lp-set[aria-hidden]{display:none}
+#intro .lp-msheet .lp-pp{display:none}
+}
+@media (prefers-reduced-motion:no-preference){
+#intro .lp-btn{transition:transform .15s ease, background .15s ease}
+#intro .lp-topbar{transition:border-color .2s,box-shadow .2s}
+#intro .lp-seg button{transition:background .2s,color .2s}
+#intro .lp-msheet .lp-shot>div{transition:opacity .35s ease}
+#intro .lp-player .lp-shot > div{transition:opacity .35s ease}
+#intro .lp-thumbs button{transition:opacity .2s, transform .2s}
+#intro .lp-ui-badge{transition:background .3s}
+#intro .lp-own{transition:background .2s}
+}
 .auth-demo{margin:var(--s-2) 0 0}
 .intro-demo{display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);color:var(--accent);font-weight:600}
 .auth-adv{margin-top:var(--s-3)}
@@ -599,76 +1084,216 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 <!-- ===== Sign-up: pick a backend ===== -->
 <div id="setup" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
-  <h1>Your videos, as sheets</h1>
-  <p class="lead">Paste the videos you want to keep (Instagram, TikTok, YouTube, Facebook): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
+  <h1 data-k="s.h1">Your videos, as sheets</h1>
+  <p class="lead" data-k="s.lead">Paste the videos you want to keep (Instagram, TikTok, YouTube, Facebook): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
   <div class="panel">
-    <h2>Where should your new account live?</h2>
+    <h2 data-k="s.h2">Where should your new account live?</h2>
     <div class="choice">
       <button type="button" id="pick-hosted"><b id="hosted-name">Hosted backend</b><span id="hosted-blurb">Free for now. A paid hosted plan is planned; no setup required.</span></button>
-      <button type="button" id="pick-own"><b>My own Supabase project</b><span>Free tier is enough. You run one SQL file, then paste the project URL and anon key here.</span></button>
+      <button type="button" id="pick-own"><b data-k="s.own">My own Supabase project</b><span data-k="s.ownd">Free tier is enough. You run one SQL file, then paste the project URL and anon key here.</span></button>
     </div>
     <form id="own-form" hidden>
       <div style="display:grid;gap:10px">
-        <label>Project URL <input id="own-url" type="url" placeholder="https://xxxx.supabase.co" required></label>
-        <label>Anon key <input id="own-key" type="text" placeholder="eyJhbGciOi…" required autocomplete="off"></label>
-        <p class="hint">Both are in your Supabase dashboard under Project settings → API. The anon key is safe to keep in a browser: row level security keeps your data yours. Setup guide: <a id="own-guide" href="#" target="_blank" rel="noopener">docs/own-supabase.md</a>.</p>
+        <label><span data-k="a.url">Project URL</span> <input id="own-url" type="url" placeholder="https://xxxx.supabase.co" required></label>
+        <label><span data-k="a.key">Anon key</span> <input id="own-key" type="text" placeholder="eyJhbGciOi…" required autocomplete="off"></label>
+        <p class="hint"><span data-k="s.where">Both are in your Supabase dashboard under Project settings → API. The anon key is safe to keep in a browser: row level security keeps your data yours. Setup guide:</span> <a id="own-guide" href="#" target="_blank" rel="noopener">docs/own-supabase.md</a>.</p>
         <p class="err" id="own-err" hidden></p>
-        <div class="actions"><button class="btn" type="submit">Use this project</button><button class="btn ghost" type="button" id="own-cancel">Back</button></div>
+        <div class="actions"><button class="btn" type="submit" data-k="s.use">Use this project</button><button class="btn ghost" type="button" id="own-cancel" data-k="s.back">Back</button></div>
       </div>
     </form>
-    <p class="hint">Already have an account? <a href="#" id="setup-signin">Sign in</a></p>
+    <p class="hint"><span data-k="s.have">Already have an account?</span> <a href="#" id="setup-signin" data-k="a.in">Sign in</a></p>
   </div>
 </div>
 
 <!-- ===== Auth ===== -->
 <div id="auth" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
-  <!-- L25: what Reelbook is, shown before the account actions on a device that has never signed in -->
-  <section id="intro" hidden>
-    <h1>Your videos, as sheets</h1>
-    <p class="lead" id="intro-summary">Reelbook turns the videos you save from Instagram, TikTok, YouTube or Facebook into sheets with photos and key points, filed in your notebooks.</p>
-    <ol class="intro-steps">
-      <li id="intro-step-link"><svg aria-hidden="true" focusable="false" viewBox="0 0 96 72" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 36h20m-6-6 6 6-6 6"/><rect x="34" y="4" width="36" height="64" rx="7"/><path d="M46 10h12"/><rect class="fill" x="39" y="28" width="26" height="14" rx="7"/><path d="M48 35h8"/><rect x="43" y="32" width="9" height="6" rx="3"/><rect x="52" y="32" width="9" height="6" rx="3"/><path d="M44 52h16"/></svg><b>Paste a link</b><span>Found a move worth keeping? Copy the video&rsquo;s link and paste it in Reelbook.</span></li>
-      <li id="intro-step-claude"><svg aria-hidden="true" focusable="false" viewBox="0 0 96 72" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="48" height="32" rx="3"/><path d="M1 47h54l-4 6H5z"/><path class="fill" d="M28 17l2.6 6.4L37 26l-6.4 2.6L28 35l-2.6-6.4L19 26l6.4-2.6z"/><path d="M58 26h9m-4-4 4 4-4 4"/><rect x="72" y="10" width="20" height="30" rx="2"/><rect class="fill" x="75" y="13" width="14" height="10" rx="1"/><path d="M75 29h14M75 34h9"/></svg><b>Claude makes the sheet</b><span>Claude Code, on your computer, watches the video and writes the sheet: photos, dose, key points.</span></li>
-      <li id="intro-step-workout"><svg aria-hidden="true" focusable="false" viewBox="0 0 96 72" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="36" height="64" rx="7"/><rect class="fill" x="14" y="14" width="24" height="18" rx="2"/><path d="M14 40h24M14 47h18M14 54h21"/><path d="M60 36h20"/><rect x="55" y="26" width="6" height="20" rx="2"/><rect x="79" y="26" width="6" height="20" rx="2"/><path d="M51 31v10M89 31v10"/></svg><b>Read it during the workout</b><span>Open the sheet on your phone: the gesture first, then the details.</span></li>
-    </ol>
-    <div class="panel intro-needs">
-      <h2>What you need</h2>
-      <ul>
-        <li>Claude Pro or above, with Claude Code</li>
-        <li>Chrome with the Claude in Chrome extension</li>
-        <li>A computer that stays on: your videos are processed there</li>
-      </ul>
+  <!-- L30, L36: the landing (mockup v3), shown before the account actions on a device that has never signed in -->
+<div id="intro" hidden data-ex="mma">
+<div class="lp-topbar" id="lp-topbar"><header class="lp-frame lp-bar">
+  <a class="lp-wm" href="#lp-top" aria-label="Reelbook"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="lp-wm-t">reelbook</span></a>
+  <nav aria-label="Sections" data-ka="aria.sections"><a href="#lp-train"><span class="lp-l2"><span lang="fr">S’entraîner</span><span lang="en">Train</span></span></a><a href="#lp-how"><span class="lp-l2"><span lang="fr">Comment ça marche</span><span lang="en">How it works</span></span></a><a href="#lp-install"><span class="lp-l2"><span lang="fr">Installation</span><span lang="en">Setup</span></span></a></nav>
+  <div class="lp-seg lp-lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
+  <a class="lp-btn lp-quiet" href="#signin" id="intro-signin"><span class="lp-l2"><span lang="fr">Se connecter</span><span lang="en">Sign in</span></span></a>
+</header></div>
+
+<main id="lp-top">
+
+<section class="lp-frame lp-hero" aria-labelledby="lp-h1">
+  <h1 id="lp-h1" data-k="h1">A Claude Code <span class="lp-slash">/skill</span> that turns your technique videos into a training notebook.</h1>
+  <div class="lp-pitch">
+    <p class="lp-sub" data-k="sub">Reelbook gathers your technique videos into a training notebook. Each video becomes a frame-by-frame sheet, easy to find and to build sessions from.</p>
+    <div class="lp-pitch-side">
+      <div class="lp-cta-row"><a class="lp-btn" href="#lp-carnet" data-k="cta">Create my notebook</a><a class="lp-btn lp-quiet" href="#lp-how" data-k="cta2">See how it works</a></div>
+      <p class="lp-beta"><span class="lp-seats" id="lp-seatsBar" aria-hidden="true" hidden><i></i></span><span data-k="beta" id="lp-betaLine">Free during the beta</span></p>
+      <p class="lp-fit" data-k="fit">You need Claude Pro (or higher) with Claude Code, and Chrome on your computer. For TikTok, Instagram, YouTube and Facebook.</p>
     </div>
-    <div class="actions intro-acts">
-      <button class="btn" type="button" id="intro-signup">Create an account</button>
-      <button class="btn ghost" type="button" id="intro-signin">Sign in</button>
+  </div>
+</section>
+
+<section class="lp-field-step lp-sports" aria-labelledby="lp-v6">
+  <div class="lp-frame lp-sports-head">
+    <h2 id="lp-v6" data-k="v6.h">Your activities, your notebooks.</h2>
+    <p class="lp-own-row"><span data-k="v6.q">29 ready-made notebooks. Yours isn’t there?</span><a class="lp-own" href="#lp-install"><i aria-hidden="true">+</i><span data-k="v6.own">Create your own activity</span></a></p>
+  </div>
+  <div class="lp-marquee"><div class="lp-track" id="lp-lib"></div></div>
+</section>
+
+<section class="lp-frame lp-flow-sec" aria-labelledby="lp-flow-h">
+  <div class="lp-flow-head">
+    <h2 id="lp-flow-h" data-k="flow.h">From reel to move.</h2>
+    <div class="lp-ex-switch"><span data-k="ex.l">See an example:</span>
+        <div class="lp-seg lp-ex" role="group" aria-label="Example" data-ka="aria.ex"><button type="button" data-ex="mma" aria-pressed="true">MMA</button><button type="button" data-ex="dance" aria-pressed="false" data-k="ex.dance">Dance</button><button type="button" data-ex="stretch" aria-pressed="false" data-k="ex.stretch">Stretch</button><button type="button" data-ex="snow" aria-pressed="false" data-k="ex.snow">Snowboard</button><button type="button" data-ex="hiit" aria-pressed="false" data-k="ex.hiit">HIIT</button></div></div>
+  </div>
+  <ol class="lp-flow" aria-labelledby="lp-flow-h">
+    <li><div class="lp-fl-vis" aria-hidden="true"><div class="lp-mini-phone"><div class="lp-screen"><div class="lp-bg" data-share></div><div class="lp-sheet"><span class="lp-app"></span><span class="lp-app lp-rb"><svg viewBox="0 0 256 256"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg></span><span class="lp-app"></span></div></div></div></div>
+      <h3><span class="lp-n" aria-hidden="true">1</span><span data-k="f1.h">You spot a video, send it to Reelbook</span></h3>
+      <p data-k="f1.p">On TikTok, Instagram, YouTube or Facebook: Share, then Reelbook. Ten seconds, and you keep scrolling.</p></li>
+    <li><div class="lp-fl-vis"><figure class="lp-msheet" aria-label="A Reelbook sheet" data-ka="aria.sheet">
+        <div class="lp-shot" id="lp-shot"><span class="lp-num" id="lp-num" aria-hidden="true">1</span><button class="lp-pp" id="lp-pp" type="button" aria-label="Mettre en pause les animations"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path class="lp-i-pause" d="M6 4h4v16H6zM14 4h4v16h-4z"/><path class="lp-i-play" d="M7 4l13 8-13 8z"/></svg></span></button></div>
+        <figcaption class="lp-side">
+          <span class="lp-crumb" id="lp-pCrumb"></span>
+          <span class="lp-title" id="lp-pTitle"></span>
+          <span class="lp-step-name" id="lp-stepName"></span>
+          <span class="lp-cue" id="lp-cue" aria-live="off"></span>
+          <div class="lp-dots" id="lp-thumbs"></div>
+        </figcaption>
+      </figure></div>
+      <h3><span class="lp-n" aria-hidden="true">2</span><span data-k="f2.h">It becomes a sheet</span></h3>
+      <p data-k="f2.p">The move cut into frames, with the cues to remember, a dose and the link to the video.</p></li>
+    <li><div class="lp-fl-vis" aria-hidden="true"><div class="lp-msess" id="lp-sessionMini"></div></div>
+      <h3><span class="lp-n" aria-hidden="true">3</span><span data-k="f3.h">Sheets become sessions</span></h3>
+      <p data-k="f3.p">Mix sheets from all your notebooks, give each one its dose, and train sheet by sheet.</p></li>
+  </ol>
+  <p class="lp-drawn" id="lp-drawn"></p>
+</section>
+
+<section class="lp-frame lp-sec" aria-labelledby="lp-v1">
+  <div class="lp-split">
+    <div class="lp-txt">
+      <h2 id="lp-v1" data-k="v1.h">All in one place.</h2>
+      <p class="lp-lede" data-k="v1.p">Your coach’s reel on Instagram, a champion’s YouTube breakdown, the TikTok you caught on the train: it all lands in one place, filed by activity and by theme. Search by body zone or gear, and keep your coach’s notes next to the move.</p>
     </div>
-  </section>
+    <figure class="lp-devices" id="lp-nbUi" role="img" aria-label="Six Reelbook notebooks on a tablet, one notebook open on a phone" data-ka="aria.devices"></figure>
+  </div>
+</section>
+
+<section class="lp-field-dark" id="lp-train" aria-labelledby="lp-v3">
+  <div class="lp-frame lp-split">
+    <div class="lp-txt">
+      <h2 id="lp-v3" data-k="v3.h">Sheets become sessions.</h2>
+      <p class="lp-lede" data-k="v3.p">Pick from all your notebooks and mix them: technique, mobility and warm-up in the same session. Put the exercises in order, give each one its dose, then follow the session sheet by sheet.</p>
+    </div>
+    <div data-ui class="lp-session-ui" id="lp-sessionUi" role="img" aria-label="A Reelbook session" data-ka="aria.session"></div>
+  </div>
+  <div class="lp-frame lp-sub-sec">
+    <div class="lp-head2">
+      <h2 data-k="v4.h">Your progress, sheet by sheet.</h2>
+      <p class="lp-lede" data-k="v4.p">New sheets wait at the top of the home page, the ones you’ve never tried resurface on their own, and every “Done today” adds to the sheet’s count.</p>
+    </div>
+    <div class="lp-progress" id="lp-progressUi"></div>
+  </div>
+</section>
+
+<section class="lp-frame lp-sec" id="lp-how" aria-labelledby="lp-how-h">
+  <div class="lp-head2">
+    <h2 id="lp-how-h" data-k="how.h">A Claude skill does the work.</h2>
+    <p class="lp-lede" data-k="how.p"><strong class="lp-brand">Reelbook</strong> is a skill for Claude Code. With the Claude in Chrome extension, it opens the videos you sent, cuts each one into a sequence of frames and files each sheet in the right notebook.</p>
+  </div>
+  <ol class="lp-route">
+    <li class="lp-dot" aria-hidden="true"></li>
+    <li><div class="lp-stage" aria-hidden="true"><div class="lp-mini-phone"><div class="lp-screen"><div class="lp-bg" data-share></div><div class="lp-sheet"><span class="lp-app"></span><span class="lp-app lp-rb"><svg viewBox="0 0 256 256"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg></span><span class="lp-app"></span></div></div></div></div>
+      <div><h3 data-k="r1.h">You send the video</h3><p data-k="r1.p">From TikTok, Instagram, YouTube or Facebook: Share, then Reelbook. It joins your queue.</p></div></li>
+    <li><div class="lp-stage" aria-hidden="true"><div class="lp-term"><div class="lp-tb"><i></i><i></i><i></i></div><span class="lp-c">&gt;</span> <span class="lp-k">/reelbook</span><br><span data-k="t.l1">3 videos queued</span><br><span data-k="t.l2">opening in Chrome</span> <span class="lp-cur"></span></div></div>
+      <div><h3 data-k="r2.h">Claude takes over</h3><p data-k="r2.p">Type <code>/reelbook</code> in Claude Code, or let it run overnight on your computer.</p></div></li>
+    <li><div class="lp-stage" aria-hidden="true"><div class="lp-chrome"><div class="lp-tb"><i></i><i></i><span class="lp-url" id="lp-rUrl"></span></div><div class="lp-vid"><div data-frame="3" style="width:100%;height:100%"></div><span class="lp-scan"></span></div></div></div>
+      <div><h3 data-k="r3.h">Chrome opens and reads it</h3><p data-k="r3.p">The Claude in Chrome extension watches the video the way you would: the move, the cues, the captions.</p></div></li>
+    <li><div class="lp-stage" aria-hidden="true"><div class="lp-seq" id="lp-seq"></div></div>
+      <div><h3 data-k="r4.h">The move, cut into frames</h3><p data-k="r4.p">The key moments become a sequence of images, with the points to remember, a dose and the link to the video.</p></div></li>
+    <li><div class="lp-stage" aria-hidden="true"><div class="lp-nb" id="lp-routeNb"></div></div>
+      <div><h3 data-k="r5.h">Filed in your notebook</h3><p data-k="r5.p">Right notebook, right group. Ready to find, annotate and add to a session.</p></div></li>
+  </ol>
+</section>
+
+<section class="lp-frame lp-sec" id="lp-install" aria-labelledby="lp-inst-h">
+  <div class="lp-head2">
+    <h2 id="lp-inst-h" data-k="inst.h">Set up Reelbook.</h2>
+    <p class="lp-lede" data-k="inst.p">Before you start: Claude Pro with Claude Code, Chrome with the Claude in Chrome extension, Git and Python 3.9+. Then three things to do once: your account, the skill on your computer, the app on your phone.</p>
+  </div>
+  <p class="lp-oss"><span class="lp-oss-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></span><span data-k="oss.p"><b>Reelbook is open source.</b> The skill, the app and the server are public on GitHub, under the MIT licence: you can read what you install, and host it yourself.</span><a href="https://github.com/lt20/reelbook" target="_blank" rel="noopener" data-k="oss.a">See the code on GitHub ↗</a></p>
+  <ol class="lp-install" id="lp-installList">
+    <li id="lp-carnet"><h3 data-k="i1.h">Create your notebook</h3>
+      <p data-k="i1.p">Choose where your sheets live. You can change it later.</p>
+      <label class="lp-opt lp-host-open" id="lp-host-hosted-opt"><input type="radio" name="lp-host" id="lp-host-hosted" checked><span><b data-k="i1.a">Hosted by Reelbook</b><span data-k="i1.ad">Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.</span><span class="lp-seatline" data-k="i1.seats" id="lp-seatline" hidden></span></span></label>
+      <div class="lp-opt lp-host-full" id="lp-host-full" hidden><span class="lp-lock-ic" id="lp-lockN" aria-hidden="true">50</span><span><b data-k="wl.h" id="lp-wlH">Beta full: {total} of {total}</b><span data-k="wl.p" id="lp-wlP" hidden>Leave your first name and email: we’ll let you know as soon as a spot opens.</span>
+        <form class="lp-wl" id="lp-wl" hidden><label><span data-k="wl.n">First name</span><input type="text" autocomplete="given-name" placeholder="Camille"></label><label><span data-k="wl.e">Email</span><input type="email" autocomplete="email" placeholder="camille@exemple.fr"></label>
+        <label class="lp-consent"><input type="checkbox"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
+        <button class="lp-btn" type="submit" data-k="wl.cta" disabled aria-disabled="true">Notify me</button></form></span></div>
+      <label class="lp-opt"><input type="radio" name="lp-host" id="lp-host-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="i1.bd">Your own project, your limits. Run one SQL file, then paste the URL and key.</span></span></label>
+      <a class="lp-btn lp-host-cta" href="#signup" id="intro-signup" data-k="i1.cta">Create my notebook</a></li>
+    <li><h3 data-k="i2.h">Install the skill</h3>
+      <p class="lp-need" data-k="i2.n">You need Claude Pro or above with Claude Code, and Chrome with the Claude in Chrome extension.</p>
+      <div class="lp-lines" id="lp-lines">
+      <div class="lp-seg lp-os" role="group" aria-label="Operating system" data-ka="aria.os"><button type="button" data-os="unix" aria-pressed="true">macOS / Linux</button><button type="button" data-os="win" aria-pressed="false">Windows</button></div>
+      <p data-k="i2.p" data-os-pane="unix">Paste this line into Terminal. It installs the <code>/reelbook</code> skill and links it to your account.</p>
+      <p data-k="i2.pw" data-os-pane="win" hidden>Paste this line into PowerShell. It installs the <code>/reelbook</code> skill and links it to your account.</p>
+      <pre data-os-pane="unix" id="lp-line">curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
+      <pre data-os-pane="win" id="lp-line-win" hidden>irm https://lt20.github.io/reelbook/install.ps1 | iex</pre>
+      <button class="lp-copy" type="button" id="lp-copy" data-k="i2.copy">Copy the line</button><p class="lp-copy-msg" id="lp-copyMsg" role="status" hidden></p>
+      <p class="lp-src" data-os-pane="unix"><a href="https://github.com/lt20/reelbook/blob/main/app/install.sh" target="_blank" rel="noopener" data-k="i2.src">Read the script before you run it ↗</a></p>
+      <p class="lp-src" data-os-pane="win" hidden><a href="https://github.com/lt20/reelbook/blob/main/app/install.ps1" target="_blank" rel="noopener" data-k="i2.src">Read the script before you run it ↗</a></p></div>
+      <p id="lp-ownLine" data-k="i2.own" hidden>On your own Supabase, your line comes once your notebook is created: it carries your project’s URL and key. You can find it again anytime in Settings.</p></li>
+    <li><h3 data-k="i3.h">Add it to your phone</h3>
+      <p data-k="i3.p">Put Reelbook on your home screen, then the “Send to Reelbook” shortcut in the iPhone Share menu.</p>
+      <p data-k="i3.p2">On Android, just paste the link in the app.</p>
+      <a class="lp-btn lp-quiet" href="#shortcut" id="intro-shortcut" style="align-self:flex-start;background:var(--paper)" data-k="i3.cta">Add the shortcut</a></li>
+  </ol>
+</section>
+
+<section class="lp-frame lp-sec" id="lp-daily" aria-labelledby="lp-daily-h">
+  <h2 id="lp-daily-h" data-k="d.h">Day to day.</h2>
+  <ol class="lp-daily">
+    <li><span class="lp-verb" data-k="d1.v">Send</span><p data-k="d1.p">A technique catches your eye in your feed: Share, Reelbook. Ten seconds, and you keep scrolling.</p></li>
+    <li><span class="lp-verb" data-k="d2.v">Run</span><p data-k="d2.p"><code>/reelbook</code> in Claude Code whenever you like, or every night on its own. In the morning, your sheets are there.</p></li>
+    <li><span class="lp-verb" data-k="d3.v">Organise</span><p data-k="d3.p">Move a sheet to another group, add your notes, build a session from several notebooks.</p></li>
+    <li><span class="lp-verb" data-k="d4.v">Train</span><p data-k="d4.p">Open the sheet or the session on your phone: the move first, in pictures, then the details. Tick “Done today”.</p></li>
+  </ol>
+</section>
+
+<section class="lp-frame lp-close" aria-labelledby="lp-close-h">
+  <h2 id="lp-close-h" class="lp-big">reelbook</h2>
+  <div class="lp-close-row">
+    <p data-k="c.p">Your technique videos, ready for training at last. Free during the beta, 50 spots.</p>
+    <a class="lp-btn" href="#lp-carnet" data-k="cta">Create my notebook</a>
+  </div>
+  <p class="lp-foot" data-k="foot">Personal sheets keep the link to their video and author. The visuals on this page are generated demonstrations. Reelbook is open source, under the MIT licence: <a href="https://github.com/lt20/reelbook" target="_blank" rel="noopener">github.com/lt20/reelbook</a>.</p>
+</section>
+</main>
+</div>
   <h1 id="auth-title">Sign in</h1>
   <form class="panel" id="auth-form">
-    <label>Email <input id="a-email" type="email" autocomplete="email" required></label>
-    <label>Password <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
+    <label><span data-k="a.email">Email</span> <input id="a-email" type="email" autocomplete="email" required></label>
+    <label><span data-k="a.pass">Password</span> <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
     <p class="err" id="a-err" hidden></p>
     <p class="hint" id="a-info" hidden></p>
     <div class="actions">
       <button class="btn" type="submit" id="a-submit">Sign in</button>
       <button class="btn ghost" type="button" id="a-toggle">Create an account</button>
     </div>
-    <p class="hint">Backend: <span id="a-backend"></span></p>
+    <p class="hint"><span data-k="a.backend">Backend:</span> <span id="a-backend"></span></p>
   </form>
   <!-- L25: the advanced way, under the form -->
-  <p class="hint auth-adv" id="a-adv"><a href="#" id="a-own">Use my own Supabase</a><a href="#" id="a-hosted" hidden> · Use Reelbook hosted</a></p>
+  <p class="hint auth-adv" id="a-adv"><a href="#" id="a-own">Use my own Supabase</a><a href="#" id="a-hosted" hidden data-k="a.hosted"> · Use Reelbook hosted</a></p>
   <form class="panel" id="login-own-form" hidden>
-    <h2>Connect your own instance</h2>
-    <p class="hint">Enter your Supabase project details once on this device. Setup guide: <a id="login-own-guide" href="#" target="_blank" rel="noopener">docs/own-supabase.md</a>.</p>
-    <label>Project URL <input id="login-own-url" type="url" placeholder="https://xxxx.supabase.co" required></label>
-    <label>Anon key <input id="login-own-key" type="text" placeholder="eyJhbGciOi…" required autocomplete="off"></label>
+    <h2 data-k="a.ownh">Connect your own instance</h2>
+    <p class="hint"><span data-k="a.ownp">Enter your Supabase project details once on this device. Setup guide:</span> <a id="login-own-guide" href="#" target="_blank" rel="noopener">docs/own-supabase.md</a>.</p>
+    <label><span data-k="a.url">Project URL</span> <input id="login-own-url" type="url" placeholder="https://xxxx.supabase.co" required></label>
+    <label><span data-k="a.key">Anon key</span> <input id="login-own-key" type="text" placeholder="eyJhbGciOi…" required autocomplete="off"></label>
     <p class="err" id="login-own-err" hidden></p>
-    <div class="actions"><button class="btn" type="submit">Use this instance</button><button class="btn ghost" type="button" id="login-own-cancel">Cancel</button></div>
+    <div class="actions"><button class="btn" type="submit" data-k="a.useown">Use this instance</button><button class="btn ghost" type="button" id="login-own-cancel" data-k="a.cancel">Cancel</button></div>
   </form>
-  <!-- L25 + L27: the one « See a demo » link, after the presentation's actions and under the sign-in form alike -->
-  <p class="auth-demo"><a class="intro-demo" id="intro-demo" href="#demo" hidden>See a demo</a></p>
+  <!-- L25 + L27: the one « See a demo » link, after the landing and under the sign-in form alike -->
+  <p class="auth-demo"><a class="intro-demo" id="intro-demo" href="#demo" hidden data-k="a.demo">See a demo</a></p>
 </div>
 
 <!-- ===== Home: portal / theme ===== -->
@@ -746,36 +1371,36 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 
 <!-- ===== Welcome (after sign-up, and from "Setup guide") ===== -->
 <div id="welcome" class="wrap" hidden>
-  <p class="eyebrow">Welcome to Reelbook</p>
-  <h1>How it works</h1>
+  <p class="eyebrow" data-k="w.eyebrow">Welcome to Reelbook</p>
+  <h1 data-k="w.h1">How it works</h1>
   <div class="panel">
-    <h2>1 · Save videos on your phone</h2>
-    <p>A video is worth keeping: tap <b>+ Add a video</b> and paste the link. It waits in the queue. That is all the phone does.</p>
+    <h2 data-k="w.1h">1 · Save videos on your phone</h2>
+    <p data-k="w.1p">A video is worth keeping: tap <b>+ Add a video</b> and paste the link. It waits in the queue. That is all the phone does.</p>
   </div>
   <div class="panel">
-    <h2>2 · Claude turns them into sheets</h2>
-    <p>Every now and then, when a few videos are waiting, you run the Reelbook skill on your computer. Claude opens each video, watches it, picks the key frames and writes a sheet: photos, why it matters, key points, the steps in order.</p>
-    <p><b>What you need on that computer</b></p>
+    <h2 data-k="w.2h">2 · Claude turns them into sheets</h2>
+    <p data-k="w.2p">Every now and then, when a few videos are waiting, you run the Reelbook skill on your computer. Claude opens each video, watches it, picks the key frames and writes a sheet: photos, why it matters, key points, the steps in order.</p>
+    <p><b data-k="w.need">What you need on that computer</b></p>
     <ul>
-      <li><a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> (terminal, desktop app or VS Code), Pro plan or above.</li>
-      <li>Chrome with the <a href="https://claude.com/chrome" target="_blank" rel="noopener">Claude in Chrome</a> extension.</li>
-      <li>Being signed in to Instagram, TikTok and/or Facebook in that Chrome (YouTube needs no sign-in).</li>
+      <li data-k="w.need1"><a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> (terminal, desktop app or VS Code), Pro plan or above.</li>
+      <li data-k="w.need2">Chrome with the <a href="https://claude.com/chrome" target="_blank" rel="noopener">Claude in Chrome</a> extension.</li>
+      <li data-k="w.need3">Being signed in to Instagram, TikTok and/or Facebook in that Chrome (YouTube needs no sign-in).</li>
     </ul>
-    <p><b>How a run goes</b></p>
+    <p><b data-k="w.run">How a run goes</b></p>
     <ul>
-      <li>Open Claude Code and type <code>/reelbook</code>. Claude reads your queue and processes the videos one by one.</li>
-      <li>Keep Chrome open, not minimised, with the video tab in front: the video does not play in the background.</li>
-      <li>Expect 10 to 15 minutes per sheet. You can leave the computer to it.</li>
-      <li>On a Mac, it can run every night instead: <code>tools/nightly.sh install</code> in the Reelbook folder. Leave the Mac plugged in with Chrome open; a locked screen is fine.</li>
+      <li data-k="w.run1">Open Claude Code and type <code>/reelbook</code>. Claude reads your queue and processes the videos one by one.</li>
+      <li data-k="w.run2">Keep Chrome open, not minimised, with the video tab in front: the video does not play in the background.</li>
+      <li data-k="w.run3">Expect 10 to 15 minutes per sheet. You can leave the computer to it.</li>
+      <li data-k="w.run4">On a Mac, it can run every night instead: <code>tools/nightly.sh install</code> in the Reelbook folder. Leave the Mac plugged in with Chrome open; a locked screen is fine.</li>
     </ul>
   </div>
   <div class="panel">
-    <h2>3 · Set up the computer, once</h2>
-    <p class="hint">Paste one line in a terminal. It installs the code, the Python tools and the skill, then asks for the email and password you just chose.</p>
+    <h2 data-k="w.3h">3 · Set up the computer, once</h2>
+    <p class="hint" data-k="w.3p">Paste one line in a terminal. It installs the code, the Python tools and the skill, then asks for the email and password you just chose.</p>
     <div id="w-install"></div>
-    <p class="hint">You can find these lines again anytime in Settings.</p>
+    <p class="hint" data-k="w.3again">You can find these lines again anytime in Settings.</p>
   </div>
-  <div class="actions" style="margin-top:14px"><button class="btn" type="button" id="w-done">Open my notebooks</button></div>
+  <div class="actions" style="margin-top:14px"><button class="btn" type="button" id="w-done" data-k="w.done">Open my notebooks</button></div>
 </div>
 
 <!-- ===== Settings ===== -->
@@ -908,6 +1533,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 <script src="config.js?v=9"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
+<script src="landing.js?v=2"></script>
 <script>
 (() => {
   'use strict';
@@ -930,7 +1556,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
   const views = ['setup', 'auth', 'home', 'welcome', 'settings', 'view', 'player', 'demo'];
-  const show = id => { for (const v of views) $(v).hidden = v !== id; window.scrollTo(0, 0); wakeSync(); syncNav(); };
+  // L30: <html lang> is the landing's language on the screens it translates (auth, setup, welcome), English elsewhere
+  const show = id => { for (const v of views) $(v).hidden = v !== id; const de = document.documentElement; if (de) de.lang = window.RBL && (id === 'auth' || id === 'setup' || id === 'welcome') ? window.RBL.lang : 'en'; window.scrollTo(0, 0); wakeSync(); syncNav(); };
+  // L30: the newcomer's screens in French or English (app/landing.js, window.RBL); English when it is not loaded
+  // (the vm harness). Every T(key, english) call matches the English dictionary (tests/landing.test.cjs).
+  const T = (k, en) => (window.RBL && window.RBL.t(k)) || en;
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
   // ---------- L18: bottom sheets ----------
   // Every dialog.dlg opens with openSheet and closes with closeSheet (the photo viewer stays a full-screen dialog of
@@ -992,18 +1622,19 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   let sb = null;
   // D2: {client, token, exp} of the session supabase-js last gave (onAuthStateChange), for a request that cannot wait.
   let authNow = null;
-  const backendLabel = () => backend ? (backend.mode === 'hosted' ? (CFG.hosted.name || 'Reelbook hosted') : backend.url.replace(/^https?:\/\//, '')) : 'No backend selected';
+  const backendLabel = () => backend ? (backend.mode === 'hosted' ? (CFG.hosted.name || 'Reelbook hosted') : backend.url.replace(/^https?:\/\//, '')) : T('a.none', 'No backend selected');
   const selectBackend = (next, remember = true) => { backend = next; if (remember && next) ls.set('rb.backend', JSON.stringify(next.mode === 'hosted' ? {mode: 'hosted'} : next)); boot(); };
   const ownBackend = (urlInput, keyInput) => {
-    let url; try { url = new URL(urlInput.trim()); } catch { throw new Error('That URL is not valid.'); }
-    if (!['https:', 'http:'].includes(url.protocol)) throw new Error('Use an http or https project URL.');
+    let url; try { url = new URL(urlInput.trim()); } catch { throw new Error(T('a.badUrl', 'That URL is not valid.')); }
+    if (!['https:', 'http:'].includes(url.protocol)) throw new Error(T('a.badProto', 'Use an http or https project URL.'));
     const key = keyInput.trim();
-    if (key.length < 20) throw new Error('That does not look like an anon key.');
+    if (key.length < 20) throw new Error(T('a.badKey', 'That does not look like an anon key.'));
     return {mode: 'own', url: url.origin, key};
   };
 
   $('hosted-name').textContent = CFG.hosted.name || 'Hosted backend';
-  $('hosted-blurb').textContent = hostedOk ? CFG.hosted.blurb : 'Not available yet.';
+  const paintBlurb = () => { $('hosted-blurb').textContent = hostedOk ? T('s.blurb', CFG.hosted.blurb) : T('s.unavailable', 'Not available yet.'); };
+  paintBlurb();
   $('pick-hosted').disabled = !hostedOk;
   $('own-guide').href = $('login-own-guide').href = CFG.repo + '/blob/main/docs/own-supabase.md';
   $('howto-repo').href = CFG.repo;
@@ -1036,20 +1667,64 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   // L25: introOpen, the presentation shows above the account actions until the visitor picks one, on a device
   // that has never signed in (no rb.backend stored).
   let mode = 'in', signupBackendChosen = false, authBusy = false, introOpen = !readBackend();
-  const setMode = m => { mode = m; $('auth-title').textContent = m === 'in' ? 'Sign in' : 'Create an account'; $('a-submit').textContent = m === 'in' ? 'Sign in' : 'Create account'; $('a-toggle').textContent = m === 'in' ? 'Create an account' : 'I already have an account'; $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-info').hidden = true; $('login-own-form').hidden = true; };
+  const labelMode = () => { $('auth-title').textContent = mode === 'in' ? T('a.in', 'Sign in') : T('a.up', 'Create an account'); $('a-submit').textContent = mode === 'in' ? T('a.in', 'Sign in') : T('a.submitUp', 'Create account'); $('a-toggle').textContent = mode === 'in' ? T('a.up', 'Create an account') : T('a.have', 'I already have an account'); };
+  const setMode = m => { mode = m; labelMode(); $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-info').hidden = true; $('login-own-form').hidden = true; };
   // « Sign in » asked for explicitly (setup, sign-up form): the form, never the presentation again (L25)
   const returnToSignin = () => { introOpen = false; setMode('in'); signupBackendChosen = false; selectBackend(rememberedBackend(), false); };
   $('a-toggle').addEventListener('click', () => { if (mode === 'up') returnToSignin(); else { setMode('up'); signupBackendChosen = false; route(); } });
   $('setup-signin').addEventListener('click', ev => { ev.preventDefault(); returnToSignin(); });
   // L25: « Create an account » is the hosted backend (the main path); « Use my own Supabase » stays under the form.
+  // L30: the landing's « Create my notebook » (installation, step 1) follows its radio: « On my own Supabase »
+  // opens the sign-up screen with the project form, as « My own Supabase project » there.
+  // Without a hosted backend (a fork whose config.js has none), « On my own Supabase » is the only option. On that
+  // option, step 2 says the line comes after sign-up (it carries the project's URL and key), not the hosted one.
+  if (!hostedOk) { $('lp-host-own').checked = true; $('lp-host-hosted').checked = false; $('lp-host-hosted-opt').hidden = true; }
+  const paintHostChoice = () => { const own = !hostedOk || !!$('lp-host-own').checked; $('lp-lines').hidden = own; $('lp-ownLine').hidden = !own; };
+  for (const id of ['lp-host-hosted', 'lp-host-own']) $(id).addEventListener('change', paintHostChoice);
+  paintHostChoice();
   $('intro-signup').addEventListener('click', () => {
+    if (!hostedOk || $('lp-host-own').checked) {
+      introOpen = false; setMode('up'); signupBackendChosen = false; route();
+      $('own-form').hidden = false; $('own-url').focus(); return;
+    }
     introOpen = false; setMode('up'); signupBackendChosen = hostedOk;
     if (hostedOk) selectBackend(hostedBackend(), false); else route();
     $('a-email').focus();
   });
+  // L30: the seats line of the landing, from beta_seats() (L32) on the hosted backend, asked once per client. A
+  // backend without the function (PGRST202), an error or a null answer: no line, nothing else shown.
+  let seatsAsked = null;
+  const askSeats = () => {
+    const client = sb, R = window.RBL;
+    if (!R || !client || seatsAsked === client) return;
+    seatsAsked = client;
+    if (!backend || backend.mode !== 'hosted' || typeof client.rpc !== 'function') { R.seats(null); return; }
+    Promise.resolve().then(() => client.rpc('beta_seats'))
+      .then(r => { if (client === sb) R.seats(r && !r.error ? r.data : null); }, () => { if (client === sb) R.seats(null); });
+  };
+  const paintOwnLink = () => { $('a-own').textContent = backend && backend.mode === 'own' ? T('a.change', 'Change instance') : T('a.own', 'Use my own Supabase'); };
+  // L30: a language picked on the landing relabels what this script writes (no route: the page keeps its scroll)
+  if (window.RBL) window.RBL.onChange(() => { labelMode(); paintBlurb(); paintOwnLink(); $('a-backend').textContent = backendLabel(); });
   $('intro-signin').addEventListener('click', () => { introOpen = false; setMode('in'); route(); $('a-email').focus(); });
+  // L36: « Add the shortcut » (installation, step 3): the shortcut is made in Settings › iPhone shortcut (L28), behind
+  // an account: the sign-in form now, Settings once signed in.
+  $('intro-shortcut').addEventListener('click', () => { introOpen = false; setMode('in'); location.hash = 'settings'; route(); $('a-email').focus(); });
   // « See a demo » appears once the demo notebook exists (L27 adds its view).
   $('intro-demo').hidden = !views.includes('demo');
+  // L30: Supabase words its auth errors in English. The form says the known ones in the page's language (by the
+  // error code of supabase-js 2.x, else by the message older servers send), any other one as a generic line.
+  const authError = (e, authMode) => {
+    const code = String((e && e.code) || ''), msg = String((e && e.message) || ''), status = e && e.status;
+    if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) return T('a.e.creds', 'Wrong email or password.');
+    if (code === 'user_already_exists' || code === 'email_exists' || /already (registered|been registered|exists)/i.test(msg)) return T('a.e.exists', 'An account already exists with this email: sign in instead.');
+    if (code === 'email_not_confirmed' || /email not confirmed/i.test(msg)) return T('a.e.confirm', 'Confirm your email first with the link in your inbox, then sign in.');
+    if (code === 'weak_password' || /password should|password is (too )?(weak|short)/i.test(msg)) return T('a.e.weak', 'That password is too weak: choose a longer one.');
+    if (code === 'email_address_invalid' || /invalid format|validate email|email address .*invalid/i.test(msg)) return T('a.e.email', 'That email address is not valid.');
+    if (status === 429 || /rate_limit/.test(code) || /rate limit|too many/i.test(msg)) return T('a.e.rate', 'Too many attempts: try again in a few minutes.');
+    if (code === 'signup_disabled' || /signups? (are )?not allowed|signups? disabled/i.test(msg)) return T('a.e.closed', 'This server does not take new accounts.');
+    if ((e && e.name === 'AuthRetryableFetchError') || status === 0 || status >= 500 || /failed to fetch|network|load failed/i.test(msg)) return T('a.e.offline', 'The server did not answer: check your connection and try again.');
+    return authMode === 'up' ? T('a.e.up', 'Could not create the account.') : T('a.fail', 'Could not sign in.');
+  };
   $('auth-form').addEventListener('submit', async ev => {
     ev.preventDefault();
     const err = $('a-err'), info = $('a-info'); err.hidden = true; info.hidden = true; authBusy = true; $('a-submit').disabled = true;
@@ -1061,9 +1736,9 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       } else {
         const {data, error} = await client.auth.signUp({email, password, options: {emailRedirectTo: location.origin + location.pathname}}); if (client !== sb) return; if (error) throw error;
         ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
-        if (!data.session) { setMode('in'); route(); info.textContent = 'Account created. Check your inbox to confirm your email, then sign in.'; info.hidden = false; }
+        if (!data.session) { setMode('in'); route(); info.textContent = T('a.created', 'Account created. Check your inbox to confirm your email, then sign in.'); info.hidden = false; }
       }
-    } catch (e) { if (client === sb) { err.textContent = e.message || 'Could not sign in.'; err.hidden = false; } }
+    } catch (e) { if (client === sb) { console.warn('Auth failed:', (e && (e.code || e.message)) || e); err.textContent = authError(e, authMode); err.hidden = false; } }
     finally { authBusy = false; $('a-submit').disabled = !backend; }
   });
   $('s-signout').addEventListener('click', async () => { if (await signOutHere()) location.hash = ''; });
@@ -2985,11 +3660,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   const installPs = () => !backend ? '' : backend.mode === 'hosted'
     ? `${ownConfig ? `$env:REELBOOK_CONFIG_URL = "${base}config.js"; ` : ''}irm ${base}install.ps1 | iex`
     : `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex`;
-  const installBlock = () => `<p class="hint"><b>macOS / Linux</b> (Terminal)</p><pre data-cmd="sh">${esc(installSh())}</pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="sh">Copy</button><span class="hint" data-copied="sh"></span></div>
+  const installBlock = (tt = (k, en) => en) => `<p class="hint"><b>macOS / Linux</b> (Terminal)</p><pre data-cmd="sh">${esc(installSh())}</pre>
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="sh">${tt('w.copy', 'Copy')}</button><span class="hint" data-copied="sh"></span></div>
     <p class="hint"><b>Windows</b> (PowerShell)</p><pre data-cmd="ps">${esc(installPs())}</pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="ps">Copy</button><span class="hint" data-copied="ps"></span></div>
-    <div class="actions"><button class="btn sm ghost" type="button" data-send>Send to my computer</button></div>`;
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="ps">${tt('w.copy', 'Copy')}</button><span class="hint" data-copied="ps"></span></div>
+    <div class="actions"><button class="btn sm ghost" type="button" data-send>${tt('w.send', 'Send to my computer')}</button></div>`;
   // L26: « Send to my computer »: the two lines and one sentence, through the share sheet (mail, messages, AirDrop),
   // else a mail to the signed-in address. A share closed by the person (AbortError) does nothing more.
   const installText = () => `Set up Reelbook on this computer: paste one of these lines in a terminal.\n\nmacOS / Linux (Terminal):\n${installSh()}\n\nWindows (PowerShell):\n${installPs()}\n`;
@@ -3003,7 +3678,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
   };
   const copyHandler = root => async ev => { if (ev.target.closest('[data-send]')) return sendInstall(); const b = ev.target.closest('[data-copy]'); if (!b) return; const pre = root.querySelector(`[data-cmd="${b.dataset.copy}"]`) || $(b.dataset.copy); const out = root.querySelector(`[data-copied="${b.dataset.copy}"]`); try { await navigator.clipboard.writeText(pre.textContent); out.textContent = 'Copied.'; } catch { out.textContent = 'Select and copy the command above.'; } };
   const welcomeKey = () => 'rb.welcome.' + (user ? user.id : '');
-  const renderWelcome = () => { $('w-install').innerHTML = installBlock(); };
+  const renderWelcome = () => { $('w-install').innerHTML = installBlock(T); };
   $('welcome').addEventListener('click', copyHandler($('welcome')));
   $('w-done').addEventListener('click', () => { ls.set(welcomeKey(), '1'); location.hash = ''; });
   // L29: « Usage: 4/10 links today · 120/300 sheets · 80/200 MB », from my_quota(); hidden when the backend has no
@@ -3104,7 +3779,7 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
     if (!user || !$('player').hidden) return null;
     const nbUp = id => { const th = themeById.get(id); return th ? [th.id, th.title] : ['', 'Reelbook']; };
     if (!$('settings').hidden) return {title: 'Settings', up: ['', 'Reelbook']};
-    if (!$('welcome').hidden) return {title: 'How it works', up: ['', 'Reelbook']};
+    if (!$('welcome').hidden) return {title: T('w.h1', 'How it works'), up: ['', 'Reelbook']};
     if (!view.hidden && shown) {
       const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown);
       if (s) return {title: s.title, up: nbUp(s.theme), menu: !edit};
@@ -3354,11 +4029,11 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
       const intro = introOpen && mode === 'in'; // L25: the presentation, then the account actions
       $('intro').hidden = !intro;
       $('auth-title').hidden = $('auth-form').hidden = $('a-adv').hidden = intro;
-      $('auth-title').textContent = mode === 'in' ? 'Sign in' : 'Create an account';
-      if (intro) $('login-own-form').hidden = true;
+      labelMode();
+      if (intro) { $('login-own-form').hidden = true; askSeats(); } // L30: the landing's seats line
       $('a-backend').textContent = backendLabel();
       $('a-submit').disabled = !backend || authBusy;
-      $('a-own').textContent = backend && backend.mode === 'own' ? 'Change instance' : 'Use my own Supabase';
+      paintOwnLink();
       $('a-hosted').hidden = !hostedOk || !backend || backend.mode === 'hosted';
       show('auth'); return;
     }

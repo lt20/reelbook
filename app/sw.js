@@ -10,9 +10,9 @@
 //   here even when the page is not controlled yet, so the demo opens offline afterwards. Not precached: most
 //   visitors never open it.
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
-const VERSION = 'rb-shell-40';
+const VERSION = 'rb-shell-42';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300, DEMO = 'rb-demo-1';
-const SHELL = ['./', './index.html', './config.js?v=9', './sessions.js?v=10', './sheet.js?v=4', './vendor/supabase.js?v=2', './manifest.webmanifest',
+const SHELL = ['./', './index.html', './config.js?v=9', './sessions.js?v=10', './sheet.js?v=4', './landing.js?v=2', './vendor/supabase.js?v=2', './manifest.webmanifest',
   './fonts/barlow-condensed-600-latin.woff2', './fonts/barlow-condensed-700-latin.woff2', './fonts/source-sans-3-latin.woff2',
   './icons.svg', './icons/reelbook-mark.svg', './icons/reelbook-mark-light.svg', './icons/reelbook-wordmark.svg', './icons/reelbook-wordmark-light.svg', './icons/reelbook-app.svg', './icons/reelbook-icon-180.png', './icons/reelbook-icon-192.png', './icons/reelbook-icon-512.png', './icons/reelbook-icon-512-maskable.png'];
 
