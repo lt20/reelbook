@@ -148,6 +148,9 @@ languages: translate the English column).
   different moves) takes one photo per distinct movement of the timeline, even beyond 5: the 3–5
   range is for a single movement. A **progression** (stages toward one movement, section 3 bis)
   takes one or two photos per stage, even beyond 5.
+- **Badge of a photo** (`<span class="k">`): the same number never shows twice. A step or stage with one
+  photo: `2`. With several: a letter per photo, `2a`, `2b`, `2c`, each with its own short title (a reel of
+  5 tips on 8 photos: `1`, `2a`, `2b`, `3a`, `3b`, `4a`, `4b`, `5`).
 - **Mandatory check**: `Read` every final photo and tick head / hands / supports visible before
   writing the sheet. A photo that fails is redone. Then match the photos against the timeline:
   every line has its photo, or the sheet says why not.
