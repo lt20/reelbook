@@ -53,16 +53,16 @@ test('L27 — the demo preserves localStorage keys belonging to a real account',
   assert.equal(page.clients.length, 0);
 });
 
-test('L27 — four replaceable sheet folders and a catalogue are served from app/demo', () => {
+test('L27 — five replaceable sheet folders and a catalogue are served from app/demo', () => {
   const catalogue = path.join(demoDir, 'catalogue.json');
   assert.ok(fs.statSync(catalogue).isFile());
   assert.doesNotThrow(() => JSON.parse(fs.readFileSync(catalogue, 'utf8')));
   const sheets = fs.readdirSync(demoDir, {withFileTypes: true}).filter(entry => entry.isDirectory() && fs.existsSync(path.join(demoDir, entry.name, 'index.html')));
-  assert.equal(sheets.length, 4);
+  assert.equal(sheets.length, 5);
   for (const sheet of sheets) {
     assert.ok(fs.statSync(path.join(demoDir, sheet.name, 'img')).isDirectory(), sheet.name);
-    const images = fs.readdirSync(path.join(demoDir, sheet.name, 'img')).filter(name => /\.(?:svg|png)$/i.test(name));
-    assert.ok(images.length > 0, `${sheet.name} has drawn placeholder imagery`);
+    const images = fs.readdirSync(path.join(demoDir, sheet.name, 'img')).filter(name => /\.(?:svg|png|jpe?g)$/i.test(name));
+    assert.ok(images.length > 0, `${sheet.name} has imagery`);
   }
 });
 

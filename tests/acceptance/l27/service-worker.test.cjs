@@ -76,11 +76,11 @@ function worker() {
 test('L27 — the service worker caches demo files on first visit and serves them offline', async () => {
   const demo = path.join(root, 'demo');
   const sheets = fs.readdirSync(demo, {withFileTypes: true}).filter(entry => entry.isDirectory() && fs.existsSync(path.join(demo, entry.name, 'index.html')));
-  assert.equal(sheets.length, 4);
+  assert.equal(sheets.length, 5);
   const urls = ['demo/catalogue.json'];
   for (const sheet of sheets) {
     urls.push(`demo/${sheet.name}/index.html`);
-    const image = fs.readdirSync(path.join(demo, sheet.name, 'img')).find(name => /\.(?:svg|png)$/i.test(name));
+    const image = fs.readdirSync(path.join(demo, sheet.name, 'img')).find(name => /\.(?:svg|png|jpe?g)$/i.test(name));
     assert.ok(image, sheet.name);
     urls.push(`demo/${sheet.name}/img/${image}`);
   }
