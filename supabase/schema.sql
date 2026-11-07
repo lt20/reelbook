@@ -211,7 +211,7 @@ create index if not exists sheets_tags_idx on public.sheets using gin (tags);
 -- shows it once and stores only its SHA-256 (token_hash); the function looks the hash up with the service role and
 -- queues the link as a requests row of that account (the quota trigger of requests, below, applies). One active key
 -- per account; a revoked key stays revoked. window_start / window_count: the function's rate limit (10 links a minute
--- per key). Added after the quotas, written before their section (which closes the file): re-run this whole file to
+-- per key). Added after the quotas, written before their section: re-run this whole file to
 -- create it (idempotent, additive: nothing else changes).
 -- A backend without it keeps working: Settings hides the « iPhone shortcut » section. The table is what shows that
 -- section: deploy the function first (`supabase functions deploy add-link --no-verify-jwt`), then run this section,
@@ -385,6 +385,8 @@ begin
     raise exception using errcode = 'P0001', message = format('quota: %s MB of photos', lim),
       hint = 'Delete sheets you no longer need, or ask whoever runs this backend for more.';
   end if;
+  -- the whole project's photos, during a beta (section « Beta locks », below; nothing without its settings row)
+  if to_regprocedure('public.beta_upload_ok(uuid)') is not null then perform public.beta_upload_ok(uid); end if;
   return true;
 end $$;
 
@@ -415,3 +417,380 @@ revoke execute on function public.my_quota() from public, anon;
 grant execute on function public.my_quota() to authenticated;
 revoke execute on function public.enforce_request_quota() from public, anon, authenticated;
 revoke execute on function public.enforce_sheet_quota() from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Beta locks (L32): what the whole project may hold, on the hosted backend during the beta. OFF until a row of
+-- beta_settings exists: without it, sign-ups, links and photos behave exactly as before (an own backend never adds
+-- it; the only thing that runs is a delete in the empty waiting list when an email is confirmed). With the row:
+--   lock 2  a sign-up is refused when signups_open is false (« beta: closed »), when seats_offset + the accounts
+--           reach seats_total (« beta: full »; the offset is counted as taken from the start, inside the total), or
+--           when signups_per_day accounts were created today, UTC (« beta: closed today »). An account counts once
+--           confirmed, or while its confirmation is pending (created less than an hour ago, Supabase's default link
+--           lifetime): sign-ups with addresses nobody confirms hold no seat and no slot of the day for long;
+--   lock 3  a new link is refused once the project has max_videos_per_day links today, UTC (« beta: project limit,
+--           try tomorrow »), a new or changed photo once the sheets bucket holds max_photos_gb (« beta: project limit
+--           of photos »; like the per-account limit, the last uploads may pass it by a file or two);
+--   lock 4  kill switches: signups_open, captures_open (new links), uploads_open (photos): « beta: paused » for the
+--           last two.
+-- Exempt accounts: an account with an account_quotas row whose note starts with « exempt » (the maintainer's) takes
+-- no seat, is not counted in the sign-ups of the day, and passes locks 3 and 4; its links and photos still count in
+-- the project totals. Give that note BEFORE adding the settings row, or the account takes a seat:
+--   insert into public.account_quotas (user_id, note) values ((select id from auth.users where email = '<you>'), 'exempt: maintainer')
+--   on conflict (user_id) do update set note = 'exempt: ' || coalesce(public.account_quotas.note, 'maintainer');
+-- then turn the locks on (values of the hosted beta), and edit the row in the table editor:
+--   insert into public.beta_settings (seats_total, seats_offset, signups_per_day, max_photos_gb, max_videos_per_day)
+--   values (50, 14, 10, 10, 300) on conflict (id) do nothing;
+-- Deleting the row lifts every lock at once. The locks also refuse accounts added from the dashboard
+-- (Authentication › Add user, invites): raise seats_total, or set signups_open, for that.
+-- Waiting list: beta_waitlist, filled only through join_waitlist() and only while the beta is full or closed; an
+-- account whose email is confirmed deletes the row of that email (an unconfirmed sign-up with someone else's address
+-- deletes nothing). Nobody but the project owner reads it (dashboard, SQL editor).
+-- Messages: links and photos get them through PostgREST and Storage like the quotas; auth.signUp does not (Supabase
+-- Auth answers « Database error saving new user », HTTP 500, to any error of the insert): the app reads
+-- beta_seats() before a sign-up.
+-- Added after the quotas: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- ---------------------------------------------------------------------------
+
+-- One row at most (id is always true). Not readable by clients: beta_seats() says what the app needs.
+create table if not exists public.beta_settings (
+  id                 boolean primary key default true check (id),
+  seats_total        int not null default 50  check (seats_total >= 0),
+  seats_offset       int not null default 0   check (seats_offset >= 0),    -- the hosted beta: 14
+  signups_per_day    int not null default 10  check (signups_per_day >= 0),
+  max_photos_gb      int not null default 10  check (max_photos_gb >= 0),
+  max_videos_per_day int not null default 300 check (max_videos_per_day >= 0),
+  signups_open       boolean not null default true,
+  captures_open      boolean not null default true,
+  uploads_open       boolean not null default true,
+  updated_at         timestamptz not null default now()
+);
+
+-- RLS on and no policy, and no grant either (a policy filters rows, it does not grant): only the owner reads it.
+alter table public.beta_settings enable row level security;
+revoke all on public.beta_settings from anon, authenticated;
+
+create or replace function public.beta_settings_touch() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  new.updated_at := now();
+  return new;
+end $$;
+
+drop trigger if exists beta_settings_touch on public.beta_settings;
+create trigger beta_settings_touch before update on public.beta_settings
+  for each row execute function public.beta_settings_touch();
+
+-- The waiting list (decision 20): first name and email, only to say a seat is free. Deleted at sign-up, once the
+-- email is confirmed (trigger below), or on request (by the owner, in the table editor). Not readable nor writable by clients: join_waitlist().
+create table if not exists public.beta_waitlist (
+  id         bigint generated always as identity primary key,
+  first_name text not null check (char_length(first_name) between 1 and 60),
+  email      text not null check (char_length(email) <= 254 and email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'),
+  lang       text check (lang in ('fr', 'en')),
+  consent_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists beta_waitlist_email_key on public.beta_waitlist (lower(email));
+create index if not exists beta_waitlist_created_idx on public.beta_waitlist (created_at);
+
+alter table public.beta_waitlist enable row level security;
+revoke all on public.beta_waitlist from anon, authenticated;
+revoke all on sequence public.beta_waitlist_id_seq from anon, authenticated;
+
+-- Exempt: an account_quotas row whose note starts with « exempt » (any case). Only the owner writes that table.
+create or replace function public.beta_exempt(uid uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.account_quotas q where q.user_id = uid and lower(q.note) like 'exempt%')
+$$;
+
+-- The accounts that take a seat (created since `since`): confirmed (email or phone), or created less than an hour ago
+-- and still waiting for their confirmation; never the exempt ones. A confirmation sent later (« resend ») may let a
+-- seat be taken past the total by such an account: the trigger only sees the insert.
+create or replace function public.beta_accounts(since timestamptz default '-infinity') returns int
+language sql stable security definer set search_path = '' as $$
+  select count(*)::int from auth.users u
+  where u.created_at >= since
+    and (u.email_confirmed_at is not null or u.phone_confirmed_at is not null or u.created_at > now() - interval '1 hour')
+    and not exists (select 1 from public.account_quotas q where q.user_id = u.id and lower(q.note) like 'exempt%')
+$$;
+
+-- Lock 2. Runs as the owner for Supabase Auth (supabase_auth_admin) at every new account: sign-up, OAuth, invite,
+-- dashboard. Sign-ups are checked one at a time (advisory lock, held to the end of the transaction; each statement
+-- after it sees the sign-up committed before), so that two at once cannot both take the last seat. A refusal rolls
+-- the whole sign-up back: no account is created.
+create or replace function public.beta_on_signup() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare s public.beta_settings;
+begin
+  if exists (select 1 from public.beta_settings) then
+    perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('signup'));
+    select * into s from public.beta_settings b where b.id;
+    if not s.signups_open then
+      raise exception using errcode = 'P0001', message = 'beta: closed',
+        hint = 'Sign-ups are closed for now. Your own Supabase project works without limit.';
+    end if;
+    if s.seats_offset + public.beta_accounts() >= s.seats_total then
+      raise exception using errcode = 'P0001', message = 'beta: full',
+        hint = 'Every seat of the beta is taken: join the waiting list, or use your own Supabase project.';
+    end if;
+    if public.beta_accounts(date_trunc('day', now() at time zone 'utc') at time zone 'utc') >= s.signups_per_day then
+      raise exception using errcode = 'P0001', message = 'beta: closed today',
+        hint = 'Enough sign-ups for today: the count starts again at midnight UTC.';
+    end if;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists beta_signup on auth.users;
+create trigger beta_signup before insert on auth.users
+  for each row execute function public.beta_on_signup();
+
+-- The waiting list kept to its promise: deleted when the person signs up, i.e. once the email is confirmed (at the
+-- insert when confirmation is off or for OAuth, at the confirmation otherwise, and after a confirmed email change).
+-- Not at an unconfirmed sign-up: anybody can type someone else's address. With or without the settings row.
+create or replace function public.beta_waitlist_done() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.email is not null and new.email_confirmed_at is not null
+     and (tg_op = 'INSERT' or old.email_confirmed_at is null or new.email is distinct from old.email) then
+    delete from public.beta_waitlist w where lower(w.email) = lower(new.email);
+  end if;
+  return null;
+end $$;
+
+drop trigger if exists beta_waitlist_done on auth.users;
+create trigger beta_waitlist_done after insert or update of email, email_confirmed_at on auth.users
+  for each row execute function public.beta_waitlist_done();
+
+-- Locks 3 and 4 for links: a second trigger on requests, next to the per-account one (requests_quota). Only an
+-- insert adds a link to the project; every writer is checked (app, add-link function, service role). One at a time.
+-- The links of the day are counted as they are added (beta_daily, one row per UTC day), not as the rows still there:
+-- deleting links gives no slot of the day back. Exempt accounts are counted and never refused. Counting starts
+-- with the settings row; a refused or rolled-back insert is not counted. waitlist: the new rows of the waiting list
+-- that day (join_waitlist, below), counted the same way.
+create table if not exists public.beta_daily (
+  day      date primary key,
+  links    int not null default 0,
+  waitlist int not null default 0
+);
+
+alter table public.beta_daily enable row level security;
+revoke all on public.beta_daily from anon, authenticated;
+
+create or replace function public.beta_on_request() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare s public.beta_settings; n int; today date := (now() at time zone 'utc')::date;
+begin
+  if not exists (select 1 from public.beta_settings) then return new; end if;
+  perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('links'));
+  -- read after the lock: a link that waited for it sees a switch or a limit changed meanwhile
+  select * into s from public.beta_settings b where b.id;
+  if not found then return new; end if;
+  if not public.beta_exempt(new.user_id) then
+    if not s.captures_open then
+      raise exception using errcode = 'P0001', message = 'beta: paused',
+        hint = 'New videos are paused on this backend for now. What you have keeps working.';
+    end if;
+    select d.links into n from public.beta_daily d where d.day = today;
+    if coalesce(n, 0) >= s.max_videos_per_day then
+      raise exception using errcode = 'P0001', message = 'beta: project limit, try tomorrow',
+        hint = 'The beta takes a set number of videos a day for everyone: the count starts again at midnight UTC.';
+    end if;
+  end if;
+  insert into public.beta_daily as d (day, links) values (today, 1)
+    on conflict (day) do update set links = d.links + 1;
+  return new;
+end $$;
+
+drop trigger if exists requests_beta on public.requests;
+create trigger requests_beta before insert on public.requests
+  for each row execute function public.beta_on_request();
+
+-- Locks 3 and 4 for photos: called by photo_quota_ok() (the storage insert / update policies, above) after the
+-- per-account check. The total of the whole sheets bucket, every account included.
+create or replace function public.beta_upload_ok(uid uuid) returns boolean
+language plpgsql volatile security definer set search_path = '' as $$
+declare s public.beta_settings; used bigint;
+begin
+  select * into s from public.beta_settings b where b.id;
+  if not found or public.beta_exempt(uid) then return true; end if;
+  if not s.uploads_open then
+    raise exception using errcode = 'P0001', message = 'beta: paused',
+      hint = 'New photos are paused on this backend for now. What you have keeps working.';
+  end if;
+  select coalesce(sum(case when o.metadata->>'size' ~ '^[0-9]+$' then (o.metadata->>'size')::bigint end), 0)::bigint
+    into used from storage.objects o where o.bucket_id = 'sheets';
+  if used >= s.max_photos_gb::bigint * 1073741824 then
+    raise exception using errcode = 'P0001', message = 'beta: project limit of photos',
+      hint = 'The beta holds a set amount of photos for everyone. Your own Supabase project works without limit.';
+  end if;
+  return true;
+end $$;
+
+-- For the app, signed in or not: seats taken (offset included) and total, whether a sign-up can take one now
+-- (open: signups_open and a seat left; the sign-ups of the day are not in it), and today_left: the sign-ups left
+-- today, UTC (signups_per_day minus today's, counted like the seats, never below 0), so the app can say « come back
+-- tomorrow » when it is 0. Null without the settings row (the app then shows no counter). Never an email nor an id.
+create or replace function public.beta_seats() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('taken', t.taken, 'total', s.seats_total, 'open', s.signups_open and t.taken < s.seats_total,
+                            'today_left', greatest(s.signups_per_day - t.today, 0))
+  from public.beta_settings s, lateral (select s.seats_offset + public.beta_accounts() as taken,
+    public.beta_accounts(date_trunc('day', now() at time zone 'utc') at time zone 'utc') as today) t
+  where s.id
+$$;
+
+-- The waiting-list form (shown when the beta is full or closed), signed in or not. Refuses without consent, with a
+-- bad first name or email, and while a seat can be taken (or without the settings row); 200 new rows a day for the
+-- whole project at most, counted as they are added (beta_daily: a row deleted later gives no slot back). A new email
+-- and one already listed both get « ok », a listed row is never changed, and the daily cap answers before the lookup
+-- (« waitlist: full today » for everybody, listed or not): the answer never tells who is listed.
+create or replace function public.join_waitlist(first_name text, email text, lang text, consent boolean) returns text
+language plpgsql volatile security definer set search_path = '' as $$
+declare
+  s public.beta_settings; n int; today date := (now() at time zone 'utc')::date;
+  fname text := btrim(coalesce(join_waitlist.first_name, ''));
+  mail text := btrim(coalesce(join_waitlist.email, ''));
+  lng text := case when lower(join_waitlist.lang) in ('fr', 'en') then lower(join_waitlist.lang) end;
+begin
+  if join_waitlist.consent is not true then
+    raise exception using errcode = 'P0001', message = 'waitlist: consent required';
+  end if;
+  if char_length(fname) not between 1 and 60 then
+    raise exception using errcode = 'P0001', message = 'waitlist: first name';
+  end if;
+  if char_length(mail) > 254 or mail !~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' then
+    raise exception using errcode = 'P0001', message = 'waitlist: email';
+  end if;
+  select * into s from public.beta_settings b where b.id;
+  if not found or (s.signups_open and s.seats_offset + public.beta_accounts() < s.seats_total) then
+    raise exception using errcode = 'P0001', message = 'waitlist: seats open';
+  end if;
+  perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('waitlist'));
+  select d.waitlist into n from public.beta_daily d where d.day = today;
+  if coalesce(n, 0) >= 200 then
+    raise exception using errcode = 'P0001', message = 'waitlist: full today',
+      hint = 'Too many requests today: try again tomorrow. If you already joined, you are still on the list.';
+  end if;
+  if not exists (select 1 from public.beta_waitlist w where lower(w.email) = lower(mail)) then
+    insert into public.beta_waitlist (first_name, email, lang, consent_at) values (fname, mail, lng, now());
+    insert into public.beta_daily as d (day, waitlist) values (today, 1)
+      on conflict (day) do update set waitlist = d.waitlist + 1;
+  end if;
+  return 'ok';
+end $$;
+
+-- Internal functions: run by the triggers and policies as their owner, never by a client.
+revoke execute on function public.beta_settings_touch() from public, anon, authenticated;
+revoke execute on function public.beta_exempt(uuid) from public, anon, authenticated;
+revoke execute on function public.beta_accounts(timestamptz) from public, anon, authenticated;
+revoke execute on function public.beta_on_signup() from public, anon, authenticated;
+revoke execute on function public.beta_waitlist_done() from public, anon, authenticated;
+revoke execute on function public.beta_on_request() from public, anon, authenticated;
+revoke execute on function public.beta_upload_ok(uuid) from public, anon, authenticated;
+-- Public: the seats line and the waiting-list form.
+revoke execute on function public.beta_seats() from public;
+grant execute on function public.beta_seats() to anon, authenticated;
+revoke execute on function public.join_waitlist(text, text, text, boolean) from public;
+grant execute on function public.join_waitlist(text, text, text, boolean) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Daily alert (L33): one ntfy notification a day at 08:00 Europe/Zurich, sent by the database itself (pg_cron +
+-- pg_net), with the figures of the beta: seats, sign-ups, photos, videos, waiting list. Counts only: never an email
+-- nor a first name. Tag « 70% » when a figure reaches 70 % of its limit, priority high from 90 %.
+-- The schedule only exists where pg_cron and pg_net are enabled (Dashboard › Database › Extensions), with Vault
+-- (supabase_vault, on by default on Supabase) for the topic: without them the block at the end does nothing and the
+-- rest of this file runs as before (own backends). Enable them BEFORE running this file, or run it again after.
+-- The ntfy topic is a secret (anybody who knows it reads the notifications): it lives in Supabase Vault, named
+-- reelbook_ntfy_topic, never in this file nor in a table clients can read. Paste it yourself in the SQL editor:
+--   select vault.create_secret('<your topic>', 'reelbook_ntfy_topic');
+-- (a topic name; a full https://… URL also works, its last segment is the topic). Without it the job fails at each
+-- run with « beta alert: no topic » (Integrations › Cron › the job's runs) and sends nothing.
+-- pg_cron runs in UTC (cron.timezone, GMT by default): the job runs at 06:00 and 07:00 UTC and sends once, at the
+-- run that is 08:00 in Zurich (summer and winter time). By hand, at any hour: select public.beta_alert();
+-- Stop it: select cron.unschedule('reelbook-daily-alert');
+-- ---------------------------------------------------------------------------
+
+-- The day's line: { title, message, tags, priority } for ntfy. Sign-ups and videos: today so far (UTC) and all of
+-- yesterday (the run is early in the UTC day); waiting list: its size and the rows added yesterday and today
+-- (beta_daily.waitlist). Without the settings row: the counts, no limits, no tag (videos: the requests rows).
+create or replace function public.beta_alert_message() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare
+  s public.beta_settings;
+  midnight timestamptz := date_trunc('day', now() at time zone 'utc') at time zone 'utc';
+  today date := (now() at time zone 'utc')::date;
+  accounts int := public.beta_accounts();
+  signups_today int := public.beta_accounts(midnight);
+  signups_yesterday int := public.beta_accounts(midnight - interval '1 day') - public.beta_accounts(midnight);
+  photos bigint; videos_today int; videos_yesterday int; listed int; listed_new int; ratio numeric; line text;
+begin
+  select coalesce(sum(case when o.metadata->>'size' ~ '^[0-9]+$' then (o.metadata->>'size')::bigint end), 0)::bigint
+    into photos from storage.objects o where o.bucket_id = 'sheets';
+  -- videos: the higher of the links still there (requests) and the links counted as added (beta_daily, only once the
+  -- settings row exists; deletes do not lower it), so neither a delete nor the day the row is added hides any. Only
+  -- on the day the row is added, links added before it AND links deleted after it can make the figure low.
+  select (count(*) filter (where r.created_at >= midnight))::int, (count(*) filter (where r.created_at < midnight))::int
+    into videos_today, videos_yesterday from public.requests r where r.created_at >= midnight - interval '1 day';
+  select greatest(videos_today, coalesce(sum(d.links) filter (where d.day = today), 0)::int),
+         greatest(videos_yesterday, coalesce(sum(d.links) filter (where d.day = today - 1), 0)::int),
+         coalesce(sum(d.waitlist), 0)::int
+    into videos_today, videos_yesterday, listed_new from public.beta_daily d where d.day >= today - 1;
+  select count(*)::int into listed from public.beta_waitlist;
+  select * into s from public.beta_settings b where b.id;
+  if not found then
+    line := format('beta off (no settings row) · accounts %s · sign-ups today %s (yesterday %s) · photos %s GB · videos today %s (yesterday %s) · waiting list %s (+%s since yesterday)',
+      accounts, signups_today, signups_yesterday, round(photos / 1073741824.0, 1), videos_today, videos_yesterday, listed, listed_new);
+    return jsonb_build_object('title', 'Reelbook beta', 'message', line, 'tags', '[]'::jsonb, 'priority', 3);
+  end if;
+  -- the highest share of a limit (a limit of 0 is a closure, not a share: left out)
+  ratio := greatest((s.seats_offset + accounts)::numeric / nullif(s.seats_total, 0),
+                    greatest(signups_today, signups_yesterday)::numeric / nullif(s.signups_per_day, 0),
+                    photos::numeric / nullif(s.max_photos_gb::bigint * 1073741824, 0),
+                    greatest(videos_today, videos_yesterday)::numeric / nullif(s.max_videos_per_day, 0));
+  line := format('seats %s/%s · sign-ups today %s/%s (yesterday %s) · photos %s/%s GB · videos today %s/%s (yesterday %s) · waiting list %s (+%s since yesterday)',
+    s.seats_offset + accounts, s.seats_total, signups_today, s.signups_per_day, signups_yesterday,
+    round(photos / 1073741824.0, 1), s.max_photos_gb, videos_today, s.max_videos_per_day, videos_yesterday, listed, listed_new);
+  return jsonb_build_object('title', 'Reelbook beta', 'message', line,
+    'tags', case when ratio >= 0.7 then '["70%"]'::jsonb else '[]'::jsonb end,
+    'priority', case when ratio >= 0.9 then 4 else 3 end);
+end $$;
+
+-- Sends the day's line to ntfy (pg_net, asynchronous: the answer lands in net._http_response). at_8_only: the
+-- scheduled runs, which send only when it is 08:00 in Zurich. Returns the pg_net request id, or null when skipped.
+create or replace function public.beta_alert(at_8_only boolean default false) returns bigint
+language plpgsql volatile security definer set search_path = '' as $$
+declare topic text; server text := 'https://ntfy.sh';
+begin
+  if at_8_only and extract(hour from now() at time zone 'Europe/Zurich') <> 8 then return null; end if;
+  if to_regclass('vault.decrypted_secrets') is null or to_regnamespace('net') is null then
+    raise exception using errcode = 'P0001', message = 'beta alert: needs Vault and pg_net';
+  end if;
+  select btrim(v.decrypted_secret) into topic from vault.decrypted_secrets v
+    where v.name = 'reelbook_ntfy_topic' order by v.created_at desc limit 1;
+  if coalesce(topic, '') = '' then
+    raise exception using errcode = 'P0001', message = 'beta alert: no topic',
+      hint = 'Store it once in the SQL editor: select vault.create_secret(''<your topic>'', ''reelbook_ntfy_topic'');';
+  end if;
+  if topic ~ '^https?://' then   -- a full URL: its server, and its last segment as the topic
+    server := regexp_replace(rtrim(topic, '/'), '/[^/]*$', '');
+    topic := regexp_replace(rtrim(topic, '/'), '^.*/', '');
+  end if;
+  return net.http_post(url := server, body := public.beta_alert_message() || jsonb_build_object('topic', topic),
+                       headers := '{"Content-Type": "application/json"}'::jsonb);
+end $$;
+
+-- Internal: run by the job (as the owner) or by hand in the SQL editor, never by a client.
+revoke execute on function public.beta_alert_message() from public, anon, authenticated;
+revoke execute on function public.beta_alert(boolean) from public, anon, authenticated;
+
+-- The schedule, only with the three extensions (cron.schedule with an existing name updates that job: re-runs are safe).
+do $$
+begin
+  if exists (select 1 from pg_extension where extname = 'pg_cron')
+     and exists (select 1 from pg_extension where extname = 'pg_net')
+     and exists (select 1 from pg_extension where extname = 'supabase_vault') then
+    perform cron.schedule('reelbook-daily-alert', '0 6,7 * * *', 'select public.beta_alert(true)');
+  end if;
+end $$;

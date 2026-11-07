@@ -5,8 +5,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f3f1ec" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#15171a" media="(prefers-color-scheme: dark)">
-<meta name="description" content="Turn the how-to videos you save into sheets you can read on the mat, at the beach or in the kitchen.">
-<title>Reelbook</title>
+<meta name="description" content="Reelbook réunit tes vidéos de technique dans un carnet d’entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.">
+<title>Reelbook · Un /skill Claude Code qui transforme tes vidéos de technique en carnet d’entraînement</title>
+<link rel="canonical" href="https://lt20.github.io/reelbook/">
+<!-- L36: link previews (the landing's French copy; English is the alternate locale) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Reelbook">
+<meta property="og:url" content="https://lt20.github.io/reelbook/">
+<meta property="og:title" content="Reelbook · Un /skill Claude Code qui transforme tes vidéos de technique en carnet d’entraînement">
+<meta property="og:description" content="Reelbook réunit tes vidéos de technique dans un carnet d’entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:locale:alternate" content="en_GB">
+<meta property="og:image" content="https://lt20.github.io/reelbook/assets/og/reelbook-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="reelbook">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Reelbook · Un /skill Claude Code qui transforme tes vidéos de technique en carnet d’entraînement">
+<meta name="twitter:description" content="Reelbook réunit tes vidéos de technique dans un carnet d’entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.">
+<meta name="twitter:image" content="https://lt20.github.io/reelbook/assets/og/reelbook-og.jpg">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/reelbook-app.svg" type="image/svg+xml">
 <link rel="icon" href="icons/reelbook-icon-192.png" type="image/png" sizes="192x192">
@@ -562,15 +579,32 @@ dialog.nav-menu .actions{margin-top:var(--s-3)}
 .demo-banner:active{opacity:.85}
 .demo .top{margin:0 0 6px}
 .demo .top a{color:var(--accent);font-weight:600;text-decoration:none}
-.demo-nb{display:flex;align-items:center;gap:var(--s-2)}
-.demo-nb .nb-ico{width:22px;height:22px;color:var(--t,var(--accent))}
+/* L38: the demo drawn like an account (.tcard, .portal, .group-row, .card, .seat, .seq as they are); only what the
+   real pages scope by id (#brand-wordmark, #count, #home.nb, #groups) has its .demo twin here */
+.demo-brand{display:flex;align-items:center;gap:var(--s-2);min-height:44px;margin:0 0 2px;color:var(--accent);font-family:"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-.055em;text-transform:lowercase;line-height:1}
+.demo-brand img{display:block;width:28px;height:28px;flex:none}
+.demo-brand h1{font:inherit;letter-spacing:inherit;color:inherit;margin:0;min-width:0;overflow-wrap:anywhere}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .demo-brand img{content:url("icons/reelbook-mark-light.svg")}}
+:root[data-theme="dark"] .demo-brand img{content:url("icons/reelbook-mark-light.svg")}
+.demo .cnt{font-size:13px;color:var(--muted);margin:0 0 14px}
+.demo-intro{margin:0 0 var(--s-4);max-width:640px;color:var(--muted);font-size:var(--fs-base)}
+.demo section>h2,.demo .sh2 h2{font-size:var(--fs-lg);margin:22px 0 var(--s-2)}
+.demo section{scroll-margin-top:calc(96px + env(safe-area-inset-top,0px))}
+.demo .group-chips{top:var(--demo-bar,calc(41px + env(safe-area-inset-top,0px)))}
+.demo-nbp{--band:color-mix(in srgb,var(--t,var(--accent)) 14%,var(--paper))}
+.demo-nbp>.eyebrow{margin:0 0 var(--s-2);color:color-mix(in srgb,var(--t,var(--accent)) 75%,var(--ink))}
+.demo-cover{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-4);border-radius:var(--r-lg);background:var(--band);color:var(--ink);font-family:var(--display);font-size:var(--fs-display);font-weight:700;letter-spacing:-.01em;line-height:.95}
+.demo-cover .nb-badge{width:52px;height:52px}
+.demo-cover .nb-ico{width:30px;height:30px}
+.demo-cover h1{font:inherit;letter-spacing:inherit;color:inherit;margin:0;min-width:0;text-wrap:balance;overflow-wrap:anywhere}
+.demo-nbp .cnt{font-size:var(--fs-sm);margin-top:var(--s-1)}
 /* L24: invitation to install the app, a quiet card at the top of the home page (browser tab only) */
 .install{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s-2) var(--s-3);background:var(--paper);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-3) var(--s-3) var(--s-3) var(--s-4);margin:0 0 var(--s-4)}
 .install .ic-share{flex:none;width:1.375rem;height:1.375rem;color:var(--accent)}
 .install p{flex:1 1 12rem;margin:0;font-size:var(--fs-sm);line-height:1.4}
 .install .acts{display:flex;gap:var(--s-2);margin-left:auto}
 /* L30: the landing (#intro), first screen of a device that has never signed in: the mockup
-   docs/audit-design/mockups/p6-landing.html, scoped (lp- classes under #intro) so the app's styles do not move.
+   docs/audit-design/mockups/p6-landing.html (v3 since L36), scoped (lp- classes under #intro) so the app's styles do not move.
    Its own light palette, whatever the colour scheme; the page loses its padding while it shows. */
 body:has(#intro:not([hidden])){padding:0;background:#f3f1ec}
 #auth:has(>#intro:not([hidden])){max-width:none}
@@ -581,17 +615,16 @@ body:has(#intro:not([hidden])){padding:0;background:#f3f1ec}
 html:has(#intro:not([hidden])){scroll-padding-top:84px}
 @media (max-width:760px){html:has(#intro:not([hidden])){scroll-padding-top:116px}}
 @media (prefers-reduced-motion:no-preference){html:has(#intro:not([hidden])){scroll-behavior:smooth}}
-#intro{
-  --ground:#f3f1ec; --step:#e9e6df; --paper:#fbfaf7; --ink:#1b1d1f; --ink-2:#3c4148; --line:#d8d5cd;
-  --blue:#1f4fa3; --blue-ink:#fff; --coral:#c54b38;
-  --night:#121417; --night-2:#1d2026; --night-3:#24282f; --night-ink:#eceae4; --night-2ink:#b9bec6;
-  --nb:#b4432f; --mono:ui-monospace,"SF Mono",Menlo,monospace; --m:clamp(16px,4vw,48px);
-  color-scheme:light;background:var(--ground);color:var(--ink);font:400 18px/1.55 var(--body);-webkit-font-smoothing:antialiased;
-  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)
-}
+#intro{color:var(--ink);font:400 18px/1.55 var(--body);-webkit-font-smoothing:antialiased;background:var(--ground);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+#intro [hidden]{display:none!important}
 #intro button{-webkit-tap-highlight-color:transparent}
 #intro .lp-opt input{padding:0;border:0;background:none;flex:none}
-#intro[data-ex="dance"]{--nb:#b23a6e}
+#intro .lp-lines{display:contents}
+#intro .lp-copy-msg{margin:0;font-size:14px;color:var(--ink)}
+#intro .lp-wl .lp-btn[disabled]{opacity:.55;cursor:not-allowed}
+#intro pre{-webkit-user-select:all;user-select:all}
+/* L36: below, the v3 mockup's stylesheet as is, scoped by the converter (classes and ids prefixed lp-, under #intro) */
+#intro{--ground:#f3f1ec; --step:#e9e6df; --paper:#fbfaf7; --ink:#1b1d1f; --ink-2:#3c4148; --line:#d8d5cd;--blue:#1f4fa3; --blue-ink:#fff; --coral:#c54b38;--night:#121417; --night-2:#1d2026; --night-3:#24282f; --night-ink:#eceae4; --night-2ink:#b9bec6;--nb:#b4432f;--display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace;--m:clamp(16px,4vw,48px);color-scheme:light;}
 #intro *{box-sizing:border-box}
 #intro img,#intro svg{max-width:100%;display:block}
 #intro a{color:var(--blue)}
@@ -601,7 +634,7 @@ html:has(#intro:not([hidden])){scroll-padding-top:84px}
 #intro h3{font-size:26px;font-weight:700;line-height:1.05}
 #intro p{margin:0}
 #intro .lp-frame{max-width:1280px;margin:0 auto;padding-inline:var(--m)}
-#intro .lp-btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;border-radius:999px;border:0;background:var(--blue);color:var(--blue-ink);font:700 17px/1 var(--body);text-decoration:none;cursor:pointer}
+#intro .lp-btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;border-radius:999px;border:0;background:var(--blue);color:var(--blue-ink);font:700 17px/1 var(--body);text-decoration:none;cursor:pointer;}
 #intro .lp-btn:hover{background:#173e82}
 #intro .lp-btn:active{transform:scale(.97)}
 #intro .lp-btn.lp-quiet{background:transparent;color:var(--ink);padding:0 14px}
@@ -612,44 +645,111 @@ html:has(#intro:not([hidden])){scroll-padding-top:84px}
 #intro .lp-bar nav{display:flex;gap:22px;flex-wrap:wrap}
 #intro .lp-bar nav a{color:var(--ink);text-decoration:none;font-weight:600;font-size:16px}
 #intro .lp-bar nav a:hover{color:var(--blue)}
-#intro .lp-bar nav a{position:relative;padding-block:6px}
+#intro .lp-bar nav a{position:relative;padding-block:10px}
 #intro .lp-bar nav a[aria-current="true"]{color:var(--blue)}
 #intro .lp-bar nav a[aria-current="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:3px;border-radius:2px;background:var(--coral,#c54b38)}
 #intro .lp-l2{display:inline-grid;justify-items:center}
 #intro .lp-l2>span{grid-area:1/1;white-space:nowrap}
 html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="fr"]{visibility:hidden}
-#intro .lp-topbar{position:sticky;top:0;z-index:50;background:rgba(243,241,236,.9);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid transparent}
+#intro .lp-topbar{position:sticky;top:0;z-index:50;background:rgba(243,241,236,.9);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid transparent;}
 #intro .lp-topbar.lp-scrolled{border-bottom-color:rgba(27,29,31,.1);box-shadow:0 6px 20px -14px rgba(27,29,31,.35)}
 #intro .lp-topbar .lp-bar{padding-block:12px;flex-wrap:nowrap}
 #intro .lp-seg{display:inline-flex;background:var(--step);border-radius:999px;padding:3px}
-#intro .lp-seg button{border:0;background:none;font:700 14px/1 var(--body);color:var(--ink-2);min-width:44px;min-height:38px;padding:0 12px;border-radius:999px;cursor:pointer}
+#intro .lp-seg button{border:0;background:none;font:700 14px/1 var(--body);color:var(--ink-2);min-width:44px;min-height:44px;padding:0 12px;border-radius:999px;cursor:pointer;}
 #intro .lp-seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
 #intro .lp-wm svg{flex:none}
-@media (max-width:760px){#intro .lp-topbar .lp-bar{flex-wrap:wrap;row-gap:2px;padding-block:8px 4px;gap:12px}#intro .lp-topbar .lp-bar nav{order:5;width:100%;justify-content:space-between;gap:8px}#intro .lp-topbar .lp-bar nav a{font-size:15px}#intro .lp-topbar .lp-bar .lp-btn.lp-quiet{min-height:40px;padding:0 6px;font-size:15px}#intro .lp-topbar .lp-wm{font-size:24px}#intro .lp-topbar .lp-wm svg{width:26px;height:26px}}
+@media (max-width:760px){
+#intro .lp-topbar .lp-bar{flex-wrap:wrap;row-gap:2px;padding-block:8px 4px;gap:12px}
+#intro .lp-topbar .lp-bar nav{order:5;width:100%;justify-content:space-between;gap:8px}
+#intro .lp-topbar .lp-bar nav a{font-size:15px}
+#intro .lp-topbar .lp-bar .lp-btn.lp-quiet{min-height:40px;padding:0 6px;font-size:15px}
+#intro .lp-topbar .lp-wm{font-size:24px}
+#intro .lp-topbar .lp-wm svg{width:26px;height:26px}
+}
+@media (max-width:374px){
+#intro .lp-topbar .lp-wm .lp-wm-t{display:none}
+#intro .lp-topbar .lp-bar nav{gap:4px}
+#intro .lp-topbar .lp-bar nav a{font-size:14px}
+}
 #intro .lp-hero{padding-block:clamp(28px,5vw,64px) 0}
-#intro .lp-hero h1{font-size:clamp(60px,13.2vw,196px);font-weight:800;line-height:.84;text-transform:uppercase;letter-spacing:-.025em}
-#intro .lp-hero-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(28px,4vw,64px);margin-top:clamp(24px,3vw,44px);align-items:start}
-#intro .lp-pitch{display:flex;flex-direction:column;gap:28px;padding-top:8px}
+#intro .lp-hero h1{font-size:clamp(34px,5.4vw,80px);font-weight:800;line-height:.9;text-transform:uppercase;letter-spacing:-.02em;max-width:none}
+#intro .lp-hero h1 .lp-slash{color:var(--coral)}
+#intro .lp-pitch{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,4vw,64px);margin-top:clamp(24px,3vw,40px);align-items:start}
+#intro .lp-pitch-side{display:flex;flex-direction:column;gap:18px}
+@media (max-width:900px){
+#intro .lp-pitch{grid-template-columns:minmax(0,1fr)}
+}
+#intro .lp-flow-head{display:flex;justify-content:space-between;align-items:end;gap:12px 24px;flex-wrap:wrap;margin-top:clamp(44px,5vw,72px)}
+#intro .lp-flow-head h2{font-size:clamp(36px,4.6vw,68px);text-transform:uppercase;line-height:.92}
+#intro .lp-flow-head .lp-ex-switch{margin-bottom:0}
+#intro .lp-flow{list-style:none;padding:0;margin:22px 0 0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.55fr) minmax(0,1fr);gap:16px;counter-reset:fl}
+#intro .lp-flow>li{background:var(--paper);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+#intro .lp-fl-vis{height:300px;display:flex;align-items:center;justify-content:center}
+#intro .lp-flow h3{font-size:26px;text-transform:uppercase;line-height:1}
+#intro .lp-flow h3 .lp-n{color:var(--coral);margin-right:8px}
+#intro .lp-flow p{font-size:16px;line-height:1.45;color:var(--ink-2);margin:0}
+#intro .lp-flow .lp-mini-phone{width:150px;height:280px}
+@media (max-width:900px){
+#intro .lp-flow{grid-template-columns:minmax(0,1fr)}
+#intro .lp-fl-vis{height:auto}
+}
+#intro .lp-msheet{display:grid;grid-template-columns:minmax(0,210px) minmax(0,1fr);gap:16px;width:100%;margin:0}
+#intro .lp-msheet .lp-shot{position:relative;aspect-ratio:4/5;border-radius:4px;overflow:hidden;background:#222}
+#intro .lp-msheet .lp-shot>div{position:absolute;inset:0;opacity:0;}
+#intro .lp-msheet .lp-shot>div.lp-on{opacity:1}
+#intro .lp-msheet .lp-shot img,#intro .lp-msheet .lp-shot svg{width:100%;height:100%;object-fit:cover;overflow:hidden}
+#intro .lp-msheet .lp-pp{position:absolute;right:2px;bottom:2px;z-index:3;width:44px;height:44px;padding:0;border:0;background:none;cursor:pointer;display:grid;place-items:center}
+#intro .lp-msheet .lp-pp span{width:30px;height:30px;border-radius:50%;background:rgba(18,20,23,.62);display:grid;place-items:center}
+#intro .lp-msheet .lp-pp svg{width:14px;height:14px;fill:#fff}
+#intro .lp-msheet .lp-pp .lp-i-play,#intro .lp-msheet .lp-pp.lp-paused .lp-i-pause{display:none}
+#intro .lp-msheet .lp-pp.lp-paused .lp-i-play{display:block}
+#intro .lp-anim-off .lp-track{animation-play-state:paused}
+#intro .lp-vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+#intro .lp-msheet .lp-num{position:absolute;left:10px;top:8px;font:800 40px/1 var(--display);color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.35);z-index:2}
+#intro[data-ex="dance"] .lp-msheet .lp-num{color:#6e1f45;text-shadow:none}
+#intro .lp-msheet .lp-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+#intro .lp-msheet .lp-crumb{font-size:13px;color:var(--ink-2);font-weight:600}
+#intro .lp-msheet .lp-title{font:700 22px/1 var(--display)}
+#intro .lp-msheet .lp-step-name{font:800 26px/.95 var(--display);text-transform:uppercase;color:var(--blue);margin-top:auto}
+#intro .lp-msheet .lp-cue{font-size:14.5px;line-height:1.4;min-height:5.6em}
+#intro .lp-dots{display:flex;flex-wrap:wrap;margin-left:-8px}
+#intro .lp-dots button{width:26px;height:26px;padding:0;border:0;background:none;cursor:pointer;display:grid;place-items:center}
+#intro .lp-dots button::before{content:"";width:8px;height:8px;border-radius:50%;background:#8f8a80}
+#intro .lp-msheet .lp-dots{flex-wrap:nowrap;gap:0}
+#intro #lp-thumbs button{width:32px;height:44px;flex:0 1 32px;min-width:0}
+#intro .lp-dots button[aria-current="true"]::before{background:var(--blue);width:10px;height:10px}
+@media (max-width:420px){
+#intro .lp-msheet{grid-template-columns:minmax(0,130px) minmax(0,1fr);gap:12px}
+#intro .lp-msheet .lp-step-name{font-size:21px}
+#intro .lp-msheet .lp-cue{min-height:0}
+}
+#intro .lp-msess{width:100%;background:var(--ink);color:#fff;border-radius:6px;padding:16px}
+#intro .lp-msess .lp-m{font-size:12.5px;color:#c9ccd1}
+#intro .lp-msess .lp-st{display:block;font:700 22px/1.05 var(--display);margin:4px 0 12px}
+#intro .lp-msess ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+#intro .lp-msess li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13.5px;line-height:1.25}
+#intro .lp-msess li .lp-pic{border-radius:6px}
+#intro .lp-msess .lp-dose{font-size:12.5px;color:#c9ccd1;white-space:nowrap}
+#intro .lp-msess .lp-done{display:block;margin-top:14px;text-align:center;background:var(--blue);border-radius:999px;padding:9px;font-weight:700;font-size:14px}
 #intro .lp-pitch .lp-sub{font-size:clamp(20px,1.7vw,24px);line-height:1.42;max-width:30ch}
 #intro .lp-cta-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 #intro .lp-beta{font-size:16px;color:var(--ink-2);display:flex;gap:10px;align-items:center}
 #intro .lp-beta .lp-seats{display:inline-block;width:96px;height:8px;border-radius:8px;background:var(--step);position:relative;overflow:hidden;flex:none}
 #intro .lp-beta .lp-seats i{position:absolute;inset:0 auto 0 0;width:28%;background:var(--coral);border-radius:8px}
 #intro .lp-fit{font-size:16px;color:var(--ink-2)}
-@media (max-width:900px){#intro .lp-hero-grid{grid-template-columns:minmax(0,1fr)}}
 #intro .lp-ex-switch{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 #intro .lp-ex-switch span{font-size:15px;font-weight:600;color:var(--ink-2)}
-#intro .lp-ex-switch .lp-seg button{min-width:88px}
+#intro .lp-ex-switch .lp-seg{flex-wrap:wrap;border-radius:22px;max-width:100%}
+#intro .lp-ex-switch .lp-seg button{min-width:0;padding:0 14px}
 #intro .lp-ex-switch .lp-seg button[aria-pressed="true"]{background:var(--nb);color:#fff}
 #intro .lp-player{background:var(--paper);border-radius:6px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);overflow:hidden;margin:0}
 #intro .lp-player .lp-shot{position:relative;background:#222;aspect-ratio:860/1100}
-#intro .lp-player .lp-shot > div{position:absolute;inset:0;opacity:0}
+#intro .lp-player .lp-shot > div{position:absolute;inset:0;opacity:0;}
 #intro .lp-player .lp-shot > div.lp-on{opacity:1}
 #intro .lp-player .lp-shot img,#intro .lp-player .lp-shot svg{width:100%;height:100%;object-fit:cover}
 #intro .lp-pic svg,#intro .lp-player .lp-shot svg,#intro .lp-notes-ui .lp-ph svg,#intro .lp-thumbs svg,#intro .lp-seq svg,#intro .lp-chrome .lp-vid svg,#intro .lp-mini-phone svg.lp-x{overflow:hidden}
 #intro .lp-player .lp-shot .lp-num{position:absolute;left:14px;top:12px;font:800 64px/1 var(--display);color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35);z-index:2}
 #intro[data-ex="dance"] .lp-player .lp-shot .lp-num{color:#6e1f45;text-shadow:none}
-#intro[data-ex="mma"] .lp-player .lp-shot .lp-num{color:#4a1c13;text-shadow:none}
 #intro .lp-player .lp-side{padding:22px 22px 20px;display:flex;flex-direction:column;gap:14px;min-width:0}
 #intro .lp-player .lp-crumb{font-size:15px;color:var(--ink-2);font-weight:600}
 #intro .lp-player .lp-title{font:700 30px/1 var(--display);letter-spacing:-.01em}
@@ -664,7 +764,11 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-thumbs button:hover{opacity:.85}
 #intro .lp-scrub{width:100%;accent-color:var(--blue);margin:0}
 #intro .lp-scrub-l{font-size:14px;color:var(--ink-2);display:flex;justify-content:space-between}
-@media (max-width:560px){#intro .lp-player{grid-template-columns:minmax(0,1fr)}#intro .lp-player .lp-shot{aspect-ratio:4/4.2}#intro .lp-player .lp-cue{min-height:0}}
+@media (max-width:560px){
+#intro .lp-player{grid-template-columns:minmax(0,1fr)}
+#intro .lp-player .lp-shot{aspect-ratio:4/4.2}
+#intro .lp-player .lp-cue{min-height:0}
+}
 #intro .lp-drawn{font-size:13.5px;color:var(--ink-2);margin-top:10px}
 #intro .lp-sec{padding-block:clamp(96px,12vw,180px) 0}
 #intro .lp-lede{font-size:clamp(20px,1.7vw,24px);line-height:1.42;max-width:36ch}
@@ -674,15 +778,60 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-split>*{min-width:0}
 #intro .lp-split h2{font-size:clamp(44px,4.9vw,70px)}
 #intro .lp-txt{display:flex;flex-direction:column;gap:22px;padding-top:12px}
-@media (max-width:900px){#intro .lp-split,#intro .lp-split.lp-rev{grid-template-columns:minmax(0,1fr)}#intro .lp-split.lp-rev .lp-txt{order:0}}
+@media (max-width:900px){
+#intro .lp-split,#intro .lp-split.lp-rev{grid-template-columns:minmax(0,1fr)}
+#intro .lp-split.lp-rev .lp-txt{order:0}
+}
 #intro .lp-head2{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,4vw,64px);align-items:end}
-@media (max-width:900px){#intro .lp-head2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+#intro .lp-head2{grid-template-columns:minmax(0,1fr)}
+}
 #intro [data-ui]{font-family:var(--body);background:var(--paper);border-radius:16px;padding:20px;border:1px solid var(--line);min-width:0}
 #intro .lp-ui-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-#intro .lp-ui-badge{width:34px;height:34px;border-radius:10px;background:var(--nb);display:grid;place-items:center;color:#fff;flex:none}
+#intro .lp-ui-badge{width:34px;height:34px;border-radius:10px;background:var(--nb);display:grid;place-items:center;color:#fff;flex:none;}
 #intro .lp-ui-badge svg{width:20px;height:20px}
 #intro .lp-ui-title{font:700 26px/1 var(--display)}
 #intro .lp-ui-count{margin-left:auto;font-size:14px;color:var(--ink-2)}
+#intro .lp-devices{margin:0;container-type:inline-size;min-width:0}
+#intro .lp-dv-stage{position:relative;padding-bottom:17cqw}
+#intro .lp-dv-tab{width:80cqw;aspect-ratio:1.43;overflow:hidden;box-sizing:border-box;background:var(--ground);border:1.4cqw solid #1b1d1f;border-radius:3.6cqw;padding:2.2cqw;box-shadow:0 2cqw 5cqw rgba(0,0,0,.18);font-family:var(--body)}
+#intro .lp-dv-bar{display:flex;align-items:baseline;gap:2cqw;margin:0 .4cqw 1.8cqw}
+#intro .lp-dv-bar b{font:800 3cqw/1 var(--display);color:var(--blue)}
+#intro .lp-dv-bar span{font-size:1.7cqw;font-weight:700;color:var(--ink-2)}
+#intro .lp-dv-add{display:flex;justify-content:space-between;align-items:center;margin:0 .4cqw 1.8cqw;padding:1cqw 1cqw 1cqw 1.6cqw;border:.15cqw solid var(--line);border-radius:99px;background:var(--paper);font-size:1.4cqw;color:var(--ink-2)}
+#intro .lp-dv-add i{font-style:normal;width:2.6cqw;height:2.6cqw;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.8cqw}
+#intro .lp-dv-sub{margin:0 0 .9cqw;font-size:1.25cqw;line-height:1.3;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#intro .lp-dv-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5cqw}
+#intro .lp-dv-nb{background:var(--paper);border:.15cqw solid var(--line);border-radius:1.6cqw;overflow:hidden;padding:0 1.2cqw 1.2cqw}
+#intro .lp-dv-cv{display:flex;align-items:center;gap:1.2cqw;margin:0 -1.2cqw 1cqw;padding:1.2cqw;background:color-mix(in srgb,var(--t) 14%,var(--paper))}
+#intro .lp-dv-cv i{width:3.8cqw;height:3.8cqw;border-radius:50%;background:var(--paper);color:var(--t);display:grid;place-items:center;flex:none}
+#intro .lp-dv-cv i svg{width:2.2cqw;height:2.2cqw}
+#intro .lp-dv-cv span{display:grid;min-width:0}
+#intro .lp-dv-cv small{font-size:1.15cqw;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb,var(--t) 60%,var(--ink))}
+#intro .lp-dv-cv b{font:700 2.3cqw/1.05 var(--display);color:color-mix(in srgb,var(--t) 60%,var(--ink));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#intro .lp-dv-th{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6cqw}
+#intro .lp-dv-th img,#intro .lp-dv-row img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:.8cqw}
+#intro .lp-dv-th img{aspect-ratio:1}
+#intro .lp-dv-ph{position:absolute;right:0;bottom:0;width:24cqw;aspect-ratio:9/19.5;background:var(--ground);border:1.2cqw solid #1b1d1f;border-radius:4.2cqw;overflow:hidden;box-shadow:0 2cqw 6cqw rgba(0,0,0,.28);font-family:var(--body)}
+#intro .lp-dv-ph .lp-dv-cv{margin:0 0 1cqw;padding:2.6cqw 1.4cqw 1.4cqw}
+#intro .lp-dv-ph .lp-dv-cv b{font-size:2.1cqw;white-space:normal}
+#intro .lp-dv-g{padding:0 0 1.2cqw 1.4cqw}
+#intro .lp-dv-g>b{display:block;font-size:1.35cqw;margin-bottom:.6cqw}
+#intro .lp-dv-g>b span{color:var(--ink-2);font-weight:600}
+#intro .lp-dv-row{display:grid;grid-template-columns:repeat(3,8.6cqw);gap:.6cqw}
+#intro .lp-devices figcaption{margin-top:-10cqw;max-width:72cqw;font-size:15px;font-weight:700;color:var(--ink-2)}
+#intro .lp-tcs{display:grid;gap:16px;min-width:0}
+#intro .lp-tc{--band:color-mix(in srgb,var(--t) 14%,var(--paper));--on-band:color-mix(in srgb,var(--t) 60%,var(--ink));background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:0 18px 18px;font-family:var(--body);min-width:0}
+#intro .lp-tc .lp-cover{display:flex;align-items:center;gap:14px;margin:0 -18px 12px;padding:16px 18px;background:var(--band)}
+#intro .lp-tc .lp-nbb{width:46px;height:46px;border-radius:50%;background:var(--paper);color:var(--t);display:grid;place-items:center;flex:none}
+#intro .lp-tc .lp-nbb svg{width:22px;height:22px}
+#intro .lp-tc .lp-eb{margin:0;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--on-band)}
+#intro .lp-tc h3{font:700 clamp(26px,2.6vw,34px)/1 var(--display);color:var(--on-band);margin:2px 0 0}
+#intro .lp-tc .lp-sub2{margin:0 0 12px;color:var(--ink-2);font-size:15.5px}
+#intro .lp-th3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#intro .lp-th3 figure{margin:0;min-width:0}
+#intro .lp-th3 img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+#intro .lp-th3 figcaption{font-size:13px;line-height:1.25;font-weight:700;margin-top:6px}
 #intro .lp-grp{margin-top:14px;min-width:0}
 #intro .lp-grp-h{display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-bottom:8px}
 #intro .lp-grp-h span{color:var(--ink-2);font-weight:600}
@@ -712,8 +861,39 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-res small{font-size:13.5px;color:var(--ink-2)}
 #intro .lp-res mark{background:#e4eaf6;color:var(--blue);padding:0 2px;border-radius:3px}
 #intro .lp-field-step{background:var(--step);margin-top:clamp(96px,12vw,180px);padding-block:clamp(72px,9vw,140px)}
+#intro .lp-sports{margin-top:clamp(40px,5vw,72px);padding-block:clamp(28px,3.5vw,44px);overflow:hidden}
+#intro .lp-sports-head{display:flex;justify-content:space-between;align-items:end;gap:14px 32px;flex-wrap:wrap}
+#intro .lp-own-row{display:flex;flex-direction:column;align-items:flex-end;gap:10px;margin:0;font-size:15.5px;color:var(--ink-2);text-align:right}
+@media (max-width:900px){
+#intro .lp-own-row{align-items:flex-start;text-align:left}
+}
+@media (max-width:420px){
+#intro .lp-ex-switch .lp-seg button{padding:0 9px;font-size:13.5px}
+}
+@media (max-width:360px){
+#intro .lp-ex-switch .lp-seg button{padding:0 6px;font-size:12.5px}
+#intro .lp-ex-switch .lp-seg{flex-wrap:nowrap}
+#intro .lp-chrome .lp-url{white-space:normal;overflow-wrap:anywhere;text-overflow:clip;font-size:10px}
+}
+#intro .lp-flow-sec .lp-flow-head{margin-top:clamp(40px,5vw,72px)}
+#intro .lp-sports h2{font-size:clamp(30px,4.2vw,60px);text-transform:uppercase;line-height:.95}
+#intro .lp-marquee{overflow:hidden;margin-top:18px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+#intro .lp-track{display:flex;width:max-content;animation:lp-marq 45s linear infinite}
+#intro .lp-marquee:hover .lp-track,#intro .lp-marquee:focus-within .lp-track{animation-play-state:paused}
+#intro .lp-track .lp-set{display:flex;gap:8px;padding-right:8px}
+@keyframes lp-marq{to{transform:translateX(-50%)}}
+#intro .lp-lib-t{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px 0 12px;border-radius:999px;background:var(--paper);font-weight:600;font-size:15.5px;white-space:nowrap}
+#intro .lp-lib-t i{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none}
+#intro .lp-lib-t i svg{width:18px;height:18px}
+#intro .lp-own{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 20px 0 8px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;font-size:15.5px;text-decoration:none;}
+#intro .lp-own i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--coral);color:#fff;font-style:normal;font-weight:800;font-size:20px;line-height:1}
+#intro .lp-own:hover{background:var(--coral)}
+#intro .lp-own:hover i{background:#fff;color:var(--coral)}
+#intro .lp-hero .lp-lede .lp-brand,#intro .lp-lede .lp-brand{color:var(--blue);font-weight:800}
 #intro .lp-nbs{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(20px,3vw,40px);margin-top:clamp(36px,4vw,56px);align-items:start}
-@media (max-width:900px){#intro .lp-nbs{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+#intro .lp-nbs{grid-template-columns:minmax(0,1fr)}
+}
 #intro .lp-lib{display:flex;flex-wrap:wrap;gap:8px}
 #intro .lp-lib span{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 8px;border-radius:999px;background:var(--paper);font-weight:600;font-size:15.5px}
 #intro .lp-lib span i{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#fff}
@@ -727,14 +907,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-custom textarea{min-height:92px}
 #intro .lp-custom .lp-hint{font-size:14px;color:var(--ink-2)}
 #intro .lp-notes-ui{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:clamp(18px,3vw,36px);padding:clamp(16px,2vw,24px);margin-top:clamp(36px,4vw,56px)}
-@media (max-width:760px){#intro .lp-notes-ui{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){
+#intro .lp-notes-ui{grid-template-columns:minmax(0,1fr)}
+}
 #intro .lp-notes-ui .lp-ph{aspect-ratio:4/5;border-radius:10px;overflow:hidden;position:relative;max-height:520px}
 #intro .lp-notes-ui .lp-ph img,#intro .lp-notes-ui .lp-ph svg{width:100%;height:100%;object-fit:cover}
 #intro .lp-notes-ui .lp-ph b{position:absolute;left:12px;bottom:12px;background:var(--paper);border-radius:999px;padding:6px 12px;font-size:14px}
 #intro .lp-notes-ui .lp-r{display:flex;flex-direction:column;gap:16px;min-width:0}
 #intro .lp-notes-ui .lp-t{font:700 32px/1 var(--display)}
 #intro .lp-notes-ui label{font-weight:700;font-size:15px}
-#intro .lp-notes-ui textarea{font:400 18px/1.55 var(--body);color:var(--ink);border:0;border-radius:12px;background:#fff6d6;padding:16px 18px;min-height:150px;resize:none;width:100%;cursor:default}
+#intro .lp-notes-ui textarea{font:400 18px/1.55 var(--body);color:var(--ink);border:0;border-radius:12px;background:#fff6d6;padding:16px 18px;min-height:150px;resize:none;width:100%}
 #intro .lp-notes-ui .lp-saved{font-size:14px;color:#1f6b3a;font-weight:600}
 #intro .lp-orig{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--ground);text-decoration:none;color:var(--ink)}
 #intro .lp-orig .lp-play{width:44px;height:44px;border-radius:50%;background:var(--ink);display:grid;place-items:center;flex:none}
@@ -747,6 +929,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-count span{font-size:16px;color:var(--ink-2)}
 #intro .lp-field-dark{background:var(--night);color:var(--night-ink);margin-top:clamp(96px,12vw,180px);padding-block:clamp(72px,9vw,140px)}
 #intro .lp-field-dark .lp-lede{color:var(--night-ink)}
+#intro .lp-field-dark :focus-visible{outline-color:#7fa6ea}
 #intro .lp-field-dark [data-ui]{background:var(--night-2);border-color:#30343b;color:var(--night-ink)}
 #intro .lp-session-ui .lp-meta{font-size:15px;color:var(--night-2ink)}
 #intro .lp-session-ui .lp-st{font:700 32px/1 var(--display);margin:4px 0 6px}
@@ -757,16 +940,22 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-session-ui li small{font-size:13.5px;color:var(--night-2ink)}
 #intro .lp-session-ui li small i{font-style:normal;color:#fff;background:#3a3f47;border-radius:6px;padding:1px 6px;margin-right:6px}
 #intro .lp-session-ui .lp-dose{font:700 17px/1 var(--body);color:#fff;background:#30343b;padding:8px 10px;border-radius:999px;white-space:nowrap}
-#intro .lp-session-ui .lp-done{margin-top:16px;width:100%;min-height:52px;border:0;border-radius:999px;background:#7fa6ea;color:#0f1a30;font:700 17px/1 var(--body);cursor:pointer}
+#intro .lp-session-ui .lp-done{display:flex;align-items:center;justify-content:center;margin-top:16px;width:100%;min-height:52px;border:0;border-radius:999px;background:#7fa6ea;color:#0f1a30;font:700 17px/1 var(--body)}
 #intro .lp-session-ui .lp-done:active{transform:scale(.98)}
-@media (max-width:520px){#intro .lp-session-ui li{grid-template-columns:60px 1fr}#intro .lp-session-ui .lp-dose{grid-column:2;justify-self:start}}
+@media (max-width:520px){
+#intro .lp-session-ui li{grid-template-columns:60px 1fr}
+#intro .lp-session-ui .lp-dose{grid-column:2;justify-self:start}
+}
 #intro .lp-progress{margin-top:clamp(36px,4vw,56px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2vw,28px)}
-@media (max-width:900px){#intro .lp-progress{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+#intro .lp-progress{grid-template-columns:minmax(0,1fr)}
+}
 #intro .lp-shelf h3{font-size:24px;text-transform:uppercase;margin-bottom:4px}
 #intro .lp-shelf p{font-size:15.5px;color:var(--night-2ink);margin-bottom:14px}
 #intro .lp-shelf .lp-items{display:grid;gap:12px}
 #intro .lp-shelf .lp-it{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center}
-#intro .lp-shelf .lp-it b{font-size:15.5px;line-height:1.25;display:block;margin-bottom:6px}
+#intro .lp-shelf .lp-it b{font-size:15.5px;line-height:1.25;display:block;margin-bottom:4px}
+#intro .lp-shelf .lp-ynb{display:block;font-size:12.5px;color:var(--night-2ink);margin-bottom:6px}
 #intro .lp-field-dark .lp-tag-try{background:#3a3f47;color:#fff}
 #intro .lp-field-dark .lp-tag-done{background:#1d3326;color:#8fd3a6}
 #intro .lp-sub-sec{margin-top:clamp(96px,10vw,150px)}
@@ -778,8 +967,17 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-stage{height:252px;display:flex;align-items:flex-start;justify-content:center}
 #intro .lp-route h3{font-size:25px;text-transform:uppercase}
 #intro .lp-route p{font-size:16.5px;line-height:1.45;color:var(--ink-2)}
-@media (max-width:1020px){#intro .lp-route{grid-template-columns:minmax(0,1fr);gap:34px;padding-left:34px}#intro .lp-route::before{left:6px;right:auto;top:0;bottom:0;width:3px;height:auto}#intro .lp-route .lp-dot{left:1px;top:0;animation:lp-travelv 9s cubic-bezier(.6,0,.4,1) infinite}@keyframes lp-travelv{0%{top:0}100%{top:calc(100% - 13px)}}#intro .lp-route li:not(.lp-dot){display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:20px;align-items:center}#intro .lp-stage{height:auto;justify-content:flex-start}}
-@media (max-width:520px){#intro .lp-route li:not(.lp-dot){grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1020px){
+#intro .lp-route{grid-template-columns:minmax(0,1fr);gap:34px;padding-left:34px}
+#intro .lp-route::before{left:6px;right:auto;top:0;bottom:0;width:3px;height:auto}
+#intro .lp-route .lp-dot{left:1px;top:0;animation:lp-travelv 9s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes lp-travelv{0%{top:0}100%{top:calc(100% - 13px)}}
+#intro .lp-route li:not(.lp-dot){display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:20px;align-items:center}
+#intro .lp-stage{height:auto;justify-content:flex-start}
+}
+@media (max-width:520px){
+#intro .lp-route li:not(.lp-dot){grid-template-columns:minmax(0,1fr)}
+}
 #intro .lp-mini-phone{width:120px;height:224px;border-radius:24px;background:var(--ink);padding:8px;display:flex;flex-direction:column}
 #intro .lp-mini-phone .lp-screen{flex:1;border-radius:17px;overflow:hidden;position:relative;background:#333}
 #intro .lp-mini-phone .lp-screen .lp-bg{position:absolute;inset:0;opacity:.6}
@@ -827,9 +1025,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-opt:has(input:checked){border-color:var(--blue)}
 #intro .lp-opt input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--blue)}
 #intro .lp-opt .lp-seatline{margin-top:6px;font-weight:700;color:var(--coral);font-size:14px}
-#intro .lp-peek{align-self:flex-start}
-#intro .lp-peek button{font-size:13px;min-height:32px}
-#intro .lp-opt[hidden]{display:none}
+#intro .lp-opt[hidden],#intro .lp-host-cta[hidden],#intro [data-os-pane][hidden]{display:none}
+#intro .lp-install .lp-seg{align-self:flex-start;background:var(--paper)}
 #intro .lp-opt.lp-host-full,#intro .lp-opt.lp-host-full:has(input:checked){cursor:default;border-color:var(--coral)}
 #intro .lp-host-full .lp-lock-ic{width:22px;height:22px;border-radius:50%;background:var(--coral);color:#fff;font:800 10px/22px var(--body);text-align:center}
 #intro .lp-wl{display:grid;gap:10px;margin-top:12px}
@@ -840,27 +1037,52 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 #intro .lp-wl .lp-btn{justify-self:start;min-height:46px}
 #intro .lp-opt b{display:block;font-size:17px}
 #intro .lp-opt span{display:block;font-size:15px;color:var(--ink-2);line-height:1.4}
-#intro pre{margin:0;background:var(--night);color:#e6e9ef;border-radius:12px;padding:14px;font:500 13.5px/1.5 var(--mono);white-space:pre-wrap;word-break:break-all;-webkit-user-select:all;user-select:all}
-#intro .lp-copy-msg{margin:0;font-size:14px;color:var(--ink)}
-#intro .lp-opt[hidden]{display:none}
+#intro pre{margin:0;background:var(--night);color:#e6e9ef;border-radius:12px;padding:14px;font:500 13.5px/1.5 var(--mono);white-space:pre-wrap;word-break:break-all}
 #intro code{font:600 .92em var(--mono)}
 #intro .lp-copy{align-self:flex-start;min-height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--ink);color:var(--paper);font:700 15px/1 var(--body);cursor:pointer}
 #intro .lp-copy:active{transform:scale(.97)}
-@media (max-width:980px){#intro .lp-install{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:980px){
+#intro .lp-install{grid-template-columns:minmax(0,1fr)}
+}
 #intro .lp-daily{list-style:none;margin:clamp(40px,5vw,64px) 0 0;padding:0;display:grid}
 #intro .lp-daily li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(16px,4vw,64px);padding-block:26px;align-items:center}
 #intro .lp-daily .lp-verb{font:800 clamp(48px,6.4vw,92px)/.88 var(--display);text-transform:uppercase;letter-spacing:-.02em}
 #intro .lp-daily li:nth-child(1) .lp-verb{color:var(--blue)}
 #intro .lp-daily p{font-size:clamp(18px,1.5vw,21px);line-height:1.5;max-width:44ch}
 #intro .lp-daily code{background:var(--step);padding:2px 6px;border-radius:6px}
-@media (max-width:700px){#intro .lp-daily li{grid-template-columns:minmax(0,1fr);gap:8px;padding-block:18px}}
+@media (max-width:700px){
+#intro .lp-daily li{grid-template-columns:minmax(0,1fr);gap:8px;padding-block:18px}
+}
 #intro .lp-close{padding-block:clamp(96px,12vw,180px) 48px}
 #intro .lp-close .lp-big{font:800 clamp(88px,23vw,340px)/.78 var(--display);color:var(--blue);letter-spacing:-.04em;text-transform:lowercase}
 #intro .lp-close-row{display:flex;justify-content:space-between;align-items:end;gap:28px;flex-wrap:wrap;margin-top:36px}
 #intro .lp-close-row p{font-size:clamp(20px,1.7vw,24px);max-width:34ch}
 #intro .lp-foot{font-size:14px;color:var(--ink-2);margin-top:56px;line-height:1.5}
-@media (prefers-reduced-motion: reduce){#intro *,#intro *::before,#intro *::after{animation:none !important;transition:none !important}#intro .lp-seq > div{opacity:1}}
-@media (prefers-reduced-motion:no-preference){#intro .lp-btn{transition:transform .15s ease, background .15s ease}#intro .lp-topbar{transition:border-color .2s,box-shadow .2s}#intro .lp-seg button{transition:background .2s,color .2s}#intro .lp-player .lp-shot > div{transition:opacity .35s ease}#intro .lp-thumbs button{transition:opacity .2s, transform .2s}#intro .lp-ui-badge{transition:background .3s}}
+#intro .lp-foot a{color:inherit}
+#intro .lp-oss{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;margin:clamp(20px,2.5vw,32px) 0 0;padding:14px 18px;border-radius:12px;background:var(--paper);font-size:15.5px;line-height:1.45}
+#intro .lp-oss-ic{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:#fff}
+#intro .lp-oss-ic svg{width:20px;height:20px}
+#intro .lp-oss span[data-k]{flex:1 1 320px}
+#intro .lp-oss a{font-weight:700;color:var(--blue);white-space:nowrap}
+#intro .lp-install .lp-src{margin:8px 0 0;font-size:14.5px}
+#intro .lp-install .lp-src a{color:var(--blue);font-weight:600}
+@media (prefers-reduced-motion: reduce){
+#intro *,#intro *::before,#intro *::after{animation:none !important;transition:none !important}
+#intro .lp-seq > div{opacity:1}
+#intro .lp-marquee{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
+#intro .lp-track .lp-set[aria-hidden]{display:none}
+#intro .lp-msheet .lp-pp{display:none}
+}
+@media (prefers-reduced-motion:no-preference){
+#intro .lp-btn{transition:transform .15s ease, background .15s ease}
+#intro .lp-topbar{transition:border-color .2s,box-shadow .2s}
+#intro .lp-seg button{transition:background .2s,color .2s}
+#intro .lp-msheet .lp-shot>div{transition:opacity .35s ease}
+#intro .lp-player .lp-shot > div{transition:opacity .35s ease}
+#intro .lp-thumbs button{transition:opacity .2s, transform .2s}
+#intro .lp-ui-badge{transition:background .3s}
+#intro .lp-own{transition:background .2s}
+}
 .auth-demo{margin:var(--s-2) 0 0}
 .intro-demo{display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);color:var(--accent);font-weight:600}
 .auth-adv{margin-top:var(--s-3)}
@@ -903,94 +1125,74 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <!-- ===== Auth ===== -->
 <div id="auth" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
-  <!-- L30: the landing (mockup v2), shown before the account actions on a device that has never signed in -->
+  <!-- L30, L36: the landing (mockup v3), shown before the account actions on a device that has never signed in -->
 <div id="intro" hidden data-ex="mma">
 <div class="lp-topbar" id="lp-topbar"><header class="lp-frame lp-bar">
-  <a class="lp-wm" href="#lp-top" aria-label="Reelbook"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg>reelbook</a>
-  <nav aria-label="Sections" data-ka="aria.sections"><a href="#lp-train"><span class="lp-l2"><span lang="fr">S'entraîner</span><span lang="en">Train</span></span></a><a href="#lp-how"><span class="lp-l2"><span lang="fr">Comment ça marche</span><span lang="en">How it works</span></span></a><a href="#lp-install"><span class="lp-l2"><span lang="fr">Installation</span><span lang="en">Setup</span></span></a></nav>
+  <a class="lp-wm" href="#lp-top" aria-label="Reelbook"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="lp-wm-t">reelbook</span></a>
+  <nav aria-label="Sections" data-ka="aria.sections"><a href="#lp-train"><span class="lp-l2"><span lang="fr">S’entraîner</span><span lang="en">Train</span></span></a><a href="#lp-how"><span class="lp-l2"><span lang="fr">Comment ça marche</span><span lang="en">How it works</span></span></a><a href="#lp-install"><span class="lp-l2"><span lang="fr">Installation</span><span lang="en">Setup</span></span></a></nav>
   <div class="lp-seg lp-lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
-  <button type="button" class="lp-btn lp-quiet" id="intro-signin"><span class="lp-l2"><span lang="fr">Se connecter</span><span lang="en">Sign in</span></span></button>
+  <a class="lp-btn lp-quiet" href="#signin" id="intro-signin"><span class="lp-l2"><span lang="fr">Se connecter</span><span lang="en">Sign in</span></span></a>
 </header></div>
 
 <main id="lp-top">
+
 <section class="lp-frame lp-hero" aria-labelledby="lp-h1">
-  <h1 id="lp-h1" data-k="h1">From reel to move.</h1>
-  <div class="lp-hero-grid">
-    <div class="lp-pitch">
-      <p class="lp-sub" data-k="sub">Reelbook gathers your technique videos into a training notebook. Each video becomes a frame-by-frame sheet, easy to find and to build sessions from.</p>
-      <div class="lp-cta-row"><a class="lp-btn" href="#lp-install" data-k="cta">Create my notebook</a><a class="lp-btn lp-quiet" href="#lp-how" data-k="cta2">See how it works</a></div>
-      <p class="lp-beta"><span class="lp-seats" data-seats-bar aria-hidden="true" hidden><i></i></span><span><span data-k="beta">Free during the beta</span><span data-seats-line hidden> · <span data-seats></span></span></span></p>
-      <p class="lp-fit" data-k="fit">For TikTok, Instagram, YouTube and Facebook. Runs on your Claude plan.</p>
+  <h1 id="lp-h1" data-k="h1">A Claude Code <span class="lp-slash">/skill</span> that turns your technique videos into a training notebook.</h1>
+  <div class="lp-pitch">
+    <p class="lp-sub" data-k="sub">Reelbook gathers your technique videos into a training notebook. Each video becomes a frame-by-frame sheet, easy to find and to build sessions from.</p>
+    <div class="lp-pitch-side">
+      <div class="lp-cta-row"><a class="lp-btn" href="#lp-carnet" data-k="cta">Create my notebook</a><a class="lp-btn lp-quiet" href="#lp-how" data-k="cta2">See how it works</a></div>
+      <p class="lp-beta"><span class="lp-seats" id="lp-seatsBar" aria-hidden="true" hidden><i></i></span><span data-k="beta" id="lp-betaLine">Free during the beta</span></p>
+      <p class="lp-fit" data-k="fit">You need Claude Pro (or higher) with Claude Code, and Chrome on your computer. For TikTok, Instagram, YouTube and Facebook.</p>
     </div>
-    <div>
-      <div class="lp-ex-switch"><span data-k="ex.l">See an example:</span>
-        <div class="lp-seg lp-ex" role="group" aria-label="Example" data-ka="aria.ex"><button type="button" data-ex="mma" aria-pressed="true">MMA</button><button type="button" data-ex="dance" aria-pressed="false" data-k="ex.dance">Dance</button></div></div>
-      <figure class="lp-player" aria-label="A Reelbook sheet" data-ka="aria.sheet">
-        <div class="lp-shot" id="lp-shot"><span class="lp-num" id="lp-num" aria-hidden="true">1</span></div>
+  </div>
+</section>
+
+<section class="lp-field-step lp-sports" aria-labelledby="lp-v6">
+  <div class="lp-frame lp-sports-head">
+    <h2 id="lp-v6" data-k="v6.h">Your activities, your notebooks.</h2>
+    <p class="lp-own-row"><span data-k="v6.q">29 ready-made notebooks. Yours isn’t there?</span><a class="lp-own" href="#lp-install"><i aria-hidden="true">+</i><span data-k="v6.own">Create your own activity</span></a></p>
+  </div>
+  <div class="lp-marquee"><div class="lp-track" id="lp-lib"></div></div>
+</section>
+
+<section class="lp-frame lp-flow-sec" aria-labelledby="lp-flow-h">
+  <div class="lp-flow-head">
+    <h2 id="lp-flow-h" data-k="flow.h">From reel to move.</h2>
+    <div class="lp-ex-switch"><span data-k="ex.l">See an example:</span>
+        <div class="lp-seg lp-ex" role="group" aria-label="Example" data-ka="aria.ex"><button type="button" data-ex="mma" aria-pressed="true">MMA</button><button type="button" data-ex="dance" aria-pressed="false" data-k="ex.dance">Dance</button><button type="button" data-ex="stretch" aria-pressed="false" data-k="ex.stretch">Stretch</button><button type="button" data-ex="snow" aria-pressed="false" data-k="ex.snow">Snowboard</button><button type="button" data-ex="hiit" aria-pressed="false" data-k="ex.hiit">HIIT</button></div></div>
+  </div>
+  <ol class="lp-flow" aria-labelledby="lp-flow-h">
+    <li><div class="lp-fl-vis" aria-hidden="true"><div class="lp-mini-phone"><div class="lp-screen"><div class="lp-bg" data-share></div><div class="lp-sheet"><span class="lp-app"></span><span class="lp-app lp-rb"><svg viewBox="0 0 256 256"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg></span><span class="lp-app"></span></div></div></div></div>
+      <h3><span class="lp-n" aria-hidden="true">1</span><span data-k="f1.h">You spot a video, send it to Reelbook</span></h3>
+      <p data-k="f1.p">On TikTok, Instagram, YouTube or Facebook: Share, then Reelbook. Ten seconds, and you keep scrolling.</p></li>
+    <li><div class="lp-fl-vis"><figure class="lp-msheet" aria-label="A Reelbook sheet" data-ka="aria.sheet">
+        <div class="lp-shot" id="lp-shot"><span class="lp-num" id="lp-num" aria-hidden="true">1</span><button class="lp-pp" id="lp-pp" type="button" aria-label="Mettre en pause les animations"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path class="lp-i-pause" d="M6 4h4v16H6zM14 4h4v16h-4z"/><path class="lp-i-play" d="M7 4l13 8-13 8z"/></svg></span></button></div>
         <figcaption class="lp-side">
           <span class="lp-crumb" id="lp-pCrumb"></span>
           <span class="lp-title" id="lp-pTitle"></span>
           <span class="lp-step-name" id="lp-stepName"></span>
-          <span class="lp-cue" id="lp-cue" aria-live="polite"></span>
-          <div class="lp-thumbs" id="lp-thumbs"></div>
-          <label class="lp-scrub-l" for="lp-scrub"><span data-k="p.scrub">Scrub through the move</span><span id="lp-scrubN">1 / 6</span></label>
-          <input class="lp-scrub" id="lp-scrub" type="range" min="1" max="6" step="1" value="1">
-          <a class="lp-src" id="lp-pSrc" href="#"></a>
+          <span class="lp-cue" id="lp-cue" aria-live="off"></span>
+          <div class="lp-dots" id="lp-thumbs"></div>
         </figcaption>
-      </figure>
-      <p class="lp-drawn" id="lp-drawn"></p>
-    </div>
-  </div>
+      </figure></div>
+      <h3><span class="lp-n" aria-hidden="true">2</span><span data-k="f2.h">It becomes a sheet</span></h3>
+      <p data-k="f2.p">The move cut into frames, with the cues to remember, a dose and the link to the video.</p></li>
+    <li><div class="lp-fl-vis" aria-hidden="true"><div class="lp-msess" id="lp-sessionMini"></div></div>
+      <h3><span class="lp-n" aria-hidden="true">3</span><span data-k="f3.h">Sheets become sessions</span></h3>
+      <p data-k="f3.p">Mix sheets from all your notebooks, give each one its dose, and train sheet by sheet.</p></li>
+  </ol>
+  <p class="lp-drawn" id="lp-drawn"></p>
 </section>
 
 <section class="lp-frame lp-sec" aria-labelledby="lp-v1">
   <div class="lp-split">
     <div class="lp-txt">
       <h2 id="lp-v1" data-k="v1.h">All in one place.</h2>
-      <p class="lp-lede" data-k="v1.p">Your coach’s reel on Instagram, a champion’s YouTube breakdown, the TikTok you caught on the train: it all lands in one place, filed by activity and by theme.</p>
+      <p class="lp-lede" data-k="v1.p">Your coach’s reel on Instagram, a champion’s YouTube breakdown, the TikTok you caught on the train: it all lands in one place, filed by activity and by theme. Search by body zone or gear, and keep your coach’s notes next to the move.</p>
     </div>
-    <div data-ui id="lp-nbUi" aria-label="A Reelbook notebook" data-ka="aria.nb"></div>
+    <figure class="lp-devices" id="lp-nbUi" role="img" aria-label="Six Reelbook notebooks on a tablet, one notebook open on a phone" data-ka="aria.devices"></figure>
   </div>
-</section>
-
-<section class="lp-field-step" aria-labelledby="lp-v6">
-  <div class="lp-frame">
-    <div class="lp-head2">
-      <h2 id="lp-v6" data-k="v6.h">Your sports, your notebooks.</h2>
-      <p class="lp-lede" data-k="v6.p">Reelbook already knows about thirty activities and files each sheet in the right notebook on its own. Yours isn’t there? Create a notebook and describe it in a sentence: Claude uses it to sort.</p>
-    </div>
-    <div class="lp-nbs">
-      <div>
-        <div class="lp-lib" id="lp-lib"></div>
-        <p class="lp-lib-cap" data-k="v6.cap">Built-in notebooks, one tap to add. The groups inside (Turns, Clinch, Transitions…) grow as sheets arrive.</p>
-      </div>
-      <form data-ui class="lp-custom" aria-label="Create a notebook" data-ka="aria.create" onsubmit="return false">
-        <h3 data-k="cu.h">Your own notebook</h3>
-        <label for="lp-cuName"><span data-k="cu.n">Notebook name</span><input id="lp-cuName" type="text" value="Aerial hoop"></label>
-        <label for="lp-cuDesc"><span data-k="cu.d">What goes in it</span><textarea id="lp-cuDesc">Climbs, poses and sequences on the aerial hoop, beginner to advanced. One group per family of poses.</textarea></label>
-        <span class="lp-hint" data-k="cu.hint">Written for Claude: what the videos are about and how you want them grouped.</span>
-        <button class="lp-btn" type="button" data-k="cu.b">Create notebook</button>
-      </form>
-    </div>
-  </div>
-</section>
-
-<section class="lp-frame lp-sec" aria-labelledby="lp-v2">
-  <div class="lp-split lp-rev">
-    <div class="lp-txt">
-      <h2 id="lp-v2" data-k="v2.h">Right move, right time.</h2>
-      <p class="lp-lede" id="lp-v2p"></p>
-    </div>
-    <div data-ui class="lp-search-ui" id="lp-searchUi" aria-label="Reelbook search" data-ka="aria.search"></div>
-  </div>
-</section>
-
-<section class="lp-frame lp-sec" aria-labelledby="lp-v5">
-  <div class="lp-head2">
-    <h2 id="lp-v5" data-k="v5.h">Your notes, next to the move.</h2>
-    <p class="lp-lede" data-k="v5.p">A correction from your coach, a feeling, the side that sticks: write it in the sheet and it saves itself. And the link to the original video is always there, to watch it again when you need to.</p>
-  </div>
-  <div data-ui class="lp-notes-ui" id="lp-notesUi" aria-label="A sheet with its notes" data-ka="aria.notes"></div>
 </section>
 
 <section class="lp-field-dark" id="lp-train" aria-labelledby="lp-v3">
@@ -999,12 +1201,12 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       <h2 id="lp-v3" data-k="v3.h">Sheets become sessions.</h2>
       <p class="lp-lede" data-k="v3.p">Pick from all your notebooks and mix them: technique, mobility and warm-up in the same session. Put the exercises in order, give each one its dose, then follow the session sheet by sheet.</p>
     </div>
-    <div data-ui class="lp-session-ui" id="lp-sessionUi" aria-label="A Reelbook session" data-ka="aria.session"></div>
+    <div data-ui class="lp-session-ui" id="lp-sessionUi" role="img" aria-label="A Reelbook session" data-ka="aria.session"></div>
   </div>
   <div class="lp-frame lp-sub-sec">
     <div class="lp-head2">
       <h2 data-k="v4.h">Your progress, sheet by sheet.</h2>
-      <p class="lp-lede" data-k="v4.p">New sheets wait at the top of the home page, the ones you never tried come back up on their own, and every « Done today » adds to the sheet’s count.</p>
+      <p class="lp-lede" data-k="v4.p">New sheets wait at the top of the home page, the ones you’ve never tried resurface on their own, and every “Done today” adds to the sheet’s count.</p>
     </div>
     <div class="lp-progress" id="lp-progressUi"></div>
   </div>
@@ -1013,17 +1215,17 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <section class="lp-frame lp-sec" id="lp-how" aria-labelledby="lp-how-h">
   <div class="lp-head2">
     <h2 id="lp-how-h" data-k="how.h">A Claude skill does the work.</h2>
-    <p class="lp-lede" data-k="how.p">Reelbook is a skill for Claude Code. With the Claude in Chrome extension, it opens the videos you sent, cuts each one into a sequence of frames and files the sheet in your notebook.</p>
+    <p class="lp-lede" data-k="how.p"><strong class="lp-brand">Reelbook</strong> is a skill for Claude Code. With the Claude in Chrome extension, it opens the videos you sent, cuts each one into a sequence of frames and files each sheet in the right notebook.</p>
   </div>
   <ol class="lp-route">
     <li class="lp-dot" aria-hidden="true"></li>
-    <li><div class="lp-stage" aria-hidden="true"><div class="lp-mini-phone"><div class="lp-screen"><div class="lp-bg" data-frame="2"></div><div class="lp-sheet"><span class="lp-app"></span><span class="lp-app lp-rb"><svg viewBox="0 0 256 256"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg></span><span class="lp-app"></span></div></div></div></div>
-      <div><h3 data-k="r1.h">You send the video</h3><p data-k="r1.p">From TikTok or Instagram: Share, then Reelbook. It joins your queue.</p></div></li>
+    <li><div class="lp-stage" aria-hidden="true"><div class="lp-mini-phone"><div class="lp-screen"><div class="lp-bg" data-share></div><div class="lp-sheet"><span class="lp-app"></span><span class="lp-app lp-rb"><svg viewBox="0 0 256 256"><path fill="#1f4fa3" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="#c54b38" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg></span><span class="lp-app"></span></div></div></div></div>
+      <div><h3 data-k="r1.h">You send the video</h3><p data-k="r1.p">From TikTok, Instagram, YouTube or Facebook: Share, then Reelbook. It joins your queue.</p></div></li>
     <li><div class="lp-stage" aria-hidden="true"><div class="lp-term"><div class="lp-tb"><i></i><i></i><i></i></div><span class="lp-c">&gt;</span> <span class="lp-k">/reelbook</span><br><span data-k="t.l1">3 videos queued</span><br><span data-k="t.l2">opening in Chrome</span> <span class="lp-cur"></span></div></div>
-      <div><h3 data-k="r2.h">Claude takes over</h3><p data-k="r2.p">Type <code>/reelbook</code> in Claude Code, or let it run overnight on your Mac.</p></div></li>
-    <li><div class="lp-stage" aria-hidden="true"><div class="lp-chrome"><div class="lp-tb"><i></i><i></i><span class="lp-url" id="lp-rUrl">instagram.com/reel/…</span></div><div class="lp-vid"><div data-frame="3" style="width:100%;height:100%"></div><span class="lp-scan"></span></div></div></div>
+      <div><h3 data-k="r2.h">Claude takes over</h3><p data-k="r2.p">Type <code>/reelbook</code> in Claude Code, or let it run overnight on your computer.</p></div></li>
+    <li><div class="lp-stage" aria-hidden="true"><div class="lp-chrome"><div class="lp-tb"><i></i><i></i><span class="lp-url" id="lp-rUrl"></span></div><div class="lp-vid"><div data-frame="3" style="width:100%;height:100%"></div><span class="lp-scan"></span></div></div></div>
       <div><h3 data-k="r3.h">Chrome opens and reads it</h3><p data-k="r3.p">The Claude in Chrome extension watches the video the way you would: the move, the cues, the captions.</p></div></li>
-    <li><div class="lp-stage" aria-hidden="true"><div class="lp-seq"><div data-frame="0"></div><div data-frame="1"></div><div data-frame="2"></div><div data-frame="3"></div><div data-frame="4"></div><div data-frame="5"></div></div></div>
+    <li><div class="lp-stage" aria-hidden="true"><div class="lp-seq" id="lp-seq"></div></div>
       <div><h3 data-k="r4.h">The move, cut into frames</h3><p data-k="r4.p">The key moments become a sequence of images, with the points to remember, a dose and the link to the video.</p></div></li>
     <li><div class="lp-stage" aria-hidden="true"><div class="lp-nb" id="lp-routeNb"></div></div>
       <div><h3 data-k="r5.h">Filed in your notebook</h3><p data-k="r5.p">Right notebook, right group. Ready to find, annotate and add to a session.</p></div></li>
@@ -1033,25 +1235,35 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <section class="lp-frame lp-sec" id="lp-install" aria-labelledby="lp-inst-h">
   <div class="lp-head2">
     <h2 id="lp-inst-h" data-k="inst.h">Set up Reelbook.</h2>
-    <p class="lp-lede" data-k="inst.p">Three things to do once: your account, the skill on your computer, the app on your phone.</p>
+    <p class="lp-lede" data-k="inst.p">Before you start: Claude Pro with Claude Code, Chrome with the Claude in Chrome extension, Git and Python 3.9+. Then three things to do once: your account, the skill on your computer, the app on your phone.</p>
   </div>
-  <ol class="lp-install">
-    <li><h3 data-k="i1.h">Create your notebook</h3>
+  <p class="lp-oss"><span class="lp-oss-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg></span><span data-k="oss.p"><b>Reelbook is open source.</b> The skill, the app and the server are public on GitHub, under the MIT licence: you can read what you install, and host it yourself.</span><a href="https://github.com/lt20/reelbook" target="_blank" rel="noopener" data-k="oss.a">See the code on GitHub ↗</a></p>
+  <ol class="lp-install" id="lp-installList">
+    <li id="lp-carnet"><h3 data-k="i1.h">Create your notebook</h3>
       <p data-k="i1.p">Choose where your sheets live. You can change it later.</p>
-      <label class="lp-opt lp-host-open" id="lp-host-hosted-opt"><input type="radio" name="lp-host" id="lp-host-hosted" checked><span><b data-k="i1.a">With Reelbook</b><span data-k="i1.ad">Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.</span><span class="lp-seatline" data-seats-line hidden><span data-seats></span></span></span></label>
+      <label class="lp-opt lp-host-open" id="lp-host-hosted-opt"><input type="radio" name="lp-host" id="lp-host-hosted" checked><span><b data-k="i1.a">Hosted by Reelbook</b><span data-k="i1.ad">Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.</span><span class="lp-seatline" data-k="i1.seats" id="lp-seatline" hidden></span></span></label>
+      <div class="lp-opt lp-host-full" id="lp-host-full" hidden><span class="lp-lock-ic" id="lp-lockN" aria-hidden="true">50</span><span><b data-k="wl.h" id="lp-wlH">Beta full: {total} of {total}</b><span data-k="wl.p" id="lp-wlP" hidden>Leave your first name and email: we’ll let you know as soon as a spot opens.</span>
+        <form class="lp-wl" id="lp-wl" hidden><label><span data-k="wl.n">First name</span><input type="text" autocomplete="given-name" placeholder="Camille"></label><label><span data-k="wl.e">Email</span><input type="email" autocomplete="email" placeholder="camille@exemple.fr"></label>
+        <label class="lp-consent"><input type="checkbox"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
+        <button class="lp-btn" type="submit" data-k="wl.cta" disabled aria-disabled="true">Notify me</button></form></span></div>
       <label class="lp-opt"><input type="radio" name="lp-host" id="lp-host-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="i1.bd">Your own project, your limits. Run one SQL file, then paste the URL and key.</span></span></label>
-      <button type="button" class="lp-btn lp-host-cta" id="intro-signup" data-k="i1.cta">Create my notebook</button></li>
+      <a class="lp-btn lp-host-cta" href="#signup" id="intro-signup" data-k="i1.cta">Create my notebook</a></li>
     <li><h3 data-k="i2.h">Install the skill</h3>
       <p class="lp-need" data-k="i2.n">You need Claude Pro or above with Claude Code, and Chrome with the Claude in Chrome extension.</p>
-      <p data-k="i2.p">Paste this line in Terminal. It installs the <code>/reelbook</code> skill and links it to your notebook.</p>
-      <pre id="lp-line">curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
-      <button class="lp-copy" type="button" id="lp-copy" data-k="i2.copy">Copy the line</button>
-      <p id="lp-ownLine" data-k="i2.own" hidden>On your own Supabase, your line comes once your notebook is created: it carries your project’s URL and key. You can find it again anytime in Settings.</p>
-      <p class="lp-copy-msg" id="lp-copyMsg" role="status" hidden></p></li>
+      <div class="lp-lines" id="lp-lines">
+      <div class="lp-seg lp-os" role="group" aria-label="Operating system" data-ka="aria.os"><button type="button" data-os="unix" aria-pressed="true">macOS / Linux</button><button type="button" data-os="win" aria-pressed="false">Windows</button></div>
+      <p data-k="i2.p" data-os-pane="unix">Paste this line into Terminal. It installs the <code>/reelbook</code> skill and links it to your account.</p>
+      <p data-k="i2.pw" data-os-pane="win" hidden>Paste this line into PowerShell. It installs the <code>/reelbook</code> skill and links it to your account.</p>
+      <pre data-os-pane="unix" id="lp-line">curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
+      <pre data-os-pane="win" id="lp-line-win" hidden>irm https://lt20.github.io/reelbook/install.ps1 | iex</pre>
+      <button class="lp-copy" type="button" id="lp-copy" data-k="i2.copy">Copy the line</button><p class="lp-copy-msg" id="lp-copyMsg" role="status" hidden></p>
+      <p class="lp-src" data-os-pane="unix"><a href="https://github.com/lt20/reelbook/blob/main/app/install.sh" target="_blank" rel="noopener" data-k="i2.src">Read the script before you run it ↗</a></p>
+      <p class="lp-src" data-os-pane="win" hidden><a href="https://github.com/lt20/reelbook/blob/main/app/install.ps1" target="_blank" rel="noopener" data-k="i2.src">Read the script before you run it ↗</a></p></div>
+      <p id="lp-ownLine" data-k="i2.own" hidden>On your own Supabase, your line comes once your notebook is created: it carries your project’s URL and key. You can find it again anytime in Settings.</p></li>
     <li><h3 data-k="i3.h">Add it to your phone</h3>
-      <p data-k="i3.p">Put Reelbook on your home screen, then the « Send to Reelbook » shortcut in the iPhone Share menu.</p>
+      <p data-k="i3.p">Put Reelbook on your home screen, then the “Send to Reelbook” shortcut in the iPhone Share menu.</p>
       <p data-k="i3.p2">On Android, just paste the link in the app.</p>
-      <a class="lp-btn lp-quiet" href="#" style="align-self:flex-start;background:var(--paper)" data-k="i3.cta">Add the shortcut</a></li>
+      <a class="lp-btn lp-quiet" href="#shortcut" id="intro-shortcut" style="align-self:flex-start;background:var(--paper)" data-k="i3.cta">Add the shortcut</a></li>
   </ol>
 </section>
 
@@ -1061,7 +1273,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     <li><span class="lp-verb" data-k="d1.v">Send</span><p data-k="d1.p">A technique catches your eye in your feed: Share, Reelbook. Ten seconds, and you keep scrolling.</p></li>
     <li><span class="lp-verb" data-k="d2.v">Run</span><p data-k="d2.p"><code>/reelbook</code> in Claude Code whenever you like, or every night on its own. In the morning, your sheets are there.</p></li>
     <li><span class="lp-verb" data-k="d3.v">Organise</span><p data-k="d3.p">Move a sheet to another group, add your notes, build a session from several notebooks.</p></li>
-    <li><span class="lp-verb" data-k="d4.v">Train</span><p data-k="d4.p">Open the sheet or the session on your phone: the move first, in pictures, then the details. Tick « Done today ».</p></li>
+    <li><span class="lp-verb" data-k="d4.v">Train</span><p data-k="d4.p">Open the sheet or the session on your phone: the move first, in pictures, then the details. Tick “Done today”.</p></li>
   </ol>
 </section>
 
@@ -1069,9 +1281,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   <h2 id="lp-close-h" class="lp-big">reelbook</h2>
   <div class="lp-close-row">
     <p data-k="c.p">Your technique videos, ready for training at last. Free during the beta, 50 spots.</p>
-    <a class="lp-btn" href="#lp-install" data-k="cta">Create my notebook</a>
+    <a class="lp-btn" href="#lp-carnet" data-k="cta">Create my notebook</a>
   </div>
-  <p class="lp-foot" data-k="foot">Sheets are made for personal use and always keep the link to the video and its author.</p>
+  <p class="lp-foot" data-k="foot">Personal sheets keep the link to their video and author. The visuals on this page are generated demonstrations. Reelbook is open source, under the MIT licence: <a href="https://github.com/lt20/reelbook" target="_blank" rel="noopener">github.com/lt20/reelbook</a>.</p>
 </section>
 </main>
 </div>
@@ -1338,7 +1550,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <script src="config.js?v=9"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
-<script src="landing.js?v=1"></script>
+<script src="landing.js?v=3"></script>
 <script>
 (() => {
   'use strict';
@@ -1484,7 +1696,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // Without a hosted backend (a fork whose config.js has none), « On my own Supabase » is the only option. On that
   // option, step 2 says the line comes after sign-up (it carries the project's URL and key), not the hosted one.
   if (!hostedOk) { $('lp-host-own').checked = true; $('lp-host-hosted').checked = false; $('lp-host-hosted-opt').hidden = true; }
-  const paintHostChoice = () => { const own = !hostedOk || !!$('lp-host-own').checked; $('lp-line').hidden = own; $('lp-copy').hidden = own; $('lp-ownLine').hidden = !own; };
+  const paintHostChoice = () => { const own = !hostedOk || !!$('lp-host-own').checked; $('lp-lines').hidden = own; $('lp-ownLine').hidden = !own; };
   for (const id of ['lp-host-hosted', 'lp-host-own']) $(id).addEventListener('change', paintHostChoice);
   paintHostChoice();
   $('intro-signup').addEventListener('click', () => {
@@ -1511,6 +1723,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // L30: a language picked on the landing relabels what this script writes (no route: the page keeps its scroll)
   if (window.RBL) window.RBL.onChange(() => { labelMode(); paintBlurb(); paintOwnLink(); $('a-backend').textContent = backendLabel(); });
   $('intro-signin').addEventListener('click', () => { introOpen = false; setMode('in'); route(); $('a-email').focus(); });
+  // L36: « Add the shortcut » (installation, step 3): the shortcut is made in Settings › iPhone shortcut (L28), behind
+  // an account: the sign-in form now, Settings once signed in.
+  $('intro-shortcut').addEventListener('click', () => { introOpen = false; setMode('in'); location.hash = 'settings'; route(); $('a-email').focus(); });
   // « See a demo » appears once the demo notebook exists (L27 adds its view).
   $('intro-demo').hidden = !views.includes('demo');
   // L30: Supabase words its auth errors in English. The form says the known ones in the page's language (by the
@@ -1770,16 +1985,19 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const hint = ex.length ? `${ex.join(', ')}… or one you describe yourself.` : 'Describe one yourself.';
     return `<button type="button" class="tcard add" id="add-nb">${rest.length ? `<p class="eyebrow">${rest.length} more to pick from</p>` : ''}<h2>+ Add a notebook</h2><p>${esc(hint)}</p></button>`;
   };
+  // A notebook's card: `n` its sheets, `nS` its sessions, `pics` [title, photo url] newest first (L38: the demo too).
+  const tcard = (t, href, n, nS, pics, empty) => {
+    const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (nS ? ` · ${plural(nS, 'session')}` : '');
+    const thumbs = pics.slice(0, 3).map(([title, src]) => `<img src="${esc(src)}" alt="${esc(title)}">`).join('');
+    // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
+    return `<a class="tcard" href="${href}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
+        <div class="cover"><span class="nb-badge">${nbIcon(t)}</span><div><p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2></div></div><p>${esc(t.sub)}</p>
+        ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${empty}</p>`}</a>`;
+  };
   const renderPortal = () => {
     $('portal').innerHTML = themes.map(t => {
-      const list = sheets.filter(e => e.theme === t.id);
-      const n = list.length, sessions = v2Sessions.filter(s => s.theme === t.id).length;
-      const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (sessions ? ` · ${plural(sessions, 'session')}` : '');
-      const thumbs = list.slice().sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).slice(0, 3).map(e => `<img src="${esc(thumb(e.slug, e.thumbnail))}" alt="${esc(e.title)}">`).join('');
-      // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
-      return `<a class="tcard" href="#${esc(t.id)}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
-        <div class="cover"><span class="nb-badge">${nbIcon(t)}</span><div><p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2></div></div><p>${esc(t.sub)}</p>
-        ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.'}</p>`}</a>`;
+      const list = sheets.filter(e => e.theme === t.id).sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).map(e => [e.title, thumb(e.slug, e.thumbnail)]);
+      return tcard(t, `#${esc(t.id)}`, list.length, v2Sessions.filter(s => s.theme === t.id).length, list, loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.');
     }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
     $('add-nb').addEventListener('click', () => { renderPicker(); $('picker').hidden = !$('picker').hidden; if (!$('picker').hidden) $('picker').scrollIntoView({block: 'start'}); });
   };
@@ -3704,7 +3922,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // Pages: #demo (sheets and the session), #demo/<sheet>, #demo/session/<slug>. Every file is fetched on the first
   // visit, so the service worker keeps them all and the demo then opens offline.
   const DEMO = 'demo', demoEl = $('demo'), demoPages = new Map();
-  let demoCat = null, demoLoading = null, demoGen = 0, demoSeat = null, demoShown = null;
+  let demoCat = null, demoLoading = null, demoGen = 0, demoShown = null;
   // An account's own sheet or notebook named « demo » keeps its address (#demo, #demo/play…), once its catalogue is
   // known: a sheet titled « Demo » gets that slug.
   const demoOwned = t => !!user && (bySlug.has(DEMO) || themeById.has(DEMO)) && (t === DEMO || t.startsWith(DEMO + '/play'));
@@ -3719,7 +3937,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       .map(e => ({slug: e.slug, title: e.title, summary: str(e.summary), group: str(e.group), notebook: str(e.notebook), author: str(e.author), thumbnail: rel(e.thumbnail)}));
     const has = new Set(sheets.map(e => e.slug));
     const sessions = (Array.isArray(c && c.sessions) ? c.sessions : []).filter(s => s && demoSlug(s.slug) && str(s.title))
-      .map(s => ({slug: s.slug, title: s.title, format: str(s.format), why: str(s.why), author: str(s.author), thumbnail: rel(s.thumbnail),
+      .map(s => ({slug: s.slug, notebook: str(s.notebook), title: s.title, format: str(s.format), why: str(s.why), author: str(s.author), thumbnail: rel(s.thumbnail),
         items: (Array.isArray(s.items) ? s.items : []).filter(it => it && has.has(it.slug)).map(it => ({slug: it.slug, dose: str(it.dose)}))}));
     const notebooks = (Array.isArray(c && c.notebooks) ? c.notebooks : []).filter(t => t && demoSlug(t.id) && str(t.title)).map(t => ({id: t.id, title: t.title}));
     return {title: str(c && c.title) || 'Reelbook demo', intro: str(c && c.intro), notebooks, sheets, sessions, bySlug: new Map(sheets.map(e => [e.slug, e])), sesBySlug: new Map(sessions.map(s => [s.slug, s]))};
@@ -3759,42 +3977,89 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const demoLoad = () => demoLoading || (demoLoading = (typeof fetch === 'function' ? demoGet('catalogue.json', true) : Promise.reject(new Error('no fetch')))
     .then(c => { demoCat = demoCheck(c); demoWarm(demoCat).catch(() => {}); return demoCat; }, e => { demoLoading = null; throw e; }));
   // The banner leads to sign-up; with an account on this device (signed in, or a session kept for the remembered
-  // backend), back to that account's notebooks.
+  // backend), back to that account's notebooks. L38: it speaks the language chosen on the landing (L30: rb.lang,
+  // window.RBL); the rest of the demo, like the app, stays English.
   const demoKnown = () => !!(user || (backend && storedUser()));
-  const demoBanner = () => `<a class="demo-banner" id="demo-signup" href="#">${demoKnown() ? 'Demo · read only · Back to my notebooks' : 'Demo · read only · Create an account'}</a>`;
+  const demoBanner = () => {
+    const fr = !!window.RBL && window.RBL.lang === 'fr';
+    const txt = demoKnown() ? T('demo.back', 'Demo · read only · Back to my notebooks') : T('demo.up', 'Demo · read only · Create an account');
+    return `<a class="demo-banner" id="demo-signup" href="#"${fr ? ' lang="fr"' : ''}>${esc(txt)}</a>`;
+  };
   demoEl.addEventListener('click', ev => {
-    if (!(ev.target && ev.target.closest && ev.target.closest('#demo-signup'))) return;
+    const at = sel => ev.target && ev.target.closest ? ev.target.closest(sel) : null;
+    // L38: a group chip of a demo notebook page scrolls to its row, as on an account's notebook page
+    const chip = at('a[data-grp]'), sec = chip && document.getElementById(chip.dataset.grp);
+    if (sec) {
+      ev.preventDefault(); sec.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
+      for (const a of demoEl.querySelectorAll('.group-chips a')) { a.classList.toggle('on', a === chip); if (a === chip) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); }
+      return;
+    }
+    if (!at('#demo-signup')) return;
     ev.preventDefault();
     if (!demoKnown()) { setMode('up'); signupBackendChosen = false; }
     location.hash = '';
   });
+  // L38: the demo drawn with the app's own pieces: notebooks as on an account's home (.tcard, colour and pictogram
+  // of the library by notebook id), a notebook page with one row of photo cards per group (decision 7), the session
+  // and the sheets as their real pages. Addresses: #demo, #demo/notebook/<id>, #demo/session/<slug>, #demo/<sheet>.
   const demoThumb = (base, rel) => rel ? demoFile(base ? `${base}/${rel}` : rel) : '';
-  const demoCard = (e, extra = {}) => card(e, `#${DEMO}/${e.slug}`, demoThumb(e.slug, e.thumbnail), {...extra, meta: (extra.meta || [{txt: e.group}, {txt: e.author}]).filter(m => m.txt)});
+  const demoIn = slug => demoCat.sessions.filter(s => s.items.some(it => it.slug === slug)).length;
+  const demoCard = (e, extra = {}) => card(e, `#${DEMO}/${e.slug}`, demoThumb(e.slug, e.thumbnail), {...extra, meta: (extra.meta || [...(demoIn(e.slug) ? [{txt: `in ${plural(demoIn(e.slug), 'session')}`, cls: 'session'}] : []), {txt: e.author}]).filter(m => m.txt)});
+  const demoSesCard = s => card({title: s.title, summary: s.why}, `#${DEMO}/session/${s.slug}`, demoThumb('', s.thumbnail), {big: true, fmt: s.format, meta: [{txt: plural(s.items.length, 'exercise')}, {txt: s.author}].filter(m => m.txt)});
   const demoNb = t => ({...(libById.get(t.id) || {}), id: t.id, title: t.title});
+  // The notebooks shown: those of catalogue.json, then any other a sheet or the session names, when they hold something.
+  const demoNbs = c => [...c.notebooks, ...[...new Set([...c.sheets, ...c.sessions].map(x => x.notebook))].filter(id => id && !c.notebooks.some(t => t.id === id)).map(id => ({id, title: (libById.get(id) || {}).title || 'Notebook'}))]
+    .filter(t => c.sheets.some(e => e.notebook === t.id) || c.sessions.some(s => s.notebook === t.id)).map(demoNb);
+  const demoNbHref = id => `#${DEMO}/notebook/${esc(id)}`;
   const demoHome = c => {
-    const out = [`<div class="wrap"><p class="eyebrow">Read only</p><h1>${esc(c.title)}</h1>${c.intro ? `<p class="lead">${esc(c.intro)}</p>` : ''}</div>`];
-    if (c.sessions.length) out.push(`<section><h2>Sessions <span class="n">${c.sessions.length}</span></h2><div class="grid">${c.sessions.map(s => card({title: s.title, summary: s.why}, `#${DEMO}/session/${s.slug}`, demoThumb('', s.thumbnail), {big: true, fmt: s.format, meta: [{txt: plural(s.items.length, 'exercise')}, {txt: s.author}].filter(m => m.txt)})).join('')}</div></section>`);
-    const nbs = [...c.notebooks, ...[...new Set(c.sheets.map(e => e.notebook))].filter(id => !c.notebooks.some(t => t.id === id)).map(id => ({id, title: (libById.get(id) || {}).title || 'Notebook'}))];
-    for (const t of nbs) {
-      const list = c.sheets.filter(e => e.notebook === t.id); if (!list.length) continue;
-      const nb = demoNb(t);
-      out.push(`<section><h2 class="demo-nb" style="--t:${colorOf(nb)}">${nbIcon(nb)}${esc(t.title)} <span class="n">${list.length}</span></h2><div class="grid">${list.map(e => demoCard(e)).join('')}</div></section>`);
-    }
-    return `<div class="wide">${out.join('')}</div>`;
+    const nbs = demoNbs(c), nS = c.sessions.length;
+    const tcards = nbs.map(t => { const list = c.sheets.filter(e => e.notebook === t.id); return tcard(t, demoNbHref(t.id), list.length, c.sessions.filter(s => s.notebook === t.id).length, list.filter(e => e.thumbnail).map(e => [e.title, demoThumb(e.slug, e.thumbnail)]), ''); }).join('');
+    return `<div class="wide"><header class="demo-brand"><img src="icons/reelbook-mark.svg" width="28" height="28" alt=""><h1>${esc(c.title)}</h1></header>
+      <p class="cnt">${esc(`${plural(c.sheets.length, 'sheet')}${nS ? ` · ${plural(nS, 'session')}` : ''} · ${plural(nbs.length, 'notebook')}`)}</p>${c.intro ? `<p class="demo-intro">${esc(c.intro)}</p>` : ''}
+      ${tcards ? `<div class="portal">${tcards}</div>` : ''}
+      ${nS ? `<section><h2>Sessions <span class="n">${nS}</span></h2><div class="group-row">${c.sessions.map(demoSesCard).join('')}</div></section>` : ''}</div>`;
+  };
+  const demoNotebook = (c, t) => {
+    const list = c.sheets.filter(e => e.notebook === t.id), ses = c.sessions.filter(s => s.notebook === t.id);
+    const byGroup = new Map((t.groups || []).map(g => [g, []]));
+    for (const e of list) { const g = e.group || t.title; if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(e); }
+    const groups = [...byGroup].filter(([, l]) => l.length);
+    const chips = groups.length > 1 ? `<nav class="group-chips" aria-label="Groups">${groups.map(([g, l], i) => `<a href="${demoNbHref(t.id)}" data-grp="demo-grp-${i}">${esc(g)} ${l.length}</a>`).join('')}</nav>` : '';
+    return `<div class="wide demo-nbp" style="--t:${colorOf(t)}"><p class="eyebrow">Find it fast, when you need it</p>
+      <div class="demo-cover"><span class="nb-badge" aria-hidden="true">${nbIcon(t)}</span><h1>${esc(t.title)}</h1></div>
+      <p class="cnt">${esc(`${plural(list.length, 'sheet')}${ses.length ? ` · ${plural(ses.length, 'session')}` : ''}`)}</p>${chips}
+      ${ses.length ? `<section><div class="sh2"><h2>Sessions <span class="n">${ses.length}</span></h2></div><div class="group-row">${ses.map(demoSesCard).join('')}</div></section>` : ''}
+      ${groups.map(([g, l], i) => `<section id="demo-grp-${i}"><h2>${esc(g)} <span class="n">${l.length}</span></h2><div class="group-row">${l.map(e => demoCard(e)).join('')}</div></section>`).join('')}</div>`;
   };
   const demoSession = s => {
     const items = s.items.map((it, i) => ({n: i + 1, dose: it.dose, sheet: demoCat.bySlug.get(it.slug)})), img = demoThumb('', s.thumbnail);
     return `<div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
-      ${s.format ? `<div class="kit"><span><b class="kit-k">Format</b> ${esc(s.format)}</span></div>` : ''}${s.why ? `<h2>Why</h2><p>${esc(s.why)}</p>` : ''}</div>
-      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2><div class="grid">${items.map(it => demoCard(it.sheet, {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: it.sheet.author}]})).join('')}</div></div>`;
+      ${s.format ? `<div class="kit"><span><b class="kit-k">Format</b> ${esc(s.format)}</span></div>` : ''}${s.why ? `<h2>Why</h2><p class="lead">${esc(s.why)}</p>` : ''}</div>
+      <div class="wide"><h2>Exercises <span class="n">${items.length}</span></h2><div class="grid">${items.map(it => card(it.sheet, demoAt(s, it.n), demoThumb(it.sheet.slug, it.sheet.thumbnail), {n: it.n, meta: [{txt: it.dose, cls: 'dose'}, {txt: it.sheet.author}].filter(m => m.txt)})).join('')}</div></div>`;
   };
-  // The way back: to the session a sheet was opened from, else to the demo's first page.
-  const demoBack = sheet => {
-    const s = sheet && demoSeat ? demoCat.sesBySlug.get(demoSeat) : null;
-    return s && s.items.some(it => it.slug === sheet) ? `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
+  // A sheet inside the session, by its place (an exercise may come twice): #demo/session/<slug>/<n>, n from 1.
+  const demoAt = (s, n) => `#${DEMO}/session/${esc(s.slug)}/${n}`;
+  // The way back: to the session a sheet was opened from (with its place and dose, as in the app), else to the
+  // sheet's notebook page, else to the demo's first page.
+  // `seat`: {s, n} when the sheet is opened from the session, else null.
+  const demoBack = (sheet, seat) => {
+    const e = sheet && demoCat.bySlug.get(sheet), nb = e && demoNbs(demoCat).find(t => t.id === e.notebook);
+    if (!seat) return nb ? `<p class="top"><a href="${demoNbHref(nb.id)}">‹ ${esc(nb.title)}</a></p>` : `<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`;
+    const {s, n} = seat, dose = s.items[n - 1].dose;
+    return `<p class="top"><a href="#${DEMO}/session/${esc(s.slug)}">‹ ${esc(s.title)}</a></p><p class="seat">${n}/${s.items.length}${dose ? ' · ' + esc(dose) : ''}</p>`;
+  };
+  // Previous / next at the bottom of a sheet opened from the session; the last one leads back to the session.
+  const demoSeq = seat => {
+    if (!seat) return '';
+    const {s, n} = seat, next = s.items[n], nx = next && demoCat.bySlug.get(next.slug);
+    return `<div class="wrap"><nav class="seq" aria-label="Exercises of the session">${n > 1 ? `<a class="prev" href="${demoAt(s, n - 1)}">← Previous</a>` : ''}`
+      + (nx ? `<a class="next" href="${demoAt(s, n + 1)}">Next: ${esc(nx.title)} →</a>` : `<a class="next" href="#${DEMO}/session/${esc(s.slug)}">Back to the session</a>`) + '</nav></div>';
   };
   const showDemo = async tok => {
-    const gen = ++demoGen, page = (back, body) => { demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body; };
+    const gen = ++demoGen, page = (back, body) => {
+      demoEl.innerHTML = demoBanner() + (back ? `<div class="wide">${back}</div>` : '') + body;
+      const b = $('demo-signup'); if (b && b.offsetHeight && demoEl.style && demoEl.style.setProperty) demoEl.style.setProperty('--demo-bar', `${b.offsetHeight}px`);
+    };
     // Drawn again on the same page (the account's catalogue arrived): only the banner may change, the reader keeps
     // the scroll.
     if (demoShown === tok && !demoEl.hidden && demoCat) { const b = $('demo-signup'); if (b) b.outerHTML = demoBanner(); return; }
@@ -3804,14 +4069,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       try { await demoLoad(); } catch { if (gen === demoGen) page('', '<div class="wrap"><p class="empty">The demo could not be loaded. Check the connection, then reload the page.</p></div>'); return; }
       if (gen !== demoGen) return;
     }
-    const rest = tok.slice(DEMO.length + 1), ses = rest.startsWith('session/') ? demoCat.sesBySlug.get(rest.slice(8)) : null;
-    if (ses) { demoSeat = ses.slug; page(demoBack(null), demoSession(ses)); document.title = ses.title; return; }
-    const e = demoCat.bySlug.get(rest);
-    if (!e) { demoSeat = null; page('', demoHome(demoCat)); return; }
-    page(demoBack(rest), '<p class="loading">Loading the sheet…</p>'); document.title = e.title;
-    let html = null; try { html = typeof DOMParser === 'function' ? demoRender(rest, await demoSource(rest)) : null; } catch {}
+    const rest = tok.slice(DEMO.length + 1), [sSlug, sN] = rest.startsWith('session/') ? rest.slice(8).split('/') : [];
+    const ses = sSlug ? demoCat.sesBySlug.get(sSlug) : null, n = ses && /^[1-9]\d{0,2}$/.test(sN || '') && +sN <= ses.items.length ? +sN : 0;
+    if (ses && !n) { page(demoBack(null, null), demoSession(ses)); document.title = ses.title; return; }
+    const seat = n ? {s: ses, n} : null, slug = seat ? ses.items[n - 1].slug : rest;
+    const nb = rest.startsWith('notebook/') ? demoNbs(demoCat).find(t => t.id === rest.slice(9)) : null;
+    if (nb) { page(`<p class="top"><a href="#${DEMO}">‹ Demo</a></p>`, demoNotebook(demoCat, nb)); document.title = `${nb.title} · Reelbook demo`; return; }
+    const e = demoCat.bySlug.get(slug);
+    if (!e) { page('', demoHome(demoCat)); return; }
+    page(demoBack(slug, seat), '<p class="loading">Loading the sheet…</p>'); document.title = e.title;
+    let html = null; try { html = typeof DOMParser === 'function' ? demoRender(slug, await demoSource(slug)) : null; } catch {}
     if (gen !== demoGen) return;
-    page(demoBack(rest), html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html);
+    page(demoBack(slug, seat), (html === null ? '<div class="wrap"><p class="empty">This sheet could not be loaded.</p></div>' : html) + demoSeq(seat));
   };
 
   // ---------- routing ----------

@@ -28,8 +28,13 @@ test('L27 — the demo home lists the sheets and the session from catalogue.json
   await settle();
   const html = page.element('demo').innerHTML;
   const cat = JSON.parse(fs.readFileSync(path.join(demoDir, 'catalogue.json'), 'utf8'));
-  for (const e of cat.sheets) assert.match(html, new RegExp(`href="#demo/${e.slug}"`), e.slug);
+  // L38: the home page shows the notebooks (.tcard) and the session; each sheet is on its notebook's page
+  for (const t of cat.notebooks) assert.match(html, new RegExp(`class="tcard" href="#demo/notebook/${t.id}"`), t.id);
   for (const s of cat.sessions) assert.match(html, new RegExp(`href="#demo/session/${s.slug}"`), s.slug);
+  for (const t of cat.notebooks) {
+    page.go(`#demo/notebook/${t.id}`); await settle();
+    for (const e of cat.sheets.filter(x => x.notebook === t.id)) assert.match(page.element('demo').innerHTML, new RegExp(`href="#demo/${e.slug}"`), e.slug);
+  }
   assert.match(html, /src="demo\/spinning-back-kick\/img\/thumb\.jpg"/);
   assert.ok(asked.length > 1 && asked.every(u => u.startsWith('demo/')), 'only the demo files are fetched');
   // the first visit hands the service worker every demo file to keep (sw.js, KEEP_DEMO), absolute URLs
@@ -61,8 +66,9 @@ test('L27 — the demo session lists its exercises with their dose, in order', a
   const html = page.element('demo').innerHTML;
   assert.match(html, /Sampler/);
   assert.match(html, /Demo · read only · Create an account/);
-  const order = [...html.matchAll(/href="#demo\/([a-z-]+)"/g)].map(m => m[1]);
-  assert.deepEqual(order, ['spinning-back-kick', 'pirouette-en-dehors', 'diagonal-stretch', 'nose-press-on-a-box', 'push-up-taps-jump-squat']);
+  // L38: each exercise opens at its place in the session (#demo/session/<slug>/<n>), as in the app
+  const order = [...html.matchAll(/href="#demo\/session\/sampler\/(\d+)"[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1] + ' ' + m[2]);
+  assert.deepEqual(order, ['1 Spinning back kick', '2 Pirouette en dehors', '3 Diagonal stretch', '4 Nose press on a box', '5 Push-up, taps and jump squat']);
   assert.match(html, />8 \/ side</);
   assert.match(html, /href="#demo">‹ Demo</);
 });
@@ -143,7 +149,8 @@ test('L27 — a missing catalogue says so; bad entries and markup in it are left
   const html = page.element('demo').innerHTML;
   assert.doesNotMatch(html, /<img src=x/);
   assert.doesNotMatch(html, /secret/);
-  assert.match(html, /Fine &lt;b&gt;/);
+  page.go('#demo/notebook/strength'); await settle();
+  assert.match(page.element('demo').innerHTML, /Fine &lt;b&gt;/);
   assert.doesNotMatch(html, /\.\.\/\.\.\/x\.svg/);
   assert.match(html, /1 exercise\b/);
 });
