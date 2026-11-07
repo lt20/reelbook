@@ -1691,7 +1691,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (s) {
       $('s-seatline').textContent = seatWords(T('seats', '{taken} of {total} spots taken'), s);
       $('s-wlH').textContent = s.closed ? T('beta.closed', 'Beta full') : seatWords(T('wl.h', 'Beta full: {taken} of {total} spots taken'), s);
-      $('s-lockN').textContent = s.total;
+      $('s-lockN').textContent = s.closed ? '—' : s.total;
     }
     go.hidden = !$('own-form').hidden;
     go.textContent = own ? T('i1.cta.full', 'Connect my Supabase') : T('i1.cta', 'Create my notebook');
@@ -1759,16 +1759,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const o = Array.isArray(d) ? d[0] : d;
     if (!o || typeof o !== 'object' || o.taken == null || o.total == null) return null;
     const taken = Number(o.taken), total = Number(o.total);
-    if (!(Number.isFinite(taken) && Number.isFinite(total) && total > 0 && taken >= 0)) return null;
+    if (!(Number.isFinite(taken) && Number.isFinite(total) && total >= 0 && taken >= 0)) return null; // total 0: the beta closed that way
     const tot = Math.round(total), tk = Math.min(Math.round(taken), tot);
-    return {taken: tk, total: tot, full: tk >= tot || o.open === false, closed: tk < tot && o.open === false, noneToday: o.today_left === 0};
+    return {taken: tk, total: tot, full: tk >= tot || o.open === false, closed: !tot || (tk < tot && o.open === false), noneToday: o.today_left === 0};
   };
   const seatWords = (text, s) => text.replace('{taken}', s.taken).replace('{total}', s.total);
   const seatAnswer = async client => { try { const r = await client.rpc('beta_seats'); return r && !r.error ? r.data : null; } catch { return null; } };
   let seatNow = null, seatsAsked = null, wlDone = false;
   // The waiting list said yes: the form gives way to the message, on both screens. landing.js shows its form each time
   // it paints, so this runs after it (setSeats, onChange).
-  const paintWl = () => { for (const p of ['lp', 's']) { $(p + '-wl').hidden = wlDone; $(p + '-wlP').hidden = wlDone; $(p + '-wl-done').hidden = !wlDone; } };
+  // « Notify me » turns on with the box (mockup p7-signup), also for a box the browser restored on a reload.
+  const wlArmed = p => { const on = !!$(p + '-wl-consent').checked, go = $(p + '-wl-go'); go.disabled = !on; go.setAttribute('aria-disabled', String(!on)); };
+  const paintWl = () => { for (const p of ['lp', 's']) { $(p + '-wl').hidden = wlDone; $(p + '-wlP').hidden = wlDone; $(p + '-wl-done').hidden = !wlDone; wlArmed(p); } };
   const setSeats = d => { seatNow = seatsOf(d); if (window.RBL) window.RBL.seats(d); paintHostChoice(); paintSetup(); paintWl(); };
   const askSeats = () => {
     const client = sb;
@@ -1809,9 +1811,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   for (const p of ['lp', 's']) {
     const say = text => { const e = $(p + '-wl-err'); e.textContent = text || ''; e.hidden = !text; };
-    // « Notify me » turns on with the box (mockup p7-signup); the check below stays for a form sent another way
-    const armed = () => { const on = !!$(p + '-wl-consent').checked, go = $(p + '-wl-go'); go.disabled = !on; go.setAttribute('aria-disabled', String(!on)); };
-    $(p + '-wl-consent').addEventListener('change', armed);
+    $(p + '-wl-consent').addEventListener('change', () => wlArmed(p));
     $(p + '-wl').addEventListener('submit', async ev => {
       ev.preventDefault(); say('');
       const first = $(p + '-wl-first'), mail = $(p + '-wl-email'), go = $(p + '-wl-go');
@@ -1821,7 +1821,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       if (!$(p + '-wl-consent').checked) { say(wlError({message: 'waitlist: consent'})); return; }
       go.disabled = true;
       let r; try { r = await sb.rpc('join_waitlist', {first_name: fname, email, lang: (window.RBL && window.RBL.lang) || 'en', consent: true}); } catch (e) { r = {error: e}; }
-      armed();
+      wlArmed(p);
       if (r && !r.error) { wlDone = true; paintWl(); return; }
       console.warn('Waiting list failed:', (r && r.error && (r.error.code || r.error.message)) || r);
       say(wlError(r && r.error));

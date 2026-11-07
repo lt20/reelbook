@@ -599,9 +599,9 @@
     const o = Array.isArray(d) ? d[0] : d;
     if (!o || typeof o !== 'object' || o.taken == null || o.total == null) return null;
     const taken = Number(o.taken), total = Number(o.total);
-    if (!(Number.isFinite(taken) && Number.isFinite(total) && total > 0 && taken >= 0)) return null;
+    if (!(Number.isFinite(taken) && Number.isFinite(total) && total >= 0 && taken >= 0)) return null;
     const tot = Math.round(total), tk = Math.min(Math.round(taken), tot);
-    return {taken: tk, total: tot, full: tk >= tot || o.open === false, closed: tk < tot && o.open === false};
+    return {taken: tk, total: tot, full: tk >= tot || o.open === false, closed: !tot || (tk < tot && o.open === false)};
   };
   const isFull = () => !!(seatData && seatData.full);
   // L31: « Notify me » records something (join_waitlist, wired by the app script, which also says how it went). False
@@ -612,7 +612,7 @@
   const paintSeats = () => {
     const s = seatData, fullB = isFull(), n = s ? fill(t('seats'), s) : '';
     const bar = $('lp-seatsBar');
-    if (bar) { bar.hidden = !s; const i = bar.querySelector ? bar.querySelector('i') : null; if (s && i && i.style) i.style.width = Math.round(100 * s.taken / s.total) + '%'; }
+    if (bar) { bar.hidden = !s; const i = bar.querySelector ? bar.querySelector('i') : null; if (s && i && i.style) i.style.width = (s.total ? Math.round(100 * s.taken / s.total) : 100) + '%'; }
     setText('lp-betaLine', fullB ? t(WAITLIST ? 'beta.full' : 'beta.closed') : s ? t('beta') + ' · ' + n : t('beta'));
     const line = $('lp-seatline'); if (line) { line.hidden = !s; line.textContent = n; }
     // At the limit « On my own Supabase » is the option picked (its button: « Connect my Supabase »); a seat freed
@@ -621,7 +621,7 @@
     if (fullB) { if (o) o.hidden = true; if (r) r.checked = false; if (own) own.checked = true; ownForced = true; }
     else if (ownForced) { if (o) o.hidden = false; if (r) r.checked = true; if (own) own.checked = false; ownForced = false; }
     const card = $('lp-host-full'); if (card) card.hidden = !fullB;
-    if (s) { setText('lp-wlH', s.closed ? t('beta.closed') : fill(t('wl.h'), s)); setText('lp-lockN', s.total); }
+    if (s) { setText('lp-wlH', s.closed ? t('beta.closed') : fill(t('wl.h'), s)); setText('lp-lockN', s.closed ? '—' : s.total); }
     const wl = $('lp-wl'), wlp = $('lp-wlP'); if (wl) wl.hidden = !WAITLIST; if (wlp) wlp.hidden = !WAITLIST;
     toggle($('lp-installList'), 'lp-full', fullB);
     setText('intro-signup', t(fullB ? 'i1.cta.full' : 'i1.cta'));

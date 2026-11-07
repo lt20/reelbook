@@ -110,6 +110,18 @@ test('L31 closed — the heading says « Beta full » without a count of seats t
   const {page} = await visitor([answer(CLOSED)]);
   await toSetup(page);
   assert.ok(shown(page, 's-full')); assert.equal(page.element('s-wlH').textContent, 'Beta full');
+  assert.equal(page.element('s-lockN').textContent, '—');
+});
+
+test('L31 seats_total 0 — closed that way: the waiting list, and no sign-up attempted', async () => {
+  const zero = {taken: 0, total: 0, open: false, today_left: 0};
+  const {page} = await visitor([answer(zero)]);
+  await toSetup(page);
+  assert.ok(shown(page, 's-full')); assert.ok(!shown(page, 's-hosted-opt')); assert.equal(page.element('s-wlH').textContent, 'Beta full');
+  const {page: form} = await visitor([answer(OPEN), answer(zero)]);
+  await hostedForm(form);
+  assert.deepEqual(await signUp(form, DB_ERROR), []);
+  assert.equal(form.element('a-err').textContent, SHUT_MSG); assert.ok(shown(form, 'a-wl'));
 });
 
 for (const [name, seat] of [['no function', NO_FUNCTION], ['an error', {data: null, error: {message: 'boom'}}], ['null, no settings row', answer(null)], ['no network', new Error('offline')]]) {

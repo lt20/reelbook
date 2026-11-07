@@ -307,7 +307,7 @@ test('L36 — the beta follows beta_seats(): open without an answer, the count w
     assert.equal(cta.textContent, 'Créer mon carnet'); assert.ok(ctas.length >= 2 && ctas.every(b => b.textContent === 'Créer mon carnet'));
   };
   assert.equal(line.textContent, 'Gratuit pendant la bêta'); assert.equal(bar.hidden, true); assert.equal(seat.hidden, true); open();
-  for (const answer of [null, undefined, {}, {taken: null, total: 50}, {taken: 3, total: 0}, 'x', []]) {
+  for (const answer of [null, undefined, {}, {taken: null, total: 50}, {taken: 3, total: -1}, 'x', []]) {
     assert.equal(page.RBL.seats(answer), false);
     assert.equal(line.textContent, 'Gratuit pendant la bêta', `no count for ${JSON.stringify(answer)}`);
     assert.ok(bar.hidden && seat.hidden); open();
@@ -353,7 +353,11 @@ test('L36 — the beta follows beta_seats(): open without an answer, the count w
   assert.equal(q.byId('lp-host-hosted').checked, true); assert.equal(q.byId('lp-host-own').checked, false); assert.equal(q.byId('lp-host-hosted-opt').hidden, false);
   assert.equal(q.byId('lp-host-full').hidden, true);
   q.RBL.seats({taken: 3, total: 50, open: false});
-  assert.equal(q.byId('lp-wlH').textContent, 'Bêta complète');
+  assert.equal(q.byId('lp-wlH').textContent, 'Bêta complète'); assert.equal(q.byId('lp-lockN').textContent, '—');
+  // seats_total 0, a valid way of closing: the list, no count
+  assert.equal(q.RBL.seats({taken: 0, total: 0, open: false}), true);
+  assert.equal(q.RBL.full, true); assert.equal(q.byId('lp-wlH').textContent, 'Bêta complète'); assert.equal(q.byId('lp-host-full').hidden, false);
+  assert.equal(q.byId('lp-seatsBar').bar.style.width, '100%');
   // the coordinator's wording, and the consent text of decision 20, word for word
   const {DICT} = q.RBL;
   assert.equal(DICT.fr['wl.p'], 'Aucun compte n’est créé ici : laisse ton prénom et ton e-mail, on te prévient dès qu’une place se libère.');
