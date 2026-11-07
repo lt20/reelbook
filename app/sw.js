@@ -8,7 +8,9 @@
 // - The demo notebook (app/demo/, L27): stale-while-revalidate too, in a cache of its own (DEMO) that a new
 //   VERSION keeps. On the first visit of #demo the app sends the list of its files (message KEEP_DEMO), fetched
 //   here even when the page is not controlled yet, so the demo opens offline afterwards. Not precached: most
-//   visitors never open it.
+//   visitors never open it. A new DEMO (new content) keeps the previous demo cache until KEEP_DEMO has filled
+//   the new one with every listed file: meanwhile a demo file the new cache lacks offline comes from the old one
+//   (the whole old demo, coherent), so an updated device does not lose its offline demo (L37).
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
 const VERSION = 'rb-shell-44';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300, DEMO = 'rb-demo-2';
@@ -19,7 +21,7 @@ const SHELL = ['./', './index.html', './config.js?v=9', './sessions.js?v=10', '.
 // cache: 'reload' so a new version is not built from stale HTTP-cached files.
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, {cache: 'reload'})))).then(() => self.skipWaiting())); });
 // Old shells go; the photo cache stays across versions (only a sign-out empties it).
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== PHOTOS && k !== DEMO).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== PHOTOS && k !== DEMO && !oldDemo(k)).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 
 // epoch: bumped at each sign-out and each deleted sheet, so a photo still downloading then is not put back in the
 // emptied cache (another sheet's photo in flight is only left uncached).
@@ -36,13 +38,23 @@ self.addEventListener('message', e => {
 
 // A demo file: same origin, under <scope>/demo/.
 const demoFile = url => url.origin === location.origin && /\/demo\/[\w.\/-]+$/.test(url.pathname) && !url.pathname.includes('..');
+// A previous demo cache (an older DEMO): kept until the new one is complete.
+const oldDemo = k => /^rb-demo-/.test(k) && k !== DEMO;
 const keepDemo = async urls => {
   const c = await caches.open(DEMO);
+  let missed = 0, kept = 0;
   await Promise.all(urls.slice(0, 300).map(async u => {
     let url; try { url = new URL(String(u)); } catch { return; }
     if (!demoFile(url)) return;
-    try { const r = await fetch(url.href, {cache: 'no-cache'}); if (keep(r)) await c.put(url.href, r); } catch {}
+    try { const r = await fetch(url.href, {cache: 'no-cache'}); if (keep(r)) { await c.put(url.href, r); kept++; } else missed++; } catch { missed++; }
   }));
+  // Every file of the new demo is here: the old demo can go.
+  if (kept && !missed) await Promise.all((await caches.keys()).filter(oldDemo).map(k => caches.delete(k)));
+};
+// Offline, a demo file the new cache does not hold yet: the old demo's copy, if any.
+const fromOldDemo = async req => {
+  for (const k of (await caches.keys()).filter(oldDemo)) { const hit = await (await caches.open(k)).match(req); if (hit) return hit; }
+  throw new Error('not in an old demo cache');
 };
 
 // A redirected response cannot answer a navigation (Safari), an error page must not replace a good copy.
@@ -93,5 +105,6 @@ self.addEventListener('fetch', e => {
   if (url.pathname.includes('/storage/v1/object/sign/')) { e.respondWith(photo(e).catch(() => bare(e.request))); return; }
   if (url.origin !== location.origin) return;
   // Never stuck on a broken cache: any failure goes to the network.
-  e.respondWith(shell(e, demoFile(url) ? DEMO : VERSION).catch(() => fetch(e.request)));
+  if (demoFile(url)) { e.respondWith(shell(e, DEMO).catch(() => fromOldDemo(e.request)).catch(() => fetch(e.request))); return; }
+  e.respondWith(shell(e, VERSION).catch(() => fetch(e.request)));
 });
