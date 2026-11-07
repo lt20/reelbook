@@ -14,6 +14,9 @@
 (function () {
   const D = window.__FAKE || {};
   const U = {id: 'u1', email: 'demo@reelbook.test'};
+  // ?cli: rb.py login has run (#welcome, L43); ?new: an account made a minute ago
+  if (new URLSearchParams(location.search).has('cli')) U.user_metadata = {reelbook_cli_at: new Date().toISOString()};
+  if (new URLSearchParams(location.search).has('new')) U.created_at = new Date(Date.now() - 60000).toISOString();
   const params = new URLSearchParams(location.search);
   let signedIn = !params.has('noauth');
   const missing = new Set((params.get('missing') || '').split(',').map(s => s.trim()).filter(Boolean));

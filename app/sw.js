@@ -12,11 +12,11 @@
 //   the new one with every listed file: meanwhile a demo file the new cache lacks offline comes from the old one
 //   (the whole old demo, coherent), so an updated device does not lose its offline demo (L37).
 // Data (rows) never goes through here: the app keeps its own last catalogue (IndexedDB, per user).
-const VERSION = 'rb-shell-45';
+const VERSION = 'rb-shell-46';
 const PHOTOS = 'rb-photos-1', PHOTO_MAX = 300, DEMO = 'rb-demo-2';
-const SHELL = ['./', './index.html', './config.js?v=9', './sessions.js?v=10', './sheet.js?v=4', './landing.js?v=4', './vendor/supabase.js?v=2', './manifest.webmanifest',
+const SHELL = ['./', './index.html', './config.js?v=9', './sessions.js?v=10', './sheet.js?v=4', './landing.js?v=5', './vendor/supabase.js?v=2', './manifest.webmanifest',
   './fonts/barlow-condensed-600-latin.woff2', './fonts/barlow-condensed-700-latin.woff2', './fonts/source-sans-3-latin.woff2',
-  './icons.svg', './icons/reelbook-mark.svg', './icons/reelbook-mark-light.svg', './icons/reelbook-wordmark.svg', './icons/reelbook-wordmark-light.svg', './icons/reelbook-app.svg', './icons/reelbook-icon-180.png', './icons/reelbook-icon-192.png', './icons/reelbook-icon-512.png', './icons/reelbook-icon-512-maskable.png'];
+  './icons.svg', './icons/reelbook-mark.svg', './icons/reelbook-mark-light.svg', './icons/reelbook-wordmark.svg', './icons/reelbook-wordmark-light.svg', './icons/reelbook-app.svg', './icons/welcome-qr.svg', './icons/reelbook-icon-180.png', './icons/reelbook-icon-192.png', './icons/reelbook-icon-512.png', './icons/reelbook-icon-512-maskable.png'];
 
 // cache: 'reload' so a new version is not built from stale HTTP-cached files.
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, {cache: 'reload'})))).then(() => self.skipWaiting())); });

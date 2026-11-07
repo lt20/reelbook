@@ -398,24 +398,39 @@
       's.limits': '300 fiches, 200 Mo de photos, 10 vidéos par jour.',
       's.use': 'Utiliser ce projet', 's.back': 'Retour', 's.have': 'Tu as déjà un compte ?', 's.unavailable': 'Pas encore disponible.',
       's.blurb': 'Gratuit pour l’instant. Une offre hébergée payante est prévue ; rien à configurer.',
-      'w.eyebrow': 'Bienvenue dans Reelbook', 'w.h1': 'Comment ça marche',
-      'w.1h': '1 · Garde des vidéos sur ton téléphone',
-      'w.1p': 'Une vidéo vaut la peine d’être gardée : touche <b>+ Add a video</b> et colle le lien. Elle attend dans la file. Le téléphone ne fait rien de plus.',
-      'w.2h': '2 · Claude en fait des fiches',
-      'w.2p': 'De temps en temps, quand quelques vidéos attendent, tu lances le skill Reelbook sur ton ordinateur. Claude ouvre chaque vidéo, la regarde, choisit les images clés et écrit une fiche : photos, pourquoi c’est utile, points clés, les étapes dans l’ordre.',
-      'w.need': 'Ce qu’il faut sur cet ordinateur',
-      'w.need1': '<a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> (terminal, application de bureau ou VS Code), abonnement Pro ou plus.',
-      'w.need2': 'Chrome avec l’extension <a href="https://claude.com/chrome" target="_blank" rel="noopener">Claude in Chrome</a>.',
-      'w.need3': 'Être connecté à Instagram, TikTok et/ou Facebook dans ce Chrome (YouTube ne demande pas de connexion).',
-      'w.run': 'Comment se passe une séance de traitement',
-      'w.run1': 'Ouvre Claude Code et tape <code>/reelbook</code>. Claude lit ta file et traite les vidéos une par une.',
-      'w.run2': 'Garde Chrome ouvert, pas réduit, avec l’onglet de la vidéo devant : la vidéo ne se lit pas en arrière-plan.',
-      'w.run3': 'Compte 10 à 15 minutes par fiche. Tu peux laisser l’ordinateur travailler.',
-      'w.run4': 'Sur un Mac, il peut tourner chaque nuit à la place : <code>tools/nightly.sh install</code> dans le dossier Reelbook. Laisse le Mac branché avec Chrome ouvert ; un écran verrouillé ne gêne pas.',
-      'w.3h': '3 · Prépare l’ordinateur, une seule fois',
-      'w.3p': 'Colle une ligne dans un terminal. Elle installe le code, les outils Python et le skill, puis demande l’e-mail et le mot de passe que tu viens de choisir.',
-      'w.3again': 'Tu retrouves ces lignes à tout moment dans les réglages.', 'w.done': 'Ouvrir mes carnets',
-      'w.copy': 'Copier', 'w.send': 'Envoyer à mon ordinateur'
+      'w.eyebrow': 'Bienvenue dans Reelbook', 'w.flash': 'Compte créé pour <b>{email}</b>.', 'w.done': 'Ouvrir mes carnets',
+      'w.left3': 'Plus que 3 étapes, à faire une seule fois', 'w.left2': 'Plus que 2 étapes', 'w.left1': 'Plus qu’une étape', 'w.left0': 'Tout est en place',
+      'w.chip.todo': 'À faire', 'w.chip.done': 'Fait', 'w.chip.sent': 'Envoyée', 'w.chip.copied': 'Copiée',
+      'w.pc.t': 'Ton ordinateur',
+      'w.pc.why': 'Cette étape ne se fait pas sur un téléphone : c’est ton ordinateur qui regarde les vidéos et écrit les fiches. Envoie-toi la ligne d’installation, tu la colleras une fois devant.',
+      'w.pc.ask': 'Elle te demandera ton e-mail et ton mot de passe Reelbook. Le mot de passe ne s’affiche pas quand tu le tapes : c’est normal.',
+      'w.pc.needm': 'Ce qu’il faut sur l’ordinateur : Claude Code, Chrome avec Claude in Chrome, Git, Python 3.9+ ↗',
+      'w.send': 'M’envoyer la ligne', 'w.sendtitle': 'Installer Reelbook', 'w.sendtext': 'Installe Reelbook sur ton ordinateur : colle une de ces lignes dans un terminal.',
+      'w.pc.sent': 'Ligne envoyée. Colle-la dans le Terminal quand tu es devant ton ordinateur ; cette étape se cochera toute seule. Tu la retrouves aussi dans <b>Settings</b>.',
+      'w.pc.copied': 'Ligne copiée. Envoie-la-toi, puis colle-la dans le Terminal quand tu es devant ton ordinateur ; cette étape se cochera toute seule. Tu la retrouves aussi dans <b>Settings</b>.',
+      'w.pc.nosend': 'Le partage et la copie n’ont pas marché : sélectionne le texte ci-dessus et envoie-le-toi.',
+      'w.pc.lead': 'C’est lui qui regarde les vidéos et écrit les fiches. Colle cette ligne dans le Terminal : elle installe <code>/reelbook</code> et le relie à ton compte.',
+      'w.pc.leadw': 'C’est lui qui regarde les vidéos et écrit les fiches. Colle cette ligne dans PowerShell : elle installe <code>/reelbook</code> et le relie à ton compte.',
+      'w.sys.mac': 'macOS détecté', 'w.sys.linux': 'Linux détecté', 'w.sys.win': 'Windows détecté',
+      'w.os.win': 'Sur Windows ? PowerShell', 'w.os.unix': 'Sur Mac ou Linux ? Terminal',
+      'w.pc.need': 'Ce qu’il faut : Claude Code, Chrome avec Claude in Chrome, Git, Python 3.9+ ↗', 'w.pc.script': 'Lire le script avant ↗',
+      'w.pc.done': 'Relié. La ligne d’installation reste dans <b>Settings</b>.',
+      'w.ph.t': 'Ton téléphone',
+      'w.ph.1': 'Mets Reelbook sur ton écran d’accueil et connecte-toi là.',
+      'w.ph.1d': 'Ouvre Reelbook sur ton téléphone, mets-le sur l’écran d’accueil et connecte-toi là.',
+      'w.ph.2': 'Ajoute le raccourci « Envoyer à Reelbook » au menu Partager de l’iPhone. Sur Android, colle le lien dans l’app.',
+      'w.ph.tick': 'C’est fait sur mon téléphone', 'w.ph.done': 'Fait sur ce téléphone.', 'w.ph.donepc': 'Fait sur ton téléphone.',
+      'w.fs.t': 'Ta première fiche',
+      'w.fs.p': 'Partage une vidéo depuis Instagram, TikTok, YouTube ou Facebook, ou touche <b>+ Add a video</b> et colle le lien. Puis, sur ton ordinateur, tape <code>/reelbook</code> dans Claude Code : la fiche arrive dans tes carnets.',
+      'w.fs.done1': '1 fiche dans tes carnets. La suite : <b>+ Add a video</b> ou le raccourci.',
+      'w.fs.donen': '{n} fiches dans tes carnets. La suite : <b>+ Add a video</b> ou le raccourci.',
+      'w.gh': 'Comment ça marche',
+      'w.g1h': 'Sur le téléphone, envoie',
+      'w.g1p': 'Une technique te plaît dans ton fil : Partager, Reelbook. La vidéo attend dans la file. Le téléphone ne fait rien de plus.',
+      'w.g2h': 'Sur l’ordinateur, lance',
+      'w.g2p': 'Tape <code>/reelbook</code> dans Claude Code quand tu veux. Garde Chrome ouvert au premier plan, connecté à Instagram, TikTok ou Facebook si tes vidéos en viennent (YouTube ne demande rien). Claude regarde chaque vidéo et écrit la fiche : photos, pourquoi, points clés, étapes dans l’ordre. Sur un Mac, il peut aussi tourner chaque nuit : <code>tools/nightly.sh install</code>.',
+      'w.g3h': 'À l’entraînement, ouvre la fiche',
+      'w.g3p': 'Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets. Sur le tapis, ouvre la fiche : le geste d’abord, en images. Coche <b>Done today</b>.'
     },
     en: {
       'a.in': 'Sign in', 'a.up': 'Create an account', 'a.submitUp': 'Create account', 'a.have': 'I already have an account',
@@ -453,24 +468,39 @@
       's.limits': '300 sheets, 200 MB of photos, 10 videos a day.',
       's.use': 'Use this project', 's.back': 'Back', 's.have': 'Already have an account?', 's.unavailable': 'Not available yet.',
       's.blurb': null,
-      'w.eyebrow': 'Welcome to Reelbook', 'w.h1': 'How it works',
-      'w.1h': '1 · Save videos on your phone',
-      'w.1p': 'A video is worth keeping: tap <b>+ Add a video</b> and paste the link. It waits in the queue. That is all the phone does.',
-      'w.2h': '2 · Claude turns them into sheets',
-      'w.2p': 'Every now and then, when a few videos are waiting, you run the Reelbook skill on your computer. Claude opens each video, watches it, picks the key frames and writes a sheet: photos, why it matters, key points, the steps in order.',
-      'w.need': 'What you need on that computer',
-      'w.need1': '<a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> (terminal, desktop app or VS Code), Pro plan or above.',
-      'w.need2': 'Chrome with the <a href="https://claude.com/chrome" target="_blank" rel="noopener">Claude in Chrome</a> extension.',
-      'w.need3': 'Being signed in to Instagram, TikTok and/or Facebook in that Chrome (YouTube needs no sign-in).',
-      'w.run': 'How a run goes',
-      'w.run1': 'Open Claude Code and type <code>/reelbook</code>. Claude reads your queue and processes the videos one by one.',
-      'w.run2': 'Keep Chrome open, not minimised, with the video tab in front: the video does not play in the background.',
-      'w.run3': 'Expect 10 to 15 minutes per sheet. You can leave the computer to it.',
-      'w.run4': 'On a Mac, it can run every night instead: <code>tools/nightly.sh install</code> in the Reelbook folder. Leave the Mac plugged in with Chrome open; a locked screen is fine.',
-      'w.3h': '3 · Set up the computer, once',
-      'w.3p': 'Paste one line in a terminal. It installs the code, the Python tools and the skill, then asks for the email and password you just chose.',
-      'w.3again': 'You can find these lines again anytime in Settings.', 'w.done': 'Open my notebooks',
-      'w.copy': 'Copy', 'w.send': 'Send to my computer'
+      'w.eyebrow': 'Welcome to Reelbook', 'w.flash': 'Account created for <b>{email}</b>.', 'w.done': 'Open my notebooks',
+      'w.left3': 'Three more steps. You only do this once.', 'w.left2': 'Two steps left', 'w.left1': 'One step left', 'w.left0': 'All set',
+      'w.chip.todo': 'To do', 'w.chip.done': 'Done', 'w.chip.sent': 'Sent', 'w.chip.copied': 'Copied',
+      'w.pc.t': 'Your computer',
+      'w.pc.why': 'This one can’t be done on a phone: your computer is what watches the videos and writes the sheets. Send yourself the install line and paste it when you’re at your computer.',
+      'w.pc.ask': 'It will ask for your Reelbook email and password. The password stays hidden as you type: that’s normal.',
+      'w.pc.needm': 'What the computer needs: Claude Code, Chrome with Claude in Chrome, Git, Python 3.9+ ↗',
+      'w.send': 'Send myself the line', 'w.sendtitle': 'Set up Reelbook', 'w.sendtext': 'Set up Reelbook on your computer: paste one of these lines in a terminal.',
+      'w.pc.sent': 'Line sent. Paste it into Terminal when you’re at your computer; this step will tick itself. It also stays in <b>Settings</b>.',
+      'w.pc.copied': 'Line copied. Send it to yourself, then paste it into Terminal when you’re at your computer; this step will tick itself. It also stays in <b>Settings</b>.',
+      'w.pc.nosend': 'Sharing and copying did not work: select the text above and send it to yourself.',
+      'w.pc.lead': 'It is what watches the videos and writes the sheets. Paste this line into Terminal: it installs <code>/reelbook</code> and links it to your account.',
+      'w.pc.leadw': 'It is what watches the videos and writes the sheets. Paste this line into PowerShell: it installs <code>/reelbook</code> and links it to your account.',
+      'w.sys.mac': 'macOS detected', 'w.sys.linux': 'Linux detected', 'w.sys.win': 'Windows detected',
+      'w.os.win': 'On Windows? PowerShell', 'w.os.unix': 'On a Mac or Linux? Terminal',
+      'w.pc.need': 'What you need: Claude Code, Chrome with Claude in Chrome, Git, Python 3.9+ ↗', 'w.pc.script': 'Read the script first ↗',
+      'w.pc.done': 'Linked. The install line stays in <b>Settings</b>.',
+      'w.ph.t': 'Your phone',
+      'w.ph.1': 'Put Reelbook on your home screen and sign in there.',
+      'w.ph.1d': 'Open Reelbook on your phone, put it on your home screen and sign in there.',
+      'w.ph.2': 'Add the “Send to Reelbook” shortcut to the iPhone Share menu. On Android, paste the link in the app.',
+      'w.ph.tick': 'Done on my phone', 'w.ph.done': 'Done on this phone.', 'w.ph.donepc': 'Done on your phone.',
+      'w.fs.t': 'Your first sheet',
+      'w.fs.p': 'Share a video from Instagram, TikTok, YouTube or Facebook, or tap <b>+ Add a video</b> and paste the link. Then type <code>/reelbook</code> in Claude Code on your computer: the sheet lands in your notebooks.',
+      'w.fs.done1': '1 sheet in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.',
+      'w.fs.donen': '{n} sheets in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.',
+      'w.gh': 'How it works',
+      'w.g1h': 'On your phone, send',
+      'w.g1p': 'A technique catches your eye in your feed: Share, Reelbook. The video waits in the queue. That’s all the phone does.',
+      'w.g2h': 'On your computer, run',
+      'w.g2p': 'Type <code>/reelbook</code> in Claude Code whenever you like. Keep Chrome open in the foreground, signed in to Instagram, TikTok or Facebook if your videos come from there (YouTube needs nothing). Claude watches each video and writes the sheet: photos, why, key points, the steps in order. On a Mac it can also run every night: <code>tools/nightly.sh install</code>.',
+      'w.g3h': 'When you train, open the sheet',
+      'w.g3p': 'Move a sheet to another group, add your notes, build a session from several notebooks. On the mat, open the sheet: the move first, in pictures. Tick <b>Done today</b>.'
     }
   };
   // s.blurb: English is the blurb of config.js (a fork writes its own); French only replaces it.
@@ -632,11 +662,12 @@
 
   // ---------- language ----------
   const listeners = [];
+  const langButtons = () => all('#intro .lp-lang button').concat(all('#welcome .lp-lang button')); // L43: the switch of #welcome too
   const apply = () => {
     if (doc && doc.documentElement) doc.documentElement.lang = lang;
     all('[data-k]').forEach(el => { const v = t(el.getAttribute('data-k')); if (v != null) el.innerHTML = v; });
     all('[data-ka]').forEach(el => { const v = t(el.getAttribute('data-ka')); if (v != null) el.setAttribute('aria-label', v); });
-    all('#intro .lp-lang button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang)));
+    langButtons().forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang)));
     if ($('intro')) { renderLib(); renderAll(); paintSeats(); }
   };
   const setLang = l => {
@@ -656,8 +687,8 @@
     stop(); live('off');
     if (typeof setInterval === 'function') timer = setInterval(() => { if (shown() && !(doc && doc.hidden)) show((step + 1) % nF()); }, 2600);
   };
+  langButtons().forEach(b => on(b, 'click', () => setLang(b.getAttribute('data-lang'))));
   if (intro) {
-    all('#intro .lp-lang button').forEach(b => on(b, 'click', () => setLang(b.getAttribute('data-lang'))));
     all('#intro .lp-ex button').forEach(b => on(b, 'click', () => setExample(b.getAttribute('data-ex'))));
     on($('lp-thumbs'), 'click', ev => { const b = ev.target && ev.target.closest ? ev.target.closest('button[data-i]') : null; if (b) { stop(); live('polite'); show(+b.getAttribute('data-i')); } });
     // in-page links scroll; the app routes on location.hash, so the hash never changes here. #signin, #signup and
