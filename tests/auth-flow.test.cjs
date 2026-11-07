@@ -12,7 +12,7 @@ test('a new visitor sees hosted sign-in before any backend choice', async () => 
   assert.equal(page.element('setup').hidden, false);
   await page.fire('s-go');
   assert.equal(page.element('auth').hidden, false);
-  assert.equal(page.element('auth-title').textContent, 'Create an account');
+  assert.equal(page.element('auth-title').textContent, 'Create your account');
 });
 
 test('an existing self-hosted session opens on its remembered project', async () => {
@@ -67,8 +67,7 @@ test('sign-up saves its chosen backend after account creation', async () => {
   await page.fire('auth-form', 'submit');
   assert.equal(page.clients.at(-1).calls[0][0], 'up');
   assert.deepEqual(JSON.parse(page.storage.get('rb.backend')), {mode: 'own', url: ownUrl, key: ownKey});
-  assert.equal(page.element('auth-title').textContent, 'Sign in');
-  assert.equal(page.element('a-info').hidden, false);
+  assert.equal(page.element('auth-title').textContent, 'Enter your code', 'no session: the code screen');
 });
 
 test('L25: sign-up with my own Supabase keeps the project only once the account exists', async () => {
@@ -79,7 +78,7 @@ test('L25: sign-up with my own Supabase keeps the project only once the account 
   page.element('login-own-key').value = ownKey;
   await page.fire('login-own-form', 'submit');
   assert.equal(page.clients.at(-1).url, ownUrl);
-  assert.equal(page.element('auth-title').textContent, 'Create an account');
+  assert.equal(page.element('auth-title').textContent, 'Create your account');
   assert.equal(page.storage.get('rb.backend'), undefined);
   page.element('a-email').value = 'new@example.test';
   page.element('a-pass').value = 'example-password';

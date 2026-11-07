@@ -39,7 +39,7 @@ async function signUp(page, error = null) {
   await settle();
   return calls;
 }
-const hostedForm = async page => { await page.fire('intro-signup'); await settle(); assert.equal(page.element('auth-form').hidden, false); assert.equal(page.element('auth-title').textContent, 'Create an account'); };
+const hostedForm = async page => { await page.fire('intro-signup'); await settle(); assert.equal(page.element('auth-form').hidden, false); assert.equal(page.element('auth-title').textContent, 'Create your account'); };
 const shown = (page, id) => page.element(id).hidden === false;
 const FULL_MSG = 'The last spot has just been taken: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.';
 const SHUT_MSG = 'Sign-ups are closed for now: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.';
@@ -76,7 +76,7 @@ test('L31 — the hosted sign-up form no longer offers own Supabase; the sign-in
   assert.ok(shown(page, 'a-adv'), 'on sign-in');
   await page.fire('a-toggle'); await settle();
   await page.fire('s-go'); await settle();
-  assert.ok(shown(page, 'auth-form')); assert.equal(page.element('auth-title').textContent, 'Create an account');
+  assert.ok(shown(page, 'auth-form')); assert.equal(page.element('auth-title').textContent, 'Create your account');
   assert.ok(!shown(page, 'a-adv'), 'not on the hosted sign-up');
 });
 
@@ -156,7 +156,7 @@ test('L31 own Supabase — beta_seats() is not asked, neither on #setup nor befo
   assert.deepEqual(rpcs, []);
 });
 
-for (const [name, seats, msg, link] of [['full', FULL, FULL_MSG, true], ['closed', CLOSED, SHUT_MSG, true], ['no slot left today', NONE_TODAY, TODAY_MSG, false]]) {
+for (const [name, seats, msg, link] of [['closed', CLOSED, SHUT_MSG, true], ['no slot left today', NONE_TODAY, TODAY_MSG, false]]) {
   test(`L31 refused before signUp — ${name}: its message, signUp not called, the state already known by then`, async () => {
     const {page} = await visitor([answer(OPEN), answer(seats)]);
     await hostedForm(page);
@@ -167,17 +167,32 @@ for (const [name, seats, msg, link] of [['full', FULL, FULL_MSG, true], ['closed
   });
 }
 
-test('L31 last seat taken meanwhile — read open, signUp refused, read full: the clear message and the way to the list', async () => {
-  const {page, seatCalls} = await visitor([answer(OPEN), answer(OPEN), answer(FULL)]);
+const LAST_SEAT = 'The last seat was taken while you were signing up. No account was created.';
+test('L41 last seat taken meanwhile — read open, signUp refused, read full: the waiting list, its banner, the address carried over', async () => {
+  const {page} = await visitor([answer(OPEN), answer(OPEN), answer(FULL), answer(FULL)]);
   await hostedForm(page);
   assert.equal((await signUp(page, DB_ERROR)).length, 1);
-  assert.equal(seatCalls(), 3);
-  assert.equal(page.element('a-err').textContent, FULL_MSG, 'never the generic message');
-  assert.ok(shown(page, 'a-wl'));
-  await page.fire('a-wl-go'); await settle();
+  await settle();
   assert.ok(shown(page, 'setup')); assert.ok(shown(page, 's-full'));
+  assert.ok(shown(page, 's-note')); assert.equal(page.element('s-note').textContent, LAST_SEAT);
   assert.equal(page.element('s-wl-email').value, 'new@example.test', 'the address typed follows');
-  assert.ok(!shown(page, 'a-wl'), 'the link goes with the message');
+  assert.ok(!shown(page, 'a-wl'));
+});
+
+test('L41 refused before signUp — full: signUp not called, the waiting list with its banner', async () => {
+  const {page} = await visitor([answer(OPEN), answer(FULL), answer(FULL)]);
+  await hostedForm(page);
+  assert.deepEqual(await signUp(page), [], 'no account attempted');
+  await settle();
+  assert.ok(shown(page, 's-note')); assert.ok(shown(page, 's-full'));
+  assert.equal(page.element('s-wl-email').value, 'new@example.test');
+});
+
+test('L41 — the banner goes with the seats: a seat open again when the list is read, no banner', async () => {
+  const {page} = await visitor([answer(OPEN), answer(FULL), answer(OPEN)]);
+  await hostedForm(page);
+  await signUp(page); await settle();
+  assert.ok(!shown(page, 's-note'));
 });
 
 test('L31 signUp refused — read again: closed today says so; still open is another error, the generic line; no answer says it may be full', async () => {

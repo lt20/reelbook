@@ -59,7 +59,7 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity, href = 'https://app.example.test/reelbook/', win = {}, rpc = null, docEl = null} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity, href = 'https://app.example.test/reelbook/', win = {}, rpc = null, docEl = null, auth = null, cfg = null} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [];
@@ -98,7 +98,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     window: {
       REELBOOK: {
         library,
-        hosted: {name: 'Reelbook hosted', url: hostedUrl, anonKey: ownKey, blurb: 'Free for now.'},
+        hosted: {name: 'Reelbook hosted', url: hostedUrl, anonKey: ownKey, blurb: 'Free for now.', ...(cfg || {})},
         repo: 'https://github.com/lt20/reelbook'
       },
       scrollTo() {}, addEventListener(type, listener) { winListeners[type] = listener; (winAll[type] = winAll[type] || []).push(listener); },
@@ -161,7 +161,8 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
           },
           async signInWithPassword(credentials) { client.calls.push(['in', credentials]); return {error: null}; },
           async signUp(credentials) { client.calls.push(['up', credentials]); return {data: {session: null}, error: null}; },
-          async signOut() { return {error: null}; }
+          async signOut() { return {error: null}; },
+          ...(auth ? auth(() => client) : {}) // L41: a test's own answers (verifyOtp, resend, updateUser...)
         }};
         if (rpc) client.rpc = async (name, args) => rpc(name, args, client);
         clients.push(client);

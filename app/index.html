@@ -1101,6 +1101,27 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 }
 .auth-demo{margin:var(--s-2) 0 0}
 .intro-demo{display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);color:var(--accent);font-weight:600}
+/* L41: the auth screens (mockup p7-signup). One colour for every error, on these screens. */
+#auth .err{color:var(--danger)}
+#auth #a-brand[hidden]{display:none}
+.a-note{background:var(--tag);color:var(--ink);border-radius:var(--r-sm);padding:10px var(--s-3);font-size:var(--fs-sm);margin:0 0 var(--s-3)}
+.a-note[hidden]{display:none}
+.a-step{font-size:var(--fs-sm);color:var(--muted);margin:0 0 12px}
+.a-step b{color:var(--ink)}
+#auth-form .hint[hidden],#auth-form label[hidden]{display:none}
+#auth-form .actions .btn{width:100%}
+#a-lead.a-plain{font-size:var(--fs-base);color:var(--ink);margin:0}
+.a-other{font-size:var(--fs-sm);color:var(--muted);margin:14px 0 0}
+.a-other[hidden]{display:none}
+.a-pwrow{position:relative}
+.a-pwrow input{padding-right:84px}
+.a-eye{position:absolute;right:4px;bottom:0;height:44px;border:0;background:none;color:var(--accent);font:600 var(--fs-sm) var(--body);padding:0 12px;cursor:pointer}
+.a-codein{font:700 32px/1 var(--display);letter-spacing:.42em;text-align:center;padding-left:calc(var(--s-3) + .42em);min-height:60px;background:var(--paper)}
+.a-codein::placeholder{letter-spacing:.42em;color:var(--line-strong)}
+.btn.busy{opacity:.75;position:relative;padding-left:40px}
+.btn.busy::before{content:"";position:absolute;left:16px;top:50%;width:14px;height:14px;margin-top:-8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:a-spin .8s linear infinite}
+@keyframes a-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.btn.busy::before{animation:none}}
 .auth-adv{margin-top:var(--s-3)}
 .auth-adv a{display:inline-block;padding:var(--s-2) 0}
 </style>
@@ -1117,6 +1138,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <!-- ===== Sign-up: pick a backend ===== -->
 <div id="setup" class="wrap" hidden>
   <p class="brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
+  <div class="a-note" id="s-note" role="status" hidden></div>
   <h1 data-k="s.h1">Your videos, as sheets</h1>
   <p class="lead" data-k="s.lead">Paste the videos you want to keep (Instagram, TikTok, YouTube, Facebook): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.</p>
   <div class="panel">
@@ -1128,7 +1150,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
         <label class="wl-consent"><input type="checkbox" id="s-wl-consent"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
         <p class="err" id="s-wl-err" role="alert" hidden></p>
         <button class="btn" type="submit" id="s-wl-go" data-k="wl.cta" disabled aria-disabled="true">Notify me</button></form>
-        <span class="wl-done" id="s-wl-done" role="status" hidden><b data-k="wl.ok.h">You’re on the list</b><span data-k="wl.ok">You’re on the list. We’ll email you as soon as a spot opens.</span></span></span></div>
+        <span class="wl-done" id="s-wl-done" role="status" hidden><b data-k="wl.ok.h">You’re on the list</b><span data-k="wl.ok">We’ll email you as soon as a spot opens.</span></span></span></div>
       <label class="host-opt"><input type="radio" name="s-host" id="pick-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="s.ownd">Free tier is enough. You run one SQL file, then paste the project URL and anon key here.</span></span></label>
     </div>
     <div class="actions"><button class="btn" type="button" id="s-go">Create my notebook</button></div>
@@ -1270,7 +1292,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
         <label class="lp-consent"><input type="checkbox" id="lp-wl-consent"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
         <span class="lp-wl-err" id="lp-wl-err" role="alert" hidden></span>
         <button class="lp-btn" type="submit" id="lp-wl-go" data-k="wl.cta" disabled aria-disabled="true">Notify me</button></form>
-        <span class="lp-wl-done" id="lp-wl-done" role="status" hidden><b data-k="wl.ok.h">You’re on the list</b><span data-k="wl.ok">You’re on the list. We’ll email you as soon as a spot opens.</span></span></span></div>
+        <span class="lp-wl-done" id="lp-wl-done" role="status" hidden><b data-k="wl.ok.h">You’re on the list</b><span data-k="wl.ok">We’ll email you as soon as a spot opens.</span></span></span></div>
       <label class="lp-opt"><input type="radio" name="lp-host" id="lp-host-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="i1.bd">Your own project, your limits. Run one SQL file, then paste the URL and key.</span></span></label>
       <a class="lp-btn lp-host-cta" href="#signup" id="intro-signup" data-k="i1.cta">Create my notebook</a></li>
     <li><h3 data-k="i2.h">Install the skill</h3>
@@ -1312,19 +1334,25 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 </section>
 </main>
 </div>
+  <p class="brand" id="a-brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
+  <div class="a-note" id="a-note" role="status" hidden></div>
   <h1 id="auth-title">Sign in</h1>
-  <form class="panel" id="auth-form">
-    <label><span data-k="a.email">Email</span> <input id="a-email" type="email" autocomplete="email" required></label>
-    <label><span data-k="a.pass">Password</span> <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required></label>
-    <p class="err" id="a-err" hidden></p>
+  <p class="a-step" id="a-step" hidden></p>
+  <form class="panel" id="auth-form" novalidate>
+    <p class="hint" id="a-sent-row" hidden><span id="a-sent"></span> <a href="#" id="a-change"></a></p>
+    <p class="hint" id="a-lead" hidden></p>
+    <label id="a-email-row"><span data-k="a.email">Email</span> <input id="a-email" type="email" autocomplete="email" required></label>
+    <label id="a-code-row" hidden><span id="a-code-l"></span> <input class="a-codein" id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······"></label>
+    <label class="a-pwrow" id="a-pass-row"><span id="a-pass-l">Password</span> <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required><button type="button" class="a-eye" id="a-eye">Show</button></label>
+    <p class="err" id="a-err" role="alert" hidden></p>
     <p class="hint" id="a-wl" hidden><a href="#" id="a-wl-go" data-k="cta.full">Join the waiting list</a></p>
-    <p class="hint" id="a-info" hidden></p>
-    <div class="actions">
-      <button class="btn" type="submit" id="a-submit">Sign in</button>
-      <button class="btn ghost" type="button" id="a-toggle">Create an account</button>
-    </div>
-    <p class="hint"><span data-k="a.backend">Backend:</span> <span id="a-backend"></span></p>
+    <div class="actions"><button class="btn" type="submit" id="a-submit">Sign in</button></div>
+    <p class="hint" id="a-help" hidden></p>
+    <p class="hint" id="a-forgot-row"><a href="#" id="a-forgot">Forgot your password?</a></p>
+    <p class="hint" id="a-nocode" hidden></p>
+    <p class="hint" id="a-backend-row"><span data-k="a.backend">Backend:</span> <span id="a-backend"></span></p>
   </form>
+  <p class="a-other" id="a-other"><span id="a-other-t"></span><a href="#" id="a-toggle">Create an account</a></p>
   <!-- L25: the advanced way, under the form -->
   <p class="hint auth-adv" id="a-adv"><a href="#" id="a-own">Use my own Supabase</a><a href="#" id="a-hosted" hidden data-k="a.hosted"> · Use Reelbook hosted</a></p>
   <form class="panel" id="login-own-form" hidden>
@@ -1336,7 +1364,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     <div class="actions"><button class="btn" type="submit" data-k="a.useown">Use this instance</button><button class="btn ghost" type="button" id="login-own-cancel" data-k="a.cancel">Cancel</button></div>
   </form>
   <!-- L25 + L27: the one « See a demo » link, after the landing and under the sign-in form alike -->
-  <p class="auth-demo"><a class="intro-demo" id="intro-demo" href="#demo" hidden data-k="a.demo">See a demo</a></p>
+  <p class="auth-demo" id="a-demo"><a class="intro-demo" id="intro-demo" href="#demo" hidden data-k="a.demo">See a demo</a></p>
 </div>
 
 <!-- ===== Home: portal / theme ===== -->
@@ -1574,10 +1602,10 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 </dialog>
 
 <script src="vendor/supabase.js?v=2"></script>
-<script src="config.js?v=9"></script>
+<script src="config.js?v=10"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
-<script src="landing.js?v=4"></script>
+<script src="landing.js?v=5"></script>
 <script>
 (() => {
   'use strict';
@@ -1605,6 +1633,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // L30: the newcomer's screens in French or English (app/landing.js, window.RBL); English when it is not loaded
   // (the vm harness). Every T(key, english) call matches the English dictionary (tests/landing.test.cjs).
   const T = (k, en) => (window.RBL && window.RBL.t(k)) || en;
+  // L41: the auth screens' texts, with {email}-style holes (the English here works without landing.js).
+  const AU_EN = {'au.signup.h': 'Create your account', 'au.signup.step': 'Account, step 1 of 2: we’ll email you a code to check your address.', 'au.pw8': 'Password · 8 characters or more', 'au.show': 'Show', 'au.hide': 'Hide', 'au.signup.cta': 'Get my code', 'au.signup.busy': 'Sending your code…', 'au.have': 'Already have an account?', 'au.code.h': 'Enter your code', 'au.code.step': 'Account, step 2 of 2: it’s created as soon as the code checks out.', 'au.code.sent': 'A 6-digit code is on its way to <b>{email}</b>.', 'au.code.sent.own': 'A code or a link is on its way to <b>{email}</b>.', 'au.change': 'Change address', 'au.code.l': '6-digit code', 'au.code.l.own': 'Code from the email', 'au.code.cta': 'Confirm', 'au.code.busy': 'Checking…', 'au.code.new': 'Get a new code', 'au.help.n': 'Nothing yet? Check your junk folder, or resend the code in <b>{n} s</b>.', 'au.help.a': 'Nothing yet? Check your junk folder, or {link}.', 'au.help.l': 'resend the code', 'au.help.way': 'Still nothing? Check <b>{email}</b>, search your inbox for Reelbook, or {us}.', 'au.help.way0': 'Still nothing? Check <b>{email}</b> and search your inbox for Reelbook.', 'au.help.us': 'email us', 'au.help.again': 'Resend the code', 'au.e.email': 'That doesn’t look like an email address: check it.', 'au.e.short': 'The password needs at least 8 characters.', 'au.e.off.send': 'You’re offline: nothing was sent. Try again once you’re back online.', 'au.e.off.code': 'You’re offline: the code could not be checked. Try again once you’re back online.', 'au.e.off.in': 'You’re offline: check your connection and try again.', 'au.e.rate': 'Sending limit reached for this address: try again in an hour. Nothing was created.', 'au.e.rate2': 'Sending limit reached for this address: try again in an hour.', 'au.e.wrong': 'That code isn’t right. Check the 6 digits of the latest email.', 'au.e.wrong.own': 'That code isn’t right. Check the latest email.', 'au.e.expired': 'This code has expired. Ask for a new one: it will reach the same address.', 'au.e.toomany': 'Too many attempts. Wait a few minutes, then ask for a new code.', 'au.e.soon': 'The last code just left: wait for the countdown before asking for another.', 'au.e.save': 'The password could not be saved: try again.', 'au.n.resent': 'New code sent to <b>{email}</b>. Only the latest one works.', 'au.n.resume': 'Picking up where you left off: the code sent {n} min ago to <b>{email}</b> is still valid.', 'au.n.signin': 'Your sign-up isn’t finished: we just sent you a new code.', 'au.n.full': 'The last seat was taken while you were signing up. No account was created.', 'au.setpw.h': 'Choose your password', 'au.setpw.step': 'Address confirmed, account created for <b>{email}</b>. Only your password is missing.', 'au.setpw.cta': 'Save and continue', 'au.in.h': 'Sign in', 'au.in.busy': 'Signing in…', 'au.forgot': 'Forgot your password?', 'au.new': 'New here?', 'au.ex.h': 'This address already has an account', 'au.ex.p': '<b>{email}</b> already has a Reelbook account. Sign in with your password.', 'au.ex.you': 'Not you?', 'au.ex.other': 'Use another address', 'au.fg.h': 'Forgot your password', 'au.fg.p': 'Enter your address: we send a 6-digit code so you can pick a new password. Your account and sheets stay as they are.', 'au.fg.p.own': 'Enter your address: we send a code or a link so you can pick a new password. Your account and sheets stay as they are.', 'au.fg.cta': 'Get a code', 'au.back': 'Back to sign in', 'au.rs.h': 'New password', 'au.rs.sent': 'Code sent to <b>{email}</b>, if an account uses it.', 'au.rs.sent.own': 'Code or link sent to <b>{email}</b>, if an account uses it.', 'au.rs.pw': 'New password · 8 characters or more', 'au.rs.cta': 'Change my password', 'au.rs.none': 'No code after a few minutes, junk folder included? This address may have no account: {link}.', 'au.rs.create': 'create one', 'au.rs.ok': 'Password changed for <b>{email}</b>.', 'a.in': 'Sign in', 'a.up': 'Create an account', 'a.pass': 'Password'};
+  const A = (k, vars) => { let out = T(k, AU_EN[k] || ''); for (const v in vars || {}) out = out.split('{' + v + '}').join(vars[v]); return out; };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
   // ---------- L18: bottom sheets ----------
   // Every dialog.dlg opens with openSheet and closes with closeSheet (the photo viewer stays a full-screen dialog of
@@ -1688,6 +1719,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const s = seatNow, full = !!(s && s.full), own = setupOwn(), go = $('s-go');
     $('pick-own').checked = own; $('pick-hosted').checked = !own;
     $('s-hosted-opt').hidden = full; $('s-full').hidden = !full; $('s-seatline').hidden = !s || full;
+    $('s-note').hidden = !(setupNote && full); $('s-note').textContent = setupNote && full ? A('au.n.full') : '';
     if (s) {
       $('s-seatline').textContent = seatWords(T('seats', '{taken} of {total} spots taken'), s);
       $('s-wlH').textContent = s.closed ? T('beta.closed', 'Beta full') : seatWords(T('wl.h', 'Beta full: {taken} of {total} spots taken'), s);
@@ -1727,11 +1759,133 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // L25: introOpen, the presentation shows above the account actions until the visitor picks one, on a device
   // that has never signed in (no rb.backend stored).
   let mode = 'in', signupBackendChosen = false, authBusy = false, introOpen = !readBackend();
-  const labelMode = () => { $('auth-title').textContent = mode === 'in' ? T('a.in', 'Sign in') : T('a.up', 'Create an account'); $('a-submit').textContent = mode === 'in' ? T('a.in', 'Sign in') : T('a.submitUp', 'Create account'); $('a-toggle').textContent = mode === 'in' ? T('a.up', 'Create an account') : T('a.have', 'I already have an account'); };
-  const setMode = m => { mode = m; labelMode(); $('a-pass').autocomplete = m === 'in' ? 'current-password' : 'new-password'; $('a-err').hidden = true; $('a-wl').hidden = true; $('a-info').hidden = true; $('login-own-form').hidden = true; };
+  // L41 (P7-signup.md): one form, one screen at a time: signup, code, set-password, signin, exists, forgot, reset,
+  // new-password (reset once its code is used, or a recovery link). flow: the code on its way {type, email, from, at,
+  // verified, resent, expired}, also in rb.pending for 1 hour, so the screen survives a trip to Mail; the password
+  // only ever in heldPw (memory). flowHold: a verifyOtp is on its way; a session it brings must not open the app yet.
+  // authErr, authNote: functions, so a language change rewrites them.
+  let screen = 'signin', flow = null, flowHold = false, heldPw = '', authErr = null, authNote = null, resendAt = 0, codeLocked = 0, helpTimer = null, setupNote = false;
+  const PENDING = 'rb.pending', PENDING_MS = 3600000, RESEND_MS = 60000, LOCK_MS = 300000;
+  const ownNow = () => !!backend && backend.mode === 'own';
+  const backHere = () => location.origin + location.pathname;
+  const authHeld = () => !!(flowHold || (flow && flow.verified));
+  const savePending = () => { if (flow && backend) ls.set(PENDING, JSON.stringify({email: flow.email, type: flow.type, at: flow.at, from: flow.from, verified: !!flow.verified, url: backend.url})); };
+  const readPending = () => {
+    let p = null; try { p = JSON.parse(ls.get(PENDING) || 'null'); } catch { ls.del(PENDING); }
+    if (!p) return null;
+    const age = Date.now() - Number(p.at);
+    if (typeof p.email !== 'string' || !p.email || (p.type !== 'signup' && p.type !== 'recovery') || !(age >= 0 && age < PENDING_MS)) { ls.del(PENDING); return null; }
+    return p;
+  };
+  const stopHelp = () => { if (helpTimer !== null && typeof clearInterval === 'function') clearInterval(helpTimer); helpTimer = null; };
+  const startHelp = () => { if (helpTimer === null && typeof setInterval === 'function') helpTimer = setInterval(() => paintHelp(), 1000); };
+  const startFlow = (type, email, from) => {
+    flow = {type, email, from, at: Date.now()}; resendAt = flow.at + RESEND_MS; codeLocked = 0;
+    savePending(); screen = type === 'recovery' ? 'reset' : 'code'; $('a-code').value = ''; authErr = null; authNote = null; startHelp();
+  };
+  const endFlow = () => { flow = null; flowHold = false; heldPw = ''; codeLocked = 0; ls.del(PENDING); stopHelp(); };
+  // Back on the page with a code on its way (the iPhone reloads a PWA coming back from Mail).
+  const resumeFlow = () => {
+    const p = readPending();
+    if (!p) return;
+    if (!backend || p.url !== backend.url) { ls.del(PENDING); return; }
+    const rec = p.type === 'recovery';
+    flow = {type: p.type, email: p.email, from: p.from || (rec ? 'forgot' : 'signup'), at: Number(p.at), verified: !!p.verified};
+    resendAt = flow.at + RESEND_MS; introOpen = false; $('a-email').value = p.email;
+    screen = p.verified ? (rec ? 'new-password' : 'set-password') : (rec ? 'reset' : 'code');
+    if (!p.verified) { authNote = () => A('au.n.resume', {n: Math.max(1, Math.floor((Date.now() - flow.at) / 60000)), email: esc(flow.email)}); startHelp(); }
+  };
+  const contactHref = () => {
+    const c = String((CFG.hosted && CFG.hosted.contact) || '').trim();
+    if (!c || ownNow()) return '';
+    return /^(mailto:|https:)/i.test(c) ? c : /^[^@\s:]+@[^@\s]+$/.test(c) ? 'mailto:' + c : '';
+  };
+  // One help line under the code: junk folder and resend (countdown, then a link); after a resend, the way out.
+  const paintHelp = () => {
+    const el = $('a-help'), f = flow, onCode = screen === 'code' || screen === 'reset';
+    if (codeLocked && Date.now() >= codeLocked) { codeLocked = 0; authErr = null; paintAuth(); return; }
+    let out = '';
+    if (f && onCode && !f.expired && !codeLocked) {
+      const left = Math.ceil((resendAt - Date.now()) / 1000);
+      if (f.resent) {
+        const us = contactHref();
+        out = us ? A('au.help.way', {email: esc(f.email), us: `<a href="${esc(us)}">${A('au.help.us')}</a>`}) : A('au.help.way0', {email: esc(f.email)});
+        if (left <= 0) out += ` <a href="#" data-au="resend">${A('au.help.again')}</a>`;
+      } else out = left > 0 ? A('au.help.n', {n: left}) : A('au.help.a', {link: `<a href="#" data-au="resend">${A('au.help.l')}</a>`});
+    }
+    if (el.innerHTML !== out) el.innerHTML = out;
+    el.hidden = !out;
+  };
+  const paintAuth = () => {
+    const s = screen, f = flow, own = ownNow(), intro = introOpen && mode === 'in' && !f, onCode = s === 'code' || s === 'reset', em = esc(f ? f.email : String($('a-email').value || '').trim());
+    const emailOn = s === 'signup' || s === 'signin' || s === 'forgot', passOn = s === 'signup' || s === 'signin' || s === 'set-password' || s === 'reset' || s === 'new-password';
+    const title = {signup: 'au.signup.h', code: 'au.code.h', 'set-password': 'au.setpw.h', signin: 'au.in.h', exists: 'au.ex.h', forgot: 'au.fg.h', reset: 'au.rs.h', 'new-password': 'au.rs.h'}[s];
+    $('auth-title').textContent = A(title);
+    const step = s === 'signup' ? A('au.signup.step') : s === 'code' ? A('au.code.step') : s === 'set-password' ? A('au.setpw.step', {email: em}) : '';
+    $('a-step').innerHTML = step; $('a-step').hidden = intro || !step;
+    const note = authNote ? authNote() : ''; $('a-note').innerHTML = note; $('a-note').hidden = intro || !note;
+    // the lines above the fields
+    $('a-sent-row').hidden = !onCode;
+    if (onCode) { $('a-sent').innerHTML = s === 'code' ? A(own ? 'au.code.sent.own' : 'au.code.sent', {email: em}) : A(own ? 'au.rs.sent.own' : 'au.rs.sent', {email: em}); $('a-change').textContent = A('au.change'); }
+    $('a-lead').hidden = s !== 'forgot' && s !== 'exists';
+    $('a-lead').innerHTML = s === 'forgot' ? A(own ? 'au.fg.p.own' : 'au.fg.p') : s === 'exists' ? A('au.ex.p', {email: em}) : '';
+    $('a-lead').classList.toggle('a-plain', s === 'exists');
+    // the fields
+    $('a-email-row').hidden = !emailOn; $('a-code-row').hidden = !onCode; $('a-pass-row').hidden = !passOn;
+    $('a-code-l').textContent = A(own ? 'au.code.l.own' : 'au.code.l');
+    const code = $('a-code'); code.maxLength = own ? 10 : 6; code.placeholder = own ? '' : '······';
+    $('a-pass-l').textContent = s === 'signup' || s === 'set-password' ? A('au.pw8') : s === 'reset' || s === 'new-password' ? A('au.rs.pw') : A('a.pass');
+    const pass = $('a-pass'); pass.autocomplete = s === 'signin' ? 'current-password' : 'new-password';
+    $('a-eye').textContent = pass.type === 'text' ? A('au.hide') : A('au.show');
+    const readOnly = authBusy; $('a-email').readOnly = readOnly; code.readOnly = readOnly; pass.readOnly = readOnly;
+    // messages
+    const err = authErr ? authErr() : ''; $('a-err').textContent = err; $('a-err').hidden = !err;
+    // the main action
+    const expired = !!(f && f.expired), go = $('a-submit');
+    const cta = {signup: 'au.signup.cta', code: expired ? 'au.code.new' : 'au.code.cta', 'set-password': 'au.setpw.cta', signin: 'a.in', exists: 'a.in', forgot: 'au.fg.cta', reset: expired ? 'au.code.new' : 'au.rs.cta', 'new-password': 'au.rs.cta'}[s];
+    const wait = {signup: 'au.signup.busy', code: expired ? 'au.signup.busy' : 'au.code.busy', 'set-password': 'au.code.busy', signin: 'au.in.busy', exists: 'au.in.busy', forgot: 'au.signup.busy', reset: expired ? 'au.signup.busy' : 'au.code.busy', 'new-password': 'au.code.busy'}[s];
+    go.textContent = A(authBusy ? wait : cta);
+    go.classList.toggle('busy', authBusy);
+    go.disabled = !backend || authBusy || !!codeLocked;
+    // the links
+    $('a-forgot-row').hidden = s !== 'signin' && s !== 'exists'; $('a-forgot').textContent = A('au.forgot');
+    $('a-nocode').hidden = s !== 'reset' || expired;
+    if (s === 'reset') $('a-nocode').innerHTML = A('au.rs.none', {link: `<a href="#" data-au="create">${A('au.rs.create')}</a>`});
+    const other = {signup: ['au.have', 'a.in'], signin: ['au.new', 'a.up'], exists: ['au.ex.you', 'au.ex.other'], forgot: ['', 'au.back']}[s];
+    $('a-other').hidden = intro || !other;
+    if (other) { $('a-other-t').textContent = other[0] ? A(other[0]) + ' ' : ''; $('a-toggle').textContent = A(other[1]); }
+    paintHelp();
+  };
+  const setMode = m => { mode = m; screen = m === 'in' ? 'signin' : 'signup'; authErr = null; authNote = null; setupNote = false; $('a-pass').type = 'password'; $('a-wl').hidden = true; $('login-own-form').hidden = true; paintAuth(); };
+  // A screen of the auth form from another one: the address stays in its field, whichever the way.
+  const focusAuth = () => {
+    const el = $(screen === 'code' || screen === 'reset' ? 'a-code' : screen === 'set-password' || screen === 'new-password' ? 'a-pass' : screen === 'exists' ? 'a-submit' : 'a-email');
+    if (el.focus) el.focus();
+    if (el === $('a-email') && el.select) el.select();
+  };
+  const goScreen = s => {
+    if (s === 'signup') { mode = 'up'; signupBackendChosen = true; } else if (s === 'signin') mode = 'in';
+    screen = s; authErr = null; authNote = null; $('a-pass').type = 'password'; $('a-wl').hidden = true; $('login-own-form').hidden = true;
+    route(); focusAuth();
+  };
   // « Sign in » asked for explicitly (setup, sign-up form): the form, never the presentation again (L25)
   const returnToSignin = () => { introOpen = false; setMode('in'); signupBackendChosen = false; selectBackend(rememberedBackend(), false); };
-  $('a-toggle').addEventListener('click', () => { if (mode === 'up') returnToSignin(); else { setMode('up'); signupBackendChosen = false; route(); } });
+  $('a-toggle').addEventListener('click', ev => {
+    ev.preventDefault();
+    if (authBusy) return;
+    if (screen === 'signup') returnToSignin();
+    else if (screen === 'signin') { setMode('up'); signupBackendChosen = false; route(); }
+    else if (screen === 'exists') goScreen('signup');
+    else if (screen === 'forgot') goScreen('signin');
+  });
+  $('a-forgot').addEventListener('click', ev => { ev.preventDefault(); if (!authBusy) goScreen('forgot'); });
+  // « Change address » goes back to where the person came from, the code forgotten.
+  $('a-change').addEventListener('click', ev => {
+    ev.preventDefault();
+    if (authBusy) return;
+    const to = flow ? flow.from : 'signup'; endFlow(); goScreen(to);
+  });
+  $('a-eye').addEventListener('click', () => { const p = $('a-pass'); p.type = p.type === 'text' ? 'password' : 'text'; $('a-eye').textContent = p.type === 'text' ? A('au.hide') : A('au.show'); });
   $('setup-signin').addEventListener('click', ev => { ev.preventDefault(); returnToSignin(); });
   // L25: « Create an account » is the hosted backend (the main path); « Use my own Supabase » stays under the form.
   // L30: the landing's « Create my notebook » (installation, step 1) follows its radio: « On my own Supabase »
@@ -1828,16 +1982,10 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     });
   }
   // The refusal's link: the waiting list of #setup, with the address already typed. The state is read again.
-  $('a-wl-go').addEventListener('click', ev => {
-    ev.preventDefault();
-    const email = $('a-email').value.trim();
-    setMode('up'); signupBackendChosen = false; seatsAsked = null; route();
-    if (email) $('s-wl-email').value = email;
-    $('s-wl-first').focus();
-  });
+  $('a-wl-go').addEventListener('click', ev => { ev.preventDefault(); toWaitlist($('a-email').value.trim(), false); });
   const paintOwnLink = () => { $('a-own').textContent = backend && backend.mode === 'own' ? T('a.change', 'Change instance') : T('a.own', 'Use my own Supabase'); };
   // L30: a language picked on the landing relabels what this script writes (no route: the page keeps its scroll)
-  if (window.RBL) window.RBL.onChange(() => { labelMode(); paintBlurb(); paintOwnLink(); paintSetup(); paintWl(); $('lp-wl-err').hidden = $('s-wl-err').hidden = true; $('a-backend').textContent = backendLabel(); });
+  if (window.RBL) window.RBL.onChange(() => { paintAuth(); paintBlurb(); paintOwnLink(); paintSetup(); paintWl(); $('lp-wl-err').hidden = $('s-wl-err').hidden = true; $('a-backend').textContent = backendLabel(); });
   $('intro-signin').addEventListener('click', () => { introOpen = false; setMode('in'); route(); $('a-email').focus(); });
   // L36: « Add the shortcut » (installation, step 3): the shortcut is made in Settings › iPhone shortcut (L28), behind
   // an account: the sign-in form now, Settings once signed in.
@@ -1849,43 +1997,221 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const authError = (e, authMode) => {
     const code = String((e && e.code) || ''), msg = String((e && e.message) || ''), status = e && e.status;
     const refused = betaText(msg); if (refused) return refused;
+    // L41: offline for sure, in the mockup's words (a failure while online stays « the server did not answer » below).
+    if (typeof navigator !== 'undefined' && navigator.onLine === false && ((e && e.name === 'AuthRetryableFetchError') || status === 0 || /failed to fetch|network|load failed/i.test(msg))) return A(authMode === 'signin' || authMode === 'in' ? 'au.e.off.in' : authMode === 'code' || authMode === 'reset' ? 'au.e.off.code' : 'au.e.off.send');
+    if (code === 'over_email_send_rate_limit' || /email rate limit/i.test(msg)) return A(authMode === 'signup' || authMode === 'up' ? 'au.e.rate' : 'au.e.rate2');
     if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) return T('a.e.creds', 'Wrong email or password.');
-    if (code === 'user_already_exists' || code === 'email_exists' || /already (registered|been registered|exists)/i.test(msg)) return T('a.e.exists', 'An account already exists with this email: sign in instead.');
-    if (code === 'email_not_confirmed' || /email not confirmed/i.test(msg)) return T('a.e.confirm', 'Confirm your email first with the link in your inbox, then sign in.');
     if (code === 'weak_password' || /password should|password is (too )?(weak|short)/i.test(msg)) return T('a.e.weak', 'That password is too weak: choose a longer one.');
     if (code === 'email_address_invalid' || /invalid format|validate email|email address .*invalid/i.test(msg)) return T('a.e.email', 'That email address is not valid.');
     if (status === 429 || /rate_limit/.test(code) || /rate limit|too many/i.test(msg)) return T('a.e.rate', 'Too many attempts: try again in a few minutes.');
     if (code === 'signup_disabled' || /signups? (are )?not allowed|signups? disabled/i.test(msg)) return T('a.e.closed', 'This server does not take new accounts.');
     if ((e && e.name === 'AuthRetryableFetchError') || status === 0 || status >= 500 || /failed to fetch|network|load failed/i.test(msg)) return T('a.e.offline', 'The server did not answer: check your connection and try again.');
-    return authMode === 'up' ? T('a.e.up', 'Could not create the account.') : T('a.fail', 'Could not sign in.');
+    return authMode === 'up' || authMode === 'signup' ? T('a.e.up', 'Could not create the account.') : authMode === 'signin' || authMode === 'in' ? T('a.fail', 'Could not sign in.') : authMode === 'save' || authMode === 'set-password' || authMode === 'new-password' ? A('au.e.save') : T('wl.e.fail', 'That did not work: check your connection and try again.');
   };
-  $('auth-form').addEventListener('submit', async ev => {
-    ev.preventDefault();
-    const err = $('a-err'), info = $('a-info'); err.hidden = true; $('a-wl').hidden = true; info.hidden = true; authBusy = true; $('a-submit').disabled = true;
-    const email = $('a-email').value.trim(), password = $('a-pass').value, client = sb, selectedBackend = backend, authMode = mode;
+  // L42 adds the Turnstile token here, and only here: the four calls Supabase guards with it.
+  const guardedAuth = (client, call, {email, password, type, options = {}}) =>
+    call === 'resetPasswordForEmail' ? client.auth.resetPasswordForEmail(email, options)
+    : client.auth[call](type ? {type, email, options} : {email, password, options});
+  const rememberBackend = b => ls.set('rb.backend', JSON.stringify(b.mode === 'hosted' ? {mode: 'hosted'} : b));
+  const failedInvalid = (id, key) => { authErr = () => A(key); paintAuth(); const el = $(id); el.setAttribute('aria-invalid', 'true'); if (el.focus) el.focus(); };
+  const emailOk = e => (ownNow() ? /^[^@\s]+@[^@\s]+$/ : /^[^@\s]+@[^@\s]+\.[^@\s]+$/).test(e);
+  // Measured on a real Auth (progress/2026-11-07-L41.md): a resend, or a second sign-up, within the frequency window
+  // answers over_email_send_rate_limit « … after N seconds »; the hourly limit has the same code and no number.
+  const tooSoonSecs = e => { const m = /(?:after|every) (\d+) seconds?/i.exec(String((e && e.message) || '')); return e && e.status === 429 && m ? Number(m[1]) : 0; };
+  const isExists = e => { const c = String((e && e.code) || ''); return c === 'user_already_exists' || c === 'email_exists' || /already (registered|been registered|exists)/i.test(String((e && e.message) || '')); };
+  const isUnconfirmed = e => String((e && e.code) || '') === 'email_not_confirmed' || /email not confirmed/i.test(String((e && e.message) || ''));
+  const isSamePassword = e => String((e && e.code) || '') === 'same_password' || /different from the old password/i.test(String((e && e.message) || ''));
+  // The last seat went during the sign-up: the waiting list, the address carried over (mockup, signup-full).
+  const toWaitlist = (email, note) => {
+    setMode('up'); signupBackendChosen = false; seatsAsked = null; setupNote = !!note; route();
+    if (email) $('s-wl-email').value = email;
+    $('s-wl-first').focus();
+  };
+  const leaveFlow = (client, recovered) => {
+    const email = flow ? flow.email : '';
+    endFlow(); $('a-pass').value = ''; $('a-pass').type = 'password'; $('a-code').value = ''; setMode('in');
+    if (client === sb) route();
+    if (recovered) { const f = $('flash'); f.innerHTML = A('au.rs.ok', {email: esc(email)}); f.hidden = false; setTimeout(() => { f.hidden = true; }, 6000); }
+  };
+  // Both wrong and expired answer otp_expired (HTTP 403, measured): the app tells them apart by the time of its last
+  // send. Too many attempts: HTTP 429, over_request_rate_limit. Anything else goes to authError.
+  const codeFailed = (e, f) => {
+    if (e && e.status === 429) { codeLocked = Date.now() + LOCK_MS; startHelp(); authErr = () => A('au.e.toomany'); return true; }
+    if (e && (e.code === 'otp_expired' || e.status === 403 || /expired|invalid/i.test(String(e.message || '')))) {
+      if (Date.now() - f.at >= PENDING_MS) { f.expired = true; authErr = () => A('au.e.expired'); }
+      else { authErr = () => A(ownNow() ? 'au.e.wrong.own' : 'au.e.wrong'); $('a-code').setAttribute('aria-invalid', 'true'); }
+      return true;
+    }
+    return false;
+  };
+  // « Last password wins »: after the code, the password typed last is the account's. HTTP 422 same_password (nothing
+  // to change) is a success. The session is there, so a failure asks again rather than losing the person.
+  const savePassword = async (client, password) => {
+    const {error} = await client.auth.updateUser({password});
+    if (error && !isSamePassword(error)) throw error;
+  };
+  const sendAgain = async () => {
+    const f = flow, client = sb;
+    if (!f || authBusy || !client) return;
+    authBusy = true; authErr = null; authNote = null; paintAuth();
     try {
-      if (authMode === 'in') {
-        const {error} = await client.auth.signInWithPassword({email, password}); if (client !== sb) return; if (error) throw error;
-        ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
-      } else {
-        // L31: on the hosted backend, beta_seats() first: Auth's own refusal says nothing (signupRefused).
-        const hostedUp = selectedBackend.mode === 'hosted'; let seatsKnown = false;
-        if (hostedUp) {
-          const d = await seatAnswer(client), s = seatsOf(d); if (client !== sb || mode !== 'up') return;
-          if (s) { seatsKnown = true; setSeats(d); const refusal = seatRefusal(s); if (refusal) throw new Error(refusal); }
-        }
-        const {data, error} = await client.auth.signUp({email, password, options: {emailRedirectTo: location.origin + location.pathname}}); if (client !== sb) return;
-        if (error && hostedUp && /database error saving new user/i.test(String(error.message))) {
-          const refusal = await signupRefused(client, seatsKnown); if (client !== sb) return;
-          if (refusal) throw new Error(refusal);
-        }
-        if (error) throw error;
-        ls.set('rb.backend', JSON.stringify(selectedBackend.mode === 'hosted' ? {mode: 'hosted'} : selectedBackend));
-        if (!data.session) { setMode('in'); route(); info.textContent = T('a.created', 'Account created. Check your inbox to confirm your email, then sign in.'); info.hidden = false; }
-      }
-    } catch (e) { if (client === sb) { console.warn('Auth failed:', (e && (e.code || e.message)) || e); err.textContent = authError(e, authMode); err.hidden = false; $('a-wl').hidden = !/^beta: (full|closed)$/.test(String((e && e.message) || '').trim()); } }
-    finally { authBusy = false; $('a-submit').disabled = !backend; }
+      const {error} = f.type === 'recovery'
+        ? await guardedAuth(client, 'resetPasswordForEmail', {email: f.email, options: {redirectTo: backHere()}})
+        : await guardedAuth(client, 'resend', {type: 'signup', email: f.email, options: {emailRedirectTo: backHere()}});
+      if (client !== sb || f !== flow) return;
+      const soon = tooSoonSecs(error);
+      if (soon) { resendAt = Date.now() + soon * 1000; authErr = () => A('au.e.soon'); return; }
+      if (error) throw error;
+      f.at = Date.now(); f.expired = false; f.resent = true; resendAt = f.at + RESEND_MS; codeLocked = 0; savePending(); $('a-code').value = '';
+      authNote = () => A('au.n.resent', {email: esc(f.email)});
+    } catch (e) { if (client === sb) { console.warn('Resend failed:', (e && (e.code || e.message)) || e); authErr = () => authError(e, 'send'); } }
+    finally { authBusy = false; if (client === sb) paintAuth(); }
+  };
+  $('auth-form').addEventListener('click', ev => {
+    const a = ev.target && ev.target.closest && ev.target.closest('a[data-au]');
+    if (!a) return;
+    ev.preventDefault();
+    if (a.dataset.au === 'resend') sendAgain();
+    else if (a.dataset.au === 'create' && !authBusy) { $('a-email').value = flow ? flow.email : $('a-email').value; endFlow(); goScreen('signup'); }
   });
+  const AUTH_STEP = {
+    async signup(client) {
+      const email = $('a-email').value.trim(), password = $('a-pass').value, selected = backend, hostedUp = selected.mode === 'hosted';
+      if (!emailOk(email)) return failedInvalid('a-email', 'au.e.email');
+      if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
+      // L31: on the hosted backend, beta_seats() first: Auth's own refusal says nothing (signupRefused).
+      let seatsKnown = false;
+      if (hostedUp) {
+        const d = await seatAnswer(client), s = seatsOf(d); if (client !== sb || screen !== 'signup') return;
+        if (s) { seatsKnown = true; setSeats(d); const refusal = seatRefusal(s); if (refusal === 'beta: full') return toWaitlist(email, true); if (refusal) throw new Error(refusal); }
+      }
+      const {data, error} = await guardedAuth(client, 'signUp', {email, password, options: {emailRedirectTo: backHere()}}); if (client !== sb) return;
+      if (error && hostedUp && /database error saving new user/i.test(String(error.message))) {
+        const refusal = await signupRefused(client, seatsKnown); if (client !== sb) return;
+        if (refusal === 'beta: full') return toWaitlist(email, true);
+        if (refusal) throw new Error(refusal);
+      }
+      // An address that has its account: HTTP 422 on a real Auth (measured, confirmation on and off); older servers, a
+      // user without identities. Told plainly (decision 23).
+      if (isExists(error) || (!error && data && data.user && Array.isArray(data.user.identities) && !data.user.identities.length)) return goScreen('exists');
+      const soon = tooSoonSecs(error); // the same address, again within the minute: its last code is still good
+      if (error && !soon) throw error;
+      rememberBackend(selected);
+      if (data && data.session) { $('a-pass').value = ''; return; } // confirmation off: onAuthStateChange has opened the app
+      heldPw = password; startFlow('signup', email, 'signup');
+      if (soon) { resendAt = Date.now() + soon * 1000; authErr = () => A('au.e.soon'); }
+      route(); focusAuth();
+    },
+    async signin(client) {
+      const email = $('a-email').value.trim(), password = $('a-pass').value, selected = backend;
+      const {error} = await guardedAuth(client, 'signInWithPassword', {email, password}); if (client !== sb) return;
+      if (error && isUnconfirmed(error)) {
+        // Right password (checked first, measured), the address never confirmed: a new code, the sign-up goes on.
+        const r = await guardedAuth(client, 'resend', {type: 'signup', email, options: {emailRedirectTo: backHere()}}); if (client !== sb) return;
+        const soon = tooSoonSecs(r.error);
+        if (r.error && !soon) throw r.error;
+        rememberBackend(selected); heldPw = password; startFlow('signup', email, 'signin');
+        if (soon) { resendAt = Date.now() + soon * 1000; authErr = () => A('au.e.soon'); } else authNote = () => A('au.n.signin');
+        route(); focusAuth(); return;
+      }
+      if (error) throw error;
+      rememberBackend(selected); $('a-pass').value = '';
+    },
+    async exists() { goScreen('signin'); },
+    async forgot(client) {
+      const email = $('a-email').value.trim();
+      if (!emailOk(email)) return failedInvalid('a-email', 'au.e.email');
+      const {error} = await guardedAuth(client, 'resetPasswordForEmail', {email, options: {redirectTo: backHere()}}); if (client !== sb) return;
+      const soon = tooSoonSecs(error);
+      if (error && !soon) throw error;
+      startFlow('recovery', email, 'forgot'); $('a-pass').value = '';
+      if (soon) { resendAt = Date.now() + soon * 1000; authErr = () => A('au.e.soon'); }
+      route(); focusAuth();
+    },
+    async code(client) {
+      const f = flow, token = $('a-code').value.trim();
+      if (f.expired) return void (await sendAgainInForm());
+      if (!token) return failedInvalid('a-code', ownNow() ? 'au.e.wrong.own' : 'au.e.wrong');
+      flowHold = true;
+      const {error} = await client.auth.verifyOtp({email: f.email, token, type: 'signup'}); if (client !== sb) return;
+      if (error) { flowHold = false; if (!codeFailed(error, f)) throw error; return; }
+      f.verified = true; savePending(); // a reload from here on asks for the password
+      if (!heldPw) { flowHold = false; screen = 'set-password'; route(); focusAuth(); return; }
+      try { await savePassword(client, heldPw); } catch (e) { if (client !== sb) return; flowHold = false; heldPw = ''; screen = 'set-password'; authErr = () => A('au.e.save'); console.warn('Password not saved:', (e && (e.code || e.message)) || e); route(); return; }
+      if (client !== sb) return;
+      leaveFlow(client, false);
+    },
+    async 'set-password'(client) {
+      const password = $('a-pass').value;
+      if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
+      flowHold = true;
+      await savePassword(client, password); if (client !== sb) return;
+      leaveFlow(client, false);
+    },
+    async reset(client) {
+      const f = flow, token = $('a-code').value.trim(), password = $('a-pass').value;
+      if (f.expired) return void (await sendAgainInForm());
+      if (!token) return failedInvalid('a-code', ownNow() ? 'au.e.wrong.own' : 'au.e.wrong');
+      if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
+      flowHold = true;
+      const {error} = await client.auth.verifyOtp({email: f.email, token, type: 'recovery'}); if (client !== sb) return;
+      if (error) { flowHold = false; if (!codeFailed(error, f)) throw error; return; }
+      f.verified = true; savePending();
+      try { await savePassword(client, password); } catch (e) { if (client !== sb) return; flowHold = false; screen = 'new-password'; authErr = () => authError(e, 'save'); console.warn('Password not saved:', (e && (e.code || e.message)) || e); route(); return; }
+      if (client !== sb) return;
+      leaveFlow(client, true);
+    },
+    async 'new-password'(client) {
+      const password = $('a-pass').value;
+      if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
+      flowHold = true;
+      await savePassword(client, password); if (client !== sb) return;
+      leaveFlow(client, true);
+    }
+  };
+  // The button of a screen whose code has expired asks for a new one (authBusy is released for sendAgain).
+  const sendAgainInForm = async () => { authBusy = false; await sendAgain(); };
+  const submitAuth = async () => {
+    if (authBusy || !sb || !backend) return;
+    const client = sb, s = screen, step = AUTH_STEP[s];
+    for (const id of ['a-email', 'a-code', 'a-pass']) $(id).setAttribute('aria-invalid', 'false');
+    authErr = null; authNote = null; $('a-wl').hidden = true; authBusy = true; paintAuth();
+    try { await step(client); }
+    catch (e) {
+      if (client === sb) {
+        console.warn('Auth failed:', (e && (e.code || e.message)) || e);
+        authErr = () => authError(e, s);
+        $('a-wl').hidden = !/^beta: (full|closed)$/.test(String((e && e.message) || '').trim());
+      }
+    }
+    finally { authBusy = false; if (client === sb) { flowHold = false; if (!user || authHeld()) paintAuth(); } }
+  };
+  $('auth-form').addEventListener('submit', ev => { ev.preventDefault(); return submitAuth(); });
+  // Six digits typed or pasted: sent at once on the hosted backend. An own backend's code may be longer: its button.
+  $('a-code').addEventListener('input', () => {
+    const el = $('a-code'), digits = String(el.value).replace(/\D/g, ''), v = ownNow() ? digits : digits.slice(0, 6);
+    if (v !== el.value) el.value = v;
+    if (screen === 'code' && !ownNow() && v.length === 6 && !authBusy && !codeLocked && !(flow && flow.expired)) submitAuth();
+  });
+  // A session that did not come from this form's verifyOtp (the link of an email, another tab) ends the wait for a code.
+  // Called inside onAuthStateChange: no await here (known pitfall). Measured: verifyOtp type recovery fires
+  // PASSWORD_RECOVERY, not SIGNED_IN; flowHold covers it. Elsewhere that event means a recovery link: ask for the password.
+  const sessionArrived = (ev, next, client) => {
+    if (flowHold) return false;
+    if (ev === 'PASSWORD_RECOVERY' && next) {
+      flow = {type: 'recovery', email: next.email || '', from: 'forgot', at: Date.now(), verified: true};
+      screen = 'new-password'; heldPw = ''; authErr = null; authNote = null; introOpen = false; savePending(); stopHelp(); $('a-pass').value = '';
+      return false;
+    }
+    if (!flow) return false;
+    const same = !!next && String(next.email || '').toLowerCase() === flow.email.toLowerCase();
+    if (flow.verified && same && ev !== 'USER_UPDATED') return false; // the password is still to be set (a reload)
+    if (!next && !flow.verified) return false; // nothing yet: the wait goes on
+    const pw = heldPw, signup = flow.type === 'signup';
+    endFlow(); $('a-code').value = ''; $('a-pass').value = ''; setMode('in');
+    if (next && same && signup && pw) setTimeout(() => { if (client === sb) client.auth.updateUser({password: pw}).then(r => { if (r && r.error && !isSamePassword(r.error)) console.warn('Password not saved:', r.error.code || r.error.message); }).catch(() => {}); }, 0);
+    return true;
+  };
   $('s-signout').addEventListener('click', async () => { if (await signOutHere()) location.hash = ''; });
 
   // ---------- data ----------
@@ -4244,18 +4570,20 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       showDemo(demoAt); return;
     }
     demoShown = null;
-    if (!demoEl.hidden && !user && mode === 'in') setMode('in'); // back from the demo: a fresh sign-in screen
+    if (!demoEl.hidden && !user && mode === 'in' && !flow) setMode('in'); // back from the demo: a fresh sign-in screen
     if (backend && !sb) { boot(); return; }
-    if (!user) {
-      if (mode === 'up' && !signupBackendChosen) { askSeats(); paintSetup(); show('setup'); return; }
-      const intro = introOpen && mode === 'in'; // L25: the presentation, then the account actions
+    if (!user || authHeld()) { // L41: a session waiting for its password stays here (authHeld), the app behind it
+      if (mode === 'up' && !signupBackendChosen && !flow) { askSeats(); paintSetup(); show('setup'); return; }
+      const intro = introOpen && mode === 'in' && !flow; // L25: the presentation, then the account actions
       $('intro').hidden = !intro;
       $('auth-title').hidden = $('auth-form').hidden = intro;
-      $('a-adv').hidden = intro || (mode === 'up' && !!backend && backend.mode === 'hosted'); // L31: own Supabase is chosen in #setup, or from the sign-in form
-      labelMode();
+      $('a-brand').hidden = intro;
+      $('a-adv').hidden = intro || !(screen === 'signin' || (screen === 'signup' && !!backend && backend.mode !== 'hosted')); // L31: own Supabase is chosen in #setup, or from the sign-in form
+      $('a-demo').hidden = !intro && screen !== 'signin';
+      paintAuth();
       if (intro) { $('login-own-form').hidden = true; askSeats(); } // L30: the landing's seats line
       $('a-backend').textContent = backendLabel();
-      $('a-submit').disabled = !backend || authBusy;
+      $('a-backend-row').hidden = !(screen === 'signup' || screen === 'signin') || (!!backend && backend.mode === 'hosted');
       paintOwnLink();
       $('a-hosted').hidden = !hostedOk || !backend || backend.mode === 'hosted';
       show('auth'); return;
@@ -4332,6 +4660,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
         if (client !== sb) return;
+        const flowOver = sessionArrived(ev, session ? session.user : null, client);
         authNow = session && session.access_token ? {client, token: session.access_token, exp: Number(session.expires_at) || 0} : null;
         const next = session ? session.user : null;
         if (peeked && user) {
@@ -4346,7 +4675,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
         if (changed && user) clearUserCache(user.id); // signed out (button, reset, revoked session) or another account
         user = next;
         if (changed) { resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); practiceGen++; pageLog = null; ended = null; signed.clear(); cache.clear(); loadError = ''; }
-        if (changed || ev === 'INITIAL_SESSION') route();
+        if (changed || ev === 'INITIAL_SESSION' || ev === 'PASSWORD_RECOVERY' || flowOver) route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });
       authSubscription = data.subscription;
@@ -4357,6 +4686,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   if (!location.hash && /(?:^|[?&])demo(?:[=&]|$)/.test(String(location.search || '').slice(1))) {
     try { history.replaceState(history.state, '', location.pathname + '#' + DEMO); } catch { location.hash = '#' + DEMO; }
   }
+  resumeFlow();
   boot();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
