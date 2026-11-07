@@ -79,6 +79,48 @@ States of the auth screen, each with one main action:
 - « Backend: … » goes from under the form for the hosted path; the own-Supabase path stays reachable.
 - Plain French `tu`, no jargon (`backend`, `OTP`, `captcha`).
 
+## Mockup review (7 Nov, coordinator + independent critique, decision 27)
+
+Applied to the mockup and binding on L41, L42, L43:
+
+- **Turnstile is invisible by default**: `appearance: interaction-only`, `execution: execute`, so a fresh token at submit.
+  Cloudflare's own widget, never a drawn imitation; our messages stay outside it. Mounted on every guarded screen
+  (`signup`, `signin`, resend, `forgot`), with a failure state on each. Blocked: say what to do (turn off the blocker,
+  another browser), try again, write to us. No loop.
+- **A way out when the code never comes**: after a resend, check the address, search for « Reelbook », write to us.
+  Contact from `hosted.contact` in `app/config.js`; empty hides the link. `too many attempts` shows no resend and no
+  validity line.
+- **Last password wins**: Supabase does not update an unconfirmed account on a second `signUp` (`signup.go`, to confirm in
+  L41's local test). So after `verifyOtp` type `signup`: `updateUser({password})` when the password is still in memory,
+  and otherwise (the page reloaded) a short `set-password` state before entering. This fixes the wrong-password trap, and
+  a stranger who pre-registered someone's address no longer keeps a valid password.
+- **Fewer statuses**: « account not created yet » only in the subtitle of `code`; no status line on `signup` and `exists`; no
+  `code-ok` state (the button spins, then `#welcome`); « Account created for x » in the banner of `#welcome` only, no
+  « you are signed in » (French would need a gender) and no account card, so the steps read 1, 2, 3.
+- **Own Supabase** is not offered on the hosted `signup`: the choice is made on the landing or in `#setup` (L31 cards); the
+  link stays on `signin`.
+- **`#welcome` follows the device**:
+  - phone: no command, no tabs. Says why this step cannot happen here, and sends the line to the person; the main action
+    then moves to the phone step;
+  - computer: « Copy the line », system detected, no send button; the phone step shows a QR code of the app's address and
+    the address as text (static SVG, shown only on the hosted address).
+- **The computer step knows**: `rb.py login` writes `reelbook_cli_at` in the account's `user_metadata` (no schema change,
+  also on own backends; a failure never blocks the login). The app reads it with `getUser()` when the page regains focus,
+  so the step ticks itself after the install. A sheet or a processed request also counts. No checkbox here; the phone step
+  keeps its checkbox. This is the one `tools/rb.py` change of L43, so L43 is reviewed as protected.
+- **Step 3 is « Your first sheet »**, up to `/reelbook`, since the first sheet is what proves the product. Add an **all done**
+  state of the page. The install step says it will ask for email and hidden password, links its prerequisites, and names
+  Terminal or PowerShell according to the tab. The phone step has two numbered lines (home screen and sign in there, then the
+  shortcut). « Open my notebooks » sits right under the steps; the guide is collapsed and keeps the night run in one line.
+- **New states**: invalid address, password too short, sending limit reached, last seat taken meanwhile. The email is carried
+  over between `signup`, `exists`, `signin` and `forgot`. « Change address » returns to where the person came from.
+- **Not retained**: « did you mean gmail.com? » (the address is in bold on `code`, with « change address » beside it), moving the
+  night run out of the guide.
+- **Settled at validation (coordinator, #83)**: `#welcome` keeps the app's 640 px column on a computer; a closed beta reuses
+  `beta.closed`, its sub-line tells it from a full one; `reset` hedges because `/recover` does not say whether an address
+  has an account.
+- **To measure after launch**: pending, confirmed, first sheet per account (a query for Laurent, in L34's business tests).
+
 ## Lots
 
 | Lot | What | Depends on | Zone | Branch |
@@ -101,8 +143,11 @@ States of the auth screen, each with one main action:
 - Token passed to `signUp`, `signInWithPassword`, `resend`, `resetPasswordForEmail`. Script blocked or failing: a clear
   message and a retry; sign-in must not be lost while Turnstile is off on the server.
 - `rb.py login`: direct first, and on `captcha_failed` the function. So own backends never need it.
-- `supabase/functions/cli-login`: email and password in, tokens out; no logging of either. Look at what it does to
-  Auth's per-IP limits (every call now comes from the function) and say so in the PR.
+- `supabase/functions/cli-login`: email and password in, tokens out; no logging of either.
+- **Abuse criterion (Codex, #80)**: this route deliberately skips Turnstile, and every call reaches Auth from the
+  function. A test of repeated calls must show both that automated attempts get limited and that they cannot exhaust a
+  shared quota and lock out legitimate sign-ins. If the platform's limits do not give both, the function adds its own
+  limit (per address and per caller). Report the measured behaviour in the PR.
 
 ### L43 notes
 - Steps: account created (true by construction); computer, phone, first video. **Show as done only what the app really

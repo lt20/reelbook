@@ -243,6 +243,16 @@ for (const p of ['lp', 's']) {
     assert.deepEqual(joins(), []);
   });
 
+  test(`L31 waiting list (${p}) — « Notify me » turns on with the box, and off without it`, async () => {
+    const {page} = await visitor([answer(FULL)]);
+    await onCard(page);
+    const box = page.element(`${p}-wl-consent`), go = page.element(`${p}-wl-go`);
+    box.checked = true; await page.fire(`${p}-wl-consent`, 'change');
+    assert.equal(go.disabled, false);
+    box.checked = false; await page.fire(`${p}-wl-consent`, 'change');
+    assert.equal(go.disabled, true);
+  });
+
   test(`L31 waiting list (${p}) — the server's refusals in words, and the form stays`, async () => {
     for (const [error, msg] of [
       [{code: 'P0001', message: 'waitlist: consent required'}, 'Tick the box so we can keep your first name and email.'],
@@ -255,11 +265,12 @@ for (const p of ['lp', 's']) {
       const {page} = await visitor([answer(FULL)], {join: async () => { if (!error) throw new Error('offline'); return {data: null, error}; }});
       await onCard(page);
       fill(page, 'Camille', 'camille@example.test', true);
+      await page.fire(`${p}-wl-consent`, 'change');
       const warn = console.warn; console.warn = () => {};
       try { await page.fire(`${p}-wl`, 'submit'); } finally { console.warn = warn; }
       assert.equal(page.element(`${p}-wl-err`).textContent, msg);
       assert.equal(page.element(`${p}-wl-done`).hidden, true);
-      assert.equal(page.element(`${p}-wl-go`).disabled, false, 'it can be sent again');
+      assert.equal(page.element(`${p}-wl-go`).disabled, false, 'it can be sent again, the box still ticked');
     }
   });
 }

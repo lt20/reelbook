@@ -344,7 +344,7 @@ test('L36 — the beta follows beta_seats(): open without an answer, the count w
   assert.doesNotMatch(intro.replace(/<b data-k="wl.h"[^>]*>[^<]*<\/b>|id="lp-lockN"[^>]*>50</g, ''), /\b(14|50) (places|of|sur)\b/);
   assert.doesNotMatch(landingJs + intro, /[?&]places=|data-seats-toggle/);
   // the waiting list has no table yet (L31): its button is visible and inactive
-  assert.match(intro, /<button class="lp-btn" type="submit" id="lp-wl-go" data-k="wl.cta">/);
+  assert.match(intro, /<button class="lp-btn" type="submit" id="lp-wl-go" data-k="wl.cta" disabled aria-disabled="true">/);
   // L31: a seat freed again gives the hosted option back; closed: the heading without a count of seats not taken
   const q = landing({language: 'fr'}); q.byId('lp-host-hosted').checked = true;
   q.RBL.seats({taken: 50, total: 50});

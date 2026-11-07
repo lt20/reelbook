@@ -2,28 +2,33 @@
   "title": "Reelbook demo",
   "intro": "A sample notebook: what your videos become once Claude has turned them into sheets. Read only.",
   "notebooks": [
-    {"id": "strength", "title": "Strength"},
-    {"id": "kitesurf", "title": "Kitesurf"}
+    {"id": "fight", "title": "Fight techniques"},
+    {"id": "dance", "title": "Dance"},
+    {"id": "yoga", "title": "Yoga & stretching"},
+    {"id": "snow", "title": "Ski & snowboard"},
+    {"id": "strength", "title": "Strength"}
   ],
   "sheets": [
-    {"slug": "goblet-squat", "notebook": "strength", "group": "Legs", "title": "Goblet squat", "summary": "A squat with one weight at the chest: the easiest squat to learn well.", "thumbnail": "img/thumb.svg", "author": "Reelbook demo"},
-    {"slug": "push-up", "notebook": "strength", "group": "Upper body", "title": "Push-up", "summary": "Chest, shoulders and arms, with the body held in one line.", "thumbnail": "img/thumb.svg", "author": "Reelbook demo"},
-    {"slug": "dead-bug", "notebook": "strength", "group": "Core", "title": "Dead bug", "summary": "Arm and opposite leg reach out, the lower back stays on the floor.", "thumbnail": "img/thumb.svg", "author": "Reelbook demo"},
-    {"slug": "water-start", "notebook": "kitesurf", "group": "Getting up", "title": "Water start", "summary": "From sitting in the water to riding, in one dive of the kite.", "thumbnail": "img/thumb.svg", "author": "Reelbook demo"}
+    {"slug": "spinning-back-kick", "notebook": "fight", "group": "Kicks & knees", "title": "Spinning back kick", "thumbnail": "img/thumb.jpg", "author": "Generated demo"},
+    {"slug": "pirouette-en-dehors", "notebook": "dance", "group": "Turns", "title": "Pirouette en dehors", "thumbnail": "img/thumb.jpg", "author": "Generated demo"},
+    {"slug": "diagonal-stretch", "notebook": "yoga", "group": "Hips", "title": "Diagonal stretch", "thumbnail": "img/thumb.jpg", "author": "Generated demo"},
+    {"slug": "nose-press-on-a-box", "notebook": "snow", "group": "Park", "title": "Nose press on a box", "thumbnail": "img/thumb.jpg", "author": "Generated demo"},
+    {"slug": "push-up-taps-jump-squat", "notebook": "strength", "group": "HIIT", "title": "Push-up, taps and jump squat", "thumbnail": "img/thumb.jpg", "author": "Generated demo"}
   ],
   "sessions": [
     {
-      "slug": "ten-minute-circuit",
-      "notebook": "strength",
-      "title": "Ten-minute circuit",
-      "format": "3 rounds · 45 s rest between exercises",
-      "why": "Legs, upper body and core in ten minutes, with one kettlebell. A session is a list of sheets with a dose for each.",
-      "thumbnail": "goblet-squat/img/thumb.svg",
-      "author": "Reelbook demo",
+      "slug": "sampler",
+      "title": "Sampler",
+      "format": "One round · at your pace",
+      "why": "One sheet from each notebook, back to back. A session is a list of sheets with a dose for each.",
+      "thumbnail": "spinning-back-kick/img/thumb.jpg",
+      "author": "Generated demo",
       "items": [
-        {"slug": "goblet-squat", "dose": "10 reps"},
-        {"slug": "push-up", "dose": "8 reps"},
-        {"slug": "dead-bug", "dose": "6 per side"}
+        {"slug": "spinning-back-kick", "dose": "8 / side"},
+        {"slug": "pirouette-en-dehors", "dose": "8 / side"},
+        {"slug": "diagonal-stretch", "dose": "3×10 / side"},
+        {"slug": "nose-press-on-a-box", "dose": "5 runs"},
+        {"slug": "push-up-taps-jump-squat", "dose": "5 rounds"}
       ]
     }
   ]

@@ -1127,7 +1127,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
         <form class="wl-form" id="s-wl" novalidate><label><span data-k="wl.n">First name</span><input type="text" id="s-wl-first" autocomplete="given-name" maxlength="60" placeholder="Camille"></label><label><span data-k="wl.e">Email</span><input type="email" id="s-wl-email" autocomplete="email" maxlength="254" placeholder="camille@exemple.fr"></label>
         <label class="wl-consent"><input type="checkbox" id="s-wl-consent"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
         <p class="err" id="s-wl-err" role="alert" hidden></p>
-        <button class="btn" type="submit" id="s-wl-go" data-k="wl.cta">Notify me</button></form>
+        <button class="btn" type="submit" id="s-wl-go" data-k="wl.cta" disabled aria-disabled="true">Notify me</button></form>
         <span class="wl-done" id="s-wl-done" role="status" hidden><b data-k="wl.ok.h">You’re on the list</b><span data-k="wl.ok">You’re on the list. We’ll email you as soon as a spot opens.</span></span></span></div>
       <label class="host-opt"><input type="radio" name="s-host" id="pick-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="s.ownd">Free tier is enough. You run one SQL file, then paste the project URL and anon key here.</span></span></label>
     </div>
@@ -1269,7 +1269,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
         <form class="lp-wl" id="lp-wl" novalidate hidden><label><span data-k="wl.n">First name</span><input type="text" id="lp-wl-first" autocomplete="given-name" maxlength="60" placeholder="Camille"></label><label><span data-k="wl.e">Email</span><input type="email" id="lp-wl-email" autocomplete="email" maxlength="254" placeholder="camille@exemple.fr"></label>
         <label class="lp-consent"><input type="checkbox" id="lp-wl-consent"><span data-k="wl.c">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></label>
         <span class="lp-wl-err" id="lp-wl-err" role="alert" hidden></span>
-        <button class="lp-btn" type="submit" id="lp-wl-go" data-k="wl.cta">Notify me</button></form>
+        <button class="lp-btn" type="submit" id="lp-wl-go" data-k="wl.cta" disabled aria-disabled="true">Notify me</button></form>
         <span class="lp-wl-done" id="lp-wl-done" role="status" hidden><b data-k="wl.ok.h">You’re on the list</b><span data-k="wl.ok">You’re on the list. We’ll email you as soon as a spot opens.</span></span></span></div>
       <label class="lp-opt"><input type="radio" name="lp-host" id="lp-host-own"><span><b data-k="i1.b">On my own Supabase</b><span data-k="i1.bd">Your own project, your limits. Run one SQL file, then paste the URL and key.</span></span></label>
       <a class="lp-btn lp-host-cta" href="#signup" id="intro-signup" data-k="i1.cta">Create my notebook</a></li>
@@ -1809,6 +1809,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   for (const p of ['lp', 's']) {
     const say = text => { const e = $(p + '-wl-err'); e.textContent = text || ''; e.hidden = !text; };
+    // « Notify me » turns on with the box (mockup p7-signup); the check below stays for a form sent another way
+    const armed = () => { const on = !!$(p + '-wl-consent').checked, go = $(p + '-wl-go'); go.disabled = !on; go.setAttribute('aria-disabled', String(!on)); };
+    $(p + '-wl-consent').addEventListener('change', armed);
     $(p + '-wl').addEventListener('submit', async ev => {
       ev.preventDefault(); say('');
       const first = $(p + '-wl-first'), mail = $(p + '-wl-email'), go = $(p + '-wl-go');
@@ -1818,7 +1821,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       if (!$(p + '-wl-consent').checked) { say(wlError({message: 'waitlist: consent'})); return; }
       go.disabled = true;
       let r; try { r = await sb.rpc('join_waitlist', {first_name: fname, email, lang: (window.RBL && window.RBL.lang) || 'en', consent: true}); } catch (e) { r = {error: e}; }
-      go.disabled = false;
+      armed();
       if (r && !r.error) { wlDone = true; paintWl(); return; }
       console.warn('Waiting list failed:', (r && r.error && (r.error.code || r.error.message)) || r);
       say(wlError(r && r.error));
