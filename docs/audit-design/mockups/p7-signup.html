@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<!-- P7 / L40 — static mockup of the sign-up flow and #welcome (docs/audit-design/P7-signup.md), 7 Nov 2026.
+     One file, no CDN; fonts from app/fonts (relative). Open it, pick a state in the left column (or ?s=<state>),
+     FR/EN, light/dark, and « keyboard » for the 390 × 664 viewport of an iPhone with the keyboard open.
+     The screens hold no mockup annotation: state labels and « what the app knows » live in the chrome, outside the phone. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reelbook — inscription et bienvenue (P7)</title>
+<style>
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:swap;src:url(../../../app/fonts/barlow-condensed-600-latin.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:700;font-display:swap;src:url(../../../app/fonts/barlow-condensed-700-latin.woff2) format("woff2")}
+@font-face{font-family:"Source Sans 3";font-style:normal;font-weight:400 600;font-display:swap;src:url(../../../app/fonts/source-sans-3-latin.woff2) format("woff2")}
+/* ---- the app's tokens, as in app/index.html ---- */
+:root{
+  --bg:#f3f1ec; --paper:#fbfaf7; --ink:#1b1d1f; --muted:#5f6670; --line:#d8d5cd; --line-strong:#8f8a80;
+  --accent:#1f4fa3; --accent-ink:#ffffff; --tag:#e4eaf6; --warn:#8a5a12; --warn-bg:#f6ead3; --ok:#1f6b3a; --ok-bg:#e1f0e6;
+  --danger:#b42318; --danger-bg:#fef3f2; --brand-coral:#c54b38; --step:#e9e6df;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
+  --fs-xs:.8125rem; --fs-sm:.875rem; --fs-base:1rem; --fs-md:1.25rem; --fs-lg:1.375rem; --fs-xl:1.75rem; --fs-2xl:2.25rem;
+  --fs-display:clamp(2.75rem,12vw,4rem);
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--step:#24282f;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){--bg:#15171a;--paper:#1e2126;--ink:#eceae4;--muted:#a3a8b0;--line:#363a41;--line-strong:#6b7079;--accent:#7fa6ea;--accent-ink:#0f1a30;--tag:#243149;--warn:#f0c77a;--warn-bg:#3a2f18;--ok:#8fd3a6;--ok-bg:#1d3326;--danger:#f97066;--danger-bg:#3b1d1a;--step:#24282f;color-scheme:dark}}
+
+/* ---- language: a pair <span lang=fr>/<span lang=en> per text ---- */
+html[lang="fr"] [lang="en"],html[lang="en"] [lang="fr"]{display:none!important}
+
+/* ---- mockup chrome (outside the phone) ---- */
+*{box-sizing:border-box}
+body{margin:0;background:#dcd9d1;color:#1b1d1f;font-family:var(--body);font-size:15px;line-height:1.45;min-height:100vh}
+:root[data-theme="dark"] body{background:#0d0f12;color:#eceae4}
+.mk{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:100vh}
+.mk-nav{background:#f3f1ec;color:#1b1d1f;border-right:1px solid #c9c5bb;padding:18px 16px 32px;position:sticky;top:0;height:100vh;overflow:auto}
+:root[data-theme="dark"] .mk-nav{background:#15171a;color:#eceae4;border-color:#2a2e35}
+.mk-nav h1{font:700 22px/1 var(--display);margin:0 0 4px}
+.mk-nav .sub{font-size:13px;color:#5f6670;margin:0 0 14px}
+:root[data-theme="dark"] .mk-nav .sub{color:#a3a8b0}
+.mk-tog{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.seg{display:inline-flex;background:var(--step);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;font:700 13px/1 var(--body);color:inherit;min-width:40px;min-height:36px;padding:0 10px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.mk-nav h2{font:600 11px/1 var(--body);text-transform:uppercase;letter-spacing:.14em;color:#5f6670;margin:16px 0 6px}
+:root[data-theme="dark"] .mk-nav h2{color:#a3a8b0}
+.mk-nav ul{list-style:none;margin:0;padding:0}
+.mk-nav li button{display:block;width:100%;text-align:left;font:inherit;font-size:14px;color:inherit;background:none;border:0;border-radius:8px;padding:6px 10px;cursor:pointer}
+.mk-nav li button:hover{background:rgba(0,0,0,.06)}
+.mk-nav li button[aria-current="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.mk-sel{display:none;width:100%;font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line-strong);background:var(--paper);color:var(--ink);margin-bottom:10px}
+.mk-stage{padding:28px 20px 60px;display:grid;justify-items:center;align-content:start;gap:14px}
+.mk-state{width:390px;max-width:100%;font-size:13px;color:#3c4148;display:grid;gap:4px}
+:root[data-theme="dark"] .mk-state{color:#b9bec6}
+.mk-state b{font-size:15px;color:inherit}
+.mk-state .know{background:#fbfaf7;border:1px dashed #b9b4a8;border-radius:8px;padding:8px 10px}
+:root[data-theme="dark"] .mk-state .know{background:#1e2126;border-color:#4a4f58}
+.mk-state .know:empty{display:none}
+@media (max-width:760px){
+  .mk{grid-template-columns:1fr}
+  .mk-nav{position:static;height:auto;border-right:0;border-bottom:1px solid #c9c5bb}
+  .mk-nav ul,.mk-nav h2{display:none}
+  .mk-sel{display:block}
+  .mk-stage{padding:16px 0 40px}
+}
+
+/* ---- the phone ---- */
+.ph{--fs-display:2.925rem;width:390px;max-width:100%;height:844px;background:var(--bg);color:var(--ink);border-radius:28px;box-shadow:0 0 0 1px rgba(0,0,0,.18),0 18px 50px rgba(0,0,0,.25);overflow:hidden;position:relative}
+.ph.kb{height:664px}
+.ph-in{height:100%;overflow:auto;padding:20px 16px 56px;line-height:1.5;font-size:1rem;scrollbar-width:none}
+.ph-in::-webkit-scrollbar{display:none}
+.ph.kb .ph-in{overflow:hidden}
+.scr{display:none}
+.scr.on{display:block}
+/* the app's components (app/index.html, verbatim where they exist) */
+a{color:var(--accent)}
+h1{font-family:var(--display);font-weight:700;font-size:var(--fs-display);line-height:.95;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+h2{font-family:var(--display);font-weight:700;font-size:var(--fs-lg);line-height:1;margin:30px 0 10px;text-transform:uppercase;letter-spacing:.02em}
+p{margin:0 0 10px}
+.eyebrow{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 6px;font-weight:600}
+.brand{display:flex;align-items:center;gap:var(--s-3);margin:0 0 20px}
+.brand svg{display:block;width:40px;height:40px;flex:none}
+.brand .wm{font:700 28px/1 var(--display);letter-spacing:-.01em;color:var(--ink)}
+.btn{appearance:none;font:600 var(--fs-base) var(--body);color:var(--accent-ink);background:var(--accent);border:0;border-radius:var(--r-pill);padding:10px 18px;cursor:pointer;min-height:44px}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.sm{font-size:var(--fs-sm);padding:7px 14px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.btn.busy{opacity:.75;position:relative;padding-left:40px}
+.btn.busy::before{content:"";position:absolute;left:16px;top:50%;width:14px;height:14px;margin-top:-8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hint{font-size:var(--fs-sm);color:var(--muted);margin:0}
+.err{color:var(--warn);font-size:var(--fs-sm);margin:0}
+.err.hard{color:var(--danger)}
+.flash{background:var(--ok-bg);color:var(--ok);border-radius:var(--r-sm);padding:10px var(--s-3);font-size:var(--fs-base);margin-bottom:var(--s-4)}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px;margin-top:14px;min-width:0}
+.panel>*{min-width:0}
+.panel ul{margin:0;padding-left:20px;display:grid;gap:var(--s-1)}
+.panel h2{margin:0}
+label{display:grid;gap:var(--s-1);font-size:var(--fs-sm);font-weight:600;color:var(--muted)}
+input{font:max(16px,1rem) var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:10px var(--s-3);width:100%;min-width:0;min-height:44px}
+input[aria-invalid="true"]{border-color:var(--danger)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.actions .btn{width:100%}
+code{font:var(--fs-sm) ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+pre{font:var(--fs-xs)/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px var(--s-3);margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
+/* P7 additions, drawn in the app's vocabulary */
+.pwrow{position:relative}
+.pwrow input{padding-right:84px}
+.pwrow .eye{position:absolute;right:4px;bottom:0;height:44px;border:0;background:none;color:var(--accent);font:600 var(--fs-sm) var(--body);padding:0 12px;cursor:pointer}
+.status{display:flex;gap:8px;align-items:flex-start;font-size:var(--fs-sm);color:var(--muted);margin:0}
+.status::before{content:"";flex:none;width:10px;height:10px;border-radius:50%;margin-top:7px;border:2px solid var(--line-strong)}
+.status.ok{color:var(--ok)}.status.ok::before{background:var(--ok);border-color:var(--ok)}
+.status.wait::before{background:var(--warn);border-color:var(--warn)}
+.ts{display:flex;align-items:center;gap:12px;min-height:65px;border:1px solid var(--line-strong);border-radius:6px;padding:10px 12px;background:var(--paper);font-size:var(--fs-sm);color:var(--ink)}
+.ts .box{flex:none;width:24px;height:24px;border:2px solid var(--line-strong);border-radius:4px;display:grid;place-items:center;color:var(--ok);font-weight:700}
+.ts.ok .box{border-color:var(--ok)}
+.ts.spin .box{border-color:var(--accent);border-right-color:transparent;border-radius:50%;animation:spin .9s linear infinite}
+.ts.ko{border-color:var(--danger);background:var(--danger-bg)}
+.ts.ko .box{border-color:var(--danger)}
+.ts .cf{margin-left:auto;font-size:var(--fs-xs);color:var(--muted);white-space:nowrap}
+.ts p{margin:0;flex:1}
+.ts a{font-weight:600}
+.codein{font:700 32px/1 var(--display);letter-spacing:.42em;text-align:center;padding-left:calc(var(--s-3) + .42em);min-height:60px;background:var(--paper)}
+.codein::placeholder{letter-spacing:.42em;color:var(--line-strong)}
+.resend{font-size:var(--fs-sm);color:var(--muted);margin:0}
+.note{background:var(--tag);color:var(--ink);border-radius:var(--r-sm);padding:10px var(--s-3);font-size:var(--fs-sm);margin:0 0 var(--s-3)}
+.note.warn{background:var(--warn-bg);color:var(--warn)}
+.other{font-size:var(--fs-sm);color:var(--muted);margin:14px 0 0}
+.adv{font-size:var(--fs-sm);margin:var(--s-3) 0 0}
+.step{font-size:var(--fs-sm);font-weight:600;color:var(--muted);margin:0 0 12px}
+.step b{color:var(--ink)}
+/* waiting list, as the landing's lp-wl */
+.wl{display:grid;gap:10px}
+.wl label{font-size:14px;font-weight:700;color:var(--ink)}
+.wl .consent{grid-template-columns:20px 1fr;align-items:start;gap:10px;font-weight:400;font-size:13.5px;color:var(--ink);line-height:1.4}
+.wl .consent input{width:20px;min-height:0;height:20px;margin:1px 0 0;padding:0;accent-color:var(--accent)}
+.lock{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--step);color:var(--ink);font:700 18px/1 var(--display);flex:none}
+.cardline{display:flex;gap:12px;align-items:center;margin:0 0 6px}
+/* #welcome: steps */
+.wtop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px}
+.wtop .eyebrow{margin:0}
+.steps{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+.steps li{display:grid;grid-template-columns:36px 1fr;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 14px}
+.steps li.now{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.steps li.done{background:transparent}
+.steps .n{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:700 18px/1 var(--display);background:var(--step);color:var(--ink)}
+.steps li.now .n{background:var(--accent);color:var(--accent-ink)}
+.steps li.done .n{background:var(--ok-bg);color:var(--ok)}
+.steps h3{font:700 var(--fs-lg)/1.05 var(--display);margin:4px 0 2px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.steps .chip{font:600 var(--fs-xs) var(--body);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.steps li.done .chip{color:var(--ok)}
+.steps li.now .chip{color:var(--accent)}
+.steps p{font-size:var(--fs-sm);color:var(--muted);margin:0 0 8px}
+.steps li.done p{margin:0}
+.steps .body{min-width:0;display:grid;gap:8px}
+.steps .body>*{min-width:0}
+.steps .body .actions{margin-top:2px}
+.steps .body .actions .btn{width:auto}
+.steps .src{font-size:var(--fs-xs);margin:0}
+.steps .tick{display:flex;gap:10px;align-items:center;font-size:var(--fs-sm);font-weight:600;color:var(--ink)}
+.steps .tick input{width:22px;height:22px;min-height:0;padding:0;margin:0;accent-color:var(--accent)}
+.steps .os{margin:2px 0 0}
+.steps .os button{min-height:32px;font-size:12px}
+.guide{margin-top:8px}
+.guide h3{font:700 var(--fs-base)/1.2 var(--body);margin:0 0 2px}
+.guide p{font-size:var(--fs-sm);margin:0}
+.guide .g{display:grid;gap:2px}
+.endrow{margin-top:18px}
+.endrow .btn{width:100%}
+/* a bare home, for « password changed » */
+.home h1{font-size:var(--fs-2xl)}
+.sk{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.sk div{height:150px;border-radius:var(--r-md);background:var(--paper);border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="mk">
+<nav class="mk-nav" aria-label="États de la maquette">
+  <h1>Reelbook · P7</h1>
+  <p class="sub"><span lang="fr">Inscription, code, connexion, mot de passe, liste d’attente, bienvenue. 390 px.</span><span lang="en">Sign-up, code, sign-in, password, waiting list, welcome. 390 px.</span></p>
+  <div class="mk-tog">
+    <div class="seg" role="group" aria-label="Langue"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
+    <div class="seg" role="group" aria-label="Thème"><button type="button" data-theme="light" aria-pressed="true"><span lang="fr">Clair</span><span lang="en">Light</span></button><button type="button" data-theme="dark" aria-pressed="false"><span lang="fr">Sombre</span><span lang="en">Dark</span></button></div>
+    <div class="seg" role="group" aria-label="Hauteur"><button type="button" data-kb="0" aria-pressed="true">844</button><button type="button" data-kb="1" aria-pressed="false">664 <span lang="fr">clavier</span><span lang="en">keyboard</span></button></div>
+  </div>
+  <select class="mk-sel" id="mk-sel" aria-label="État"></select>
+  <div id="mk-list"></div>
+</nav>
+
+<main class="mk-stage">
+  <div class="mk-state" id="mk-state"><b id="mk-title"></b><span id="mk-desc"></span><span class="know" id="mk-know"></span></div>
+  <div class="ph" id="ph"><div class="ph-in" id="phin">
+
+<!-- ================= SIGN-UP ================= -->
+<section class="scr" id="s-signup" data-g="signup"
+  data-fr="Inscription · formulaire" data-en="Sign-up · form"
+  data-dfr="Arrivée depuis « Créer mon carnet » de l’accueil (carte « Chez Reelbook » choisie). Une étape sur deux : l’adresse." data-den="Coming from the landing’s « Create my notebook » (hosted card picked). Step one of two: the address."
+  data-kfr="L’app sait : aucun compte pour cette adresse tant que l’envoi n’a pas eu lieu. Le mot de passe n’est jamais mis en mémoire locale." data-ken="The app knows: no account for this address until the request is sent. The password is never stored locally.">
+  <p class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <h1><span lang="fr">Crée ton compte</span><span lang="en">Create your account</span></h1>
+  <p class="step"><b><span lang="fr">Étape 1 sur 2</span><span lang="en">Step 1 of 2</span></b> · <span lang="fr">ton adresse e-mail</span><span lang="en">your email address</span></p>
+  <form class="panel" onsubmit="return false">
+    <label><span lang="fr">E-mail</span><span lang="en">Email</span><input type="email" autocomplete="email" data-ph="camille@exemple.fr|camille@example.com" class="v-email"></label>
+    <label class="pwrow"><span lang="fr">Mot de passe · 8 caractères au moins</span><span lang="en">Password · 8 characters or more</span><input type="password" autocomplete="new-password" minlength="8" class="v-pass"><button type="button" class="eye"><span lang="fr">Afficher</span><span lang="en">Show</span></button></label>
+    <div class="ts v-ts"><span class="box"></span><p><span lang="fr">On vérifie que tu es une vraie personne.</span><span lang="en">Checking you’re a real person.</span></p><span class="cf">Cloudflare</span></div>
+    <p class="err v-err" hidden></p>
+    <div class="actions"><button class="btn v-cta" type="submit"><span lang="fr">Recevoir mon code</span><span lang="en">Get my code</span></button></div>
+    <p class="status"><span lang="fr">Pas encore de compte : il sera créé une fois le code confirmé.</span><span lang="en">No account yet: it’s created once you confirm the code.</span></p>
+  </form>
+  <p class="other"><span lang="fr">Tu as déjà un compte ? <a href="#signin">Se connecter</a></span><span lang="en">Already have an account? <a href="#signin">Sign in</a></span></p>
+  <p class="adv"><span lang="fr">Carnet hébergé chez Reelbook · <a href="#own">Sur mon Supabase plutôt</a></span><span lang="en">Notebook hosted by Reelbook · <a href="#own">On my own Supabase instead</a></span></p>
+</section>
+
+<!-- ================= CODE ================= -->
+<section class="scr" id="s-code" data-g="code"
+  data-fr="Code · attente du code" data-en="Code · waiting for the code"
+  data-dfr="Étape 2 sur 2. Le compte est en attente côté serveur, pas encore utilisable : l’écran le dit." data-den="Step 2 of 2. The account is pending on the server, not usable yet: the screen says so."
+  data-kfr="L’app sait : l’adresse et l’heure d’envoi (rb.pending, 1 h). Le bouton « Renvoyer » s’active après 60 s." data-ken="The app knows: the address and the time it was sent (rb.pending, 1 h). « Send again » unlocks after 60 s.">
+  <p class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <div class="note v-banner" hidden></div>
+  <h1><span lang="fr">Entre ton code</span><span lang="en">Enter your code</span></h1>
+  <p class="step"><b><span lang="fr">Étape 2 sur 2</span><span lang="en">Step 2 of 2</span></b> · <span lang="fr">le code reçu par e-mail</span><span lang="en">the code from the email</span></p>
+  <form class="panel" onsubmit="return false">
+    <p class="hint v-sent"><span lang="fr">Un code à 6 chiffres est parti vers <b>camille@exemple.fr</b>. <a href="#signup">Changer d’adresse</a></span><span lang="en">A 6-digit code is on its way to <b>camille@example.com</b>. <a href="#signup">Change address</a></span></p>
+    <label><span lang="fr">Code à 6 chiffres</span><span lang="en">6-digit code</span><input class="codein v-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="······"></label>
+    <p class="err v-err" hidden></p>
+    <div class="actions"><button class="btn v-cta" type="submit"><span lang="fr">Confirmer</span><span lang="en">Confirm</span></button></div>
+    <p class="resend v-resend"><span lang="fr">Rien reçu ? <a href="#resend">Renvoyer le code</a></span><span lang="en">Nothing yet? <a href="#resend">Send the code again</a></span></p>
+    <p class="hint"><span lang="fr">Regarde aussi dans les indésirables. Le code reste valable 1 heure.</span><span lang="en">Check your junk folder too. The code stays valid for 1 hour.</span></p>
+    <p class="status wait v-status"><span lang="fr">Ton compte n’est pas encore créé : il le sera dès que le code est confirmé.</span><span lang="en">Your account isn’t created yet: it will be the moment the code is confirmed.</span></p>
+  </form>
+</section>
+
+<!-- ================= SIGN-IN ================= -->
+<section class="scr" id="s-signin" data-g="signin"
+  data-fr="Connexion" data-en="Sign-in"
+  data-dfr="Un titre et une action distincts de l’inscription ; l’autre chemin est un lien. « Serveur : » disparaît du chemin hébergé." data-den="Its own title and action, apart from sign-up; the other path is a link. « Backend: » leaves the hosted path."
+  data-kfr="" data-ken="">
+  <p class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <h1><span lang="fr">Connecte-toi</span><span lang="en">Sign in</span></h1>
+  <form class="panel" onsubmit="return false" style="margin-top:20px">
+    <label><span lang="fr">E-mail</span><span lang="en">Email</span><input type="email" autocomplete="email" class="v-email" data-ph="camille@exemple.fr|camille@example.com"></label>
+    <label class="pwrow"><span lang="fr">Mot de passe</span><span lang="en">Password</span><input type="password" autocomplete="current-password" class="v-pass"><button type="button" class="eye"><span lang="fr">Afficher</span><span lang="en">Show</span></button></label>
+    <p class="err v-err" hidden></p>
+    <div class="actions"><button class="btn v-cta" type="submit"><span lang="fr">Se connecter</span><span lang="en">Sign in</span></button></div>
+    <p class="hint"><a href="#forgot"><span lang="fr">Mot de passe oublié ?</span><span lang="en">Forgot your password?</span></a></p>
+  </form>
+  <p class="other"><span lang="fr">Pas encore de compte ? <a href="#signup">Créer un compte</a></span><span lang="en">New here? <a href="#signup">Create an account</a></span></p>
+  <p class="adv"><a href="#own"><span lang="fr">Utiliser mon propre Supabase</span><span lang="en">Use my own Supabase</span></a> · <a href="#demo"><span lang="fr">Voir une démo</span><span lang="en">See a demo</span></a></p>
+</section>
+
+<!-- ================= EXISTS ================= -->
+<section class="scr" id="s-exists" data-g="signup"
+  data-fr="Inscription · le compte existe déjà" data-en="Sign-up · account already exists"
+  data-dfr="Après « Recevoir mon code » sur une adresse déjà inscrite (identities: []). Rien de nouveau n’a été créé, et l’écran le dit." data-den="After « Get my code » on an address that already has an account (identities: []). Nothing new was created, and the screen says so."
+  data-kfr="L’app sait : un compte confirmé existe pour cette adresse. Elle ne sait pas si c’est la même personne." data-ken="The app knows: a confirmed account exists for this address. It does not know whether it is the same person.">
+  <p class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <h1><span lang="fr">Cette adresse a déjà un compte</span><span lang="en">This address already has an account</span></h1>
+  <div class="panel" style="margin-top:20px">
+    <p style="margin:0"><span lang="fr">Un compte Reelbook utilise déjà <b>camille@exemple.fr</b>. Rien de nouveau n’a été créé : connecte-toi avec ton mot de passe.</span><span lang="en">A Reelbook account already uses <b>camille@example.com</b>. Nothing new was created: sign in with your password.</span></p>
+    <div class="actions"><button class="btn" type="button"><span lang="fr">Se connecter</span><span lang="en">Sign in</span></button></div>
+    <p class="hint"><a href="#forgot"><span lang="fr">Mot de passe oublié ?</span><span lang="en">Forgot your password?</span></a></p>
+    <p class="status ok"><span lang="fr">Compte existant pour cette adresse.</span><span lang="en">An account exists for this address.</span></p>
+  </div>
+  <p class="other"><span lang="fr">Ce n’est pas toi ? <a href="#signup">Utiliser une autre adresse</a></span><span lang="en">Not you? <a href="#signup">Use another address</a></span></p>
+</section>
+
+<!-- ================= FORGOT ================= -->
+<section class="scr" id="s-forgot" data-g="pw"
+  data-fr="Mot de passe · demande d’un code" data-en="Password · asking for a code"
+  data-dfr="Depuis « Mot de passe oublié ? ». Même code à 6 chiffres que l’inscription." data-den="From « Forgot your password? ». The same 6-digit code as sign-up."
+  data-kfr="Trou de spec : le serveur ne dit pas si l’adresse a un compte (anti-énumération sur /recover). L’écran suivant reste donc prudent." data-ken="Spec gap: the server does not say whether the address has an account (no enumeration on /recover). The next screen stays careful.">
+  <p class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <h1><span lang="fr">Mot de passe oublié</span><span lang="en">Forgot your password</span></h1>
+  <form class="panel" onsubmit="return false" style="margin-top:20px">
+    <p class="hint"><span lang="fr">Indique ton adresse : on t’envoie un code à 6 chiffres pour choisir un nouveau mot de passe. Ton compte et tes fiches ne bougent pas.</span><span lang="en">Enter your address: we send a 6-digit code so you can pick a new password. Your account and sheets stay as they are.</span></p>
+    <label><span lang="fr">E-mail</span><span lang="en">Email</span><input type="email" autocomplete="email" class="v-email"></label>
+    <div class="ts ok"><span class="box">✓</span><p><span lang="fr">Vérifié : tu es une vraie personne.</span><span lang="en">Verified: you’re a real person.</span></p><span class="cf">Cloudflare</span></div>
+    <div class="actions"><button class="btn" type="submit"><span lang="fr">Recevoir un code</span><span lang="en">Get a code</span></button></div>
+  </form>
+  <p class="other"><a href="#signin"><span lang="fr">Retour à la connexion</span><span lang="en">Back to sign in</span></a></p>
+</section>
+
+<!-- ================= RESET ================= -->
+<section class="scr" id="s-reset" data-g="pw"
+  data-fr="Mot de passe · code et nouveau mot de passe" data-en="Password · code and new password"
+  data-dfr="Après « Recevoir un code ». Confirmer connecte directement." data-den="After « Get a code ». Confirming signs the person in."
+  data-kfr="L’app sait : l’adresse saisie et l’heure d’envoi. Elle ne sait pas si un compte existe : d’où « si un compte y est rattaché » et la sortie vers l’inscription." data-ken="The app knows: the address typed and the time sent. It does not know whether an account exists, hence « if an account uses it » and the way out to sign-up.">
+  <p class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <h1><span lang="fr">Nouveau mot de passe</span><span lang="en">New password</span></h1>
+  <form class="panel" onsubmit="return false" style="margin-top:20px">
+    <p class="hint"><span lang="fr">Code envoyé à <b>camille@exemple.fr</b>, si un compte y est rattaché. <a href="#forgot">Changer d’adresse</a></span><span lang="en">Code sent to <b>camille@example.com</b>, if an account uses it. <a href="#forgot">Change address</a></span></p>
+    <label><span lang="fr">Code à 6 chiffres</span><span lang="en">6-digit code</span><input class="codein v-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······"></label>
+    <label class="pwrow"><span lang="fr">Nouveau mot de passe · 8 caractères au moins</span><span lang="en">New password · 8 characters or more</span><input type="password" autocomplete="new-password" class="v-pass"><button type="button" class="eye"><span lang="fr">Afficher</span><span lang="en">Show</span></button></label>
+    <p class="err v-err" hidden></p>
+    <div class="actions"><button class="btn v-cta" type="submit"><span lang="fr">Changer mon mot de passe</span><span lang="en">Change my password</span></button></div>
+    <p class="resend v-resend"><span lang="fr">Rien reçu ? <a href="#resend">Renvoyer le code</a></span><span lang="en">Nothing yet? <a href="#resend">Send the code again</a></span></p>
+    <p class="hint"><span lang="fr">Pas de code dans quelques minutes, même dans les indésirables ? Cette adresse n’a peut-être pas de compte : <a href="#signup">crée-le</a>.</span><span lang="en">No code after a few minutes, junk folder included? This address may have no account: <a href="#signup">create one</a>.</span></p>
+  </form>
+</section>
+
+<!-- ================= RESET OK (home) ================= -->
+<section class="scr home" id="s-reset-ok" data-g="pw"
+  data-fr="Mot de passe · changé, connecté" data-en="Password · changed, signed in"
+  data-dfr="Retour à l’accueil des carnets avec un bandeau. Le reste de l’accueil est esquissé." data-den="Back to the notebooks home with a banner. The rest of the home is sketched."
+  data-kfr="" data-ken="">
+  <p class="brand" style="margin-bottom:12px"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <p class="flash"><span lang="fr">Mot de passe changé. Tu es connecté avec <b>camille@exemple.fr</b>.</span><span lang="en">Password changed. You’re signed in as <b>camille@example.com</b>.</span></p>
+  <h1>My notebooks</h1>
+  <div class="sk" aria-hidden="true"><div></div><div></div><div></div><div></div></div>
+</section>
+
+<!-- ================= WAITING LIST ================= -->
+<section class="scr" id="s-waitlist" data-g="wl"
+  data-fr="Liste d’attente · bêta complète" data-en="Waiting list · beta full"
+  data-dfr="beta_seats() dit complet : la carte hébergée devient la liste d’attente de L31 (texte de consentement validé, mot pour mot). « Me prévenir » s’active avec la case." data-den="beta_seats() says full: the hosted card becomes L31’s waiting list (validated consent text, word for word). « Notify me » unlocks with the checkbox."
+  data-kfr="L’app sait : 50 places sur 50 prises, inscriptions ouvertes. Aucun compte n’est créé ici." data-ken="The app knows: 50 of 50 seats taken, sign-up open. No account is created here.">
+  <p class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <h1 class="v-h1"><span lang="fr">La bêta est complète</span><span lang="en">The beta is full</span></h1>
+  <form class="panel wl" onsubmit="return false" style="margin-top:20px">
+    <div class="cardline"><span class="lock" aria-hidden="true">50</span><p style="margin:0" class="v-lead"><b><span lang="fr">Bêta complète : 50 sur 50</span><span lang="en">Beta full: 50 of 50</span></b><br><span class="hint"><span lang="fr">Laisse ton prénom et ton e-mail : on te prévient dès qu’une place se libère.</span><span lang="en">Leave your first name and email: we’ll let you know as soon as a spot opens.</span></span></p></div>
+    <label><span lang="fr">Prénom</span><span lang="en">First name</span><input type="text" autocomplete="given-name" placeholder="Camille"></label>
+    <label><span lang="fr">E-mail</span><span lang="en">Email</span><input type="email" autocomplete="email" data-ph="camille@exemple.fr|camille@example.com"></label>
+    <label class="consent"><input type="checkbox" class="v-consent"><span><span lang="fr">J’accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d’une place libre, et rien d’autre. Effacés à mon inscription ou sur simple demande.</span><span lang="en">I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.</span></span></label>
+    <div class="actions"><button class="btn v-cta" type="submit" disabled aria-disabled="true"><span lang="fr">Me prévenir</span><span lang="en">Notify me</span></button></div>
+    <p class="status"><span lang="fr">Aucun compte n’est créé : on garde juste ton prénom et ton e-mail.</span><span lang="en">No account is created: we only keep your first name and email.</span></p>
+  </form>
+  <p class="other"><span lang="fr">Sans attendre : <a href="#own">Connecter mon Supabase</a> · Tu as déjà un compte ? <a href="#signin">Se connecter</a></span><span lang="en">Right away: <a href="#own">Connect my Supabase</a> · Already have an account? <a href="#signin">Sign in</a></span></p>
+</section>
+
+<section class="scr" id="s-waitlist-ok" data-g="wl"
+  data-fr="Liste d’attente · c’est noté" data-en="Waiting list · noted"
+  data-dfr="Après « Me prévenir ». Le même message pour une adresse déjà inscrite (L31)." data-den="After « Notify me ». The same message for an address already listed (L31)."
+  data-kfr="" data-ken="">
+  <p class="brand"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="var(--accent)" fill-rule="evenodd" d="M16 8h143c51 0 81 29 81 71 0 37-22 67-63 70l76 87c6 7 4 12-5 12h-81c-10 0-19-4-29-15l-69-76v87c0 3-1 4-4 4H20c-3 0-4-1-4-4Zm53 81v51h94c26 0 38-10 38-25 0-17-12-26-29-26Z"/><path fill="var(--brand-coral)" d="M59 99c6-7 10-5 10 9v87l-39-33c-15-12-15-17-2-31Z"/></svg><span class="wm">reelbook</span></p>
+  <h1><span lang="fr">La bêta est complète</span><span lang="en">The beta is full</span></h1>
+  <div class="panel" style="margin-top:20px">
+    <p class="flash" style="margin:0"><span lang="fr">C’est noté : on t’écrit dès qu’une place se libère.</span><span lang="en">Done: we will write as soon as a spot opens.</span></p>
+    <p class="hint"><span lang="fr">Prénom et e-mail gardés pour ça seulement, effacés à ton inscription ou sur simple demande.</span><span lang="en">First name and email kept for this only, deleted when you sign up or whenever you ask.</span></p>
+    <p class="status"><span lang="fr">Aucun compte créé pour l’instant.</span><span lang="en">No account created for now.</span></p>
+    <div class="actions"><button class="btn ghost" type="button"><span lang="fr">Connecter mon Supabase</span><span lang="en">Connect my Supabase</span></button></div>
+  </div>
+  <p class="other"><a href="#demo"><span lang="fr">Voir une démo en attendant</span><span lang="en">See a demo meanwhile</span></a></p>
+</section>
+
+<!-- ================= WELCOME ================= -->
+<section class="scr" id="s-welcome" data-g="welcome"
+  data-fr="Bienvenue · compte tout neuf" data-en="Welcome · brand-new account"
+  data-dfr="Juste après le code confirmé. Étape 1 faite par construction ; l’action principale est la prochaine non faite : relier l’ordinateur." data-den="Right after the code is confirmed. Step 1 done by construction; the main action is the next undone one: linking the computer."
+  data-kfr="L’app sait : compte créé (vrai par construction), aucune fiche, aucune demande traitée, file vide, pas en mode écran d’accueil sur cet appareil. Rien n’est affiché comme fait au-delà." data-ken="The app knows: account created (true by construction), no sheet, no processed request, empty queue, not in home-screen mode on this device. Nothing beyond that is shown as done.">
+  <div class="wtop"><p class="eyebrow"><span lang="fr">Bienvenue dans Reelbook</span><span lang="en">Welcome to Reelbook</span></p><div class="seg lp-lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div></div>
+  <p class="flash"><span lang="fr">Compte créé pour <b>camille@exemple.fr</b>. Tu es connecté.</span><span lang="en">Account created for <b>camille@example.com</b>. You’re signed in.</span></p>
+  <h1 style="font-size:var(--fs-2xl)"><span lang="fr">Encore trois choses, une seule fois</span><span lang="en">Three more things, once</span></h1>
+  <ol class="steps">
+    <li class="done"><span class="n">✓</span><div class="body"><h3><span><span lang="fr">Ton compte</span><span lang="en">Your account</span></span><span class="chip"><span lang="fr">Fait</span><span lang="en">Done</span></span></h3><p><span lang="fr">camille@exemple.fr · hébergé chez Reelbook.</span><span lang="en">camille@example.com · hosted by Reelbook.</span></p></div></li>
+    <li class="now"><span class="n">2</span><div class="body"><h3><span><span lang="fr">Ton ordinateur</span><span lang="en">Your computer</span></span><span class="chip"><span lang="fr">À faire</span><span lang="en">To do</span></span></h3>
+      <p><span lang="fr">C’est lui qui transforme tes vidéos en fiches. Il te faut Claude Pro ou plus avec Claude Code, Chrome avec l’extension Claude in Chrome, Git et Python 3.9+.</span><span lang="en">It is what turns your videos into sheets. You need Claude Pro or above with Claude Code, Chrome with the Claude in Chrome extension, Git and Python 3.9+.</span></p>
+      <p><span lang="fr">Colle cette ligne dans le Terminal. Elle installe le skill <code>/reelbook</code> et le relie à ton compte.</span><span lang="en">Paste this line into Terminal. It installs the <code>/reelbook</code> skill and links it to your account.</span></p>
+      <div class="seg os" role="group" aria-label="Operating system"><button type="button" aria-pressed="true">macOS / Linux</button><button type="button" aria-pressed="false">Windows</button></div>
+      <pre>curl -fsSL https://lt20.github.io/reelbook/install.sh | bash</pre>
+      <div class="actions"><button class="btn" type="button"><span lang="fr">Envoyer à mon ordinateur</span><span lang="en">Send to my computer</span></button><button class="btn ghost sm" type="button"><span lang="fr">Copier</span><span lang="en">Copy</span></button></div>
+      <p class="src"><a href="#src"><span lang="fr">Lire le script avant de le lancer ↗</span><span lang="en">Read the script before you run it ↗</span></a></p>
+      <p class="hint"><span lang="fr">Tu retrouves cette ligne à tout moment dans <b>Settings</b>.</span><span lang="en">You can find this line again anytime in <b>Settings</b>.</span></p></div></li>
+    <li><span class="n">3</span><div class="body"><h3><span><span lang="fr">Ton téléphone</span><span lang="en">Your phone</span></span><span class="chip"><span lang="fr">À faire</span><span lang="en">To do</span></span></h3>
+      <p><span lang="fr">Mets Reelbook sur ton écran d’accueil, puis le raccourci « Envoyer à Reelbook » dans le menu Partager de l’iPhone. Sur Android, colle simplement le lien dans l’app.</span><span lang="en">Put Reelbook on your home screen, then the “Send to Reelbook” shortcut in the iPhone Share menu. On Android, just paste the link in the app.</span></p>
+      <div class="actions"><button class="btn ghost sm" type="button"><span lang="fr">Ajouter le raccourci</span><span lang="en">Add the shortcut</span></button></div>
+      <label class="tick"><input type="checkbox"><span><span lang="fr">C’est fait sur mon téléphone</span><span lang="en">Done on my phone</span></span></label></div></li>
+    <li><span class="n">4</span><div class="body"><h3><span><span lang="fr">Ta première vidéo</span><span lang="en">Your first video</span></span><span class="chip"><span lang="fr">À faire</span><span lang="en">To do</span></span></h3>
+      <p><span lang="fr">Partage une vidéo depuis Instagram, TikTok, YouTube ou Facebook, ou touche <b>+ Add a video</b> et colle le lien. Elle attend dans la file jusqu’au prochain <code>/reelbook</code>.</span><span lang="en">Share a video from Instagram, TikTok, YouTube or Facebook, or tap <b>+ Add a video</b> and paste the link. It waits in the queue until the next <code>/reelbook</code>.</span></p></div></li>
+  </ol>
+  <h2 style="margin-top:28px"><span lang="fr">Comment ça marche</span><span lang="en">How it works</span></h2>
+  <div class="panel guide" style="margin-top:0">
+    <div class="g"><h3><span lang="fr">Envoie, depuis le téléphone</span><span lang="en">Send, from your phone</span></h3><p><span lang="fr">Une technique te plaît dans ton fil : Partager, Reelbook. La vidéo attend dans la file. Le téléphone ne fait rien de plus.</span><span lang="en">A technique catches your eye in your feed: Share, Reelbook. The video waits in the queue. That is all the phone does.</span></p></div>
+    <div class="g"><h3><span lang="fr">Lance, sur l’ordinateur</span><span lang="en">Run, on your computer</span></h3><p><span lang="fr">Tape <code>/reelbook</code> dans Claude Code quand tu veux. Garde Chrome ouvert et devant, connecté à Instagram, TikTok ou Facebook si tes vidéos en viennent (YouTube ne demande rien). Claude regarde chaque vidéo et écrit la fiche : photos, pourquoi, points clés, étapes dans l’ordre. Sur un Mac, il peut aussi tourner chaque nuit tout seul : <code>tools/nightly.sh install</code> dans le dossier Reelbook.</span><span lang="en">Type <code>/reelbook</code> in Claude Code whenever you like. Keep Chrome open and in front, signed in to Instagram, TikTok or Facebook if your videos come from there (YouTube needs nothing). Claude watches each video and writes the sheet: photos, why, key points, the steps in order. On a Mac, it can also run every night on its own: <code>tools/nightly.sh install</code> in the Reelbook folder.</span></p></div>
+    <div class="g"><h3><span lang="fr">Organise et entraîne-toi</span><span lang="en">Organise and train</span></h3><p><span lang="fr">Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets. Sur le tapis, ouvre la fiche : le geste d’abord, en images. Coche <b>Done today</b>.</span><span lang="en">Move a sheet to another group, add your notes, build a session from several notebooks. On the mat, open the sheet: the move first, in pictures. Tick <b>Done today</b>.</span></p></div>
+  </div>
+  <div class="actions endrow"><button class="btn ghost" type="button"><span lang="fr">Ouvrir mes carnets</span><span lang="en">Open my notebooks</span></button></div>
+</section>
+
+<section class="scr" id="s-welcome-pc" data-g="welcome"
+  data-fr="Bienvenue · ordinateur relié" data-en="Welcome · computer linked"
+  data-dfr="Revenu sur #welcome plus tard : l’ordinateur a traité une vidéo, donc une fiche existe. Le téléphone reste la prochaine étape, l’action principale change." data-den="Back on #welcome later: the computer has processed a video, so a sheet exists. The phone is the next step and the main action moves there."
+  data-kfr="L’app sait : 1 demande traitée et 1 fiche (donc ordinateur relié et première vidéo faite), pas en mode écran d’accueil sur cet appareil, case « téléphone » non cochée par la personne. Trou de spec : « ordinateur relié » n’est connu qu’après une vidéo traitée, jamais avant." data-ken="The app knows: 1 processed request and 1 sheet (so computer linked and first video done), not in home-screen mode on this device, the « phone » box not ticked by the person. Spec gap: « computer linked » is only known after a processed video, never before.">
+  <div class="wtop"><p class="eyebrow"><span lang="fr">Bienvenue dans Reelbook</span><span lang="en">Welcome to Reelbook</span></p><div class="seg lp-lang" role="group" aria-label="Langue / Language"><button type="button" data-lang="fr" aria-pressed="true">FR</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div></div>
+  <h1 style="font-size:var(--fs-2xl)"><span lang="fr">Presque prêt</span><span lang="en">Almost there</span></h1>
+  <ol class="steps">
+    <li class="done"><span class="n">✓</span><div class="body"><h3><span><span lang="fr">Ton compte</span><span lang="en">Your account</span></span><span class="chip"><span lang="fr">Fait</span><span lang="en">Done</span></span></h3><p><span lang="fr">camille@exemple.fr · hébergé chez Reelbook.</span><span lang="en">camille@example.com · hosted by Reelbook.</span></p></div></li>
+    <li class="done"><span class="n">✓</span><div class="body"><h3><span><span lang="fr">Ton ordinateur</span><span lang="en">Your computer</span></span><span class="chip"><span lang="fr">Fait</span><span lang="en">Done</span></span></h3><p><span lang="fr">Relié : il a déjà traité une vidéo. La ligne d’installation reste dans <b>Settings</b>.</span><span lang="en">Linked: it has already processed a video. The install line stays in <b>Settings</b>.</span></p></div></li>
+    <li class="now"><span class="n">3</span><div class="body"><h3><span><span lang="fr">Ton téléphone</span><span lang="en">Your phone</span></span><span class="chip"><span lang="fr">À faire</span><span lang="en">To do</span></span></h3>
+      <p><span lang="fr">Mets Reelbook sur ton écran d’accueil, puis le raccourci « Envoyer à Reelbook » dans le menu Partager de l’iPhone. Sur Android, colle simplement le lien dans l’app.</span><span lang="en">Put Reelbook on your home screen, then the “Send to Reelbook” shortcut in the iPhone Share menu. On Android, just paste the link in the app.</span></p>
+      <div class="actions"><button class="btn" type="button"><span lang="fr">Ajouter le raccourci</span><span lang="en">Add the shortcut</span></button></div>
+      <label class="tick"><input type="checkbox"><span><span lang="fr">C’est fait sur mon téléphone</span><span lang="en">Done on my phone</span></span></label></div></li>
+    <li class="done"><span class="n">✓</span><div class="body"><h3><span><span lang="fr">Ta première vidéo</span><span lang="en">Your first video</span></span><span class="chip"><span lang="fr">Fait</span><span lang="en">Done</span></span></h3><p><span lang="fr">1 fiche dans tes carnets. La suite : <b>+ Add a video</b> ou le raccourci.</span><span lang="en">1 sheet in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.</span></p></div></li>
+  </ol>
+  <h2 style="margin-top:28px"><span lang="fr">Comment ça marche</span><span lang="en">How it works</span></h2>
+  <div class="panel guide" style="margin-top:0">
+    <div class="g"><h3><span lang="fr">Envoie, depuis le téléphone</span><span lang="en">Send, from your phone</span></h3><p><span lang="fr">Une technique te plaît dans ton fil : Partager, Reelbook. La vidéo attend dans la file. Le téléphone ne fait rien de plus.</span><span lang="en">A technique catches your eye in your feed: Share, Reelbook. The video waits in the queue. That is all the phone does.</span></p></div>
+    <div class="g"><h3><span lang="fr">Lance, sur l’ordinateur</span><span lang="en">Run, on your computer</span></h3><p><span lang="fr">Tape <code>/reelbook</code> dans Claude Code quand tu veux. Garde Chrome ouvert et devant, connecté à Instagram, TikTok ou Facebook si tes vidéos en viennent (YouTube ne demande rien). Claude regarde chaque vidéo et écrit la fiche : photos, pourquoi, points clés, étapes dans l’ordre. Sur un Mac, il peut aussi tourner chaque nuit tout seul : <code>tools/nightly.sh install</code> dans le dossier Reelbook.</span><span lang="en">Type <code>/reelbook</code> in Claude Code whenever you like. Keep Chrome open and in front, signed in to Instagram, TikTok or Facebook if your videos come from there (YouTube needs nothing). Claude watches each video and writes the sheet: photos, why, key points, the steps in order. On a Mac, it can also run every night on its own: <code>tools/nightly.sh install</code> in the Reelbook folder.</span></p></div>
+    <div class="g"><h3><span lang="fr">Organise et entraîne-toi</span><span lang="en">Organise and train</span></h3><p><span lang="fr">Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets. Sur le tapis, ouvre la fiche : le geste d’abord, en images. Coche <b>Done today</b>.</span><span lang="en">Move a sheet to another group, add your notes, build a session from several notebooks. On the mat, open the sheet: the move first, in pictures. Tick <b>Done today</b>.</span></p></div>
+  </div>
+  <div class="actions endrow"><button class="btn ghost" type="button"><span lang="fr">Ouvrir mes carnets</span><span lang="en">Open my notebooks</span></button></div>
+</section>
+
+  </div></div>
+</main>
+</div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s), all = (s, r = document) => [...r.querySelectorAll(s)];
+  const FR = v => v.split('|')[0], EN = v => v.split('|')[1] || v.split('|')[0];
+  // Variants: a base screen plus a few touches (value, error, banner, button). Nothing else differs from the base.
+  const t2 = (fr, en) => `<span lang="fr">${fr}</span><span lang="en">${en}</span>`;
+  const OFFLINE = t2('Pas de connexion : rien n’a été envoyé. Réessaie quand tu es de nouveau en ligne.', 'You’re offline: nothing was sent. Try again once you’re back online.');
+  const V = {
+    // ---- sign-up ----
+    'signup': { base: 'signup' },
+    'signup-filled': { base: 'signup', fr: 'Inscription · prête à envoyer', en: 'Sign-up · ready to send', dfr: 'Champs remplis, vérification passée : le bouton est la seule chose qui reste.', den: 'Fields filled, check passed: the button is all that is left.',
+      set: s => { fill(s, 'camille@exemple.fr|camille@example.com', '••••••••••'); ts(s, 'ok'); } },
+    'signup-busy': { base: 'signup', fr: 'Inscription · envoi en cours', en: 'Sign-up · sending', dfr: 'Après le toucher : bouton occupé, champs verrouillés, rien d’autre ne bouge.', den: 'After the tap: busy button, fields locked, nothing else moves.',
+      set: s => { fill(s, 'camille@exemple.fr|camille@example.com', '••••••••••'); ts(s, 'ok'); busy(s, 'Envoi du code…', 'Sending your code…'); } },
+    'signup-offline': { base: 'signup', fr: 'Inscription · hors ligne', en: 'Sign-up · offline', dfr: 'Pas de réseau au moment d’envoyer. Le message dit que rien n’est parti ; le bouton reste actif pour réessayer.', den: 'No network when sending. The message says nothing left; the button stays live to retry.',
+      set: s => { fill(s, 'camille@exemple.fr|camille@example.com', '••••••••••'); ts(s, 'ok'); err(s, OFFLINE); } },
+    'signup-ts-blocked': { base: 'signup', fr: 'Inscription · vérification bloquée', en: 'Sign-up · check blocked', dfr: 'Le script de vérification n’a pas chargé (bloqueur, réseau). Bouton désactivé, un « Réessayer » dans le cadre.', den: 'The check’s script did not load (blocker, network). Button disabled, a « Try again » inside the frame.',
+      set: s => { fill(s, 'camille@exemple.fr|camille@example.com', '••••••••••'); ts(s, 'ko', t2('La vérification n’a pas pu se charger (un bloqueur, peut-être). <a href="#retry">Réessayer</a>', 'The check could not load (an ad blocker, maybe). <a href="#retry">Try again</a>')); $('.v-cta', s).disabled = true; } },
+    'signup-ts-failed': { base: 'signup', fr: 'Inscription · vérification refusée', en: 'Sign-up · check refused', dfr: 'Le serveur a refusé le jeton. Le cadre se réinitialise, rien n’a été créé.', den: 'The server refused the token. The frame resets, nothing was created.',
+      set: s => { fill(s, 'camille@exemple.fr|camille@example.com', '••••••••••'); ts(s, 'spin', t2('Nouvelle vérification…', 'Checking again…')); err(s, t2('La vérification n’a pas abouti : attends qu’elle se refasse, puis réessaie. Rien n’a été créé.', 'The check did not go through: wait for it to run again, then retry. Nothing was created.')); } },
+    'exists': { base: 'exists' },
+    'waitlist': { base: 'waitlist' },
+    'waitlist-consent': { base: 'waitlist', fr: 'Liste d’attente · case cochée', en: 'Waiting list · box ticked', dfr: 'Prénom, e-mail et consentement : « Me prévenir » devient actif.', den: 'First name, email and consent: « Notify me » becomes active.',
+      set: s => { all('input', s)[0].value = 'Camille'; fill(s, 'camille@exemple.fr|camille@example.com'); $('.v-consent', s).checked = true; const b = $('.v-cta', s); b.disabled = false; b.removeAttribute('aria-disabled'); } },
+    'waitlist-closed': { base: 'waitlist', fr: 'Liste d’attente · bêta fermée', en: 'Waiting list · beta closed', dfr: 'beta_seats() dit fermé (pas complet) : même liste, autre titre.', den: 'beta_seats() says closed (not full): same list, another title.', kfr: 'L’app sait : inscriptions fermées. Aucun compte n’est créé ici.', ken: 'The app knows: sign-up closed. No account is created here.',
+      set: s => { $('.v-h1', s).innerHTML = t2('La bêta est fermée pour l’instant', 'The beta is closed for now'); $('.lock', s).textContent = '—'; $('.v-lead b', s).innerHTML = t2('Inscriptions en pause', 'Sign-up paused'); $('.v-lead .hint', s).innerHTML = t2('Laisse ton prénom et ton e-mail : on te prévient à la réouverture.', 'Leave your first name and email: we’ll let you know when it reopens.'); } },
+    'waitlist-ok': { base: 'waitlist-ok' },
+    // ---- code ----
+    'code': { base: 'code', set: s => { countdown(s, 47); } },
+    'code-typing': { base: 'code', fr: 'Code · saisie', en: 'Code · typing', dfr: 'Clavier numérique, collage accepté (one-time-code).', den: 'Numeric keyboard, paste accepted (one-time-code).',
+      set: s => { $('.v-code', s).value = '48 2'.replace(' ', ''); countdown(s, 31); } },
+    'code-busy': { base: 'code', fr: 'Code · vérification', en: 'Code · checking', dfr: 'Six chiffres saisis, le bouton travaille.', den: 'Six digits in, the button is working.',
+      set: s => { $('.v-code', s).value = '482915'; busy(s, 'Vérification…', 'Checking…'); countdown(s, 22); } },
+    'code-wrong': { base: 'code', fr: 'Code · faux', en: 'Code · wrong', dfr: 'Le serveur refuse le code. Le champ reste rempli pour corriger.', den: 'The server refuses the code. The field keeps its value to fix it.',
+      set: s => { const i = $('.v-code', s); i.value = '482916'; i.setAttribute('aria-invalid', 'true'); err(s, t2('Ce code n’est pas le bon. Vérifie les 6 chiffres du dernier e-mail reçu.', 'That code isn’t right. Check the 6 digits of the latest email.')); countdown(s, 0); } },
+    'code-expired': { base: 'code', fr: 'Code · expiré', en: 'Code · expired', dfr: 'Plus d’une heure : le code ne vaut plus rien. L’action principale devient « en recevoir un nouveau ».', den: 'More than an hour: the code is worthless. The main action becomes « get a new one ».',
+      set: s => { $('.v-code', s).value = ''; err(s, t2('Ce code a expiré. Demande-en un nouveau : il arrivera à la même adresse.', 'This code has expired. Ask for a new one: it will reach the same address.')); cta(s, 'Recevoir un nouveau code', 'Get a new code'); $('.v-resend', s).hidden = true; } },
+    'code-toomany': { base: 'code', fr: 'Code · trop d’essais', en: 'Code · too many attempts', dfr: 'Le serveur bloque quelques minutes. Bouton désactivé, l’attente est dite.', den: 'The server blocks for a few minutes. Button disabled, the wait is stated.',
+      set: s => { $('.v-code', s).value = ''; err(s, t2('Trop d’essais. Attends quelques minutes, puis demande un nouveau code.', 'Too many attempts. Wait a few minutes, then ask for a new code.'), true); $('.v-cta', s).disabled = true; countdown(s, 0); } },
+    'code-resent': { base: 'code', fr: 'Code · renvoyé', en: 'Code · sent again', dfr: 'Après « Renvoyer le code » : confirmation, nouveau décompte de 60 s, seul le dernier code compte.', den: 'After « Send the code again »: confirmation, new 60 s countdown, only the latest code works.',
+      set: s => { banner(s, t2('Nouveau code envoyé à <b>camille@exemple.fr</b>. Seul le dernier compte.', 'New code sent to <b>camille@example.com</b>. Only the latest one works.')); countdown(s, 60); } },
+    'code-too-soon': { base: 'code', fr: 'Code · renvoi trop tôt', en: 'Code · resend too soon', dfr: 'Le serveur a refusé le renvoi (limite). Le décompte repart, le message explique.', den: 'The server refused the resend (rate limit). The countdown restarts, the message explains.',
+      set: s => { err(s, t2('Le dernier code vient de partir : attends la fin du décompte avant d’en demander un autre.', 'The last code just left: wait for the countdown before asking for another.')); countdown(s, 58); } },
+    'code-offline': { base: 'code', fr: 'Code · hors ligne', en: 'Code · offline', dfr: 'Pas de réseau à la confirmation. Le code saisi reste.', den: 'No network at confirmation. The typed code stays.',
+      set: s => { $('.v-code', s).value = '482915'; err(s, t2('Pas de connexion : le code n’a pas pu être vérifié. Réessaie quand tu es de nouveau en ligne.', 'You’re offline: the code could not be checked. Try again once you’re back online.')); countdown(s, 0); } },
+    'code-resume': { base: 'code', fr: 'Code · retour après Mail', en: 'Code · back from Mail', dfr: 'Parti lire le code dans Mail, la PWA a rechargé : l’écran revient tel quel grâce à rb.pending. Un bandeau dit où on en est.', den: 'Went to read the code in Mail, the PWA reloaded: the screen comes back as it was thanks to rb.pending. A banner says where things stand.',
+      kfr: 'L’app sait : adresse et heure d’envoi (il y a 4 min), rien d’autre. Pas de mot de passe en mémoire : s’il fallait recommencer, il serait redemandé.', ken: 'The app knows: address and time sent (4 min ago), nothing else. No password in memory: starting over would ask for it again.',
+      set: s => { banner(s, t2('On reprend là où tu en étais : le code envoyé il y a 4 min à <b>camille@exemple.fr</b> est toujours valable.', 'Picking up where you left off: the code sent 4 min ago to <b>camille@example.com</b> is still valid.')); countdown(s, 0); } },
+    'code-from-signin': { base: 'code', fr: 'Code · depuis la connexion (adresse jamais confirmée)', en: 'Code · from sign-in (address never confirmed)', dfr: 'Connexion avec un compte dont l’adresse n’a jamais été confirmée : un code repart, et l’écran dit que le compte existe mais attend.', den: 'Sign-in with an account whose address was never confirmed: a code is sent again, and the screen says the account exists but is waiting.',
+      kfr: 'L’app sait : compte existant, adresse non confirmée (erreur de connexion), code renvoyé.', ken: 'The app knows: account exists, address unconfirmed (sign-in error), code sent again.',
+      set: s => { banner(s, t2('Ce compte existe, mais son adresse n’a jamais été confirmée. On vient de t’envoyer un nouveau code.', 'This account exists, but its address was never confirmed. We just sent you a new code.'), 'warn'); $('.v-status', s).innerHTML = t2('Compte en attente : il s’ouvre dès que le code est confirmé.', 'Account waiting: it opens the moment the code is confirmed.'); countdown(s, 60); } },
+    'code-ok': { base: 'code', fr: 'Code · confirmé', en: 'Code · confirmed', dfr: 'Un instant avant #welcome : le statut passe au vert, le bouton le dit.', den: 'An instant before #welcome: the status turns green, the button says it.',
+      set: s => { $('.v-code', s).value = '482915'; const st = $('.v-status', s); st.className = 'status ok'; st.innerHTML = t2('Compte créé pour camille@exemple.fr.', 'Account created for camille@example.com.'); cta(s, 'Compte créé ✓', 'Account created ✓'); $('.v-cta', s).disabled = true; $('.v-resend', s).hidden = true; } },
+    // ---- sign-in ----
+    'signin': { base: 'signin' },
+    'signin-wrong': { base: 'signin', fr: 'Connexion · identifiants faux', en: 'Sign-in · wrong credentials', dfr: 'Le message de l’app, et le lien « Mot de passe oublié ? » juste sous le bouton.', den: 'The app’s message, with « Forgot your password? » right under the button.',
+      set: s => { fill(s, 'camille@exemple.fr|camille@example.com', '••••••••'); err(s, t2('E-mail ou mot de passe incorrect.', 'Wrong email or password.')); } },
+    'signin-busy': { base: 'signin', fr: 'Connexion · en cours', en: 'Sign-in · in progress', set: s => { fill(s, 'camille@exemple.fr|camille@example.com', '••••••••'); busy(s, 'Connexion…', 'Signing in…'); } },
+    'signin-offline': { base: 'signin', fr: 'Connexion · hors ligne', en: 'Sign-in · offline', set: s => { fill(s, 'camille@exemple.fr|camille@example.com', '••••••••'); err(s, t2('Pas de connexion : vérifie ton réseau et réessaie.', 'You’re offline: check your connection and try again.')); } },
+    // ---- password ----
+    'forgot': { base: 'forgot', set: s => { fill(s, 'camille@exemple.fr|camille@example.com'); } },
+    'reset': { base: 'reset', set: s => { countdown(s, 44); } },
+    'reset-wrong': { base: 'reset', fr: 'Mot de passe · code faux', en: 'Password · wrong code', set: s => { const i = $('.v-code', s); i.value = '118207'; i.setAttribute('aria-invalid', 'true'); $('.v-pass', s).value = '••••••••••'; err(s, t2('Ce code n’est pas le bon. Vérifie les 6 chiffres du dernier e-mail reçu.', 'That code isn’t right. Check the 6 digits of the latest email.')); countdown(s, 0); } },
+    'reset-ok': { base: 'reset-ok' },
+    // ---- welcome ----
+    'welcome': { base: 'welcome' },
+    'welcome-pc': { base: 'welcome-pc' },
+  };
+  const GROUPS = [['signup', 'Inscription', 'Sign-up'], ['code', 'Code reçu par e-mail', 'Code by email'], ['signin', 'Connexion', 'Sign-in'], ['pw', 'Mot de passe oublié', 'Forgot password'], ['wl', 'Liste d’attente', 'Waiting list'], ['welcome', '#welcome', '#welcome']];
+  const ORDER = Object.keys(V);
+
+  // touches
+  function fill(s, email, pass) { const e = $('.v-email', s); if (e && email) e.value = lang === 'fr' ? FR(email) : EN(email); const p = $('.v-pass', s); if (p && pass) p.value = pass; }
+  function ts(s, mode, html) { const w = $('.v-ts', s); if (!w) return; w.className = 'ts v-ts ' + mode; $('.box', w).textContent = mode === 'ok' ? '✓' : ''; if (html) $('p', w).innerHTML = html; else if (mode === 'ok') $('p', w).innerHTML = t2('Vérifié : tu es une vraie personne.', 'Verified: you’re a real person.'); }
+  function err(s, html, hard) { const e = $('.v-err', s); e.hidden = false; e.innerHTML = html; e.className = 'err v-err' + (hard ? ' hard' : ''); e.setAttribute('role', 'alert'); }
+  function busy(s, fr, en) { const b = $('.v-cta', s); b.classList.add('busy'); b.disabled = true; b.innerHTML = t2(fr, en); all('input', s).forEach(i => { i.readOnly = true; }); }
+  function cta(s, fr, en) { $('.v-cta', s).innerHTML = t2(fr, en); }
+  function banner(s, html, kind) { const b = $('.v-banner', s); b.hidden = false; b.innerHTML = html; b.className = 'note v-banner' + (kind ? ' ' + kind : ''); b.setAttribute('role', 'status'); }
+  function countdown(s, n) { const r = $('.v-resend', s); if (!r) return; r.innerHTML = n > 0 ? t2(`Rien reçu ? Renvoyer le code dans <b>${n} s</b>`, `Nothing yet? Send the code again in <b>${n} s</b>`) : t2('Rien reçu ? <a href="#resend">Renvoyer le code</a>', 'Nothing yet? <a href="#resend">Send the code again</a>'); }
+
+  // state
+  let lang = 'fr', theme = 'light', kb = false, cur = 'signup';
+  const q = new URLSearchParams(location.search);
+  if (q.get('lang') === 'en') lang = 'en'; if (q.get('theme') === 'dark') theme = 'dark'; if (q.get('kb') === '1') kb = true;
+  if (V[q.get('s')]) cur = q.get('s'); else if (V[location.hash.slice(1)]) cur = location.hash.slice(1);
+
+  const bases = {}; all('.scr').forEach(sc => { bases[sc.id.slice(2)] = sc.cloneNode(true); });
+
+  function show(id) {
+    cur = id; const v = V[id], b = bases[v.base]; if (!b) return;
+    const old = $('#s-' + v.base); const fresh = b.cloneNode(true); old.replaceWith(fresh);
+    all('.scr').forEach(sc => sc.classList.remove('on')); fresh.classList.add('on');
+    all('input[data-ph]', fresh).forEach(i => { i.placeholder = lang === 'fr' ? FR(i.dataset.ph) : EN(i.dataset.ph); });
+    if (v.set) v.set(fresh);
+    all('.lp-lang button', fresh).forEach(bt => { bt.setAttribute('aria-pressed', String(bt.dataset.lang === lang)); bt.onclick = () => setLang(bt.dataset.lang); });
+    $('#phin').scrollTop = 0;
+    const L = lang === 'fr';
+    $('#mk-title').textContent = v[L ? 'fr' : 'en'] || fresh.dataset[L ? 'fr' : 'en'];
+    $('#mk-desc').textContent = v[L ? 'dfr' : 'den'] || fresh.dataset[L ? 'dfr' : 'den'] || '';
+    $('#mk-know').textContent = v[L ? 'kfr' : 'ken'] || fresh.dataset[L ? 'kfr' : 'ken'] || '';
+    all('#mk-list button').forEach(bt => bt.setAttribute('aria-current', String(bt.dataset.s === id)));
+    $('#mk-sel').value = id;
+    try { history.replaceState(null, '', '?s=' + id + (lang === 'en' ? '&lang=en' : '') + (theme === 'dark' ? '&theme=dark' : '') + (kb ? '&kb=1' : '')); } catch { /* WebKit caps replaceState at 100 per 10 s */ }
+  }
+  function labelOf(id) { const v = V[id]; const b = bases[v.base]; return v[lang] || b.dataset[lang]; }
+  function buildNav() {
+    const list = $('#mk-list'), sel = $('#mk-sel'); list.innerHTML = ''; sel.innerHTML = '';
+    GROUPS.forEach(([g, fr, en]) => {
+      const ids = ORDER.filter(id => bases[V[id].base].dataset.g === g); if (!ids.length) return;
+      const h = document.createElement('h2'); h.textContent = lang === 'fr' ? fr : en; list.appendChild(h);
+      const ul = document.createElement('ul'); const og = document.createElement('optgroup'); og.label = h.textContent;
+      ids.forEach(id => { const li = document.createElement('li'); const bt = document.createElement('button'); bt.type = 'button'; bt.dataset.s = id; bt.textContent = labelOf(id); bt.onclick = () => show(id); li.appendChild(bt); ul.appendChild(li); const o = document.createElement('option'); o.value = id; o.textContent = labelOf(id); og.appendChild(o); });
+      list.appendChild(ul); sel.appendChild(og);
+    });
+    sel.onchange = () => show(sel.value);
+  }
+  function setLang(l) { lang = l; document.documentElement.lang = l; all('.mk-tog [data-lang]').forEach(bt => bt.setAttribute('aria-pressed', String(bt.dataset.lang === l))); buildNav(); show(cur); }
+  function setTheme(t) { theme = t; document.documentElement.dataset.theme = t; all('[data-theme]', $('.mk-tog')).forEach(bt => bt.setAttribute('aria-pressed', String(bt.dataset.theme === t))); show(cur); }
+  function setKb(k) { kb = k; $('#ph').classList.toggle('kb', k); all('[data-kb]').forEach(bt => bt.setAttribute('aria-pressed', String((bt.dataset.kb === '1') === k))); show(cur); }
+  all('.mk-tog [data-lang]').forEach(bt => bt.onclick = () => setLang(bt.dataset.lang));
+  all('.mk-tog [data-theme]').forEach(bt => bt.onclick = () => setTheme(bt.dataset.theme));
+  all('[data-kb]').forEach(bt => bt.onclick = () => setKb(bt.dataset.kb === '1'));
+  document.documentElement.lang = lang; document.documentElement.dataset.theme = theme; $('#ph').classList.toggle('kb', kb);
+  all('.mk-tog [data-lang]').forEach(bt => bt.setAttribute('aria-pressed', String(bt.dataset.lang === lang)));
+  all('.mk-tog [data-theme]').forEach(bt => bt.setAttribute('aria-pressed', String(bt.dataset.theme === theme)));
+  all('[data-kb]').forEach(bt => bt.setAttribute('aria-pressed', String((bt.dataset.kb === '1') === kb)));
+  buildNav(); show(cur);
+  window.__mk = { states: ORDER, show, setLang, setTheme, setKb };
+})();
+</script>
+</body>
+</html>
