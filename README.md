@@ -159,6 +159,7 @@ security (`supabase/schema.sql`):
 | `user_themes` | your notebooks: built-in ones turned on, custom ones with their description |
 | `practice_log` | one row each time you tap « Done today » on a sheet or a session: `slug` (as for notes), `done_on`, `text` (« 12 kg, 3x10 ») |
 | `account_quotas` | limits of one account, read-only for it (see « Limits on a shared backend » below) |
+| `beta_settings`, `beta_waitlist` | the hosted beta's project-wide limits and its waiting list; no client reads them (off without a settings row, below) |
 | `sheets/<user_id>/<slug>/img/*` | the photos |
 
 The app renders `sheets.html` inside its own styles, builds session pages from their `sessions`
@@ -203,6 +204,12 @@ on conflict (user_id) do update set max_requests_per_day = excluded.max_requests
 ```
 
 A null column keeps the default; one row per account you want to lift.
+
+The same file also holds project-wide limits for a beta (seats, sign-ups a day, videos a day, total photos,
+kill switches, a waiting list: « Beta locks » in `supabase/schema.sql`). They are **off until a row of
+`beta_settings` exists**: your own Supabase never needs one, and behaves as above without it. A daily ntfy summary
+of those figures (« Daily alert ») is scheduled only where the `pg_cron` and `pg_net` extensions are enabled, and
+sends nothing until you store a topic in Vault.
 
 ## Repository layout
 
