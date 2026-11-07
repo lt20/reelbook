@@ -123,6 +123,8 @@ dialog.dlg p{margin:0}
 dialog.dlg .u{display:block;font-size:var(--fs-sm);color:var(--muted);overflow-wrap:anywhere}
 dialog.dlg .actions{display:grid;gap:var(--s-2)}
 dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+.take-all{display:flex;align-items:center;gap:var(--s-2);min-height:44px}
+.take-all input{flex:none;width:20px;height:20px;margin:0}
 .picklist{max-height:46dvh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:var(--s-1) 10px 10px}
 /* ---- L18: bottom sheets ----
    A form dialog has a header .sh-h: Cancel (.sh-no) | title | primary action (.sh-ok). From 600 px wide it melts into
@@ -1489,7 +1491,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     <div class="sh-h"><button class="btn ghost sh-no" type="button" id="mv-cancel">Cancel</button><h2 id="mv-title">Move this sheet</h2><button class="btn sh-ok" type="submit" id="mv-submit">Move</button></div>
     <p class="u" id="mv-sheet"></p>
     <label>Notebook <select id="mv-theme"></select></label>
-    <p class="hint" id="mv-hint" hidden>Its exercises stay where they are.</p>
+    <label class="take-all" id="mv-all-l" hidden><input type="checkbox" id="mv-all"><span id="mv-all-t"></span></label>
+    <p class="hint" id="mv-hint" hidden></p>
     <label id="mv-group-l">Group <select id="mv-group"></select></label>
     <label id="mv-new-l" hidden>New group name <input id="mv-new" type="text" maxlength="40" autocomplete="off" placeholder="Shoulders"></label>
     <p class="err" id="mv-err" hidden></p>
@@ -3402,11 +3405,24 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     syncNewGroup();
   };
   const shownSession = () => { const slug = RS.sessionSlugOf(shown); return slug ? v2BySlug.get(slug) : null; };
+  // The exercises of session s in the session's own notebook: those « Move » can take along. One in another
+  // notebook was filed there on purpose, and stays.
+  const sessionSheets = s => [...new Set(RS.resolveItems(s, bySlug).map(f => f.sheet))];
+  const movableSheets = s => sessionSheets(s).filter(e => e.theme === s.theme);
+  const paintMoveExercises = s => {
+    const all = s ? sessionSheets(s).length : 0, n = s ? movableSheets(s).length : 0;
+    $('mv-all-l').hidden = !n;
+    $('mv-all-t').textContent = `Move its ${plural(n, 'exercise')} too`;
+    $('mv-hint').hidden = !s || (!!n && n === all);
+    $('mv-hint').textContent = n ? 'Its exercises in other notebooks stay where they are.' : 'Its exercises stay where they are.';
+  };
   const openMove = () => {
     const s = shownSession(), e = s || bySlug.get(shown); if (!e) return;
     $('mv-title').textContent = s ? 'Move this session' : 'Move this sheet';
     $('mv-sheet').textContent = e.title; $('mv-err').hidden = true; $('mv-new').value = '';
-    $('mv-hint').hidden = !s; $('mv-group-l').hidden = !!s;
+    $('mv-group-l').hidden = !!s; paintMoveExercises(s);
+    // Checked for a session made from a video (its exercises came with it), not for one the user composed.
+    $('mv-all').checked = !!s && s.origin === 'video';
     $('mv-theme').innerHTML = themes.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
     $('mv-theme').value = e.theme;
     if (s) { $('mv-new-l').hidden = true; $('mv-new').required = false; } else fillGroups(e.theme, e.group);
@@ -3415,19 +3431,28 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   $('mv-theme').addEventListener('change', () => { if (shownSession()) return; const e = bySlug.get(shown); fillGroups($('mv-theme').value, e ? e.group : ''); });
   $('mv-group').addEventListener('change', () => { syncNewGroup(); if ($('mv-group').value === NEW_GROUP) $('mv-new').focus(); });
   $('mv-cancel').addEventListener('click', () => closeSheet(mdlg));
-  // A v2 session: only sessions.theme changes; its exercises stay in their notebooks and groups.
+  // A v2 session: sessions.theme changes and, box ticked, the theme of its exercises in the same notebook (each keeps
+  // its group; other sessions link by slug, so they keep them). The sheets go first: if the session then fails, they
+  // no longer count as movable, so trying again writes the session alone.
   const moveSession = async s => {
     const theme = $('mv-theme').value, err = $('mv-err');
     if (!themeById.has(theme)) { err.textContent = 'Pick a notebook.'; err.hidden = false; return; }
     if (theme === s.theme) { closeSheet(mdlg); return; }
+    const take = $('mv-all').checked ? movableSheets(s) : [];
+    let moved = 0;
     $('mv-submit').disabled = true; err.hidden = true;
     try {
-      touched(); const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug,updated_at'); if (error || !data || !data.length) throw error || new Error('no row');
+      touched();
+      if (take.length) { oneRow(await sb.from('sheets').update({theme}).in('slug', take.map(e => e.slug)).select('slug')); for (const e of take) e.theme = theme; moved = take.length; saveCatalogue(); }
+      const {data, error} = await sb.from('sessions').update({theme}).eq('slug', s.slug).select('slug,updated_at'); if (error || !data || !data.length) throw error || new Error('no row');
       s.theme = theme; stamp(s, data[0]); saveCatalogue();
       closeSheet(mdlg);
       const top = $('sheet-top');
-      if (top && shownSession() === s) top.innerHTML = `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.</p>`; syncNav();
-    } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
+      if (top && shownSession() === s) top.innerHTML = `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)}.${moved ? ` Its ${plural(moved, 'exercise')} moved too.` : ''}</p>`; syncNav();
+    } catch {
+      err.textContent = moved ? 'Its exercises moved, but not the session. Try again in a moment.' : 'Could not move it right now. Try again in a moment.'; err.hidden = false;
+      if (moved) paintMoveExercises(s);
+    }
     finally { $('mv-submit').disabled = false; }
   };
   $('mv-form').addEventListener('submit', whileBusy(mdlg, async ev => {

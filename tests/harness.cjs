@@ -136,6 +136,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
             const eqs = ops.filter(o => o[0] === 'eq').map(o => o.slice(1)), w = ops.find(o => WRITES.includes(o[0]));
             if (w) {
               client.calls.push([w[0], table, w[1], eqs]);
+              for (const o of ops) if (o[0] === 'in') client.ins.push([table, o[1], o[2]]);
               return writes[table] || {data: w[0] === 'insert' ? [].concat(w[1]).map(r => ({format: '', why: '', key_points: [], source: {}, thumbnail: '', ...r})) : [{}], error: null};
             }
             const rows = tables[table] || [];
@@ -146,7 +147,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
           const q = new Proxy({}, {get: (_, k) => k === 'then' ? (ok, ko) => Promise.resolve().then(wait).then(v => v || result()).then(ok, ko) : (...a) => { ops.push([k, ...a]); return q; }});
           return q;
         };
-        const client = {url, key, options, calls: [], selects: [], from: tables ? query : table => ({
+        const client = {url, key, options, calls: [], ins: [], selects: [], from: tables ? query : table => ({
           async insert(row) { client.calls.push(['insert', table, row]); return {error: null}; }
         }),
           // storage: list answers one photo; list and remove are recorded in client.calls (not in writesOf)
