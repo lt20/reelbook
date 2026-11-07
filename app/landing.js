@@ -367,6 +367,7 @@
       'a.own': 'Utiliser mon propre Supabase', 'a.change': 'Changer d’instance', 'a.hosted': ' · Utiliser Reelbook hébergé',
       'a.ownh': 'Connecter ta propre instance', 'a.ownp': 'Indique une fois sur cet appareil les informations de ton projet Supabase. Guide d’installation :',
       'a.url': 'URL du projet', 'a.key': 'Clé anon', 'a.useown': 'Utiliser cette instance', 'a.cancel': 'Annuler', 'a.demo': 'Voir une démo',
+      'demo.up': 'Démo · lecture seule · Créer un compte', 'demo.back': 'Démo · lecture seule · Revenir à mes carnets', // L38: the #demo banner
       'a.created': 'Compte créé. Confirme ton e-mail avec le lien reçu dans ta boîte, puis connecte-toi.',
       'a.fail': 'Connexion impossible.', 'a.e.up': 'Impossible de créer le compte.',
       'a.e.creds': 'E-mail ou mot de passe incorrect.', 'a.e.exists': 'Un compte existe déjà avec cet e-mail : connecte-toi plutôt.',
@@ -408,6 +409,7 @@
       'a.own': 'Use my own Supabase', 'a.change': 'Change instance', 'a.hosted': ' · Use Reelbook hosted',
       'a.ownh': 'Connect your own instance', 'a.ownp': 'Enter your Supabase project details once on this device. Setup guide:',
       'a.url': 'Project URL', 'a.key': 'Anon key', 'a.useown': 'Use this instance', 'a.cancel': 'Cancel', 'a.demo': 'See a demo',
+      'demo.up': 'Demo · read only · Create an account', 'demo.back': 'Demo · read only · Back to my notebooks', // L38: the #demo banner
       'a.created': 'Account created. Check your inbox to confirm your email, then sign in.',
       'a.fail': 'Could not sign in.', 'a.e.up': 'Could not create the account.',
       'a.e.creds': 'Wrong email or password.', 'a.e.exists': 'An account already exists with this email: sign in instead.',
