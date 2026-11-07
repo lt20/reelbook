@@ -14,6 +14,7 @@ Ten minutes, free tier, no card. You get a private backend that only you can rea
 2. Paste the whole content of [`supabase/schema.sql`](../supabase/schema.sql) and click **Run**.
    It creates the tables (`requests`, `sheets`, `notes`, `user_themes`, `sessions`), their row
    level security policies and a private storage bucket `sheets`. It is safe to run again later.
+   If the app later says `permission denied for table …`, the file did not run to its end: run the latest one again.
 3. **After each Reelbook update**, run the latest `supabase/schema.sql` again the same way: it only
    adds what is missing (sessions, for instance, need the `sessions` table) and keeps your data.
    The update that added search in the text of the sheets (`sheets.search_text`) also needs, once,
