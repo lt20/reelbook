@@ -101,8 +101,11 @@ States of the auth screen, each with one main action:
 - Token passed to `signUp`, `signInWithPassword`, `resend`, `resetPasswordForEmail`. Script blocked or failing: a clear
   message and a retry; sign-in must not be lost while Turnstile is off on the server.
 - `rb.py login`: direct first, and on `captcha_failed` the function. So own backends never need it.
-- `supabase/functions/cli-login`: email and password in, tokens out; no logging of either. Look at what it does to
-  Auth's per-IP limits (every call now comes from the function) and say so in the PR.
+- `supabase/functions/cli-login`: email and password in, tokens out; no logging of either.
+- **Abuse criterion (Codex, #80)**: this route deliberately skips Turnstile, and every call reaches Auth from the
+  function. A test of repeated calls must show both that automated attempts get limited and that they cannot exhaust a
+  shared quota and lock out legitimate sign-ins. If the platform's limits do not give both, the function adds its own
+  limit (per address and per caller). Report the measured behaviour in the PR.
 
 ### L43 notes
 - Steps: account created (true by construction); computer, phone, first video. **Show as done only what the app really
