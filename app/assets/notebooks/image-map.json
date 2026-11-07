@@ -1,0 +1,52 @@
+{
+  "notice": "Visuels de démonstration générés (Codex, 5-6 nov. 2026) pour l’accueil v3 (L36). Aucun n’est une capture d’une vidéo tierce ; droit de publication dans le dépôt public acquis (Laurent, 6 nov.).",
+  "source": "outputs/site-artifact/img/ (hors dépôt), mêmes noms de fichier",
+  "sizes": {
+    "frame": "640 px de large, JPEG q70",
+    "thumbnail": "240 px de large, JPEG q70, suffixe -t"
+  },
+  "files": {
+    "n-cook-1-t.jpg": {
+      "source": "n-cook-1.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 12375
+    },
+    "n-cook-2-t.jpg": {
+      "source": "n-cook-2.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 14021
+    },
+    "n-cook-3-t.jpg": {
+      "source": "n-cook-3.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 13428
+    },
+    "n-str-1-t.jpg": {
+      "source": "n-str-1.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 12599
+    },
+    "n-str-2-t.jpg": {
+      "source": "n-str-2.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 15773
+    },
+    "n-str-3-t.jpg": {
+      "source": "n-str-3.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 13792
+    }
+  }
+}
