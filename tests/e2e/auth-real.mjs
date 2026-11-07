@@ -1,12 +1,13 @@
 // L41: the auth screens against a REAL Supabase Auth, on a local stack (never the hosted project). Not run by the CI.
 //   RB_BASE=http://127.0.0.1:8841/ RB_API=http://127.0.0.1:54721 RB_MAIL=http://127.0.0.1:54724 RB_ANON=<anon key> \
-//   RB_DB=supabase_db_<project> [RB_SERVICE=<service key>] node tests/e2e/auth-real.mjs [confirm-on|confirm-off]
+//   RB_DB=supabase_db_<project> RB_SERVICE=<service key> [RB_PY_MARK=<an rb.py that writes reelbook_cli_at>] node tests/e2e/auth-real.mjs [confirm-on|confirm-off]
 // RB_BASE serves a copy of app/ whose config.js points hosted.url and anonKey at the local stack. The hosted address is
 // blocked at the browser's door. Codes come from the stack's mail server; subject or body must carry {{ .Token }}.
-import {createRequire} from 'node:module'; import {homedir} from 'node:os'; import {join} from 'node:path'; import {execFileSync} from 'node:child_process';
+// confirm-on wants hosted.mailReady true in that copy (its scenes use the forgot link); confirm-off also runs with false, as at the merge.
+import {createRequire} from 'node:module'; import {homedir, tmpdir} from 'node:os'; import {join} from 'node:path'; import {execFileSync} from 'node:child_process'; import {rmSync} from 'node:fs'; import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 const req = createRequire(import.meta.url);
-const {webkit} = req(process.env.REELBOOK_PLAYWRIGHT || join(homedir(), '.cache/reelbook-e2e/node_modules/playwright'));
+const {webkit, devices} = req(process.env.REELBOOK_PLAYWRIGHT || join(homedir(), '.cache/reelbook-e2e/node_modules/playwright'));
 const {RB_BASE: BASE, RB_API: API, RB_MAIL: MAIL, RB_ANON: ANON, RB_DB: DB, RB_SERVICE: SERVICE} = process.env;
 const mode = process.argv[2] || 'confirm-on';
 const stamp = Date.now().toString(36), addr = n => `${n}-${stamp}@example.test`;
@@ -21,8 +22,8 @@ const canSignIn = async (email, password) => {
 };
 const browser = await webkit.launch();
 const results = [];
-const scene = async (name, fn) => {
-  const ctx = await browser.newContext({viewport: {width: 390, height: 844}, locale: 'en-US'});
+const scene = async (name, fn, device = {viewport: {width: 390, height: 844}}) => {
+  const ctx = await browser.newContext({...device, locale: 'en-US'});
   await ctx.route(/supabase\.co/, r => r.abort()); // never the hosted project
   const page = await ctx.newPage();
   // WebKit reports a request cut by a navigation (a reload, here on purpose) as an access control error.
@@ -41,7 +42,51 @@ const waitTitle = (p, text) => p.waitForFunction(t => { const e = document.getEl
 const inApp = p => p.waitForFunction(() => document.getElementById('auth').hidden && (!document.getElementById('home').hidden || !document.getElementById('welcome').hidden), null, {timeout: 8000});
 const errIs = async (p, text) => { await p.waitForSelector('#a-err:not([hidden])'); assert.equal(await p.locator('#a-err').textContent(), text); };
 
+// L41b: an account from before all this, already confirmed. No screen of the sign-up may ever show. rb.py next to the open app.
+const REELBOOK_PY = fileURLToPath(new URL('../../tools/rb.py', import.meta.url));
+const existingAccount = async p => {
+  const a = addr('old');
+  const made = await fetch(`${API}/auth/v1/admin/users`, {method: 'POST', headers: {apikey: SERVICE, authorization: `Bearer ${SERVICE}`, 'content-type': 'application/json'}, body: JSON.stringify({email: a, password: P1, email_confirm: true})});
+  assert.equal(made.status, 200);
+  psql(`update auth.users set created_at = now() - interval '30 days' where email = '${a}'`);
+  await p.addInitScript(() => {
+    const look = () => { const t = document.getElementById('auth-title'), s = document.getElementById('auth'); if (t && s && !s.hidden && /Enter your code|Choose your password|New password/.test(t.textContent)) sessionStorage.setItem('rb.seen', t.textContent); };
+    new MutationObserver(look).observe(document, {subtree: true, childList: true, characterData: true, attributes: true});
+  });
+  const clean = async () => { assert.equal(await p.evaluate(() => sessionStorage.getItem('rb.seen')), null); assert.equal(await p.evaluate(() => localStorage.getItem('rb.pending')), null); };
+  const appToken = () => p.evaluate(() => { for (const k of Object.keys(localStorage)) if (k.startsWith('rb.auth.')) return JSON.parse(localStorage.getItem(k)).access_token; return ''; });
+  const tokenWorks = async () => { const token = await appToken(); assert.ok(token, 'the app holds a session'); return (await fetch(`${API}/auth/v1/user`, {headers: {apikey: ANON, authorization: `Bearer ${token}`}})).status; };
+  const toForm = async () => { await p.goto(BASE + 'index.html'); await p.waitForSelector('#intro-signin:visible, #a-email:visible'); if (await p.locator('#intro-signin').isVisible()) await p.click('#intro-signin'); await p.waitForSelector('#a-email:visible'); };
+  const cfgFile = join(tmpdir(), `rb-l41b-${stamp}.json`);
+  const py = (script, ...args) => execFileSync('python3', ['-I', script, ...args], {encoding: 'utf8', input: '', env: {...process.env, REELBOOK_CONFIG: cfgFile, REELBOOK_URL: API, REELBOOK_ANON_KEY: ANON, REELBOOK_EMAIL: a, REELBOOK_PASSWORD: P1}});
+  const marker = () => psql(`select coalesce(raw_user_meta_data->>'reelbook_cli_at', '') from auth.users where email = '${a}'`);
+  try {
+    await toForm(); await fill(p, a, P1); await inApp(p); await clean();
+    await p.reload(); await inApp(p); await clean();
+    assert.match(py(REELBOOK_PY, 'login'), /signed in as/); py(REELBOOK_PY, 'themes');
+    if (process.env.RB_PY_MARK) { assert.equal(marker(), ''); assert.match(py(process.env.RB_PY_MARK, 'login'), /signed in as/); assert.ok(marker(), 'reelbook_cli_at written'); console.log('     reelbook_cli_at =', marker()); }
+    else console.log('     no RB_PY_MARK: reelbook_cli_at not checked');
+    assert.equal(await tokenWorks(), 200, 'the session of the open app still answers');
+    await p.reload(); await inApp(p); await clean(); assert.equal(await tokenWorks(), 200);
+    await p.evaluate(() => { location.hash = '#settings'; }); await p.waitForSelector('#s-signout:visible'); await p.click('#s-signout');
+    await p.waitForFunction(() => !Object.keys(localStorage).some(k => k.startsWith('rb.auth.')), null, {timeout: 8000});
+    py(REELBOOK_PY, 'themes'); // the app signs out here only: the computer stays signed in
+    await toForm(); await fill(p, a, P2); await errIs(p, 'Wrong email or password.'); await clean();
+    await fill(p, a, P1); await inApp(p); await clean(); assert.equal(await canSignIn(a, P1), 'ok');
+  } finally { rmSync(cfgFile, {force: true}); }
+};
+
 if (mode === 'confirm-on') {
+  await scene('an existing confirmed account: sign-in, reload, rb.py, sign-out, wrong password, sign-in; no sign-up screen', existingAccount);
+  await scene('iPhone 14: signup, code, signin fit the width, the language selector is not cut', async p => {
+    const fits = async where => {
+      const m = await p.evaluate(() => ({sw: document.documentElement.scrollWidth, iw: innerWidth, sel: [...document.querySelectorAll('.lp-lang')].filter(e => e.offsetParent !== null).map(e => { const b = e.getBoundingClientRect(); return [Math.round(b.left), Math.round(b.right)]; }), wide: [...document.querySelectorAll('#auth *')].filter(e => e.offsetParent !== null && e.getBoundingClientRect().right > innerWidth + 0.5).length}));
+      console.log('    ', where, JSON.stringify(m)); assert.equal(m.sw, m.iw, where); assert.equal(m.wide, 0, where); for (const [l, r] of m.sel) assert.ok(l >= 0 && r <= m.iw, where);
+    };
+    const a = addr('i'); await signUpForm(p); await fits('signup');
+    await fill(p, a, P1); await waitTitle(p, 'Enter your code'); await fits('code');
+    await p.evaluate(() => localStorage.clear()); await signInForm(p); await fits('signin');
+  }, devices['iPhone 14']);
   await scene('signup → code (6 digits go alone) → the app; the password is the one typed', async p => {
     const a = addr('a'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');
     const ls = await p.evaluate(() => JSON.stringify(localStorage)); assert.ok(!ls.includes(P1), 'password never stored'); assert.ok(ls.includes('rb.pending'));
@@ -203,11 +248,15 @@ if (mode === 'confirm-on') {
     const a = addr('y'); await signUpForm(p); await fill(p, a, P1); await inApp(p);
     await p.evaluate(() => localStorage.clear()); await signUpForm(p); await fill(p, a, P2);
     await waitTitle(p, 'This address already has an account');
+    assert.equal(await p.locator('#a-forgot-row').isVisible(), await p.evaluate(() => window.REELBOOK.hosted.mailReady !== false));
   });
-  await scene('confirmation off: sign-in, then forgot by code', async p => {
+  await scene('an existing confirmed account, confirmation off: the same', existingAccount);
+  await scene('confirmation off: sign-in, then forgot by code (mailReady false: no link at all)', async p => {
     const a = addr('v'); await signUpForm(p); await fill(p, a, P1); await inApp(p);
     await p.evaluate(() => localStorage.clear()); await signInForm(p); await fill(p, a, P1); await inApp(p);
-    await p.evaluate(() => localStorage.clear()); await signInForm(p); await p.fill('#a-email', a); await p.click('#a-forgot');
+    await p.evaluate(() => localStorage.clear()); await signInForm(p); await p.fill('#a-email', a);
+    if (await p.evaluate(() => window.REELBOOK.hosted.mailReady === false)) { assert.equal(await p.locator('#a-forgot-row').isVisible(), false); return; }
+    await p.click('#a-forgot');
     await waitTitle(p, 'Forgot your password'); await p.click('#a-submit'); await waitTitle(p, 'New password');
     await p.fill('#a-code', await codeOf(a)); await p.fill('#a-pass', P3); await p.click('#a-submit');
     await inApp(p); assert.equal(await canSignIn(a, P3), 'ok');
