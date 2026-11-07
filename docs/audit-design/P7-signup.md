@@ -47,9 +47,14 @@ Sign-up (read in the code of `main`, 7 Nov):
 - **A Turnstile token is single use**: reset the widget after every attempt, failed or not.
 - **Beta locks (L32)**: an account holds a seat when confirmed or created less than an hour ago. Keep the code's
   lifetime at Supabase's default of 1 hour, or a pending account outlives its hold. A refusal reaches `signUp` as
-  « Database error saving new user » (HTTP 500), so the app reads `beta_seats()` first (L31).
+  « Database error saving new user » (HTTP 500), so the app reads `beta_seats()` first (L31). Known and accepted limit
+  (Codex, #80, and the comment of `beta_accounts`): a resend renews the code but not the hold, so a late confirmation can
+  pass the total by a seat. No extra locking for that; a test in L41 records the behaviour.
 - **Order of deployment**: the new client must work with confirmation off (session at once) and on, with Turnstile off
   and on. An old cached client plus a code email would be a dead end, so the client ships first and stays compatible.
+  Shipping first does not prove an installed PWA has updated (Codex, #80): L41 tests it from a service worker holding
+  the previous version, and only then may Laurent reach steps 4 and 5 below. If that test fails, L41 adds an explicit
+  update step on the auth screen.
 - **Own backends** keep working untouched: no Turnstile, and their email may carry a link instead of a code (default
   template), so the code screen also accepts the session arriving from that link.
 
