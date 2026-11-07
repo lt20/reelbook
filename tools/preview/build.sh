@@ -7,7 +7,8 @@
 #
 # Copies app/ to <out-dir>, replaces vendor/supabase.js by tools/preview/fake-supabase.js, adds
 # vendor/fake-data.js (script tag injected before supabase.js) and files/ (the photos), and empties
-# sw.js (no cache between two builds). Query options of the fake client: ?noauth, ?missing=<tables>.
+# sw.js (no cache between two builds). Query options of the fake client: ?noauth, ?missing=<tables>,
+# ?seats=<taken of 50> | closed | last (beta_seats, the last seat taken when asked again).
 # <out-dir> must be new, empty, or a previous preview (it holds .reelbook-preview): it is rebuilt.
 set -euo pipefail
 

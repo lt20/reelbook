@@ -110,19 +110,15 @@ pre{font:var(--fs-xs)/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;backgroun
 .host-opt input[type=radio]{width:20px;height:20px;margin:2px 0 0;padding:0;accent-color:var(--accent)}
 .host-opt b{display:block;font-family:var(--display);font-size:var(--fs-lg);line-height:1.1;margin-bottom:var(--s-1)}
 .host-opt>span:last-child>span{display:block;font-size:var(--fs-sm);color:var(--muted);line-height:1.4}
-.host-opt .host-seats{margin-top:6px;font-weight:600;color:var(--brand-coral)}
+.host-opt>span:last-child>.host-seats{margin-top:6px;font-weight:600;color:var(--brand-coral)}
+.host-opt:has(input[type=radio]:disabled){opacity:.5;cursor:default}
 .host-full{cursor:default;border-color:var(--brand-coral)}
 .host-lock{width:22px;height:22px;border-radius:50%;background:var(--brand-coral);color:#fff;font:600 10px/22px var(--body);text-align:center}
 .wl-form{display:grid;gap:10px;margin-top:var(--s-3)}
 .wl-form .wl-consent{grid-template-columns:20px 1fr;align-items:start;gap:10px;font-weight:400;line-height:1.4}
 .wl-form .wl-consent input{width:20px;height:20px;margin:1px 0 0;padding:0;accent-color:var(--accent)}
 .wl-form .btn{justify-self:start}
-.host-opt .wl-done{margin-top:var(--s-2);color:var(--ink)}
-.host-opt .wl-done b{margin-bottom:var(--s-1)}
-.choice button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:14px var(--s-4);cursor:pointer;display:grid;gap:var(--s-1)}
-.choice button b{font-family:var(--display);font-size:var(--fs-lg);line-height:1}
-.choice button span{font-size:var(--fs-sm);color:var(--muted)}
-.choice button:disabled{opacity:.5;cursor:default}
+.host-opt>span:last-child>.wl-done{margin-top:var(--s-2);font-size:var(--fs-base);color:var(--ink)}
 /* ---- add sheet ---- */
 .sheet{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:var(--s-4);margin-bottom:22px;display:grid;gap:var(--s-3)}
 .sheet h2{margin:0}
@@ -639,6 +635,7 @@ html:has(#intro:not([hidden])){scroll-padding-top:84px}
 #intro .lp-lines{display:contents}
 #intro .lp-copy-msg{margin:0;font-size:14px;color:var(--ink)}
 #intro .lp-wl .lp-btn[disabled]{opacity:.55;cursor:not-allowed}
+#intro label.lp-opt{font-weight:400}
 #intro .lp-wl .lp-wl-err{font-size:14px;font-weight:700;color:var(--coral)}
 #intro .lp-wl-done{margin-top:12px;color:var(--ink)}
 #intro pre{-webkit-user-select:all;user-select:all}
