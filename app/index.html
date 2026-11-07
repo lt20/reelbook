@@ -1772,7 +1772,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     let p = null; try { p = JSON.parse(ls.get(PENDING) || 'null'); } catch { ls.del(PENDING); }
     if (!p) return null;
     const age = Date.now() - Number(p.at);
-    if (typeof p.email !== 'string' || !p.email || (p.type !== 'signup' && p.type !== 'recovery') || !(age >= 0 && age < PENDING_MS)) { ls.del(PENDING); return null; }
+    // A code accepted (verified) outlives the code's hour: the password is still owed, as long as the session lasts.
+    if (typeof p.email !== 'string' || !p.email || (p.type !== 'signup' && p.type !== 'recovery') || (!p.verified && !(age >= 0 && age < PENDING_MS))) { ls.del(PENDING); return null; }
     return p;
   };
   const stopHelp = () => { if (helpTimer !== null && typeof clearInterval === 'function') clearInterval(helpTimer); helpTimer = null; };
@@ -2192,9 +2193,12 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (screen === 'code' && !ownNow() && v.length === 6 && !authBusy && !codeLocked && !(flow && flow.expired)) submitAuth();
   });
   // A session that did not come from this form's verifyOtp (the link of an email, another tab) ends the wait for a code.
-  // Called inside onAuthStateChange: no await here (known pitfall). Measured: verifyOtp type recovery fires
-  // PASSWORD_RECOVERY, not SIGNED_IN; flowHold covers it. Elsewhere that event means a recovery link: ask for the password.
-  const sessionArrived = (ev, next, client) => {
+  // Its address is proved, its password is not: the account may hold the password of whoever registered first, and a
+  // password kept in this tab may be older than one saved in another. So nothing is written from here: set-password, and
+  // USER_UPDATED (saved in another tab) ends that too. Called inside onAuthStateChange: no await here (known pitfall).
+  // Measured: verifyOtp type recovery fires PASSWORD_RECOVERY, not SIGNED_IN; flowHold covers it. Elsewhere that event
+  // means a recovery link: ask for the password.
+  const sessionArrived = (ev, next) => {
     if (flowHold) return false;
     if (ev === 'PASSWORD_RECOVERY' && next) {
       flow = {type: 'recovery', email: next.email || '', from: 'forgot', at: Date.now(), verified: true};
@@ -2205,9 +2209,11 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const same = !!next && String(next.email || '').toLowerCase() === flow.email.toLowerCase();
     if (flow.verified && same && ev !== 'USER_UPDATED') return false; // the password is still to be set (a reload)
     if (!next && !flow.verified) return false; // nothing yet: the wait goes on
-    const pw = heldPw, signup = flow.type === 'signup';
+    if (same && flow.type === 'signup' && ev !== 'USER_UPDATED') {
+      flow.verified = true; heldPw = ''; codeLocked = 0; screen = 'set-password'; authErr = null; authNote = null; stopHelp(); $('a-code').value = ''; $('a-pass').value = ''; savePending();
+      return true;
+    }
     endFlow(); $('a-code').value = ''; $('a-pass').value = ''; setMode('in');
-    if (next && same && signup && pw) setTimeout(() => { if (client === sb) client.auth.updateUser({password: pw}).then(r => { if (r && r.error && !isSamePassword(r.error)) console.warn('Password not saved:', r.error.code || r.error.message); }).catch(() => {}); }, 0);
     return true;
   };
   $('s-signout').addEventListener('click', async () => { if (await signOutHere()) location.hash = ''; });
@@ -4657,7 +4663,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       // No awaits inside the auth callback (supabase-js holds its auth lock there): render, then load.
       const {data} = client.auth.onAuthStateChange((ev, session) => {
         if (client !== sb) return;
-        const flowOver = sessionArrived(ev, session ? session.user : null, client);
+        const flowOver = sessionArrived(ev, session ? session.user : null);
         authNow = session && session.access_token ? {client, token: session.access_token, exp: Number(session.expires_at) || 0} : null;
         const next = session ? session.user : null;
         if (peeked && user) {

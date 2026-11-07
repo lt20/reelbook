@@ -145,17 +145,21 @@ if (mode === 'confirm-on') {
     const a = addr('t'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');
     const code = await codeOf(a);
     const q = await ctx.newPage(); await q.goto(BASE + 'index.html'); await waitTitle(q, 'Enter your code');
-    await q.fill('#a-code', code); await waitTitle(q, 'Choose your password'); await q.fill('#a-pass', P2); await q.click('#a-submit'); await inApp(q);
+    await q.fill('#a-code', code); await waitTitle(q, 'Choose your password');
+    await waitTitle(p, 'Choose your password'); // the first tab keeps its older password to itself
+    await q.fill('#a-pass', P2); await q.click('#a-submit'); await inApp(q);
     await inApp(p);
+    assert.equal(await canSignIn(a, P2), 'ok'); assert.equal(await canSignIn(a, P1), 'invalid_credentials');
     await q.close();
   });
   if (SERVICE) { // an own backend's default email carries a link: asked from Auth itself (site_url and redirect urls: RB_BASE)
     const linkFor = async (type, email, password) => { const r = await fetch(`${API}/auth/v1/admin/generate_link`, {method: 'POST', headers: {apikey: SERVICE, authorization: `Bearer ${SERVICE}`, 'content-type': 'application/json'}, body: JSON.stringify({type, email, password, redirect_to: BASE + 'index.html'})}); const j = await r.json(); assert.ok(j.action_link, JSON.stringify(j).slice(0, 200)); return j.action_link; };
-    await scene('the link of an email, opened in another tab: this tab leaves the code screen', async (p, ctx) => {
+    await scene('the link of an email, opened in another tab: both tabs ask the password, saved once', async (p, ctx) => {
       const a = addr('l'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');
       const link = await linkFor('signup', a, P1);
-      const q = await ctx.newPage(); await q.goto(link); await inApp(q); await inApp(p);
-      assert.equal(await p.evaluate(() => localStorage.getItem('rb.pending')), null); await q.close();
+      const q = await ctx.newPage(); await q.goto(link); await waitTitle(q, 'Choose your password'); await waitTitle(p, 'Choose your password');
+      await q.fill('#a-pass', P2); await q.click('#a-submit'); await inApp(q); await inApp(p);
+      assert.equal(await p.evaluate(() => localStorage.getItem('rb.pending')), null); assert.equal(await canSignIn(a, P2), 'ok'); await q.close();
     });
     await scene('a recovery link (real PASSWORD_RECOVERY): the new password first, not the app; a reload keeps asking', async p => {
       const a = addr('k'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');

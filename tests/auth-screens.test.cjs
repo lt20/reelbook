@@ -296,18 +296,35 @@ test('resume: an hour old, or from another backend, or malformed: forgotten', as
   }
 });
 
-test('resume: signed in already (link, other tab, before the reload): the app, the pending dropped', async () => {
-  const {page} = await auth({}, {stored: stored(), sessions: {[hostedUrl]: USER}});
+test('resume: a session for that address (a link opened in this tab): the address is proved, the password is asked', async () => {
+  const {page, log} = await auth({}, {stored: stored(), sessions: {[hostedUrl]: USER}});
   await settle();
-  assert.ok(!shown(page, 'auth')); assert.equal(page.storage.get('rb.pending'), undefined);
+  assert.equal(titleOf(page), 'Choose your password'); assert.ok(shown(page, 'auth')); assert.equal(pending(page).verified, true);
+  assert.equal(log.length, 0);
+});
+
+test('a code accepted over an hour ago, its password never saved: a reload still asks (the pre-registered password must not survive)', async () => {
+  const {page} = await auth({}, {stored: stored({verified: true, at: Date.now() - 2 * 3600000}), sessions: {[hostedUrl]: USER}});
+  await settle();
+  assert.equal(titleOf(page), 'Choose your password'); assert.ok(shown(page, 'auth'));
+});
+
+test('verified but no session any more: forgotten, the sign-in form', async () => {
+  const {page} = await auth({}, {stored: stored({verified: true, at: Date.now() - 2 * 3600000})});
+  await settle();
+  assert.equal(titleOf(page), 'Sign in'); assert.equal(page.storage.get('rb.pending'), undefined);
 });
 
 // ---------- a session from elsewhere
-test('code: a session arriving from a link or another tab leaves the screen; the typed password follows, for the same address only', async () => {
+test('code: a session arriving from a link or another tab leaves the screen for set-password; nothing is written from it', async () => {
   const s = await atCode();
   s.client().authListener('SIGNED_IN', {user: USER, access_token: 't'}); await settle();
+  assert.equal(titleOf(s.page), 'Choose your password'); assert.ok(shown(s.page, 'auth')); assert.equal(pending(s.page).verified, true);
+  assert.equal(s.log.filter(l => l[0] === 'update').length, 0);
+  // saved in the other tab: this tab's older password never overwrites it
+  s.client().authListener('USER_UPDATED', {user: USER, access_token: 't'}); await settle();
   assert.ok(!shown(s.page, 'auth')); assert.equal(s.page.storage.get('rb.pending'), undefined);
-  assert.equal(s.log.find(l => l[0] === 'update')[1].password, PW);
+  assert.equal(s.log.filter(l => l[0] === 'update').length, 0, 'two tabs: the password saved last stays');
   const other = await atCode();
   other.client().authListener('SIGNED_IN', {user: {...USER, id: 'u2', email: 'someone@else.test'}, access_token: 't'}); await settle();
   assert.ok(!shown(other.page, 'auth'));
