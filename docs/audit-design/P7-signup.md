@@ -116,6 +116,9 @@ Applied to the mockup and binding on L41, L42, L43:
   over between `signup`, `exists`, `signin` and `forgot`. « Change address » returns to where the person came from.
 - **Not retained**: « did you mean gmail.com? » (the address is in bold on `code`, with « change address » beside it), moving the
   night run out of the guide.
+- **Settled at validation (coordinator, #83)**: `#welcome` keeps the app's 640 px column on a computer; a closed beta reuses
+  `beta.closed`, its sub-line tells it from a full one; `reset` hedges because `/recover` does not say whether an address
+  has an account.
 - **To measure after launch**: pending, confirmed, first sheet per account (a query for Laurent, in L34's business tests).
 
 ## Lots

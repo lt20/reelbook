@@ -171,8 +171,8 @@ Decisions 21–28 and specs: `docs/audit-design/P7-signup.md`. Coordinator: sess
 
 | Lot | What | Depends on | Branch | Status |
 |---|---|---|---|---|
-| L40 | Mockup: auth states, `#welcome`, FR/EN | — | `docs/p7-mockup` | #83, review applied in progress |
-| L31 | See P6 table | #77 merged | `feat/p6-hosting` | waiting for #77 |
+| L40 | Mockup: auth states, `#welcome`, FR/EN | — | `docs/p7-mockup` | #83, validated by the coordinator |
+| L31 | See P6 table | — | `feat/p6-hosting` | in progress |
 | L41 | Auth states, email code, resend, resume, forgot password | L31, L40 | `feat/p7-signup` | to do |
 | L43 | `#welcome` of the mockup, FR/EN switch, signal from `rb.py login` — protected | L40 | `feat/p7-welcome` | to do |
 | L42 | Turnstile, `cli-login`, `rb.py login` — protected | L41 | `feat/p7-turnstile` | to do |
