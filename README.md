@@ -33,8 +33,9 @@ extension and the way Instagram renders videos today. Read *What can break* befo
   `python3` macOS installs with its Command Line Tools (3.9) is enough.
 - A backend for your data. Two options:
   - **Your own Supabase project**, free tier. Ten minutes: [docs/own-supabase.md](docs/own-supabase.md).
-  - **The hosted backend** run by the maintainers, when enabled in `app/config.js`. Free for now;
-    a paid hosted plan is planned. Your data stays private to your account either way.
+  - **The hosted backend** run by the maintainers, when enabled in `app/config.js`. Free during the beta, which has
+    a limited number of spots; when it is full the app offers a waiting list, and your own Supabase stays open
+    ([docs/hosted.md](docs/hosted.md)). A paid hosted plan is planned. Your data stays private to your account either way.
 
 ## Quick start
 
@@ -208,7 +209,8 @@ A null column keeps the default; one row per account you want to lift.
 
 The same file also holds project-wide limits for a beta (seats, sign-ups a day, videos a day, total photos,
 kill switches, a waiting list: « Beta locks » in `supabase/schema.sql`). They are **off until a row of
-`beta_settings` exists**: your own Supabase never needs one, and behaves as above without it. A daily ntfy summary
+`beta_settings` exists**: your own Supabase never needs one, and behaves as above without it. The app follows them
+through `beta_seats()` and `join_waitlist()` ([docs/hosted.md](docs/hosted.md)). A daily ntfy summary
 of those figures (« Daily alert ») is scheduled only where the `pg_cron` and `pg_net` extensions are enabled, and
 sends nothing until you store a topic in Vault.
 

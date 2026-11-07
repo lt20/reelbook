@@ -307,7 +307,7 @@ test('L36 — the beta follows beta_seats(): open without an answer, the count w
     assert.equal(cta.textContent, 'Créer mon carnet'); assert.ok(ctas.length >= 2 && ctas.every(b => b.textContent === 'Créer mon carnet'));
   };
   assert.equal(line.textContent, 'Gratuit pendant la bêta'); assert.equal(bar.hidden, true); assert.equal(seat.hidden, true); open();
-  for (const answer of [null, undefined, {}, {taken: null, total: 50}, {taken: 3, total: 0}, 'x', []]) {
+  for (const answer of [null, undefined, {}, {taken: null, total: 50}, {taken: 3, total: -1}, 'x', []]) {
     assert.equal(page.RBL.seats(answer), false);
     assert.equal(line.textContent, 'Gratuit pendant la bêta', `no count for ${JSON.stringify(answer)}`);
     assert.ok(bar.hidden && seat.hidden); open();
@@ -325,29 +325,46 @@ test('L36 — the beta follows beta_seats(): open without an answer, the count w
     h.checked = true;
     assert.equal(p.RBL.seats(full), true);
     assert.equal(p.RBL.full, true);
-    // no waiting list before L31: nothing promises a sign-up (Codex, pass 1)
-    assert.equal(p.byId('lp-betaLine').textContent, 'Bêta complète');
-    assert.equal(p.byId('lp-wl').hidden, true, 'no form that records nothing'); assert.equal(p.byId('lp-wlP').hidden, true);
+    assert.equal(p.byId('lp-betaLine').textContent, 'Bêta complète · inscris-toi sur la liste d’attente');
+    assert.equal(p.byId('lp-wl').hidden, false, 'the form'); assert.equal(p.byId('lp-wlP').hidden, false);
     assert.equal(p.byId('lp-host-full').hidden, false); assert.equal(p.byId('lp-host-hosted-opt').hidden, true);
     assert.equal(h.checked, false, 'the hosted option is no longer picked');
-    assert.equal(c.textContent, 'Connecter mon Supabase'); assert.equal(c.hidden, true, 'until « Sur mon Supabase » is picked');
-    own.checked = true; own.listeners.change();
-    assert.equal(c.hidden, false);
-    assert.ok(p.lists.get('#intro [data-k="cta"]').every(b => b.textContent === 'Créer mon carnet'), 'the buttons lead to step 1');
+    assert.equal(own.checked, true, '« Sur mon Supabase » is the option picked');
+    assert.equal(c.textContent, 'Connecter mon Supabase'); assert.equal(c.hidden, false);
+    assert.ok(p.lists.get('#intro [data-k="cta"]').every(b => b.textContent === 'Rejoindre la liste d’attente'), 'the buttons lead to step 1');
     assert.ok(p.byId('lp-installList').classes.has('lp-full'));
   }
   const p = landing({language: 'en'}); p.RBL.seats({taken: 50, total: 50});
-  assert.equal(p.byId('lp-wlH').textContent, 'Beta full: 50 of 50'); assert.equal(p.byId('lp-lockN').textContent, '50');
-  assert.equal(p.byId('lp-betaLine').textContent, 'Beta full');
-  // L31 turns the waiting list on with one switch, and the mockup's full wording comes back
-  assert.match(landingJs, /\n  const WAITLIST = false;\n/);
-  assert.equal(p.RBL.t('beta.full'), 'Beta full · join the waiting list'); assert.equal(p.RBL.t('cta.full'), 'Join the waiting list');
+  assert.equal(p.byId('lp-wlH').textContent, 'Beta full: 50 of 50 spots taken'); assert.equal(p.byId('lp-lockN').textContent, '50');
+  assert.equal(p.byId('lp-betaLine').textContent, 'Beta full · join the waiting list');
+  assert.match(landingJs, /\n  const WAITLIST = true;\n/);
+  assert.equal(p.RBL.t('cta.full'), 'Join the waiting list');
   assert.equal(p.byId('intro-signup').textContent, 'Connect my Supabase');
   // nothing in the markup says a number of seats, and the visitor has no switch
   assert.doesNotMatch(intro.replace(/<b data-k="wl.h"[^>]*>[^<]*<\/b>|id="lp-lockN"[^>]*>50</g, ''), /\b(14|50) (places|of|sur)\b/);
   assert.doesNotMatch(landingJs + intro, /[?&]places=|data-seats-toggle/);
   // the waiting list has no table yet (L31): its button is visible and inactive
-  assert.match(intro, /<button class="lp-btn" type="submit" data-k="wl.cta" disabled aria-disabled="true">/);
+  assert.match(intro, /<button class="lp-btn" type="submit" id="lp-wl-go" data-k="wl.cta" disabled aria-disabled="true">/);
+  // L31: a seat freed again gives the hosted option back; closed: the heading without a count of seats not taken
+  const q = landing({language: 'fr'}); q.byId('lp-host-hosted').checked = true;
+  q.RBL.seats({taken: 50, total: 50});
+  assert.equal(q.byId('lp-wlH').textContent, 'Bêta complète : 50 places sur 50 prises');
+  q.RBL.seats({taken: 49, total: 50, open: true});
+  assert.equal(q.byId('lp-host-hosted').checked, true); assert.equal(q.byId('lp-host-own').checked, false); assert.equal(q.byId('lp-host-hosted-opt').hidden, false);
+  assert.equal(q.byId('lp-host-full').hidden, true);
+  q.RBL.seats({taken: 3, total: 50, open: false});
+  assert.equal(q.byId('lp-wlH').textContent, 'Bêta complète'); assert.equal(q.byId('lp-lockN').textContent, '—');
+  // seats_total 0, a valid way of closing: the list, no count
+  assert.equal(q.RBL.seats({taken: 0, total: 0, open: false}), true);
+  assert.equal(q.RBL.full, true); assert.equal(q.byId('lp-wlH').textContent, 'Bêta complète'); assert.equal(q.byId('lp-host-full').hidden, false);
+  assert.equal(q.byId('lp-seatsBar').bar.style.width, '100%');
+  // the coordinator's wording, and the consent text of decision 20, word for word
+  const {DICT} = q.RBL;
+  assert.equal(DICT.fr['wl.p'], 'Aucun compte n’est créé ici : laisse ton prénom et ton e-mail, on te prévient dès qu’une place se libère.');
+  assert.equal(DICT.fr['wl.ok.h'], 'C’est noté'); assert.equal(DICT.fr['wl.ok'], 'C’est noté : on t’écrit dès qu’une place se libère.');
+  assert.equal(DICT.en['wl.ok.h'], 'You’re on the list'); assert.equal(DICT.en['wl.ok'], 'You’re on the list. We’ll email you as soon as a spot opens.');
+  assert.equal(DICT.fr['wl.c'], 'J’accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d’une place libre, et rien d’autre. Effacés à mon inscription ou sur simple demande.');
+  assert.equal(DICT.en['wl.c'], 'I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.');
 });
 
 test('L36 — five examples: each step has its frame, its dot and its words, from the example\'s data', () => {

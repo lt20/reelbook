@@ -12,6 +12,7 @@
 // - The beta's state comes from beta_seats() (L32), asked by the app script on the hosted backend: RBL.seats(data).
 //   Without an answer (no function, an error, null): seats open, no count. At the limit (taken >= total, or open
 //   false): the waiting-list card, « On my own Supabase » as the way in, the buttons say « Join the waiting list ».
+//   The app script wires the form (join_waitlist, L31) and paints the same two cards in #setup.
 // The vm harness of tests/auth-flow.test.cjs does not load this file: the app script falls back to English.
 // tests/landing.test.cjs runs it with a small fake DOM, so every newer DOM API here is guarded.
 (function () {
@@ -52,8 +53,8 @@
       "wl.c": "J’accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d’une place libre, et rien d’autre. Effacés à mon inscription ou sur simple demande.",
       "wl.e": "E-mail",
       "wl.n": "Prénom",
-      "wl.p": "Laisse ton prénom et ton e-mail : on te prévient dès qu’une place se libère.",
-      "wl.h": "Bêta complète : {total} sur {total}",
+      "wl.p": "Aucun compte n’est créé ici : laisse ton prénom et ton e-mail, on te prévient dès qu’une place se libère.",
+      "wl.h": "Bêta complète : {taken} places sur {total} prises",
       "i1.seats": "",
       "i1.ad": "Rien à configurer. Gratuit pendant la bêta : 300 fiches, 200 Mo de photos, 10 vidéos par jour.",
       "i1.a": "Chez Reelbook",
@@ -183,8 +184,8 @@
       "i1.a": "Hosted by Reelbook",
       "i1.ad": "Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.",
       "i1.seats": "",
-      "wl.h": "Beta full: {total} of {total}",
-      "wl.p": "Leave your first name and email: we’ll let you know as soon as a spot opens.",
+      "wl.h": "Beta full: {taken} of {total} spots taken",
+      "wl.p": "No account is created here: leave your first name and email, we’ll let you know as soon as a spot opens.",
       "wl.n": "First name",
       "wl.e": "Email",
       "wl.c": "I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.",
@@ -374,14 +375,27 @@
       'a.e.confirm': 'Confirme d’abord ton e-mail avec le lien reçu dans ta boîte, puis connecte-toi.',
       'a.e.weak': 'Ce mot de passe est trop faible : choisis-en un plus long.', 'a.e.email': 'Cette adresse e-mail n’est pas valide.',
       'a.e.rate': 'Trop d’essais : réessaie dans quelques minutes.', 'a.e.closed': 'Ce serveur ne prend pas de nouveaux comptes.',
+      // L31: the refusals of the beta (schema.sql, « Beta locks »), and the waiting-list form
+      'a.e.full': 'La dernière place vient d’être prise : ton compte n’a pas été créé. Inscris-toi sur la liste d’attente : on te prévient dès qu’une place se libère.',
+      'a.e.shut': 'Les inscriptions sont fermées pour l’instant : ton compte n’a pas été créé. Inscris-toi sur la liste d’attente : on te prévient dès qu’une place se libère.',
+      'a.e.today': 'Assez d’inscriptions pour aujourd’hui : ton compte n’a pas été créé. Réessaie demain.',
+      'a.e.retry': 'Ton compte n’a pas été créé : la bêta vient peut-être de se remplir. Réessaie dans un instant.',
+      'a.e.projDay': 'Reelbook a reçu assez de vidéos pour aujourd’hui, tous comptes confondus : réessaie demain.',
+      'a.e.projPhotos': 'L’espace photos de la bêta est plein pour l’instant : réessaie plus tard.',
+      'wl.ok.h': 'C’est noté', 'wl.ok': 'C’est noté : on t’écrit dès qu’une place se libère.',
+      'wl.e.first': 'Indique ton prénom.', 'wl.e.consent': 'Coche la case pour qu’on puisse garder ton prénom et ton e-mail.',
+      'wl.e.today': 'Trop de demandes aujourd’hui : réessaie demain. Si tu as déjà laissé ton e-mail, il reste sur la liste.',
+      'wl.e.open': 'Une place vient de se libérer : recharge la page pour créer ton compte.',
+      'wl.e.fail': 'Ça n’a pas marché : vérifie ta connexion et réessaie.',
       'a.e.offline': 'Le serveur n’a pas répondu : vérifie ta connexion et réessaie.',
       'a.badUrl': 'Cette URL n’est pas valide.', 'a.badProto': 'Indique une URL de projet en http ou https.',
       'a.badKey': 'Cela ne ressemble pas à une clé anon.',
       's.h1': 'Tes vidéos, en fiches',
       's.lead': 'Colle les vidéos que tu veux garder (Instagram, TikTok, YouTube, Facebook) : un geste, une technique, une recette. Claude Code fait de chacune une fiche avec photos et points clés, rangée dans tes carnets.',
-      's.h2': 'Où vivra ton nouveau compte ?', 's.own': 'Mon propre projet Supabase',
+      's.h2': 'Où vivra ton nouveau compte ?',
       's.ownd': 'L’offre gratuite suffit. Tu lances un fichier SQL, puis tu colles ici l’URL du projet et la clé anon.',
       's.where': 'Les deux sont dans le tableau de bord Supabase, sous Project settings → API. La clé anon peut rester dans un navigateur : la sécurité au niveau des lignes garde tes données à toi. Guide d’installation :',
+      's.limits': '300 fiches, 200 Mo de photos, 10 vidéos par jour.',
       's.use': 'Utiliser ce projet', 's.back': 'Retour', 's.have': 'Tu as déjà un compte ?', 's.unavailable': 'Pas encore disponible.',
       's.blurb': 'Gratuit pour l’instant. Une offre hébergée payante est prévue ; rien à configurer.',
       'w.eyebrow': 'Bienvenue dans Reelbook', 'w.h1': 'Comment ça marche',
@@ -416,14 +430,27 @@
       'a.e.confirm': 'Confirm your email first with the link in your inbox, then sign in.',
       'a.e.weak': 'That password is too weak: choose a longer one.', 'a.e.email': 'That email address is not valid.',
       'a.e.rate': 'Too many attempts: try again in a few minutes.', 'a.e.closed': 'This server does not take new accounts.',
+      // L31: the refusals of the beta (schema.sql, « Beta locks »), and the waiting-list form
+      'a.e.full': 'The last spot has just been taken: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.',
+      'a.e.shut': 'Sign-ups are closed for now: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.',
+      'a.e.today': 'Enough sign-ups for today: your account was not created. Try again tomorrow.',
+      'a.e.retry': 'Your account was not created: the beta may have just filled up. Try again in a moment.',
+      'a.e.projDay': 'Reelbook has taken enough videos for today, across all accounts: try again tomorrow.',
+      'a.e.projPhotos': 'The beta’s photo space is full for now: try again later.',
+      'wl.ok.h': 'You’re on the list', 'wl.ok': 'You’re on the list. We’ll email you as soon as a spot opens.',
+      'wl.e.first': 'Enter your first name.', 'wl.e.consent': 'Tick the box so we can keep your first name and email.',
+      'wl.e.today': 'Too many requests today: try again tomorrow. If you already joined, you are still on the list.',
+      'wl.e.open': 'A spot has just opened: reload the page to create your account.',
+      'wl.e.fail': 'That did not work: check your connection and try again.',
       'a.e.offline': 'The server did not answer: check your connection and try again.',
       'a.badUrl': 'That URL is not valid.', 'a.badProto': 'Use an http or https project URL.',
       'a.badKey': 'That does not look like an anon key.',
       's.h1': 'Your videos, as sheets',
       's.lead': 'Paste the videos you want to keep (Instagram, TikTok, YouTube, Facebook): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.',
-      's.h2': 'Where should your new account live?', 's.own': 'My own Supabase project',
+      's.h2': 'Where should your new account live?',
       's.ownd': 'Free tier is enough. You run one SQL file, then paste the project URL and anon key here.',
       's.where': 'Both are in your Supabase dashboard under Project settings → API. The anon key is safe to keep in a browser: row level security keeps your data yours. Setup guide:',
+      's.limits': '300 sheets, 200 MB of photos, 10 videos a day.',
       's.use': 'Use this project', 's.back': 'Back', 's.have': 'Already have an account?', 's.unavailable': 'Not available yet.',
       's.blurb': null,
       'w.eyebrow': 'Welcome to Reelbook', 'w.h1': 'How it works',
@@ -567,31 +594,34 @@
   };
 
   // ---------- the beta (beta_seats(), L32: {taken, total, open} or null) ----------
-  let seatData = null;
+  let seatData = null, ownForced = false;
   const seatsOf = d => {
     const o = Array.isArray(d) ? d[0] : d;
     if (!o || typeof o !== 'object' || o.taken == null || o.total == null) return null;
     const taken = Number(o.taken), total = Number(o.total);
-    if (!(Number.isFinite(taken) && Number.isFinite(total) && total > 0 && taken >= 0)) return null;
+    if (!(Number.isFinite(taken) && Number.isFinite(total) && total >= 0 && taken >= 0)) return null;
     const tot = Math.round(total), tk = Math.min(Math.round(taken), tot);
-    return {taken: tk, total: tot, full: tk >= tot || o.open === false};
+    return {taken: tk, total: tot, full: tk >= tot || o.open === false, closed: !tot || (tk < tot && o.open === false)};
   };
   const isFull = () => !!(seatData && seatData.full);
-  // The waiting list (its table and its sending) comes with L31. Until then a full beta promises no sign-up: the card
-  // says the beta is full, without the form, the hero line without « join the waiting list », the buttons lead to
-  // step 1, where « On my own Supabase » stays open. L31 sets this to true once « Notify me » records something.
-  const WAITLIST = false;
+  // L31: « Notify me » records something (join_waitlist, wired by the app script, which also says how it went). False
+  // would be a full beta without the form, the hero line without « join the waiting list ».
+  const WAITLIST = true;
   // « Create my notebook » of step 1 hides on a full beta until « On my own Supabase » is picked
   const syncCta = () => { const cta = $('intro-signup'), own = $('lp-host-own'); if (cta) cta.hidden = isFull() && !(own && own.checked); };
   const paintSeats = () => {
     const s = seatData, fullB = isFull(), n = s ? fill(t('seats'), s) : '';
     const bar = $('lp-seatsBar');
-    if (bar) { bar.hidden = !s; const i = bar.querySelector ? bar.querySelector('i') : null; if (s && i && i.style) i.style.width = Math.round(100 * s.taken / s.total) + '%'; }
+    if (bar) { bar.hidden = !s; const i = bar.querySelector ? bar.querySelector('i') : null; if (s && i && i.style) i.style.width = (s.total ? Math.round(100 * s.taken / s.total) : 100) + '%'; }
     setText('lp-betaLine', fullB ? t(WAITLIST ? 'beta.full' : 'beta.closed') : s ? t('beta') + ' · ' + n : t('beta'));
     const line = $('lp-seatline'); if (line) { line.hidden = !s; line.textContent = n; }
-    if (fullB) { const o = $('lp-host-hosted-opt'), r = $('lp-host-hosted'); if (o) o.hidden = true; if (r) r.checked = false; }
+    // At the limit « On my own Supabase » is the option picked (its button: « Connect my Supabase »); a seat freed
+    // again gives the hosted one back. The app script repaints what follows the choice (step 2) after this.
+    const o = $('lp-host-hosted-opt'), r = $('lp-host-hosted'), own = $('lp-host-own');
+    if (fullB) { if (o) o.hidden = true; if (r) r.checked = false; if (own) own.checked = true; ownForced = true; }
+    else if (ownForced) { if (o) o.hidden = false; if (r) r.checked = true; if (own) own.checked = false; ownForced = false; }
     const card = $('lp-host-full'); if (card) card.hidden = !fullB;
-    if (s) { setText('lp-wlH', fill(t('wl.h'), s)); setText('lp-lockN', s.total); }
+    if (s) { setText('lp-wlH', s.closed ? t('beta.closed') : fill(t('wl.h'), s)); setText('lp-lockN', s.closed ? '—' : s.total); }
     const wl = $('lp-wl'), wlp = $('lp-wlP'); if (wl) wl.hidden = !WAITLIST; if (wlp) wlp.hidden = !WAITLIST;
     toggle($('lp-installList'), 'lp-full', fullB);
     setText('intro-signup', t(fullB ? 'i1.cta.full' : 'i1.cta'));

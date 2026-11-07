@@ -10,7 +10,7 @@ test('a new visitor sees hosted sign-in before any backend choice', async () => 
   assert.equal(page.clients[0].url, hostedUrl);
   await page.fire('a-toggle');
   assert.equal(page.element('setup').hidden, false);
-  await page.fire('pick-hosted');
+  await page.fire('s-go');
   assert.equal(page.element('auth').hidden, false);
   assert.equal(page.element('auth-title').textContent, 'Create an account');
 });
@@ -44,7 +44,7 @@ test('self-hosted sign-in on a new device stores the project and uses it', async
 test('leaving sign-up restores the remembered backend', async () => {
   const page = await app({remembered: {mode: 'hosted'}});
   await page.fire('a-toggle');
-  await page.fire('pick-own');
+  await page.fire('pick-own', 'change');
   page.element('own-url').value = ownUrl;
   page.element('own-key').value = ownKey;
   await page.fire('own-form', 'submit');
@@ -58,7 +58,7 @@ test('leaving sign-up restores the remembered backend', async () => {
 test('sign-up saves its chosen backend after account creation', async () => {
   const page = await app();
   await page.fire('a-toggle');
-  await page.fire('pick-own');
+  await page.fire('pick-own', 'change');
   page.element('own-url').value = ownUrl;
   page.element('own-key').value = ownKey;
   await page.fire('own-form', 'submit');
@@ -554,7 +554,7 @@ test('C2: a queue row without a notebook shows no notebook label, and its reason
 test('C5: sign-up asks Supabase to send the confirmation link back to the app, not to localhost', async () => {
   const page = await app();
   await page.fire('a-toggle');
-  await page.fire('pick-hosted');
+  await page.fire('s-go');
   page.element('a-email').value = 'new@example.test';
   page.element('a-pass').value = 'example-password';
   await page.fire('auth-form', 'submit');
