@@ -35,7 +35,7 @@ test('L27 — the demo home lists the sheets and the session from catalogue.json
     page.go(`#demo/notebook/${t.id}`); await settle();
     for (const e of cat.sheets.filter(x => x.notebook === t.id)) assert.match(page.element('demo').innerHTML, new RegExp(`href="#demo/${e.slug}"`), e.slug);
   }
-  assert.match(html, /src="demo\/goblet-squat\/img\/thumb\.svg"/);
+  assert.match(html, /src="demo\/spinning-back-kick\/img\/thumb\.jpg"/);
   assert.ok(asked.length > 1 && asked.every(u => u.startsWith('demo/')), 'only the demo files are fetched');
   // the first visit hands the service worker every demo file to keep (sw.js, KEEP_DEMO), absolute URLs
   assert.equal(posted.length, 1);
@@ -43,7 +43,7 @@ test('L27 — the demo home lists the sheets and the session from catalogue.json
   const base = 'https://app.example.test/reelbook/demo/';
   assert.ok(posted[0].urls.includes(base + 'catalogue.json'));
   for (const e of cat.sheets) assert.ok(posted[0].urls.includes(`${base}${e.slug}/index.html`), e.slug);
-  assert.ok(posted[0].urls.includes(base + 'water-start/img/04-pulled.svg'));
+  assert.ok(posted[0].urls.includes(base + 'nose-press-on-a-box/img/sb06.jpg'));
   assert.ok(posted[0].urls.every(u => u.startsWith(base)));
   assert.equal(page.clients.length, 0);
 });
@@ -54,22 +54,22 @@ test('L27 — browsing the demo writes nothing to localStorage and creates no cl
   const page = await app({hash: '#demo', tables: {}, fetch, stored});
   await settle();
   const before = JSON.stringify([...page.storage]);
-  for (const h of ['#demo/session/ten-minute-circuit', '#demo/goblet-squat', '#demo/nope', '#demo']) { page.go(h); await settle(); }
+  for (const h of ['#demo/session/sampler', '#demo/spinning-back-kick', '#demo/nope', '#demo']) { page.go(h); await settle(); }
   assert.equal(JSON.stringify([...page.storage]), before);
   assert.equal(page.clients.length, 0);
 });
 
 test('L27 — the demo session lists its exercises with their dose, in order', async () => {
   const {fetch} = files();
-  const page = await app({hash: '#demo/session/ten-minute-circuit', tables: {}, fetch});
+  const page = await app({hash: '#demo/session/sampler', tables: {}, fetch});
   await settle();
   const html = page.element('demo').innerHTML;
-  assert.match(html, /Ten-minute circuit/);
+  assert.match(html, /Sampler/);
   assert.match(html, /Demo · read only · Create an account/);
   // L38: each exercise opens at its place in the session (#demo/session/<slug>/<n>), as in the app
-  const order = [...html.matchAll(/href="#demo\/session\/ten-minute-circuit\/(\d+)"[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1] + ' ' + m[2]);
-  assert.deepEqual(order, ['1 Goblet squat', '2 Push-up', '3 Dead bug']);
-  assert.match(html, />10 reps</);
+  const order = [...html.matchAll(/href="#demo\/session\/sampler\/(\d+)"[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1] + ' ' + m[2]);
+  assert.deepEqual(order, ['1 Spinning back kick', '2 Pirouette en dehors', '3 Diagonal stretch', '4 Nose press on a box', '5 Push-up, taps and jump squat']);
+  assert.match(html, />8 \/ side</);
   assert.match(html, /href="#demo">‹ Demo</);
 });
 
@@ -130,7 +130,7 @@ test('L27 — an account\'s own sheet « demo » keeps #demo; the other demo pag
   assert.equal(page.element('demo').hidden, true);
   assert.equal(page.element('view').hidden, false);
   assert.match(page.element('view').innerHTML, /<h1>Demo<\/h1>/);
-  page.go('#demo/session/ten-minute-circuit'); await settle();
+  page.go('#demo/session/sampler'); await settle();
   assert.equal(page.element('demo').hidden, false);
   page.go('#demo'); await settle();
   assert.equal(page.element('demo').hidden, true);

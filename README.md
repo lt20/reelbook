@@ -106,8 +106,9 @@ notebook, or creates a custom one named after the subject (`rb.py add-theme`), a
 report. It never files a video in a merely « closest » notebook.
 
 Claude filed a sheet in the wrong place? Open it and tap **Move**: pick another notebook and a
-group (one it already has, or a new one). A session moves too, to another notebook only: its
-exercise sheets stay where they are.
+group (one it already has, or a new one). A session moves too, to another notebook only: a box
+takes along its exercise sheets of the same notebook (ticked for a session made from a video), and
+sheets in other notebooks stay where they are.
 
 Don't want a sheet any more? **Delete sheet**, at the bottom of its page, removes it with its photos
 and your note. A session that listed it simply skips it; processing the same video again brings it

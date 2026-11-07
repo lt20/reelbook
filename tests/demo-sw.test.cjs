@@ -38,7 +38,7 @@ function worker() {
 test('KEEP_DEMO keeps the listed demo files, which then answer offline', async () => {
   const w = worker();
   await w.dispatch('message', {data: {type: 'KEEP_DEMO', urls: [base + 'catalogue.json', base + 'push-up/img/02-lower.svg']}});
-  assert.deepEqual([...w.stores.get('rb-demo-1').keys()], [base + 'catalogue.json', base + 'push-up/img/02-lower.svg']);
+  assert.deepEqual([...w.stores.get('rb-demo-2').keys()], [base + 'catalogue.json', base + 'push-up/img/02-lower.svg']);
   w.offline();
   const r = await w.dispatch('fetch', {request: {url: base + 'push-up/img/02-lower.svg', method: 'GET', mode: 'cors'}});
   assert.equal(r.ok, true);
@@ -55,6 +55,34 @@ test('a new shell version keeps the demo cache', async () => {
   await w.dispatch('message', {data: {type: 'KEEP_DEMO', urls: [base + 'catalogue.json']}});
   w.stores.set('rb-shell-1', new Map());
   await w.dispatch('activate', {});
-  assert.ok(w.stores.has('rb-demo-1'));
+  assert.ok(w.stores.has('rb-demo-2'));
   assert.ok(!w.stores.has('rb-shell-1'));
+});
+
+// L37: a device that kept the old demo (rb-demo-1) and is updated without opening the new one keeps an offline
+// demo, the old one whole, until KEEP_DEMO has filled rb-demo-2; then rb-demo-1 goes.
+test('a new demo cache keeps the old demo offline until it is complete', async () => {
+  const w = worker();
+  w.stores.set('rb-demo-1', new Map([[base + 'catalogue.json', response('old catalogue')], [base + 'goblet-squat/index.html', response('old sheet')]]));
+  w.stores.set('rb-shell-1', new Map());
+  await w.dispatch('activate', {});
+  assert.ok(w.stores.has('rb-demo-1'), 'the old demo stays through the update');
+  assert.ok(!w.stores.has('rb-shell-1'));
+  w.offline();
+  const get = url => w.dispatch('fetch', {request: {url, method: 'GET', mode: 'cors'}});
+  assert.equal((await get(base + 'catalogue.json')).body, 'old catalogue');
+  assert.equal((await get(base + 'goblet-squat/index.html')).body, 'old sheet');
+  // a KEEP_DEMO cut short (offline) leaves the old demo in place
+  await w.dispatch('message', {data: {type: 'KEEP_DEMO', urls: [base + 'catalogue.json', base + 'sampler/index.html']}});
+  assert.ok(w.stores.has('rb-demo-1'));
+});
+
+test('a complete KEEP_DEMO drops the old demo cache, and the new copy answers first', async () => {
+  const w = worker();
+  w.stores.set('rb-demo-1', new Map([[base + 'catalogue.json', response('old catalogue')]]));
+  await w.dispatch('message', {data: {type: 'KEEP_DEMO', urls: [base + 'catalogue.json', base + 'spinning-back-kick/index.html']}});
+  assert.ok(!w.stores.has('rb-demo-1'));
+  w.offline();
+  const r = await w.dispatch('fetch', {request: {url: base + 'catalogue.json', method: 'GET', mode: 'cors'}});
+  assert.equal(r.body, base + 'catalogue.json', 'the new copy');
 });
