@@ -36,6 +36,7 @@ async function auth(answers = {}, options = {}) {
       signInWithPassword: async (...a) => { const r = say('signIn', a); if (!r.error && !r.data?.user && !answers.signIn) return {error: null}; if (r.data && r.data.session) fire('SIGNED_IN', r.data.session.user); return r; },
       resend: async (...a) => say('resend', a),
       resetPasswordForEmail: async (...a) => say('recover', a),
+      getSession: async () => ({data: {session: {user: answers.sessionUser || USER}}, error: null}),
       verifyOtp: async (...a) => { const r = say('verify', a); if (!r.error) fire(a[0].type === 'recovery' ? 'PASSWORD_RECOVERY' : 'SIGNED_IN', USER); return r; },
       updateUser: async (...a) => { const r = say('update', a); if (!r.error) fire('USER_UPDATED', USER); return r; }
     };
@@ -328,6 +329,26 @@ test('forgot on an own backend chosen in the sign-up, new device: the backend is
   assert.equal(pending(s.page).url, ownUrl);
   const back = await auth({}, {stored: {'rb.backend': s.page.storage.get('rb.backend'), 'rb.pending': s.page.storage.get('rb.pending')}});
   assert.equal(titleOf(back.page), 'New password'); assert.ok(shown(back.page, 'a-code-row'));
+});
+
+test('another account opened in another tab before the save: the password is not written on it, the flow given up', async () => {
+  const s = await atCode({verify: {data: {session: {}}, error: null}, sessionUser: {id: 'b', email: 'b@example.test'}});
+  await code(s.page, '123456');
+  assert.equal(s.log.filter(l => l[0] === 'update').length, 0);
+  assert.equal(s.page.storage.get('rb.pending'), undefined);
+  const set = await auth({sessionUser: {id: 'b', email: 'b@example.test'}}, {stored: stored({verified: true}), sessions: {[hostedUrl]: USER}});
+  await settle(); set.page.element('a-pass').value = PW; await submit(set.page);
+  assert.equal(set.log.filter(l => l[0] === 'update').length, 0);
+});
+
+test('offline restart, token expired: no session but one stored: the password stays owed; the refresh does not open the app', async () => {
+  const key = 'rb.auth.' + hostedUrl.replace(/\W/g, '');
+  const session = JSON.stringify({access_token: 't', refresh_token: 'r', expires_at: 1, user: USER});
+  const {page, client} = await auth({}, {stored: {...stored({verified: true}), [key]: session}});
+  await settle();
+  assert.equal(pending(page).verified, true, 'not forgotten');
+  client().authListener('TOKEN_REFRESHED', {user: USER, access_token: 't2'}); await settle();
+  assert.equal(titleOf(page), 'Choose your password'); assert.ok(shown(page, 'auth'));
 });
 
 test('a code accepted over an hour ago, its password never saved: a reload still asks (the pre-registered password must not survive)', async () => {

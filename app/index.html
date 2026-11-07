@@ -2047,9 +2047,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   // « Last password wins »: after the code, the password typed last is the account's. HTTP 422 same_password (nothing
   // to change) is a success. The session is there, so a failure asks again rather than losing the person.
+  // updateUser writes on the session of the moment: another tab may have opened another account since the code. Answers
+  // false, the flow given up, when the account is no longer the one the code proved.
   const savePassword = async (client, password) => {
+    const email = flow ? flow.email.toLowerCase() : '';
+    const {data} = await client.auth.getSession(); if (client !== sb) return false;
+    const now = data && data.session && data.session.user;
+    if (!now || String(now.email || '').toLowerCase() !== email) { console.warn('Password not saved: the session is another account'); leaveFlow(client, false); return false; }
     const {error} = await client.auth.updateUser({password});
     if (error && !isSamePassword(error)) throw error;
+    return true;
   };
   const sendAgain = async () => {
     const f = flow, client = sb;
@@ -2139,7 +2146,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       if (error) { flowHold = false; if (!codeFailed(error, f)) throw error; return; }
       f.verified = true; savePending(); // a reload from here on asks for the password
       if (!heldPw) { flowHold = false; screen = 'set-password'; route(); focusAuth(); return; }
-      try { await savePassword(client, heldPw); } catch (e) { if (client !== sb) return; flowHold = false; heldPw = ''; screen = 'set-password'; authErr = () => A('au.e.save'); console.warn('Password not saved:', (e && (e.code || e.message)) || e); route(); return; }
+      try { if (!await savePassword(client, heldPw)) return; } catch (e) { if (client !== sb) return; flowHold = false; heldPw = ''; screen = 'set-password'; authErr = () => A('au.e.save'); console.warn('Password not saved:', (e && (e.code || e.message)) || e); route(); return; }
       if (client !== sb) return;
       leaveFlow(client, false);
     },
@@ -2147,7 +2154,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       const password = $('a-pass').value;
       if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
       flowHold = true;
-      await savePassword(client, password); if (client !== sb) return;
+      if (!await savePassword(client, password) || client !== sb) return;
       leaveFlow(client, false);
     },
     async reset(client) {
@@ -2159,7 +2166,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       const {error} = await client.auth.verifyOtp({email: f.email, token, type: 'recovery'}); if (client !== sb) return;
       if (error) { flowHold = false; if (!codeFailed(error, f)) throw error; return; }
       f.verified = true; savePending();
-      try { await savePassword(client, password); } catch (e) { if (client !== sb) return; flowHold = false; screen = 'new-password'; authErr = () => authError(e, 'save'); console.warn('Password not saved:', (e && (e.code || e.message)) || e); route(); return; }
+      try { if (!await savePassword(client, password)) return; } catch (e) { if (client !== sb) return; flowHold = false; screen = 'new-password'; authErr = () => authError(e, 'save'); console.warn('Password not saved:', (e && (e.code || e.message)) || e); route(); return; }
       if (client !== sb) return;
       leaveFlow(client, true);
     },
@@ -2167,7 +2174,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       const password = $('a-pass').value;
       if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
       flowHold = true;
-      await savePassword(client, password); if (client !== sb) return;
+      if (!await savePassword(client, password) || client !== sb) return;
       leaveFlow(client, true);
     }
   };
@@ -2220,6 +2227,10 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const same = !!next && String(next.email || '').toLowerCase() === flow.email.toLowerCase();
     if (flow.verified && same && ev !== 'USER_UPDATED') return false; // the password is still to be set (a reload)
     if (!next && !flow.verified) return false; // nothing yet: the wait goes on
+    if (!next) { // offline, its token expired: no session now, but still stored and renewable. The password stays owed.
+      const kept = storedUser();
+      if (kept && String(kept.email || '').toLowerCase() === flow.email.toLowerCase()) return false;
+    }
     if (same && flow.type === 'signup' && ev !== 'USER_UPDATED') {
       flow.verified = true; heldPw = ''; codeLocked = 0; screen = 'set-password'; authErr = null; authNote = null; stopHelp(); $('a-code').value = ''; $('a-pass').value = ''; savePending();
       return true;
