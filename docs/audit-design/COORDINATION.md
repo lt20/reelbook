@@ -166,6 +166,18 @@ after the other. L30 `app/index.html` (welcome/intro, auth, setup copy, new land
 (shell list). L31 `app/index.html` (setup step 1, auth), `docs/hosted.md`, `README.md`. Another session has open
 PRs #70 (skill) and #71 (`app/index.html`, New row): expect a small merge in `app/index.html`.
 
+### P7 (fifth chantier, 7 Nov): sign-up and `#welcome`
+Decisions 21–28 and specs: `docs/audit-design/P7-signup.md`. Coordinator: session `reelbook-a7`, which took over L31 and L34.
+
+| Lot | What | Depends on | Branch | Status |
+|---|---|---|---|---|
+| L40 | Mockup: auth states, `#welcome`, FR/EN | — | `docs/p7-mockup` | in progress |
+| L31 | See P6 table | #77 merged | `feat/p6-hosting` | waiting for #77 |
+| L41 | Auth states, email code, resend, resume, forgot password | L31, L40 | `feat/p7-signup` | to do |
+| L43 | `#welcome` of the mockup, FR/EN switch | L40 | `feat/p7-welcome` | to do |
+| L42 | Turnstile, `cli-login`, `rb.py login` — protected | L41 | `feat/p7-turnstile` | to do |
+| L34 | Captures and business tests, extended to this flow | L41 L42 L43 | `test/p7-launch` | to do |
+
 ## Open questions
 _(P0–P2 questions below were settled by the coordinator's arbitration comments in each PR: L4 dot before « 1 failed »
 and `animationend` toast accepted (#28); L5 double write of the top bar accepted (#30); L6 Log assertion scoped
