@@ -1,13 +1,13 @@
 // L41: the auth screens against a REAL Supabase Auth, on a local stack (never the hosted project). Not run by the CI.
 //   RB_BASE=http://127.0.0.1:8841/ RB_API=http://127.0.0.1:54721 RB_MAIL=http://127.0.0.1:54724 RB_ANON=<anon key> \
-//   RB_DB=supabase_db_<project> node tests/e2e/auth-real.mjs [confirm-on|confirm-off]
+//   RB_DB=supabase_db_<project> [RB_SERVICE=<service key>] node tests/e2e/auth-real.mjs [confirm-on|confirm-off]
 // RB_BASE serves a copy of app/ whose config.js points hosted.url and anonKey at the local stack. The hosted address is
 // blocked at the browser's door. Codes come from the stack's mail server; subject or body must carry {{ .Token }}.
 import {createRequire} from 'node:module'; import {homedir} from 'node:os'; import {join} from 'node:path'; import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 const req = createRequire(import.meta.url);
 const {webkit} = req(process.env.REELBOOK_PLAYWRIGHT || join(homedir(), '.cache/reelbook-e2e/node_modules/playwright'));
-const {RB_BASE: BASE, RB_API: API, RB_MAIL: MAIL, RB_ANON: ANON, RB_DB: DB} = process.env;
+const {RB_BASE: BASE, RB_API: API, RB_MAIL: MAIL, RB_ANON: ANON, RB_DB: DB, RB_SERVICE: SERVICE} = process.env;
 const mode = process.argv[2] || 'confirm-on';
 const stamp = Date.now().toString(36), addr = n => `${n}-${stamp}@example.test`;
 const P1 = 'first-password-1', P2 = 'second-password-2', P3 = 'third-password-3';
@@ -25,7 +25,9 @@ const scene = async (name, fn) => {
   const ctx = await browser.newContext({viewport: {width: 390, height: 844}, locale: 'en-US'});
   await ctx.route(/supabase\.co/, r => r.abort()); // never the hosted project
   const page = await ctx.newPage();
-  const errors = []; page.on('pageerror', e => errors.push(String(e)));
+  // WebKit reports a request cut by a navigation (a reload, here on purpose) as an access control error.
+  const errors = []; page.on('pageerror', e => { if (!/access control checks/.test(String(e))) errors.push(String(e)); });
+  psql('delete from public.beta_settings'); // a scene that stopped half-way leaves the next ones a normal project
   try { await fn(page, ctx); assert.deepEqual(errors, []); results.push(['ok', name]); console.log('ok  ', name); }
   catch (e) { results.push(['FAIL', name]); console.log('FAIL', name, String(e.message).split('\n').slice(0, 3).join(' ').slice(0, 200), errors.slice(0, 2).join(' | ').slice(0, 300), await page.evaluate(() => JSON.stringify({hash: location.hash, err: (document.getElementById('load-error') || {}).textContent, vis: ['auth', 'home', 'welcome', 'setup'].filter(i => !document.getElementById(i).hidden)})).catch(() => '')); }
   await ctx.close();
@@ -128,7 +130,7 @@ if (mode === 'confirm-on') {
     assert.match(await p.locator('#a-sent').textContent(), /if an account uses it/);
     await p.fill('#a-code', '000000'); await p.fill('#a-pass', P3); await p.click('#a-submit'); await errIs(p, 'That code isn’t right. Check the 6 digits of the latest email.');
     await p.fill('#a-code', await codeOf(a, 2)); await p.click('#a-submit');
-    await p.waitForSelector('#flash:not([hidden])'); assert.match(await p.locator('#flash').textContent(), /Password changed for/);
+    await inApp(p); assert.match(await p.locator('#flash').textContent(), /Password changed for/); // this empty account then goes on to #welcome
     assert.equal(await canSignIn(a, P3), 'ok'); assert.equal(await canSignIn(a, P1), 'invalid_credentials');
   });
   await scene('forgot with the same password: no error on the screen', async p => {
@@ -137,7 +139,7 @@ if (mode === 'confirm-on') {
     await p.evaluate(() => localStorage.clear()); await signInForm(p); await p.fill('#a-email', a); await p.click('#a-forgot');
     await waitTitle(p, 'Forgot your password'); await p.click('#a-submit'); await waitTitle(p, 'New password');
     await p.fill('#a-code', await codeOf(a, 2)); await p.fill('#a-pass', P1); await p.click('#a-submit');
-    await p.waitForSelector('#flash:not([hidden])'); assert.equal(await canSignIn(a, P1), 'ok');
+    await inApp(p); assert.equal(await p.evaluate(() => document.getElementById('a-err').hidden), true); assert.equal(await canSignIn(a, P1), 'ok');
   });
   await scene('another tab: the session arriving there leaves the code screen here', async (p, ctx) => {
     const a = addr('t'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');
@@ -147,6 +149,25 @@ if (mode === 'confirm-on') {
     await inApp(p);
     await q.close();
   });
+  if (SERVICE) { // an own backend's default email carries a link: asked from Auth itself (site_url and redirect urls: RB_BASE)
+    const linkFor = async (type, email, password) => { const r = await fetch(`${API}/auth/v1/admin/generate_link`, {method: 'POST', headers: {apikey: SERVICE, authorization: `Bearer ${SERVICE}`, 'content-type': 'application/json'}, body: JSON.stringify({type, email, password, redirect_to: BASE + 'index.html'})}); const j = await r.json(); assert.ok(j.action_link, JSON.stringify(j).slice(0, 200)); return j.action_link; };
+    await scene('the link of an email, opened in another tab: this tab leaves the code screen', async (p, ctx) => {
+      const a = addr('l'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');
+      const link = await linkFor('signup', a, P1);
+      const q = await ctx.newPage(); await q.goto(link); await inApp(q); await inApp(p);
+      assert.equal(await p.evaluate(() => localStorage.getItem('rb.pending')), null); await q.close();
+    });
+    await scene('a recovery link (real PASSWORD_RECOVERY): the new password first, not the app; a reload keeps asking', async p => {
+      const a = addr('k'); await signUpForm(p); await fill(p, a, P1); await waitTitle(p, 'Enter your code');
+      await p.fill('#a-code', await codeOf(a)); await inApp(p);
+      await p.evaluate(() => localStorage.clear());
+      await p.goto(await linkFor('recovery', a)); await waitTitle(p, 'New password');
+      assert.equal(await p.locator('#a-code-row').isVisible(), false);
+      await p.reload(); await waitTitle(p, 'New password');
+      await p.fill('#a-pass', P3); await p.click('#a-submit'); await inApp(p);
+      assert.equal(await canSignIn(a, P3), 'ok'); assert.equal(await canSignIn(a, P1), 'invalid_credentials');
+    });
+  }
   await scene('beta full during the sign-up (a real refusal, HTTP 500): the waiting list, its banner, the address', async p => {
     await signUpForm(p);
     const a = addr('b');
@@ -178,7 +199,7 @@ if (mode === 'confirm-on') {
     await p.evaluate(() => localStorage.clear()); await signInForm(p); await p.fill('#a-email', a); await p.click('#a-forgot');
     await waitTitle(p, 'Forgot your password'); await p.click('#a-submit'); await waitTitle(p, 'New password');
     await p.fill('#a-code', await codeOf(a)); await p.fill('#a-pass', P3); await p.click('#a-submit');
-    await p.waitForSelector('#flash:not([hidden])'); assert.equal(await canSignIn(a, P3), 'ok');
+    await inApp(p); assert.equal(await canSignIn(a, P3), 'ok');
   });
 }
 await browser.close();

@@ -175,6 +175,7 @@ test('L41 last seat taken meanwhile — read open, signUp refused, read full: th
   await settle();
   assert.ok(shown(page, 'setup')); assert.ok(shown(page, 's-full'));
   assert.ok(shown(page, 's-note')); assert.equal(page.element('s-note').textContent, LAST_SEAT);
+  assert.ok(!shown(page, 'intro'), 'body:has(#intro) keeps the landing light and without padding: #setup hides it');
   assert.equal(page.element('s-wl-email').value, 'new@example.test', 'the address typed follows');
   assert.ok(!shown(page, 'a-wl'));
 });

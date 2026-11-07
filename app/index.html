@@ -4571,7 +4571,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (!demoEl.hidden && !user && mode === 'in' && !flow) setMode('in'); // back from the demo: a fresh sign-in screen
     if (backend && !sb) { boot(); return; }
     if (!user || authHeld()) { // L41: a session waiting for its password stays here (authHeld), the app behind it
-      if (mode === 'up' && !signupBackendChosen && !flow) { askSeats(); paintSetup(); show('setup'); return; }
+      if (mode === 'up' && !signupBackendChosen && !flow) { $('intro').hidden = true; askSeats(); paintSetup(); show('setup'); return; } // the landing's light page and no padding go with it (body:has(#intro))
       const intro = introOpen && mode === 'in' && !flow; // L25: the presentation, then the account actions
       $('intro').hidden = !intro;
       $('auth-title').hidden = $('auth-form').hidden = intro;
