@@ -1103,7 +1103,6 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 .intro-demo{display:inline-flex;align-items:center;min-height:44px;padding:0 var(--s-2);color:var(--accent);font-weight:600}
 /* L41: the auth screens (mockup p7-signup). One colour for every error, on these screens. */
 #auth .err{color:var(--danger)}
-#auth #a-brand[hidden]{display:none}
 .a-note{background:var(--tag);color:var(--ink);border-radius:var(--r-sm);padding:10px var(--s-3);font-size:var(--fs-sm);margin:0 0 var(--s-3)}
 .a-note[hidden]{display:none}
 .a-step{font-size:var(--fs-sm);color:var(--muted);margin:0 0 12px}
@@ -1334,7 +1333,6 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 </section>
 </main>
 </div>
-  <p class="brand" id="a-brand"><img src="icons/reelbook-mark.svg" width="40" height="40" alt=""><img class="wm" src="icons/reelbook-wordmark.svg" width="110" height="26" alt="reelbook"></p>
   <div class="a-note" id="a-note" role="status" hidden></div>
   <h1 id="auth-title">Sign in</h1>
   <p class="a-step" id="a-step" hidden></p>
@@ -4577,7 +4575,6 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       const intro = introOpen && mode === 'in' && !flow; // L25: the presentation, then the account actions
       $('intro').hidden = !intro;
       $('auth-title').hidden = $('auth-form').hidden = intro;
-      $('a-brand').hidden = intro;
       $('a-adv').hidden = intro || !(screen === 'signin' || (screen === 'signup' && !!backend && backend.mode !== 'hosted')); // L31: own Supabase is chosen in #setup, or from the sign-in form
       $('a-demo').hidden = !intro && screen !== 'signin';
       paintAuth();

@@ -10,7 +10,7 @@ const {app, html, ownUrl, ownKey} = require('./harness.cjs');
 const ROOT = path.join(__dirname, '..');
 const landingJs = fs.readFileSync(path.join(ROOT, 'app/landing.js'), 'utf8');
 const attrsOf = tag => Object.fromEntries([...tag.matchAll(/([\w-]+)="([^"]*)"/g)].map(m => [m[1], m[2]]));
-const intro = html.slice(html.indexOf('<div id="intro"'), html.indexOf('id="a-brand"'));
+const intro = html.slice(html.indexOf('<div id="intro"'), html.indexOf('id="auth-title"'));
 
 function stub(attrs = {}) {
   const el = {
