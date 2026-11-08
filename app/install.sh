@@ -9,7 +9,7 @@
 set -euo pipefail
 
 CONFIG_URL="${REELBOOK_CONFIG_URL:-https://lt20.github.io/reelbook/config.js}"
-URL=""; KEY=""; DRY=""; DIR="${REELBOOK_DIR:-$HOME/reelbook}"; REPO="https://github.com/lt20/reelbook"
+URL=""; KEY=""; HOSTED_URL=""; DRY=""; DIR="${REELBOOK_DIR:-$HOME/reelbook}"; REPO="https://github.com/lt20/reelbook"
 
 usage() {
   cat <<USAGE
@@ -56,7 +56,50 @@ resolve_backend() {
     die "Could not read $CONFIG_URL to find the hosted backend. Check the connection and try again, or run with --url <project url> --key <anon key>."
   pair=$(printf '%s\n' "$text" | hosted_from_config) ||
     die "No hosted backend is set in $CONFIG_URL (an https url and an anon key). Run with --url <project url> --key <anon key> instead: the app's Settings page shows that line."
-  URL="${pair%% *}"; KEY="${pair#* }"
+  URL="${pair%% *}"; KEY="${pair#* }"; HOSTED_URL="$URL"
+}
+
+# The end of an install that went through: a film reel and REELBOOK in block letters (the brand's coral and blue,
+# ANSI 256 colours), then what to do next. Colour only on a terminal, without NO_COLOR, and when TERM is not dumb;
+# '#' instead of the block character outside a UTF-8 locale. French when the locale is French, English otherwise.
+welcome() {
+  local coral="" blue="" bold="" off="" px="#" i reel letters
+  if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ]; then
+    coral=$'\033[38;5;167m'; blue=$'\033[38;5;25m'; bold=$'\033[1m'; off=$'\033[0m'
+  fi
+  case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in *[Uu][Tt][Ff]-8*|*[Uu][Tt][Ff]8*) px=$'\xe2\x96\x88' ;; esac
+  # a 7 x 7 reel, each dot two columns wide, and 4 x 5 letters
+  reel=("    ######    " "  ##########  " "####  ##  ####" "######  ######" "####  ##  ####" "  ##########  " "    ######    ")
+  letters=(""
+    "###  #### #### #    ###   ##   ##  #  #"
+    "#  # #    #    #    #  # #  # #  # # # "
+    "###  ###  ###  #    ###  #  # #  # ##  "
+    "# #  #    #    #    #  # #  # #  # # # "
+    "#  # #### #### #### ###   ##   ##  #  #"
+    "")
+  echo
+  for i in 0 1 2 3 4 5 6; do
+    printf '  %s%s%s   %s%s%s\n' "$coral" "${reel[$i]//\#/$px}" "$off" "$blue$bold" "${letters[$i]//\#/$px}" "$off"
+  done
+  echo
+  case "${LC_ALL:-${LANG:-}}" in
+    fr*)
+      printf '%s%s%s\n' "$bold" "C'est prêt." "$off"
+      echo "1. Mets tes vidéos en file d'attente : colle leur lien dans l'app, ou envoie-les avec le raccourci iPhone."
+      echo "2. Dans Claude Code, sur ton ordinateur, tape /reelbook, avec Chrome ouvert et l'extension Claude in Chrome installée."
+      echo "3. Claude ouvre les liens en file d'attente, lit les vidéos, crée les fiches et les range dans le carnet du sport correspondant."
+      echo "Retrouve-les dans l'app : https://lt20.github.io/reelbook/"
+      [ "$(uname -s)" = Darwin ] && echo "Sur Mac, la file peut aussi se traiter seule chaque nuit à 2 h (Mac branché, Chrome ouvert) : ${DIR/#$HOME/~}/tools/nightly.sh install"
+      true ;;
+    *)
+      printf '%s%s%s\n' "$bold" "You're all set." "$off"
+      echo "1. Queue your videos: paste their link in the app, or send them with the iPhone shortcut."
+      echo "2. In Claude Code on your computer, type /reelbook, with Chrome open and the Claude in Chrome extension installed."
+      echo "3. Claude opens the queued links, reads the videos, writes the sheets and files each one in the notebook of its sport."
+      echo "Find them in the app: https://lt20.github.io/reelbook/"
+      [ "$(uname -s)" = Darwin ] && echo "On a Mac, the queue can also run by itself every night at 02:00 (Mac plugged in, Chrome open): ${DIR/#$HOME/~}/tools/nightly.sh install"
+      true ;;
+  esac
 }
 
 # a value, not empty and not the next option (`--url --dry-run` must not install anything)
@@ -149,7 +192,7 @@ echo "~/.claude/skills/reelbook -> $DIR/skill/reelbook"
 
 say "5/5 Signing this computer in to your Reelbook account"
 echo "Use the email and password of your Reelbook account (the ones you chose in the app)."
-python3 "$DIR/tools/rb.py" login --url "$URL" --key "$KEY" < /dev/tty
+# a failed sign-in stops here (set -e): the welcome below is only for an install that went through
+REELBOOK_HOSTED_URL="$HOSTED_URL" python3 "$DIR/tools/rb.py" login --url "$URL" --key "$KEY" < /dev/tty
 
-say "Done."
-echo "Open Claude Code in any folder, keep Chrome open with the Claude in Chrome extension, and type:  /reelbook"
+welcome

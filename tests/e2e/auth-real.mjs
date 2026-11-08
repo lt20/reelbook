@@ -66,7 +66,7 @@ const existingAccount = async p => {
     await toForm(); await fill(p, a, P1); await inApp(p); await clean();
     await p.reload(); await inApp(p); await clean();
     // L43 merged: this rb.py login writes reelbook_cli_at, the session of the open app intact
-    assert.equal(marker(), ''); assert.match(py(REELBOOK_PY, 'login'), /signed in as/); assert.ok(marker(), 'reelbook_cli_at written'); py(REELBOOK_PY, 'themes');
+    assert.equal(marker(), ''); assert.match(py(REELBOOK_PY, 'login'), /signed in as/i); assert.ok(marker(), 'reelbook_cli_at written'); py(REELBOOK_PY, 'themes');
     assert.equal(await tokenWorks(), 200, 'the session of the open app still answers');
     await p.reload(); await inApp(p); await clean(); assert.equal(await tokenWorks(), 200);
     await p.evaluate(() => { location.hash = '#settings'; }); await p.waitForSelector('#s-signout:visible'); await p.click('#s-signout');

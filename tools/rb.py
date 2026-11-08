@@ -137,7 +137,7 @@ def cmd_login(args):
     cfg = {"url": url, "anon_key": key, "email": email, "user_id": tok["user"]["id"],
            "access_token": tok["access_token"], "refresh_token": tok["refresh_token"], "expires_at": int(time.time()) + tok.get("expires_in", 3600)}
     save_cfg(cfg)
-    print(f"signed in as {email} on {url}")
+    print(f"Signed in as {email} (Reelbook hosted)." if is_hosted(url) else f"Signed in as {email} on your own Supabase: {url}")
     mark_cli_login(url, key, cfg["access_token"])
 
 def password_grant(url, key, email, pwd):
@@ -211,7 +211,28 @@ def rest(cfg, method, path, data=None, prefer=None, params=None, tolerate=()):
 
 def cmd_whoami(args):
     cfg = session()
-    print(f"{cfg['email']} ({cfg['user_id']}) on {cfg['url']}")
+    where = ", Reelbook hosted" if is_hosted(cfg["url"]) else f" on your own Supabase: {cfg['url']}"
+    print(f"{cfg['email']} ({cfg['user_id']}){where}")
+
+def hosted_url(path=None):
+    """The url of the hosted backend: REELBOOK_HOSTED_URL (the installer sets it from the published config.js), else
+    the `hosted: { url: ... }` of the repository's app/config.js, read as text; "" when neither gives one."""
+    env = os.environ.get("REELBOOK_HOSTED_URL", "").strip()
+    if env:
+        return env.rstrip("/")
+    try:
+        src = pathlib.Path(path or LIBRARY_JS).read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    src = re.sub(r"(?m)(^|\s)//.*$", "", src)  # line comments out, never the `//` of 'https://'
+    block = re.search(r"(?:^|[{,\s])hosted:\s*\{([^}]*)\}", src)
+    url = block and re.search(r"(?:^|[{,\s])url:\s*['\"]([^'\"]*)['\"]", block.group(1))
+    return url.group(1).rstrip("/") if url else ""
+
+def is_hosted(url):
+    """True on the hosted backend: its users never chose a Supabase project, so its url means nothing to them."""
+    hosted = hosted_url()
+    return bool(hosted) and url.rstrip("/") == hosted
 
 # ---------------------------------------------------------------------------
 # requests

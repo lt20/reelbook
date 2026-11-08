@@ -193,7 +193,7 @@ class LoginMarksTheComputer(unittest.TestCase):
         self.assertRegex(body["data"]["reelbook_cli_at"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
         self.assertEqual(headers["apikey"], "the-key")
         self.assertEqual(headers["authorization"], "Bearer at")
-        self.assertIn("signed in as user@example.test", out)
+        self.assertIn("Signed in as user@example.test", out)
         self.assertEqual(err, "")
         self.assertEqual(cfg["access_token"], "at")
 
@@ -202,13 +202,13 @@ class LoginMarksTheComputer(unittest.TestCase):
             (out, err, cfg), seen = self.login(status)
             self.assertEqual(seen[-1][:2], ("PUT", "/auth/v1/user"))
             self.assertEqual(out.strip().count("\n"), 0, "one line: signed in")
-            self.assertIn("signed in as user@example.test", out)
+            self.assertIn("Signed in as user@example.test", out)
             self.assertEqual(err, "")
             self.assertEqual(cfg["refresh_token"], "rt")
 
     def test_a_dropped_connection_is_silent_and_the_login_stands(self):
         (out, err, cfg), seen = self.login(None)
-        self.assertIn("signed in as user@example.test", out)
+        self.assertIn("Signed in as user@example.test", out)
         self.assertEqual(err, "")
         self.assertEqual(cfg["user_id"], "u1")
 
@@ -278,7 +278,7 @@ class LoginFallsBackToCliLogin(LoginMarksTheComputer):
         self.assertEqual(seen[1][2], {"email": "user@example.test", "password": "pw"})
         self.assertEqual(seen[1][3]["apikey"], "the-key")
         self.assertEqual((cfg["user_id"], cfg["access_token"], cfg["refresh_token"]), ("u1", "at", "rt"))
-        self.assertIn("signed in as user@example.test", out)
+        self.assertIn("Signed in as user@example.test", out)
         self.assertEqual(err, "")
 
     def test_a_backend_without_captcha_never_calls_it(self):
@@ -301,6 +301,57 @@ class LoginFallsBackToCliLogin(LoginMarksTheComputer):
             self.assertEqual(code, 1)
             self.assertTrue(err.getvalue().startswith(line), err.getvalue())
             self.assertNotIn("pw", err.getvalue().replace("password", ""), "the password never shows")
+
+
+class TheMessageNamesTheBackend(unittest.TestCase):
+    """The hosted backend is named as such: its users never chose a Supabase project. Another one shows its url."""
+    login = LoginMarksTheComputer.login
+    run_login = LoginMarksTheComputer.run_login
+
+    def with_hosted(self, url):
+        old = os.environ.get("REELBOOK_HOSTED_URL")
+        os.environ["REELBOOK_HOSTED_URL"] = url
+        self.addCleanup(lambda: os.environ.pop("REELBOOK_HOSTED_URL") if old is None else os.environ.update(REELBOOK_HOSTED_URL=old))
+
+    def test_login_on_the_hosted_backend(self):
+        # the fake server's url is only known once it listens: it is given as REELBOOK_HOSTED_URL right then
+        real_run = self.run_login
+        def run(url):
+            self.with_hosted(url)
+            return real_run(url)
+        self.run_login = run
+        (out, err, cfg), _ = self.login(200)
+        self.assertEqual(out.splitlines()[0], "Signed in as user@example.test (Reelbook hosted).")
+        self.assertNotIn("127.0.0.1", out)
+
+    def test_login_on_another_backend(self):
+        self.with_hosted("https://hosted.example.test")
+        (out, err, cfg), _ = self.login(200)
+        self.assertRegex(out.splitlines()[0], r"^Signed in as user@example\.test on your own Supabase: http://127\.0\.0\.1:\d+$")
+
+    def whoami(self, url):
+        orig = rb.session
+        rb.session = lambda: {"email": "user@example.test", "user_id": "u1", "url": url}
+        self.addCleanup(setattr, rb, "session", orig)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            rb.cmd_whoami([])
+        return out.getvalue().strip()
+
+    def test_whoami_follows_the_same_rule(self):
+        self.with_hosted("https://hosted.example.test/")
+        self.assertEqual(self.whoami("https://hosted.example.test"), "user@example.test (u1), Reelbook hosted")
+        self.assertEqual(self.whoami("https://mine.example.test"), "user@example.test (u1) on your own Supabase: https://mine.example.test")
+
+    def test_without_the_variable_the_repository_config_js_names_it(self):
+        self.with_hosted("")
+        with tempfile.TemporaryDirectory() as tmp:
+            js = pathlib.Path(tmp) / "config.js"
+            js.write_text("window.X = {\n  hosted: {\n    // url: 'https://old.example.test',\n    url: \"https://hosted.example.test/\",\n    anonKey: 'k'\n  }\n};\n")
+            self.assertEqual(rb.hosted_url(js), "https://hosted.example.test")
+            js.write_text("window.X = { hosted: { url: '' } };\n")
+            self.assertEqual(rb.hosted_url(js), "")
+        self.assertEqual(rb.hosted_url(pathlib.Path("/nonexistent/config.js")), "")
 
 
 if __name__ == "__main__":

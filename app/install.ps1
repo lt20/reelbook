@@ -52,6 +52,7 @@ function Resolve-ReelbookBackend([string]$Url, [string]$Key, [string]$ConfigUrl)
   catch { throw "Could not read $ConfigUrl to find the hosted backend. Check the connection and try again, or set REELBOOK_URL and REELBOOK_KEY first." }
   $b = Get-HostedBackend $text
   if (-not $b) { throw "No hosted backend is set in $ConfigUrl (an https url and an anon key). Set REELBOOK_URL and REELBOOK_KEY first: the app's Settings page shows that line." }
+  $b.Hosted = $true
   return $b
 }
 
@@ -100,6 +101,46 @@ function Update-ReelbookRepo([string]$Dir) {
   return $true
 }
 
+# The end of an install that went through: a film reel and REELBOOK in block letters (the brand's coral and blue,
+# ANSI 256 colours), then what to do next. Colour only on a terminal that reads escape codes, without NO_COLOR, and
+# when TERM is not dumb. French when the UI culture is French, English otherwise. This file stays ASCII (Windows
+# PowerShell may read it as Latin-1): the block and the accents are character codes.
+function Show-ReelbookWelcome {
+  $e = [char]27; $coral = ""; $blue = ""; $bold = ""; $off = ""
+  if ($Host.UI.SupportsVirtualTerminal -and -not [Console]::IsOutputRedirected -and -not $env:NO_COLOR -and $env:TERM -ne "dumb") {
+    $coral = "$e[38;5;167m"; $blue = "$e[38;5;25m"; $bold = "$e[1m"; $off = "$e[0m"
+  }
+  $px = [string][char]0x2588
+  # a 7 x 7 reel, each dot two columns wide, and 4 x 5 letters
+  $reel = @("    ######    ", "  ##########  ", "####  ##  ####", "######  ######", "####  ##  ####", "  ##########  ", "    ######    ")
+  $letters = @("",
+    "###  #### #### #    ###   ##   ##  #  #",
+    "#  # #    #    #    #  # #  # #  # # # ",
+    "###  ###  ###  #    ###  #  # #  # ##  ",
+    "# #  #    #    #    #  # #  # #  # # # ",
+    "#  # #### #### #### ###   ##   ##  #  #",
+    "")
+  Write-Host ""
+  for ($i = 0; $i -lt 7; $i++) {
+    Write-Host ("  $coral" + $reel[$i].Replace("#", $px) + "$off   $blue$bold" + $letters[$i].Replace("#", $px) + $off)
+  }
+  Write-Host ""
+  if ([string]$PSUICulture -like "fr*") {
+    $ea = [char]0xE0; $ec = [char]0xEA; $ee = [char]0xE9; $ic = [char]0xEE
+    Write-Host "${bold}C'est pr${ec}t.$off"
+    Write-Host "1. Mets tes vid${ee}os en file d'attente : colle leur lien dans l'app, ou envoie-les avec le raccourci iPhone."
+    Write-Host "2. Dans Claude Code, sur ton ordinateur, tape /reelbook, avec Chrome ouvert et l'extension Claude in Chrome install${ee}e."
+    Write-Host "3. Claude ouvre les liens en file d'attente, lit les vid${ee}os, cr${ee}e les fiches et les range dans le carnet du sport correspondant."
+    Write-Host "Retrouve-les dans l'app : https://lt20.github.io/reelbook/"
+  } else {
+    Write-Host "${bold}You're all set.$off"
+    Write-Host "1. Queue your videos: paste their link in the app, or send them with the iPhone shortcut."
+    Write-Host "2. In Claude Code on your computer, type /reelbook, with Chrome open and the Claude in Chrome extension installed."
+    Write-Host "3. Claude opens the queued links, reads the videos, writes the sheets and files each one in the notebook of its sport."
+    Write-Host "Find them in the app: https://lt20.github.io/reelbook/"
+  }
+}
+
 function Install-Reelbook {
   # The variables of a line are used once, then cleared: a later line pasted in the same PowerShell window (the short
   # one, for the hosted backend) must not reuse the backend of an earlier one.
@@ -144,10 +185,15 @@ function Install-Reelbook {
 
   Say "5/5 Signing this computer in to your Reelbook account"
   Write-Host "Use the email and password of your Reelbook account (the ones you chose in the app)."
+  # rb.py names the hosted backend as such; an empty value is no variable at all
+  $env:REELBOOK_HOSTED_URL = if ($Backend.Hosted) { $Backend.Url } else { "" }
   & python (Join-Path $Dir "tools\rb.py") login --url $Backend.Url --key $Backend.Key
+  $rc = $LASTEXITCODE
+  Remove-Item Env:REELBOOK_HOSTED_URL -ErrorAction SilentlyContinue
+  # a failed sign-in stops here: the welcome below is only for an install that went through
+  if ($rc -ne 0) { throw "The sign-in did not go through. Run the same install line again to retry." }
 
-  Say "Done."
-  Write-Host "Open Claude Code in any folder, keep Chrome open with the Claude in Chrome extension, and type:  /reelbook"
+  Show-ReelbookWelcome
 }
 
 Install-Reelbook
