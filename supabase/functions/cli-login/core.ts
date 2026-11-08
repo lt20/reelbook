@@ -12,11 +12,13 @@
 // password, nor a token is ever logged or echoed back.
 //
 // Abuse (the route skips Turnstile on purpose): before Auth is asked, cli_login_gate() in supabase/schema.sql counts
-// every attempt per caller (20 per 15 minutes) and reserves one of the address's 5 attempts per 15 minutes, atomically,
-// so that simultaneous calls cannot get more than 5 through. Every outcome that is not a wrong password gives the
-// attempt back (cli_login_release()), in the window the gate reserved it in and only there: only failures stay counted,
-// and a release that comes after the window turned cannot lower the newer window's count. Both keys are SHA-256
-// hashes: no address or IP is stored. Measures: progress/2026-11-08-L42a.md.
+// every attempt per caller (20 per 15 minutes) and reserves one of the address's attempts, atomically, so that
+// simultaneous calls cannot get more than 5 through. Per address the lock grows (L46): 5 wrong passwords lock it for
+// 15 minutes, the next 5 for 1 hour, every further 5 for 24 hours; a sign-in that succeeds here (cli_login_succeeded())
+// or 24 hours with no attempt and no lock put it back to the first level. Every other outcome that is not a wrong
+// password gives the attempt back (cli_login_release()), in the series the gate reserved it in and only there: only
+// failures stay counted, and a late release cannot lower a newer series' count. A refusal says how long is left
+// (retry-after, in seconds). Both keys are SHA-256 hashes: no address or IP is stored.
 
 export const BODY_MAX = 4096;
 export const EMAIL_MAX = 320;
@@ -61,7 +63,18 @@ const json = (status: number, body: Record<string, unknown>, extra: Record<strin
   });
 
 const WRONG = { error: 'invalid_credentials', message: 'Wrong email or password.' };
-const LIMITED = { error: 'too_many_attempts', message: 'Too many sign-in attempts. Try again in 15 minutes.' };
+// What is left to wait, as a person reads it: whole minutes under an hour, whole hours above, rounded up.
+export function waitText(seconds: number): string {
+  const minutes = Math.max(1, Math.ceil(seconds / 60));
+  if (minutes < 60) return minutes === 1 ? '1 minute' : `${minutes} minutes`;
+  const hours = Math.ceil(minutes / 60);
+  return hours === 1 ? '1 hour' : `${hours} hours`;
+}
+const limited = (seconds: number): Response =>
+  json(429, { error: 'too_many_attempts', message: `Too many sign-in attempts. Try again in ${waitText(seconds)}.` },
+    { 'retry-after': String(seconds) });
+// The wait when the gate names none (an older schema.sql's bare 'caller' or 'address'), and when Auth itself limits.
+const DEFAULT_WAIT = 900;
 const DOWN = { error: 'unavailable', message: 'Reelbook could not sign you in right now. Try again in a moment.' };
 
 export async function handle(req: Request, deps: Deps): Promise<Response> {
@@ -85,16 +98,25 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     console.error('cli-login: gate failed', String(gate.error.code || 'unknown'));
     return json(502, DOWN);
   }
-  // 'ok:<window>': the gate reserved an attempt for the address in that window. Anything else (an older schema.sql's
-  // bare 'ok' included) is refused before Auth is asked.
+  // 'ok:<series>': the gate reserved an attempt for the address in that series. 'caller:<seconds>' or
+  // 'address:<seconds>': refused, for that long (bare, from an older schema.sql: 15 minutes). Anything else (an older
+  // schema.sql's bare 'ok' included) is refused too, before Auth is asked.
   const passed = typeof gate.data === 'string' && /^ok:\S+$/.test(gate.data);
-  if (!passed) return json(429, LIMITED, { 'retry-after': '900' });
+  if (!passed) {
+    const wait = typeof gate.data === 'string' ? /^(?:caller|address):(\d{1,6})$/.exec(gate.data) : null;
+    return limited(wait ? Math.max(1, Number(wait[1])) : DEFAULT_WAIT);
+  }
   const reservedIn = (gate.data as string).slice(3);
-  // Anything but a wrong password gives the attempt back, in that window only.
-  const release = async () => {
-    const r = await deps.rpc('cli_login_release', { p_address: address, p_window: reservedIn });
-    if (r.error) console.error('cli-login: attempt not released', String(r.error.code || 'unknown'));
+  // Anything but a wrong password settles the attempt, in that series only: a success puts the address back to the
+  // first level, any other outcome gives the attempt back.
+  const settle = async (fn: 'cli_login_release' | 'cli_login_succeeded') => {
+    const r = await deps.rpc(fn, { p_address: address, p_window: reservedIn });
+    if (r.error) console.error(`cli-login: ${fn} failed`, String(r.error.code || 'unknown'));
+    return !r.error;
   };
+  const release = () => settle('cli_login_release');
+  // An older schema.sql has no cli_login_succeeded(): the attempt is then at least given back.
+  const succeeded = async () => { if (!(await settle('cli_login_succeeded'))) await release(); };
 
   let answer: Awaited<ReturnType<Grant>>;
   try { answer = await deps.grant(email, password); } catch {
@@ -105,7 +127,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   const b = answer.body || {};
   const user = (b.user && typeof b.user === 'object' ? b.user : {}) as Record<string, unknown>;
   if (answer.status === 200 && typeof b.access_token === 'string' && typeof b.refresh_token === 'string' && typeof user.id === 'string') {
-    await release();
+    await succeeded();
     return json(200, {
       access_token: b.access_token, refresh_token: b.refresh_token, expires_in: b.expires_in, expires_at: b.expires_at,
       token_type: b.token_type, user: { id: user.id },
@@ -124,7 +146,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     await release();
     return json(502, DOWN);
   }
-  if (answer.status === 429) { await release(); return json(429, LIMITED, { 'retry-after': '900' }); }
+  if (answer.status === 429) { await release(); return limited(DEFAULT_WAIT); }
   // A wrong password (or an unknown address): the reserved attempt stays counted.
   if (answer.status === 400 || answer.status === 401 || answer.status === 422) return json(401, WRONG);
   console.error('cli-login: auth answered', answer.status, code.slice(0, 40));

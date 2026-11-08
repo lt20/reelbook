@@ -2,7 +2,7 @@
 //   deno test --no-remote supabase/functions/cli-login/core.test.ts
 // (also run by tests/cli-login.test.cjs when Deno is installed). The real Auth with Turnstile on:
 // tests/e2e/cli-login-real.mjs.
-import { callerOf, grantHeaders, handle, sha256, type Deps } from './core.ts';
+import { callerOf, grantHeaders, handle, sha256, waitText, type Deps } from './core.ts';
 
 const eq = (a: unknown, b: unknown, msg = '') => {
   if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${msg} expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
@@ -45,8 +45,22 @@ Deno.test('right password: the session, the user id and nothing else of the user
   eq(r.headers.get('cache-control'), 'no-store');
   eq(grants, [[EMAIL, PASSWORD]], 'the address trimmed, the password as typed');
   const address = await sha256(EMAIL.toLowerCase());
-  eq(rpcs, [['cli_login_gate', { p_caller: await sha256('203.0.113.5'), p_address: address }], ['cli_login_release', { p_address: address, p_window: W0 }]],
-    'hashes only, the reserved attempt given back in the window it was reserved in');
+  eq(rpcs, [['cli_login_gate', { p_caller: await sha256('203.0.113.5'), p_address: address }], ['cli_login_succeeded', { p_address: address, p_window: W0 }]],
+    'hashes only, the success recorded in the series the attempt was reserved in');
+});
+
+Deno.test('right password on an older schema.sql (no cli_login_succeeded): the attempt is still given back', async () => {
+  const rpcs: string[] = [];
+  const d: Deps = {
+    rpc: fn => {
+      rpcs.push(fn);
+      if (fn === 'cli_login_gate') return Promise.resolve({ data: `ok:${W0}`, error: null });
+      return Promise.resolve({ data: null, error: fn === 'cli_login_succeeded' ? { code: 'PGRST202' } : null });
+    },
+    grant: () => Promise.resolve({ status: 200, body: SESSION }),
+  };
+  eq((await call(req({ email: EMAIL, password: PASSWORD }), d)).status, 200);
+  eq(rpcs, ['cli_login_gate', 'cli_login_succeeded', 'cli_login_release']);
 });
 
 Deno.test('wrong password and unknown address: one answer, and the failure counted for the address', async () => {
@@ -58,12 +72,21 @@ Deno.test('wrong password and unknown address: one answer, and the failure count
   eq((await call(req({ email: 'not-an-email', password: 'x' }), other.d)).json, a.json);
 });
 
-Deno.test('limited by the gate: 429 before Auth is asked', async () => {
-  for (const gate of ['caller', 'address', 'ok', 'ok:']) {
+Deno.test('limited by the gate: 429 before Auth is asked, retry-after = what the gate says is left', async () => {
+  // Bare refusals (an older schema.sql) and anything unexpected: 15 minutes.
+  for (const gate of ['caller', 'address', 'ok', 'ok:', 'address:', 'address:x', 'address:1234567']) {
     const { d, grants } = deps({ gate });
     const r = await call(req({ email: EMAIL, password: PASSWORD }), d);
-    eq(r.status, 429); eq(r.json.error, 'too_many_attempts'); eq(r.headers.get('retry-after'), '900'); eq(grants, []);
+    eq(r.status, 429); eq(r.json.error, 'too_many_attempts'); eq(r.headers.get('retry-after'), '900', gate); eq(grants, []);
+    eq(r.json.message, 'Too many sign-in attempts. Try again in 15 minutes.');
   }
+  for (const [gate, after, text] of [['address:900', '900', '15 minutes'], ['address:3600', '3600', '1 hour'], ['address:86400', '86400', '24 hours'],
+    ['address:50399', '50399', '14 hours'], ['caller:42', '42', '1 minute'], ['caller:0', '1', '1 minute'], ['address:3599', '3599', '1 hour']]) {
+    const { d, grants } = deps({ gate });
+    const r = await call(req({ email: EMAIL, password: PASSWORD }), d);
+    eq([r.status, r.headers.get('retry-after'), r.json.message], [429, after, `Too many sign-in attempts. Try again in ${text}.`], gate); eq(grants, []);
+  }
+  eq([waitText(61), waitText(899), waitText(3540), waitText(3601), waitText(86399)], ['2 minutes', '15 minutes', '59 minutes', '2 hours', '24 hours']);
 });
 
 Deno.test('gate unavailable (schema.sql not run): 502, Auth never asked', async () => {
@@ -103,41 +126,110 @@ Deno.test('simultaneous wrong passwords for one address: 5 reach Auth, not 20 (C
   eq(all.filter(r => r.status === 401).length, 5); eq(all.filter(r => r.status === 429).length, 15);
 });
 
-Deno.test('a release after the window turned leaves the newer window alone: no 6th try reaches Auth (Codex pass 2)', async () => {
-  // A stub of the two functions as schema.sql makes them, on a clock: 15-minute windows per address; the release only
-  // touches the window the gate named.
-  let now = Date.parse('2026-11-08T10:00:00Z');
-  const row = { start: 0, hits: 0 };
+// A model of the per-address part of schema.sql's cli_login_gate / cli_login_release / cli_login_succeeded, on a clock
+// (every call moves it 1 ms, so that two series never start at the same instant). The real SQL is measured on a local
+// stack (tests/e2e/cli-login-real.mjs progressive).
+const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
+function model(start = Date.parse('2026-11-08T10:00:00Z')) {
+  const clock = { now: start };
+  type Row = { ws: number; h: number; lv: number; lu: number | null; lh: number | null };
+  const rows = new Map<string, Row>();
   const iso = (t: number) => new Date(t).toISOString();
+  const rpc: Deps['rpc'] = (fn, a) => {
+    const now = (clock.now += 1);
+    const k = 'a:' + a.p_address;
+    if (fn === 'cli_login_gate') {
+      for (const [key, r] of rows) if (Math.max(r.ws, r.lh ?? r.ws, r.lu ?? r.ws) < now - DAY) rows.delete(key);
+      let r = rows.get(k);
+      if (!r) rows.set(k, r = { ws: now, h: 0, lv: 0, lu: null, lh: null });
+      if (r.lu !== null && r.lu > now) return Promise.resolve({ data: `address:${Math.max(1, Math.ceil((r.lu - now) / 1000))}`, error: null });
+      if (r.lu !== null) Object.assign(r, { ws: now, h: 0, lv: Math.min(r.lv + 1, 2), lu: null });
+      r.h++;
+      if (r.h >= 5) r.lu = now + [15 * MIN, HOUR, DAY][r.lv];
+      r.lh = now;
+      return Promise.resolve({ data: `ok:${iso(r.ws)}`, error: null });
+    }
+    const r = rows.get(k);
+    if (r && iso(r.ws) === a.p_window) {
+      if (fn === 'cli_login_release') { r.h = Math.max(r.h - 1, 0); if (r.h < 5) r.lu = null; }
+      if (fn === 'cli_login_succeeded') Object.assign(r, { ws: now, h: 0, lv: 0, lu: null });
+    }
+    return Promise.resolve({ data: null, error: null });
+  };
+  return { clock, rows, rpc };
+}
+
+Deno.test('a release after the series turned leaves the newer series alone: no 6th try reaches Auth (Codex pass 2)', async () => {
+  const m = model();
   let asked = 0, letFirstAnswer = () => {};
   const firstAnswer = new Promise<void>(r => { letFirstAnswer = r; });
   const d: Deps = {
-    rpc: (fn, args) => {
-      if (fn === 'cli_login_gate') {
-        if (row.start <= now - 15 * 60e3) { row.start = now; row.hits = 1; } else row.hits++;
-        return Promise.resolve({ data: row.hits > 5 ? 'address' : `ok:${iso(row.start)}`, error: null });
-      }
-      if (fn === 'cli_login_release' && args.p_window === iso(row.start)) row.hits = Math.max(row.hits - 1, 0);
-      return Promise.resolve({ data: null, error: null });
-    },
+    rpc: m.rpc,
     grant: async (_e, password) => {
       asked++;
-      if (password === PASSWORD) { await firstAnswer; return { status: 200, body: SESSION }; }
+      if (password === 'slow-but-not-wrong') { await firstAnswer; return { status: 503, body: null }; }
       return { status: 400, body: { error_code: 'invalid_credentials' } };
     },
   };
-  const slow = call(req({ email: EMAIL, password: PASSWORD }), d); // reserved in window N, Auth slow to answer
+  for (let i = 0; i < 4; i++) eq((await call(req({ email: EMAIL, password: `wrong-${i}` }), d)).status, 401);
+  const slow = call(req({ email: EMAIL, password: 'slow-but-not-wrong' }), d); // the 5th, of series N: Auth slow to answer
   await new Promise(r => setTimeout(r, 0));
-  eq(row.hits, 1, 'reserved in window N');
-  now += 15 * 60e3 + 1; // window N+1
-  for (let i = 0; i < 5; i++) eq((await call(req({ email: EMAIL, password: `wrong-${i}` }), d)).status, 401);
-  eq(row.hits, 5, 'five failures kept in window N+1');
+  const row = [...m.rows.values()][0];
+  eq([row.h, row.lu !== null], [5, true], 'the 5th reservation locks series N at once');
+  m.clock.now += 15 * MIN + 1; // the lock is over: series N+1
+  for (let i = 0; i < 5; i++) eq((await call(req({ email: EMAIL, password: `wrong-n1-${i}` }), d)).status, 401);
+  eq([row.h, row.lv], [5, 1], 'five failures kept in series N+1, one level up');
   letFirstAnswer();
-  eq((await slow).status, 200);
-  eq(row.hits, 5, 'the late release did not lower window N+1');
+  eq((await slow).status, 502);
+  eq([row.h, row.lu !== null], [5, true], 'the late release did not lower series N+1 nor lift its lock');
   const before = asked;
-  eq((await call(req({ email: EMAIL, password: 'wrong-6' }), d)).status, 429);
+  const sixth = await call(req({ email: EMAIL, password: 'wrong-6' }), d);
+  eq([sixth.status, sixth.headers.get('retry-after')], [429, '3600']);
   eq(asked, before, 'the 6th wrong password never reached Auth');
+});
+
+Deno.test('progressive lock per address: 15 minutes, then 1 hour, then 24 hours; reset by a success or 24 quiet hours', async () => {
+  const m = model();
+  let asked = 0;
+  const d: Deps = {
+    rpc: m.rpc,
+    grant: (_e, password) => { asked++; return Promise.resolve(password === PASSWORD ? { status: 200, body: SESSION } : { status: 400, body: { error_code: 'invalid_credentials' } }); },
+  };
+  const attempt = async (password: string) => { const r = await call(req({ email: EMAIL, password }), d); return r.status === 429 ? `429 ${r.headers.get('retry-after')}` : String(r.status); };
+  const series = async () => { const out: string[] = []; for (let i = 0; i < 6; i++) out.push(await attempt(`wrong-${i}`)); return out; };
+  const fiveThen = (after: string) => ['401', '401', '401', '401', '401', `429 ${after}`];
+
+  eq(await series(), fiveThen('900'), 'level 0: 5 failures, then 15 minutes');
+  const before = asked;
+  eq(await attempt(PASSWORD), '429 900', 'the right password during a lock: refused');
+  eq(asked, before, 'and Auth not asked');
+  m.clock.now += 10 * MIN;
+  eq(await attempt('wrong'), '429 300', 'retry-after is what is left');
+  m.clock.now += 5 * MIN + 1e3;
+  eq(await series(), fiveThen('3600'), 'level 1: 5 more failures, then 1 hour');
+  m.clock.now += HOUR + 1e3;
+  eq(await series(), fiveThen('86400'), 'level 2: 5 more, then 24 hours');
+  m.clock.now += 10 * HOUR;
+  eq(await attempt('wrong'), '429 50400', '14 hours left');
+  m.clock.now += 14 * HOUR + 1e3;
+  eq(await series(), fiveThen('86400'), 'level 2 stays 24 hours');
+
+  m.clock.now += DAY + 1e3;
+  eq(await attempt(PASSWORD), '200', 'once the lock is over, the right password passes');
+  eq(await series(), fiveThen('900'), 'a success puts the address back to level 0');
+
+  m.clock.now += 15 * MIN + 1e3;
+  eq(await series(), fiveThen('3600'), 'level 1 again');
+  m.clock.now += HOUR + DAY - 1e3;
+  eq((await series())[5], '429 86400', '23:59:59 after the 1-hour lock ended: still counted, level 2');
+  m.clock.now += DAY + DAY + 2e3;
+  eq(await series(), fiveThen('900'), '24 hours with no attempt and no lock: level 0');
+
+  // A success while the address is not locked also clears the failures counted so far.
+  m.clock.now += 15 * MIN + 1e3;
+  for (let i = 0; i < 4; i++) eq(await attempt(`wrong-${i}`), '401');
+  eq(await attempt(PASSWORD), '200');
+  eq(await series(), fiveThen('900'));
 });
 
 Deno.test('grant headers: a service_role JWT in apikey and Authorization, a secret key in apikey alone', () => {

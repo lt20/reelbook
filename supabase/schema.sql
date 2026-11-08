@@ -816,21 +816,50 @@ grant select on public.account_quotas to authenticated;                -- the li
 grant select, update on public.capture_tokens to service_role;
 grant insert on public.requests to service_role;
 
--- cli-login limits (L42a). The Edge Function cli-login makes the password grant for `rb.py login` with the service role,
--- which skips Turnstile: so it counts attempts itself, before Auth is asked. Keys are SHA-256 hashes made by the
--- function ('c:' + caller IP, 'a:' + lowercased email): no address or IP is stored. Fixed windows of 15 minutes:
--- 20 attempts per caller, whatever the address; 5 attempts per address, whatever the caller, reserved atomically by
--- the gate (simultaneous calls cannot get more than 5 through) and given back by cli_login_release() for every outcome
--- that is not a wrong password, so only failures stay counted. Rows older than a day are dropped at each attempt.
--- No client reaches the table; only service_role runs the two functions.
+-- cli-login limits (L42a; progressive per address since L46). The Edge Function cli-login makes the password grant for
+-- `rb.py login` with the service role, which skips Turnstile: so it counts attempts itself, before Auth is asked. Keys
+-- are SHA-256 hashes made by the function ('c:' + caller IP, 'a:' + lowercased email): no address or IP is stored.
+-- Per caller: 20 attempts per fixed window of 15 minutes, whatever the address.
+-- Per address, whatever the caller, a lock that grows: 5 wrong passwords lock the address for 15 minutes; once that
+-- lock is over, 5 more lock it for 1 hour; every further 5, for 24 hours. A sign-in that succeeds through the function
+-- puts the address back to the first level, and so do 24 hours with no attempt and no lock (its row is dropped).
+-- Every attempt is reserved by the gate, atomically (simultaneous calls cannot get more than 5 through a series), and
+-- given back by cli_login_release() for every outcome that is not a wrong password, so only failures stay counted.
+-- No client reaches the table; only service_role runs the gate and the two functions that settle an attempt.
 create table if not exists public.cli_login_limits (
   key          text primary key,
-  window_start timestamptz not null,
-  hits         integer not null
+  window_start timestamptz not null,  -- caller: start of its 15-minute window; address: start of its current series
+  hits         integer not null,      -- attempts counted in that window or series
+  level        integer not null default 0,  -- address: 0 for the first series (15-minute lock), 1 (1 hour), 2 (24 hours)
+  locked_until timestamptz,                  -- address: end of the lock that the series' 5th attempt started
+  last_hit     timestamptz                   -- address: when its last attempt was reserved
 );
 alter table public.cli_login_limits enable row level security;
 revoke all on public.cli_login_limits from anon, authenticated;
 
+-- A table made before L46 gets the three columns here, once. Its address rows were counted in fixed windows of
+-- 15 minutes: a window still open goes on as the address's series (with 5 failures, a lock that ends with the window);
+-- an ended window counts nothing more, so its row goes: the next attempt starts a series with a new window_start. Kept
+-- with hits at 0, it would keep its old window_start, the series' identifier, and a release still on its way for that
+-- window (reserved just before it ended, answered after this upgrade) would then match the new series and lower its
+-- count, lifting a lock that 5 newer failures started (Codex, L46 pass 1).
+do $$
+begin
+  if not exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'cli_login_limits' and column_name = 'locked_until') then
+    alter table public.cli_login_limits
+      add column if not exists level integer not null default 0,
+      add column if not exists locked_until timestamptz,
+      add column if not exists last_hit timestamptz;
+    delete from public.cli_login_limits where key like 'a:%' and window_start <= now() - interval '15 minutes';
+    update public.cli_login_limits set
+        last_hit = window_start,
+        locked_until = case when hits >= 5 then window_start + interval '15 minutes' end
+      where key like 'a:%';
+  end if;
+end $$;
+
+-- The caller's count, in fixed windows of 15 minutes.
 create or replace function public.cli_login_hit(p_key text)
 returns integer language plpgsql security definer set search_path = '' as $$
 declare n integer;
@@ -843,35 +872,66 @@ begin
   return n;
 end $$;
 
--- 'ok:<window>' (the start of the address's window that holds the reservation, UTC, to the microsecond), 'caller'
--- (more than 20 attempts from that caller; the address is not touched) or 'address' (5 attempts already kept for that
--- address; this call's increment is taken back, the caller's stays: it counts every attempt). The address's
--- counter is incremented by the same upsert that reads it (the row lock, held until the end of the call, serializes
--- simultaneous calls, so the window read just after is the one this call reserved in).
+-- 'ok:<series>' (the start of the address's series that holds the reservation, UTC, to the microsecond),
+-- 'caller:<seconds>' (more than 20 attempts from that caller in its window; the address is not touched) or
+-- 'address:<seconds>' (the address is locked; nothing is counted for it, the caller's attempt still is), <seconds> being
+-- what is left of the caller's window or of the address's lock. The address's row is read and locked by one upsert (the
+-- row lock, held until the end of the call, serializes simultaneous calls): the 5th reservation of a series starts the
+-- lock at once, so the calls after it are refused while the 5th still waits for Auth's answer. What is left is counted
+-- from clock_timestamp(): a call that waited for the row lock has an older now() and would get a second too many.
 create or replace function public.cli_login_gate(p_caller text, p_address text)
 returns text language plpgsql security definer set search_path = '' as $$
-declare w timestamptz;
+declare
+  ws timestamptz;
+  h integer;
+  lv integer;
+  lu timestamptz;
 begin
   if coalesce(p_caller, '') = '' or coalesce(p_address, '') = '' then return 'caller'; end if;
-  delete from public.cli_login_limits where window_start < now() - interval '1 day';
-  if public.cli_login_hit('c:' || p_caller) > 20 then return 'caller'; end if;
-  if public.cli_login_hit('a:' || p_address) > 5 then
-    -- A refused reservation keeps no increment (Codex pass 3): taken back under the row lock the upsert still holds,
-    -- so a burst of refused calls cannot leave the counter above 5 once the reserved attempts are given back.
-    update public.cli_login_limits set hits = hits - 1 where key = 'a:' || p_address;
-    return 'address';
+  -- A caller's row a day after its window started; an address's after 24 hours with no attempt and no lock: for an
+  -- address, that is the return to the first level.
+  delete from public.cli_login_limits
+   where greatest(window_start, coalesce(last_hit, window_start), coalesce(locked_until, window_start)) < now() - interval '1 day';
+  if public.cli_login_hit('c:' || p_caller) > 20 then
+    select window_start into ws from public.cli_login_limits where key = 'c:' || p_caller;
+    return 'caller:' || greatest(1, ceil(extract(epoch from ws + interval '15 minutes' - clock_timestamp())))::bigint;
   end if;
-  select window_start into w from public.cli_login_limits where key = 'a:' || p_address;
-  return 'ok:' || to_char(w at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+  insert into public.cli_login_limits as l (key, window_start, hits) values ('a:' || p_address, now(), 0)
+  on conflict (key) do update set hits = l.hits
+  returning l.window_start, l.hits, l.level, l.locked_until into ws, h, lv, lu;
+  if lu > now() then
+    return 'address:' || greatest(1, ceil(extract(epoch from lu - clock_timestamp())))::bigint;
+  end if;
+  if lu is not null then  -- the lock is over: a new series, one level up
+    ws := now(); h := 0; lv := least(lv + 1, 2); lu := null;
+  end if;
+  h := h + 1;
+  if h >= 5 then
+    lu := now() + case lv when 0 then interval '15 minutes' when 1 then interval '1 hour' else interval '1 day' end;
+  end if;
+  update public.cli_login_limits set window_start = ws, hits = h, level = lv, locked_until = lu, last_hit = now()
+   where key = 'a:' || p_address;
+  return 'ok:' || to_char(ws at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
 end $$;
 
--- Gives back the attempt reserved by the gate (right password, unconfirmed email, Auth down or limited), never below
--- zero, and only in the window the gate reserved it in (p_window, as the gate returned it): once that window has been
--- replaced by a newer one, the release changes nothing, so it cannot lower the newer window's count (Codex pass 2).
+-- Gives back the attempt reserved by the gate (unconfirmed email, Auth down or limited, and the right password when
+-- cli_login_succeeded() is missing), never below zero, and only in the series the gate reserved it in (p_window, as the
+-- gate returned it): a release that comes once that series is over changes nothing, so it cannot lower a newer series'
+-- count (Codex pass 2). An attempt given back was not a failure: if it was the series' 5th, the lock it started goes.
 create or replace function public.cli_login_release(p_address text, p_window timestamptz)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
-  update public.cli_login_limits set hits = greatest(hits - 1, 0)
+  update public.cli_login_limits
+     set hits = greatest(hits - 1, 0), locked_until = case when hits - 1 >= 5 then locked_until end
+   where key = 'a:' || coalesce(p_address, '') and window_start = p_window;
+end $$;
+
+-- A sign-in that succeeded: the address goes back to the first level with nothing counted, in a new series, so that a
+-- release still on its way for the old one changes nothing. Only while the series is the one the gate reserved in.
+create or replace function public.cli_login_succeeded(p_address text, p_window timestamptz)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  update public.cli_login_limits set window_start = now(), hits = 0, level = 0, locked_until = null
    where key = 'a:' || coalesce(p_address, '') and window_start = p_window;
 end $$;
 -- Replaced before any deploy (L42a, Codex passes 1 and 2): a stack that ran an earlier draft loses them.
@@ -881,5 +941,7 @@ drop function if exists public.cli_login_release(text);
 revoke execute on function public.cli_login_hit(text) from public, anon, authenticated, service_role;
 revoke execute on function public.cli_login_gate(text, text) from public, anon, authenticated;
 revoke execute on function public.cli_login_release(text, timestamptz) from public, anon, authenticated;
+revoke execute on function public.cli_login_succeeded(text, timestamptz) from public, anon, authenticated;
 grant execute on function public.cli_login_gate(text, text) to service_role;
 grant execute on function public.cli_login_release(text, timestamptz) to service_role;
+grant execute on function public.cli_login_succeeded(text, timestamptz) to service_role;

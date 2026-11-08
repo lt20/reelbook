@@ -1,13 +1,14 @@
 // L42a: cli-login and `rb.py login` against a REAL Supabase Auth with Turnstile on, on the local stack of
 // tests/e2e/cli-login-stack.sh (never the hosted project: the script refuses any URL that is not 127.0.0.1). Not run by CI.
 //   tests/e2e/cli-login-stack.sh up
-//   node tests/e2e/cli-login-real.mjs [captcha|relay|rb|addlink|abuse|all]     # default all
+//   node tests/e2e/cli-login-real.mjs [captcha|relay|rb|addlink|abuse|progressive|upgrade|all]     # default all
+//   (upgrade needs RB_OLD_SCHEMA, a schema.sql from before L46, and leaves the stack on the current one)
 //   tests/e2e/cli-login-stack.sh down
 // Prints one line per check (ok / FAIL) and the measured figures; exit 1 on any FAIL.
 import assert from 'node:assert/strict';
 import {execFileSync, spawnSync} from 'node:child_process';
 import {createHash, randomBytes} from 'node:crypto';
-import {mkdtempSync, rmSync} from 'node:fs';
+import {mkdtempSync, readFileSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -19,7 +20,9 @@ if (!process.env.RB_API_URL) {
 }
 const {RB_API_URL: API, RB_ANON_KEY: ANON, RB_SERVICE_ROLE_KEY: SERVICE, RB_PUBLISHABLE_KEY: PUB, RB_SECRET_KEY: SECRET} = process.env;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(API || '')) { console.error('RB_API_URL must be the local stack (tests/e2e/cli-login-stack.sh up)'); process.exit(2); }
-const DB = 'supabase_db_rb-l42a';
+// The stack's project id and port prefix, as cli-login-stack.sh took them (RB_L42_ID, RB_L42_PORTS).
+const STACK = process.env.RB_L42_ID || 'rb-l42a', PORTS = process.env.RB_L42_PORTS || '549';
+const DB = `supabase_db_${STACK}`;
 const FN = `${API}/functions/v1/cli-login`;
 const RB = fileURLToPath(new URL('../../tools/rb.py', import.meta.url));
 const stamp = Date.now().toString(36), addr = n => `${n}-${stamp}@example.test`;
@@ -32,7 +35,7 @@ const check = async (name, fn) => {
 const post = async (url, headers, body, raw = false) => {
   const r = await fetch(url, {method: 'POST', headers: {'content-type': 'application/json', ...headers}, body: raw ? body : JSON.stringify(body)});
   const text = await r.text(); let json = null; try { json = JSON.parse(text); } catch { /* not JSON */ }
-  return {status: r.status, json, text};
+  return {status: r.status, json, text, headers: r.headers};
 };
 const grant = (headers, email, password, extra = {}) => post(`${API}/auth/v1/token?grant_type=password`, headers, {email, password, ...extra});
 const codeOf = r => r.json && (r.json.error_code || r.json.error);
@@ -42,10 +45,13 @@ const makeUser = async email => {
 };
 const relay = (email, password, headers = {}) => post(FN, {apikey: PUB || ANON, ...headers}, {email, password});
 const resetLimits = () => psql('delete from public.cli_login_limits');
+// Time passes, for the limits: every time of every row moves back by that interval.
+const shift = iv => psql(`update public.cli_login_limits set window_start = window_start - interval '${iv}', ` +
+  `last_hit = last_hit - interval '${iv}', locked_until = locked_until - interval '${iv}'`);
 
 async function captcha() {
   const a = addr('captcha'); await makeUser(a);
-  const env = execFileSync('docker', ['exec', 'supabase_auth_rb-l42a', 'printenv', 'GOTRUE_SECURITY_CAPTCHA_ENABLED', 'GOTRUE_SECURITY_CAPTCHA_PROVIDER'], {encoding: 'utf8'}).split('\n');
+  const env = execFileSync('docker', ['exec', `supabase_auth_${STACK}`, 'printenv', 'GOTRUE_SECURITY_CAPTCHA_ENABLED', 'GOTRUE_SECURITY_CAPTCHA_PROVIDER'], {encoding: 'utf8'}).split('\n');
   await check(`stack: captcha on, provider ${env[1]}`, () => assert.deepEqual(env.slice(0, 2), ['true', 'turnstile']));
   const cases = [
     ['anon key, no token', {apikey: ANON}, {}],
@@ -106,7 +112,7 @@ async function relaySection() {
   await post(`${API}/auth/v1/admin/users`, {apikey: SERVICE, authorization: `Bearer ${SERVICE}`}, {email: un, password: PW});
   const unc = await relay(un, PW);
   console.log(`     unconfirmed address, right password: ${unc.status} ${unc.json && unc.json.error}`);
-  const logs = execFileSync('docker', ['logs', 'supabase_edge_runtime_rb-l42a'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']});
+  const logs = execFileSync('docker', ['logs', `supabase_edge_runtime_${STACK}`], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']});
   await check('the function logged no address, password or token', () => {
     for (const s of [a, PW, 'wrong-password', ok.json.access_token, ok.json.refresh_token]) assert.ok(!logs.includes(s), 'found in logs');
   });
@@ -156,11 +162,11 @@ async function addlink() {
   });
   for (const role of ['anon', 'authenticated', 'service_role']) {
     const t = psql(`select string_agg(p, ',') from (values ('select'), ('insert'), ('update'), ('delete')) w(p) where has_table_privilege('${role}', 'public.cli_login_limits', p)`);
-    const f = psql(`select string_agg(f, ',') from (values ('cli_login_gate(text,text)'), ('cli_login_release(text,timestamptz)'), ('cli_login_hit(text)')) v(f) where has_function_privilege('${role}', 'public.' || f, 'execute')`);
+    const f = psql(`select string_agg(f, ',') from (values ('cli_login_gate(text,text)'), ('cli_login_release(text,timestamptz)'), ('cli_login_succeeded(text,timestamptz)'), ('cli_login_hit(text)')) v(f) where has_function_privilege('${role}', 'public.' || f, 'execute')`);
     console.log(`     ${role}: cli_login_limits [${t}] functions [${f}]`);
-    await check(`${role}: no right on cli_login_limits${role === 'service_role' ? ', executes gate and release only' : ', no cli_login function'}`, () => {
+    await check(`${role}: no right on cli_login_limits${role === 'service_role' ? ', executes gate, release and succeeded only' : ', no cli_login function'}`, () => {
       assert.equal(t, '');
-      assert.equal(f, role === 'service_role' ? 'cli_login_gate(text,text),cli_login_release(text,timestamptz)' : '');
+      assert.equal(f, role === 'service_role' ? 'cli_login_gate(text,text),cli_login_release(text,timestamptz),cli_login_succeeded(text,timestamptz)' : '');
     });
   }
 }
@@ -176,7 +182,7 @@ async function abuse() {
   console.log(`     CLI Auth, 40 wrong admin grants, same address: ${tally(flat)}`);
 
   // 2. Auth with a per-IP key (second container of `cli-login-stack.sh limited`), as the hosted platform runs it.
-  const L = 'http://127.0.0.1:54930';
+  const L = `http://127.0.0.1:${PORTS}30`;
   if ((await fetch(`${L}/health`).catch(() => null))?.ok) {
     const lg = (ip, email, password) => post(`${L}/token?grant_type=password`, {...ADMIN(), 'x-forwarded-for': ip}, {email, password});
     const until429 = async (ip, emailOf) => { for (let i = 1; i <= 300; i++) if ((await lg(ip, emailOf(i), 'wrong-password')).status === 429) return i; return null; };
@@ -200,7 +206,7 @@ async function abuse() {
   await check('cli-login: 5 failures per address, whatever the caller; the 6th try, right or wrong, is 429', () => {
     assert.deepEqual(same, [401, 401, 401, 401, 401, 429, 429, 429]); assert.equal(locked.status, 429);
   });
-  psql("update public.cli_login_limits set window_start = now() - interval '16 minutes'");
+  shift('16 minutes');
   const after = await relay(a, PW, {'x-forwarded-for': '192.0.2.99'});
   await check('cli-login: 15 minutes later, the right password passes', () => assert.equal(after.status, 200, after.text));
 
@@ -231,41 +237,178 @@ async function abuse() {
   await check('cli-login: right passwords are not counted against the address', () => {
     assert.deepEqual(rights, Array(8).fill(200)); assert.equal(kept, '0');
   });
-  // A release that lands after the window turned (Codex pass 2), on the real SQL: an attempt reserved 1 s before its
-  // window ends, 5 failures in the next window, then the late release: the newer window keeps its 5, the 6th is refused.
+  // A release that lands after the series turned (Codex pass 2), on the real SQL: the 5th attempt of series N (which
+  // locks it) is released only after the lock is over and 5 failures were kept in series N+1: N+1 keeps its 5 and its
+  // lock, the 6th is refused. A release in its own series gives the attempt back and lifts the lock it started.
   resetLimits();
   const K = `e2e-window-${stamp}`, gate = () => psql(`select public.cli_login_gate('c-window', '${K}')`);
-  const hitsOf = () => psql(`select hits from public.cli_login_limits where key = 'a:${K}'`);
-  psql(`insert into public.cli_login_limits (key, window_start, hits) values ('a:${K}', now() - interval '15 minutes' + interval '1 second', 0)`);
-  const first = gate();
-  await new Promise(r => setTimeout(r, 1500));
+  const stateOf = () => psql(`select hits || ' ' || level || ' ' || (locked_until is not null) from public.cli_login_limits where key = 'a:${K}'`);
+  const firsts = Array.from({length: 5}, gate), first = firsts[4];
+  const lockedN = stateOf();
+  // The lock is over; window_start is left as it is, so that only the series' turn can make the late release miss.
+  psql(`update public.cli_login_limits set locked_until = now() - interval '1 second' where key = 'a:${K}'`);
   const next = Array.from({length: 5}, gate);
   psql(`select public.cli_login_release('${K}', '${first.slice(3)}')`);
-  const afterLate = hitsOf(), sixth = gate(), afterSixth = hitsOf();
+  const afterLate = stateOf(), sixth = gate(), afterSixth = stateOf();
   psql(`select public.cli_login_release('${K}', '${next[4].slice(3)}')`);
-  const afterOwn = hitsOf();
-  console.log(`     release after the window turned: reserved ${first}; next window ${next[0]} ×${next.length}; count after the late release ${afterLate}; 6th: ${sixth}, count after it ${afterSixth}; a release in its own window: ${afterOwn}`);
-  await check('cli-login: a release after the window turned leaves the newer window\'s count alone (6th refused)', () => {
-    assert.match(first, /^ok:\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}Z$/); assert.ok(next.every(g => g === next[0] && g !== first), next.join(' '));
-    // The refused 6th keeps no increment (Codex pass 3), so a release in its own window takes the count to 4.
-    assert.equal(afterLate, '5'); assert.equal(sixth, 'address'); assert.equal(afterSixth, '5'); assert.equal(afterOwn, '4');
+  const afterOwn = stateOf();
+  console.log(`     release after the series turned: series N ${first} (hits level locked: ${lockedN}); series N+1 ${next[0]} ×${next.length}; after the late release ${afterLate}; 6th: ${sixth}, after it ${afterSixth}; a release in its own series: ${afterOwn}`);
+  await check('cli-login: a release after the series turned leaves the newer series alone (6th refused)', () => {
+    assert.match(first, /^ok:\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}Z$/); assert.ok(firsts.every(g => g === first), firsts.join(' '));
+    assert.ok(next.every(g => g === next[0] && g !== first), next.join(' '));
+    assert.equal(lockedN, '5 0 true'); assert.equal(afterLate, '5 1 true');
+    assert.match(sixth, /^address:(3[56]\d\d)$/); assert.equal(afterSixth, '5 1 true'); assert.equal(afterOwn, '4 1 false');
   });
 
   resetLimits();
   const spray = [];
   for (let i = 0; i < 25; i++) spray.push((await relay(addr(`spray${i}`), 'wrong-password', {'x-forwarded-for': '198.51.100.1'})).status);
   const sameCaller = await relay(a, PW, {'x-forwarded-for': '198.51.100.1'}), otherCaller = await relay(a, PW, {'x-forwarded-for': '198.51.100.2'});
-  console.log(`     cli-login, 25 addresses from one caller: ${tally(spray)}; then the right password from that caller ${sameCaller.status}, from another ${otherCaller.status}`);
+  const callerWait = Number(sameCaller.headers.get('retry-after'));
+  console.log(`     cli-login, 25 addresses from one caller: ${tally(spray)}; then the right password from that caller ${sameCaller.status} (retry-after ${callerWait}), from another ${otherCaller.status}`);
   const sprayAddresses = psql(`select count(*) from public.cli_login_limits where key like 'a:%'`);
   await check('cli-login: 20 attempts per caller, others unaffected; a caller refusal leaves no address counted', () => {
     assert.deepEqual(spray, [...Array(20).fill(401), ...Array(5).fill(429)]); assert.equal(sameCaller.status, 429); assert.equal(otherCaller.status, 200);
+    assert.ok(callerWait > 800 && callerWait <= 900, `caller retry-after ${callerWait}`);
     assert.equal(sprayAddresses, '21');
   });
   const rows = psql('select count(*) from public.cli_login_limits');
   console.log(`     cli_login_limits rows after it: ${rows} (one per caller and per address tried)`);
 }
 
-const sections = {captcha, relay: relaySection, rb: rbSection, addlink, abuse};
+// L46: the progressive lock per address through the real function, Auth and SQL. Time is simulated by moving the rows'
+// times back (shift). Each attempt comes from its own caller, so that the caller limit never interferes.
+async function progressive() {
+  const a = addr('progressive'); await makeUser(a);
+  resetLimits();
+  let ip = 0;
+  const once = async password => {
+    const r = await relay(a, password, {'x-forwarded-for': `203.0.113.${(ip++ % 250) + 1}`});
+    return r.status === 429 ? {s: 429, wait: Number(r.headers.get('retry-after')), msg: r.json.message} : {s: r.status};
+  };
+  const series = async () => { const out = []; for (let i = 0; i < 6; i++) out.push(await once(`wrong-${i}`)); return out; };
+  const state = () => psql(`select level || ' ' || hits || ' ' || (locked_until is not null) from public.cli_login_limits where key like 'a:%'`);
+  const fiveThen = (out, lo, hi) => out.slice(0, 5).every(o => o.s === 401) && out[5].s === 429 && out[5].wait >= lo && out[5].wait <= hi;
+  const show = out => out.map(o => o.s === 429 ? `429(${o.wait})` : o.s).join(' ');
+  const table = [];
+  const step = async (name, out, lo, hi) => {
+    const st = state(); table.push(`| ${name} | ${show(out)} | ${st} |`);
+    await check(`progressive: ${name}`, () => assert.ok(fiveThen(out, lo, hi), `${show(out)} ${out[5] && out[5].msg}`));
+  };
+
+  const s1 = await series(); const during = await once(PW);
+  await step('level 0: 5 wrong passwords, then ~15 min', s1, 895, 900);
+  await check('progressive: the right password during a lock is refused, with the time left', () => {
+    assert.equal(during.s, 429); assert.ok(during.wait <= s1[5].wait, String(during.wait));
+  });
+  table.push(`| right password during the lock | 429(${during.wait}) « ${during.msg} » | ${state()} |`);
+  shift('10 minutes');
+  const left = await once('wrong-x');
+  table.push(`| 10 min later, one more try | 429(${left.wait}) | ${state()} |`);
+  await check('progressive: retry-after is what is left of the lock (~5 min)', () => assert.ok(left.s === 429 && left.wait > 280 && left.wait <= 300, JSON.stringify(left)));
+  shift('6 minutes');
+  await step('lock over: 5 more, then ~1 h', await series(), 3590, 3600);
+  shift('61 minutes');
+  const s3 = await series();
+  await step('lock over: 5 more, then ~24 h', s3, 86390, 86400);
+  table.push(`| message of that refusal | « ${s3[5].msg} » | |`);
+  shift('1441 minutes');
+  await step('lock over: 5 more, still ~24 h', await series(), 86390, 86400);
+  shift('1441 minutes');
+  const ok = await once(PW), afterOk = state();
+  table.push(`| lock over: right password | ${ok.s} | ${afterOk} |`);
+  await check('progressive: a success after a lock puts the address back to level 0', () => { assert.equal(ok.s, 200); assert.equal(afterOk, '0 0 false'); });
+  await step('after that success: 5 wrong, then ~15 min again', await series(), 895, 900);
+  shift('16 minutes');
+  await step('lock over: 5 more, then ~1 h (level 1)', await series(), 3590, 3600);
+  shift('1 hour 1441 minutes');
+  const purged = psql(`select count(*) from public.cli_login_limits where key like 'a:%'`);
+  await step('24 h after the 1 h lock ended, no attempt: back to ~15 min', await series(), 895, 900);
+  table.push(`| (address rows before that series, after 24 quiet hours: ${purged}, dropped by the next call) | | |`);
+
+  // 20 simultaneous wrong passwords: 5 reach Auth (401), 15 are refused by the gate.
+  resetLimits();
+  const burst = await Promise.all(Array.from({length: 20}, (_, i) => relay(a, `wrong-${i}`, {'x-forwarded-for': `198.51.100.${i + 10}`})));
+  const waits = burst.filter(r => r.status === 429).map(r => Number(r.headers.get('retry-after')));
+  table.push(`| 20 wrong passwords at once | ${tally(burst.map(r => r.status))}, retry-after ${Math.min(...waits)}–${Math.max(...waits)} | ${state()} |`);
+  await check('progressive: 20 simultaneous wrong passwords, 5 reach Auth', () => {
+    assert.equal(burst.filter(r => r.status === 401).length, 5); assert.equal(waits.length, 15); assert.ok(waits.every(w => w >= 895 && w <= 900), waits.join(' '));
+  });
+  console.log(['     | step | answers (retry-after s) | level hits locked |', '     |---|---|---|', ...table.map(r => `     ${r}`)].join('\n'));
+}
+
+// L46: schema.sql replayed over a database that holds the L42a section with rows in it. RB_OLD_SCHEMA: a copy of
+// schema.sql from before L46 (e.g. `git show <rev>:supabase/schema.sql`). Leaves the stack on the current schema.sql.
+async function upgrade() {
+  const old = process.env.RB_OLD_SCHEMA;
+  if (!old) { console.log('     RB_OLD_SCHEMA not set: skipped'); return; }
+  const replay = file => spawnSync('docker', ['exec', '-i', DB, 'psql', '-U', 'postgres', '-q', '-v', 'ON_ERROR_STOP=1'], {input: readFileSync(file, 'utf8'), encoding: 'utf8'});
+  psql('drop function if exists public.cli_login_succeeded(text, timestamptz); drop table if exists public.cli_login_limits');
+  const r0 = replay(old);
+  await check('upgrade: the pre-L46 schema.sql replays (the L42a table back)', () => {
+    assert.equal(r0.status, 0, r0.stderr); assert.equal(psql(`select count(*) from information_schema.columns where table_name = 'cli_login_limits'`), '3');
+  });
+  // A real address whose L42a window ended while one of its attempts, reserved just before the end, still waits for
+  // Auth: the row holds that window_start, which the release will name once Auth answers, after the upgrade.
+  const late = addr('late-release'), lateKey = 'a:' + createHash('sha256').update(late.toLowerCase()).digest('hex');
+  await makeUser(late);
+  psql(`insert into public.cli_login_limits (key, window_start, hits) values
+    ('c:caller', now() - interval '5 minutes', 3),
+    ('a:open-full', now() - interval '5 minutes', 5),
+    ('a:open-two', now() - interval '1 minute', 2),
+    ('a:ended', now() - interval '20 minutes', 4),
+    ('${lateKey}', now() - interval '15 minutes 1 second', 3)`);
+  const lateWindow = psql(`select to_char(window_start at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') from public.cli_login_limits where key = '${lateKey}'`);
+  const oldGate = psql(`select public.cli_login_gate('c-up', 'open-full')`);
+  // After that call, whose purge would drop it.
+  psql(`insert into public.cli_login_limits (key, window_start, hits) values ('a:old', now() - interval '2 days', 5)`);
+  const r1 = replay(fileURLToPath(new URL('../../supabase/schema.sql', import.meta.url)));
+  const rows = () => psql(`select string_agg(case when key = '${lateKey}' then 'a:late' else key end || ' ' || hits || ' ' || level || ' ' || coalesce(round(extract(epoch from locked_until - window_start))::text, '-') || ' ' || coalesce((last_hit = window_start)::text, '-'), ', ' order by key) from public.cli_login_limits`);
+  const after1 = rows();
+  const r2 = replay(fileURLToPath(new URL('../../supabase/schema.sql', import.meta.url)));
+  const after2 = rows();
+  const gates = {
+    'open-full': psql(`select public.cli_login_gate('c-up', 'open-full')`),
+    'open-two': Array.from({length: 4}, () => psql(`select public.cli_login_gate('c-up', 'open-two')`)).map(g => g.replace(/^ok:.*/, 'ok')).join(' '),
+    ended: psql(`select public.cli_login_gate('c-up', 'ended')`).replace(/^ok:.*/, 'ok'),
+  };
+  const oldGone = psql(`select count(*) from public.cli_login_limits where key = 'a:old'`);
+  const sigs = psql(`select string_agg(p.oid::regprocedure::text, ' ' order by 1) from pg_proc p where proname like 'cli_login_%'`);
+  const rights = psql(`select string_agg(r || '=' || has_function_privilege(r, 'public.cli_login_succeeded(text, timestamptz)', 'execute'), ' ') from unnest(array['anon', 'authenticated', 'service_role']) r`);
+  console.log(`     before: old gate on a full open window: ${oldGate}`);
+  console.log(`     replay 1: exit ${r1.status}; rows (key hits level lock-length last_hit=window_start): ${after1}`);
+  console.log(`     replay 2: exit ${r2.status}; rows: ${after2 === after1 ? 'unchanged' : after2}`);
+  console.log(`     then the gate: ${JSON.stringify(gates)}; the 2-day-old row after a call: ${oldGone}; functions: ${sigs}; succeeded executable by: ${rights}`);
+  await check('upgrade: schema.sql replays twice over the L42a table with rows, nothing lost or broken', () => {
+    assert.equal(r1.status, 0, r1.stderr); assert.equal(r2.status, 0, r2.stderr); assert.equal(after2, after1);
+    assert.equal(oldGate, 'address');
+    // Open full window → a lock that ends with it; ended window → its row goes (the next series gets a new
+    // window_start); caller rows untouched.
+    assert.match(after1, /a:open-full 5 0 900 true/); assert.match(after1, /a:open-two 2 0 - true/);
+    assert.doesNotMatch(after1, /a:ended|a:old|a:late/); assert.match(after1, /c:caller 3 0 - -/);
+    assert.match(gates['open-full'], /^address:(5\d\d|600)$/); assert.equal(gates['open-two'], 'ok ok ok address:900');
+    assert.equal(gates.ended, 'ok'); assert.equal(oldGone, '0');
+    assert.equal(sigs, 'cli_login_gate(text,text) cli_login_hit(text) cli_login_release(text,timestamp with time zone) cli_login_succeeded(text,timestamp with time zone)');
+    assert.equal(rights, 'anon=false authenticated=false service_role=true');
+  });
+
+  // The late release (Codex, L46 pass 1): after the upgrade, 5 wrong passwords through the function lock the address;
+  // then the attempt reserved in the ended L42a window is given back, naming that window. It must change nothing.
+  const wrong = [];
+  for (let i = 0; i < 5; i++) wrong.push((await relay(late, `wrong-${i}`, {'x-forwarded-for': `198.51.100.${i + 1}`})).status);
+  const lockedBefore = psql(`select hits || ' ' || (locked_until is not null) from public.cli_login_limits where key = '${lateKey}'`);
+  psql(`select public.cli_login_release('${lateKey.slice(2)}', '${lateWindow}')`);
+  const lockedAfter = psql(`select hits || ' ' || (locked_until is not null) from public.cli_login_limits where key = '${lateKey}'`);
+  const sixth = await relay(late, 'wrong-5', {'x-forwarded-for': '198.51.100.6'});
+  const wait = Number(sixth.headers.get('retry-after'));
+  console.log(`     late release: 5 wrong ${wrong.join(' ')}; hits locked ${lockedBefore} → after the old window's release ${lockedAfter}; 6th ${sixth.status}(${wait})`);
+  await check('upgrade: a release for an ended L42a window, after the upgrade, does not lift the lock of 5 newer failures', () => {
+    assert.deepEqual(wrong, [401, 401, 401, 401, 401]); assert.equal(lockedBefore, '5 true'); assert.equal(lockedAfter, '5 true');
+    assert.equal(sixth.status, 429, sixth.text); assert.ok(wait >= 895 && wait <= 900, String(wait));
+  });
+}
+
+const sections = {captcha, relay: relaySection, rb: rbSection, addlink, abuse, progressive, upgrade};
 const pick = process.argv[2] || 'all';
 for (const [name, fn] of Object.entries(sections)) if (pick === 'all' || pick === name) { console.log(`== ${name}`); await fn(); }
 console.log(fails.length ? `${fails.length} FAIL: ${fails.join(' | ')}` : 'all ok');

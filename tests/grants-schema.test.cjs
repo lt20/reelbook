@@ -82,6 +82,9 @@ test('service_role gets exactly what the Edge Functions use, and nothing for ano
   assert.ok(flat.includes('grant execute on function public.cli_login_release(text, timestamptz) to service_role;'));
   assert.ok(flat.includes('revoke execute on function public.cli_login_gate(text, text) from public, anon, authenticated;'));
   assert.ok(flat.includes('revoke execute on function public.cli_login_release(text, timestamptz) from public, anon, authenticated;'));
+  // L46: the success that resets an address's level.
+  assert.ok(flat.includes('grant execute on function public.cli_login_succeeded(text, timestamptz) to service_role;'));
+  assert.ok(flat.includes('revoke execute on function public.cli_login_succeeded(text, timestamptz) from public, anon, authenticated;'));
   assert.ok(flat.includes('revoke execute on function public.cli_login_hit(text) from public, anon, authenticated, service_role;'));
-  assert.ok(!/ grant execute on function public\.cli_login_hit/.test(flat), 'the counter itself is only called by the two');
+  assert.ok(!/ grant execute on function public\.cli_login_hit/.test(flat), 'the counter itself is only called by the gate');
 });
