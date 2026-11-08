@@ -1,0 +1,12 @@
+[
+  {"name": "01-sign-in", "query": "noauth", "actions": [{"wait": "#auth"}]},
+  {"name": "02-home", "full": true, "actions": [{"wait": "#portal >> text=Strength"}, {"wait": "#queue-toggle >> text=1 failed"}]},
+  {"name": "03-notebook", "hash": "strength", "full": true, "actions": [{"wait": "#home >> text=Pompes inclinées"}, {"wait": "#home >> text=Gainage en 10 minutes"}]},
+  {"name": "04-sheet", "hash": "pompes-inclinees", "full": true,
+   "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"wait": "#view >> text=Points clés"}]},
+  {"name": "05-session", "hash": "session/session-gainage-10-min", "full": true, "actions": [{"wait": "#view h1 >> text=Gainage en 10 minutes"}, {"wait": "#view >> text=Dead bug"}]},
+  {"name": "06-settings", "hash": "settings", "full": true, "actions": [{"wait": "#settings"}]},
+  {"name": "07-add-video", "actions": [{"click": "#add-video-fab"}, {"wait": "#sheet-new"}]},
+  {"name": "08-settings-no-sessions-table", "query": "missing=sessions", "hash": "settings", "full": true,
+   "actions": [{"wait": "#s-sessions"}]}
+]

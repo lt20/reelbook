@@ -1,0 +1,14 @@
+[
+  {"name": "l15-01-sheet-full", "hash": "pompes-inclinees", "full": true,
+   "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"wait": "#view .step.bad img[data-ph]"}],
+   "why": "sheet on the L15 template: Étapes, Dose, Points clés, Pourquoi, then Erreurs fréquentes; production note in the footer"},
+  {"name": "l15-02-sheet-mistake", "hash": "pompes-inclinees",
+   "actions": [{"wait": "#view .step.bad img[data-ph]"}, {"scroll": "#view .step.bad"}, {"wait": 300}],
+   "why": "the mistake: danger border and ✕ badge, no number"},
+  {"name": "l15-03-exercise-full", "hash": "session-gainage-planche", "full": true,
+   "actions": [{"wait": "#view h1 >> text=Planche"}, {"wait": "#view .step.bad img[data-ph]"}],
+   "why": "exercise sheet on the L15 template: Étapes, Points clés, Erreurs fréquentes, Plus facile / plus dur"},
+  {"name": "l15-04-old-sheet", "hash": "fente-arriere", "full": true,
+   "actions": [{"wait": "#view h1 >> text=Fente arrière"}],
+   "why": "a sheet written before L15 (older titles) still shows as before"}
+]

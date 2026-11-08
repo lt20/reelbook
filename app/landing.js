@@ -1,0 +1,897 @@
+// Reelbook landing and language (L30, decision 13; v3 by L36).
+// - The landing (#intro in index.html): the first screen of a device that has never signed in, the v3 mockup
+//   docs/audit-design/mockups/p6-landing.html. Its copy is the mockup's, word for word, French and English.
+// - The FR / EN dictionary of the screens a newcomer sees: the landing, sign-up / sign-in and their messages, #setup,
+//   #welcome. The rest of the app stays English (L35 later). Static text carries data-k="<key>" (data-ka for an
+//   aria-label); the app script asks window.RBL.t(key) for what it writes itself.
+// - Language: the choice saved in localStorage rb.lang (not per user: it is chosen before signing in), else
+//   navigator.language, else English. <html lang> follows.
+// - Pictures (decision 19, L36): five examples (MMA, dance, stretch, snowboard, HIIT), generated images in
+//   assets/<folder>/ (assets/<folder>/README.md): <name>.jpg a step frame (640 px), <name>-t.jpg a thumbnail (240 px).
+//   Never a frame from a third-party video, never an address outside the app.
+// - The beta's state comes from beta_seats() (L32), asked by the app script on the hosted backend: RBL.seats(data).
+//   Without an answer (no function, an error, null): seats open, no count. At the limit (taken >= total, or open
+//   false): the waiting-list card, « On my own Supabase » as the way in, the buttons say « Join the waiting list ».
+//   The app script wires the form (join_waitlist, L31) and paints the same two cards in #setup.
+// The vm harness of tests/auth-flow.test.cjs does not load this file: the app script falls back to English.
+// tests/landing.test.cjs runs it with a small fake DOM, so every newer DOM API here is guarded.
+(function () {
+  'use strict';
+  const doc = typeof document !== 'undefined' ? document : null;
+  const win = typeof window !== 'undefined' ? window : {};
+
+  // @gen-start: generated from the v3 mockup (docs/audit-design/mockups/p6-landing.html): FR from its markup, EN
+  // from its EN dictionary, then the strings its script writes itself. Image names: see assets/README.md.
+  const LANDING = {
+    "fr": {
+      "foot": "Les fiches personnelles gardent le lien vers leur vidéo et leur auteur. Les visuels de cette page sont des démonstrations générées. Reelbook est open source, sous licence MIT : <a href=\"https://github.com/lt20/reelbook\" target=\"_blank\" rel=\"noopener\">github.com/lt20/reelbook</a>.",
+      "cta": "Créer mon carnet",
+      "c.p": "Tes vidéos de technique, enfin prêtes pour l’entraînement. Gratuit pendant la bêta, 50 places.",
+      "d4.p": "Ouvre la fiche ou la séance sur ton téléphone : le geste d’abord, en images, puis les détails. Coche « Fait aujourd’hui ».",
+      "d4.v": "Entraîne-toi",
+      "d3.p": "Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets.",
+      "d3.v": "Organise",
+      "d2.p": "<code>/reelbook</code> dans Claude Code quand tu veux, ou laisse-le tourner chaque nuit. Le matin, tes fiches sont là.",
+      "d2.v": "Lance",
+      "d1.p": "Une technique te plaît dans ton fil : Partager, Reelbook. Dix secondes, et tu continues à scroller.",
+      "d1.v": "Envoie",
+      "d.h": "Au quotidien.",
+      "i3.cta": "Ajouter le raccourci",
+      "i3.p2": "Sur Android, colle simplement le lien dans l’app.",
+      "i3.p": "Mets Reelbook sur ton écran d’accueil, puis le raccourci « Envoyer à Reelbook » dans le menu Partager de l’iPhone.",
+      "i3.h": "Ajoute Reelbook à ton téléphone",
+      "i2.src": "Lire le script avant de le lancer ↗",
+      "i2.copy": "Copier la ligne",
+      "i2.pw": "Colle cette ligne dans PowerShell. Elle installe le skill <code>/reelbook</code> et le relie à ton compte.",
+      "i2.p": "Colle cette ligne dans le Terminal. Elle installe le skill <code>/reelbook</code> et le relie à ton compte.",
+      "i2.n": "Il te faut Claude Pro ou plus avec Claude Code, et Chrome avec l’extension Claude in Chrome.",
+      "i2.h": "Installe le skill",
+      "i1.cta": "Créer mon carnet",
+      "i1.bd": "Ton propre projet, tes limites. Un fichier SQL à lancer, puis colle l’adresse et la clé.",
+      "i1.b": "Sur mon Supabase",
+      "wl.cta": "Me prévenir",
+      "wl.c": "J’accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d’une place libre, et rien d’autre. Effacés à mon inscription ou sur simple demande.",
+      "wl.e": "E-mail",
+      "wl.n": "Prénom",
+      "wl.p": "Aucun compte n’est créé ici : laisse ton prénom et ton e-mail, on te prévient dès qu’une place se libère.",
+      "wl.h": "Bêta complète : {taken} places sur {total} prises",
+      "i1.seats": "",
+      "i1.ad": "Rien à configurer. Gratuit pendant la bêta : 300 fiches, 200 Mo de photos, 10 vidéos par jour.",
+      "i1.a": "Chez Reelbook",
+      "i1.p": "Choisis où vivent tes fiches. Tu pourras changer plus tard.",
+      "i1.h": "Crée ton carnet",
+      "oss.a": "Voir le code sur GitHub ↗",
+      "oss.p": "<b>Reelbook est open source.</b> Le skill, l’app et le serveur sont publics sur GitHub, sous licence MIT : tu peux lire ce que tu installes, et l’héberger toi-même.",
+      "inst.p": "Avant de commencer : Claude Pro avec Claude Code, Chrome avec l’extension Claude in Chrome, Git et Python 3.9+. Ensuite, trois choses à faire une fois : ton compte, le skill sur ton ordinateur, l’app sur ton téléphone.",
+      "inst.h": "Installer Reelbook.",
+      "r5.p": "Dans le bon carnet, le bon groupe. Prête à être retrouvée, annotée, ajoutée à une séance.",
+      "r5.h": "Rangée dans ton carnet",
+      "r4.p": "Les moments clés deviennent une séquence d’images, avec les points à retenir, un dosage et le lien vers la vidéo.",
+      "r4.h": "Le geste, découpé",
+      "r3.p": "L’extension Claude in Chrome lit la vidéo comme toi : le geste, les consignes, les sous-titres.",
+      "r3.h": "Chrome ouvre et analyse",
+      "r2.p": "Tape <code>/reelbook</code> dans Claude Code, ou laisse-le tourner la nuit sur ton ordinateur.",
+      "r2.h": "Claude s’en charge",
+      "t.l2": "ouverture dans Chrome",
+      "t.l1": "3 vidéos dans la file",
+      "r1.p": "Depuis TikTok, Instagram, YouTube ou Facebook : Partager, puis Reelbook. Elle rejoint ta file.",
+      "r1.h": "Tu envoies la vidéo",
+      "how.p": "<strong class=\"lp-brand\">Reelbook</strong> est un skill pour Claude Code. Avec l’extension Claude in Chrome, il ouvre les vidéos que tu lui as envoyées, les découpe en séquence d’images et range chaque fiche dans le bon carnet.",
+      "how.h": "Un skill Claude fait le travail.",
+      "v4.p": "Les nouvelles fiches t’attendent en haut de l’accueil, celles que tu n’as jamais essayées remontent d’elles-mêmes, et chaque « Fait aujourd’hui » s’ajoute au compteur de la fiche.",
+      "v4.h": "Ta progression, fiche par fiche.",
+      "v3.p": "Pioche dans tous tes carnets et mélange-les : la technique, la mobilité, l’échauffement dans la même séance. Mets les exercices dans l’ordre, donne à chacun son dosage, puis suis la séance fiche après fiche.",
+      "v3.h": "Tes fiches font tes séances.",
+      "v1.p": "Le reel de ton coach sur Instagram, la vidéo YouTube d’une championne, le TikTok repéré dans le métro : tout arrive au même endroit, rangé par activité et par thème. Tu y cherches par zone du corps ou par matériel, et les notes de ton coach restent à côté du geste.",
+      "v1.h": "Tout au même endroit.",
+      "f3.p": "Mélange les fiches de tous tes carnets, donne à chacune son dosage, et entraîne-toi fiche après fiche.",
+      "f3.h": "Tes fiches font tes séances",
+      "f2.p": "Le geste découpé en images, avec les consignes à retenir, un dosage et le lien vers la vidéo.",
+      "f2.h": "Elle devient une fiche",
+      "f1.p": "Sur TikTok, Instagram, YouTube ou Facebook : Partager, puis Reelbook. Dix secondes, et tu continues de scroller.",
+      "f1.h": "Tu repères une vidéo, tu l’envoies à Reelbook",
+      "ex.hiit": "HIIT",
+      "ex.snow": "Snowboard",
+      "ex.stretch": "Étirement",
+      "ex.dance": "Danse",
+      "ex.l": "Voir un exemple :",
+      "flow.h": "Du reel au geste.",
+      "v6.own": "Crée ta propre activité",
+      "v6.q": "29 carnets prêts à l’emploi. Le tien n’y est pas ?",
+      "v6.h": "Tes activités, tes carnets.",
+      "fit": "Il te faut Claude Pro (ou plus) avec Claude Code, et Chrome sur ton ordinateur. Pour TikTok, Instagram, YouTube et Facebook.",
+      "beta": "Gratuit pendant la bêta",
+      "cta2": "Voir comment ça marche",
+      "sub": "Reelbook réunit tes vidéos de technique dans un carnet d’entraînement. Chaque vidéo devient une fiche image par image, facile à retrouver et à assembler en séances.",
+      "h1": "Un <span class=\"lp-slash\">/skill</span> Claude Code qui transforme tes vidéos de technique en carnet d’entraînement.",
+      "seats": "{taken} places prises sur {total}",
+      "beta.full": "Bêta complète · inscris-toi sur la liste d’attente",
+      "beta.closed": "Bêta complète",
+      "cta.full": "Rejoindre la liste d’attente",
+      "i1.cta.full": "Connecter mon Supabase",
+      "ui.nbs": "Mes carnets",
+      "ui.paste": "Colle le lien d’une vidéo…",
+      "ui.sheets": "{n} fiches",
+      "ui.devices": "6 carnets · 89 fiches, sur ton téléphone et sur ta tablette.",
+      "ui.session": "Séance",
+      "ui.done": "Fait aujourd’hui",
+      "ui.new": "Nouveau",
+      "ui.nw.h": "Nouveautés",
+      "ui.nw.p": "Arrivées ces derniers jours, pas encore ouvertes.",
+      "ui.tr.h": "À essayer",
+      "ui.tr.p": "Gardées depuis un moment, jamais travaillées.",
+      "ui.tr.tag": "Jamais faite",
+      "ui.dn.h": "Déjà travaillées",
+      "ui.dn.p": "Combien de fois, et la dernière.",
+      "ui.pause": "Mettre en pause les animations",
+      "ui.play": "Relancer les animations",
+      "ui.copied": "Copiée",
+      "i2.own": "Sur ton propre Supabase, ta ligne arrive une fois le carnet créé : elle porte l’URL et la clé de ton projet. Tu la retrouves à tout moment dans les réglages.",
+      "ui.copyHand": "La copie n’a pas marché : la ligne est sélectionnée, copie-la à la main (⌘C ou Ctrl+C).",
+      "aria.sections": "Sections",
+      "aria.ex": "Exemple",
+      "aria.sheet": "Une fiche Reelbook",
+      "aria.devices": "Six carnets Reelbook sur une tablette, un carnet ouvert sur un téléphone",
+      "aria.session": "Une séance Reelbook",
+      "aria.os": "Système"
+    },
+    "en": {
+      "h1": "A Claude Code <span class=\"lp-slash\">/skill</span> that turns your technique videos into a training notebook.",
+      "flow.h": "From reel to move.",
+      "f1.h": "You spot a video, send it to Reelbook",
+      "f1.p": "On TikTok, Instagram, YouTube or Facebook: Share, then Reelbook. Ten seconds, and you keep scrolling.",
+      "f2.h": "It becomes a sheet",
+      "f2.p": "The move cut into frames, with the cues to remember, a dose and the link to the video.",
+      "f3.h": "Sheets become sessions",
+      "f3.p": "Mix sheets from all your notebooks, give each one its dose, and train sheet by sheet.",
+      "sub": "Reelbook gathers your technique videos into a training notebook. Each video becomes a frame-by-frame sheet, easy to find and to build sessions from.",
+      "cta": "Create my notebook",
+      "cta2": "See how it works",
+      "beta": "Free during the beta",
+      "fit": "You need Claude Pro (or higher) with Claude Code, and Chrome on your computer. For TikTok, Instagram, YouTube and Facebook.",
+      "ex.l": "See an example:",
+      "ex.dance": "Dance",
+      "ex.stretch": "Stretch",
+      "ex.snow": "Snowboard",
+      "ex.hiit": "HIIT",
+      "v1.h": "All in one place.",
+      "v1.p": "Your coach’s reel on Instagram, a champion’s YouTube breakdown, the TikTok you caught on the train: it all lands in one place, filed by activity and by theme. Search by body zone or gear, and keep your coach’s notes next to the move.",
+      "v6.h": "Your activities, your notebooks.",
+      "v6.own": "Create your own activity",
+      "v6.q": "29 ready-made notebooks. Yours isn’t there?",
+      "v3.h": "Sheets become sessions.",
+      "v3.p": "Pick from all your notebooks and mix them: technique, mobility and warm-up in the same session. Put the exercises in order, give each one its dose, then follow the session sheet by sheet.",
+      "v4.h": "Your progress, sheet by sheet.",
+      "v4.p": "New sheets wait at the top of the home page, the ones you’ve never tried resurface on their own, and every “Done today” adds to the sheet’s count.",
+      "how.h": "A Claude skill does the work.",
+      "how.p": "<strong class=\"lp-brand\">Reelbook</strong> is a skill for Claude Code. With the Claude in Chrome extension, it opens the videos you sent, cuts each one into a sequence of frames and files each sheet in the right notebook.",
+      "r1.h": "You send the video",
+      "r1.p": "From TikTok, Instagram, YouTube or Facebook: Share, then Reelbook. It joins your queue.",
+      "t.l1": "3 videos queued",
+      "t.l2": "opening in Chrome",
+      "r2.h": "Claude takes over",
+      "r2.p": "Type <code>/reelbook</code> in Claude Code, or let it run overnight on your computer.",
+      "r3.h": "Chrome opens and reads it",
+      "r3.p": "The Claude in Chrome extension watches the video the way you would: the move, the cues, the captions.",
+      "r4.h": "The move, cut into frames",
+      "r4.p": "The key moments become a sequence of images, with the points to remember, a dose and the link to the video.",
+      "r5.h": "Filed in your notebook",
+      "r5.p": "Right notebook, right group. Ready to find, annotate and add to a session.",
+      "inst.h": "Set up Reelbook.",
+      "inst.p": "Before you start: Claude Pro with Claude Code, Chrome with the Claude in Chrome extension, Git and Python 3.9+. Then three things to do once: your account, the skill on your computer, the app on your phone.",
+      "i1.h": "Create your notebook",
+      "i1.p": "Choose where your sheets live. You can change it later.",
+      "i1.a": "Hosted by Reelbook",
+      "i1.ad": "Nothing to set up. Free during the beta: 300 sheets, 200 MB of photos, 10 videos a day.",
+      "i1.seats": "",
+      "wl.h": "Beta full: {taken} of {total} spots taken",
+      "wl.p": "No account is created here: leave your first name and email, we’ll let you know as soon as a spot opens.",
+      "wl.n": "First name",
+      "wl.e": "Email",
+      "wl.c": "I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.",
+      "wl.cta": "Notify me",
+      "i1.b": "On my own Supabase",
+      "i1.bd": "Your own project, your limits. Run one SQL file, then paste the URL and key.",
+      "i1.cta": "Create my notebook",
+      "i2.h": "Install the skill",
+      "i2.n": "You need Claude Pro or above with Claude Code, and Chrome with the Claude in Chrome extension.",
+      "i2.p": "Paste this line into Terminal. It installs the <code>/reelbook</code> skill and links it to your account.",
+      "i2.copy": "Copy the line",
+      "i2.pw": "Paste this line into PowerShell. It installs the <code>/reelbook</code> skill and links it to your account.",
+      "i3.h": "Add it to your phone",
+      "i3.p": "Put Reelbook on your home screen, then the “Send to Reelbook” shortcut in the iPhone Share menu.",
+      "i3.p2": "On Android, just paste the link in the app.",
+      "i3.cta": "Add the shortcut",
+      "d.h": "Day to day.",
+      "d1.v": "Send",
+      "d1.p": "A technique catches your eye in your feed: Share, Reelbook. Ten seconds, and you keep scrolling.",
+      "d2.v": "Run",
+      "d2.p": "<code>/reelbook</code> in Claude Code whenever you like, or every night on its own. In the morning, your sheets are there.",
+      "d3.v": "Organise",
+      "d3.p": "Move a sheet to another group, add your notes, build a session from several notebooks.",
+      "d4.v": "Train",
+      "d4.p": "Open the sheet or the session on your phone: the move first, in pictures, then the details. Tick “Done today”.",
+      "c.p": "Your technique videos, ready for training at last. Free during the beta, 50 spots.",
+      "foot": "Personal sheets keep the link to their video and author. The visuals on this page are generated demonstrations. Reelbook is open source, under the MIT licence: <a href=\"https://github.com/lt20/reelbook\" target=\"_blank\" rel=\"noopener\">github.com/lt20/reelbook</a>.",
+      "oss.p": "<b>Reelbook is open source.</b> The skill, the app and the server are public on GitHub, under the MIT licence: you can read what you install, and host it yourself.",
+      "oss.a": "See the code on GitHub ↗",
+      "i2.src": "Read the script before you run it ↗",
+      "seats": "{taken} of {total} spots taken",
+      "beta.full": "Beta full · join the waiting list",
+      "beta.closed": "Beta full",
+      "cta.full": "Join the waiting list",
+      "i1.cta.full": "Connect my Supabase",
+      "ui.nbs": "My notebooks",
+      "ui.paste": "Paste a video link…",
+      "ui.sheets": "{n} sheets",
+      "ui.devices": "6 notebooks · 89 sheets, on your phone and on your tablet.",
+      "ui.session": "Session",
+      "ui.done": "Done today",
+      "ui.new": "New",
+      "ui.nw.h": "New",
+      "ui.nw.p": "Arrived in the last few days, not opened yet.",
+      "ui.tr.h": "To try",
+      "ui.tr.p": "Saved a while ago, never practised.",
+      "ui.tr.tag": "Never done",
+      "ui.dn.h": "Practised",
+      "ui.dn.p": "How many times, and the last one.",
+      "ui.pause": "Pause the animations",
+      "ui.play": "Play the animations",
+      "ui.copied": "Copied",
+      "i2.own": "On your own Supabase, your line comes once your notebook is created: it carries your project’s URL and key. You can find it again anytime in Settings.",
+      "ui.copyHand": "Copying did not work: the line is selected, copy it by hand (⌘C or Ctrl+C).",
+      "aria.sections": "Sections",
+      "aria.ex": "Example",
+      "aria.sheet": "A Reelbook sheet",
+      "aria.devices": "Six Reelbook notebooks on a tablet, one notebook open on a phone",
+      "aria.session": "A Reelbook session",
+      "aria.os": "Operating system"
+    }
+  };
+  const EX = {
+    "mma": {
+      "nb": "Fight techniques",
+      "icon": "fight",
+      "col": "#b4432f",
+      "url": "reelbook.demo/mma",
+      "mine": "fight",
+      "fk": "kick",
+      "share": [4,"18% 50%"],
+      "drawn": {"fr":"Séquence générée et mise en scène : les mêmes sportifs et le même studio dans les six étapes, sans vidéo réelle.","en":"Generated staged sequence: the same athletes and studio in all six steps, not footage from a real video."},
+      "crumb": "Fight techniques › Coups de pied et genoux",
+      "crumbEn": "Fight techniques › Kicks & knees",
+      "title": {"fr":"Coup de pied retourné","en":"Spinning back kick"},
+      "frames": ["k01","k02","k03","k04","k05","k06"],
+      "alts": {"fr":["En garde, face à la cible","Les pieds croisés","Le tour","Le genou levé","Le coup","Sur la pao"],"en":["On guard","Feet crossed","The turn","Knee up","The kick","On the pad"]},
+      "steps": {"fr":[["Départ","En garde, pieds écartés, face à la cible. Si tu tournes comme ça, tu perds l’équilibre : prépare d’abord le tour."],["Croise les pieds","Premier temps : les pieds se croisent, avant de tourner. Le regard reste sur la cible."],["Le tour","Tu tournes sur les pieds croisés, équilibré, le regard déjà tourné vers la cible."],["Le genou monte","Le genou se lève pendant que tu finis le tour : c’est lui qui arme le coup. Le haut du corps accompagne."],["Le coup part","Le buste s’incline et la jambe se tend vers la pao, le talon devant."],["Le coup au foie, sur la pao","Le talon frappe la pao tenue par le partenaire, au niveau du foie. Tour, genou et coup n’en font plus qu’un."]],"en":[["Start","On guard, feet apart, facing the target. Turn from here and you lose your balance: set it up first."],["Cross your feet","First beat: the feet cross before you turn. Your eyes stay on the target."],["The turn","You turn on crossed feet, balanced, eyes already back on the target."],["The knee rises","The knee comes up as you finish the turn: that's what chambers the kick. The upper body follows."],["The kick goes out","The torso leans and the leg extends toward the pad, heel first."],["Kick to the liver, on the pad","The heel lands on the pad your partner holds, at liver height. Turn, knee and kick become one."]]},
+      "items": {"neck":{"t":{"fr":"Prise de nuque : le genou à la ceinture","en":"Neck clinch: knee to the belt"},"img":"t-defense-prise-de-nuque","m":{"fr":"10 min · Instagram","en":"10 min · Instagram"},"g":"Clinch & grappling"},"crav":{"t":{"fr":"Sortir d’une cravate debout","en":"Escaping a standing headlock"},"img":"t-sortie-cravate-debout","m":{"fr":"5 min · Instagram","en":"5 min · Instagram"},"g":"Clinch & grappling"},"kick":{"t":{"fr":"Coup de pied retourné","en":"Spinning back kick"},"img":"t-coup-de-pied-tournant-foie","m":{"fr":"6 min · Instagram","en":"6 min · Instagram"},"g":"Kicks & knees"},"foot":{"t":{"fr":"Footwork boxe : le pas dans le cerceau","en":"Boxing footwork: the hoop step"},"img":"t-footwork-drills-boxe","m":{"fr":"4 combinaisons · YouTube","en":"4 combos · YouTube"},"g":"Footwork"}},
+      "groupNames": {"fr":{"Clinch & grappling":"Corps à corps","Kicks & knees":"Coups de pied et genoux","Footwork":"Déplacements","Hips":"Hanches"},"en":{"Clinch & grappling":"Clinch & grappling","Kicks & knees":"Kicks & knees","Footwork":"Footwork","Hips":"Hips"}},
+      "session": {"title":{"fr":"Jeudi : clinch et kicks","en":"Thursday: clinch and kicks"},"format":{"fr":"3 tours · 60 s de repos","en":"3 rounds · 60 s rest"},"items":[["foot","Fight",{"fr":"3 min","en":"3 min"}],["crav","Fight",{"fr":"5 / côté","en":"5 / side"}],["neck","Fight",{"fr":"5 / côté","en":"5 / side"}],["kick","Fight",{"fr":"8 / côté","en":"8 / side"}]]}
+    },
+    "dance": {
+      "nb": "Dance",
+      "icon": "dance",
+      "col": "#b23a6e",
+      "url": "tiktok.com/@…/video/…",
+      "mine": "dance",
+      "fk": "pir",
+      "drawn": {"fr":"Démonstration générée : images mises en scène, pas une vraie vidéo.","en":"Generated demo: staged images, not a real video."},
+      "crumb": "Dance › Tours",
+      "crumbEn": "Dance › Turns",
+      "title": {"fr":"Pirouette en dehors","en":"Pirouette en dehors"},
+      "frames": ["d01","d02","d03","d04","d05","d06"],
+      "alts": {"fr":["Préparation en quatrième","Montée en retiré","Début du tour","Rotation, le regard sur son point","Sortie du tour","Réception en quatrième, bras ouverts"],"en":["Preparation in fourth","Rising into retiré","Start of the turn","Rotation, eyes on the spot","Coming out of the turn","Landing in fourth, arms open"]},
+      "steps": {"fr":[["Préparation","En quatrième position, genoux pliés, le poids entre les deux pieds. Un bras devant, l’autre ouvert."],["Relevé, retiré","Pousse dans le sol : la jambe d’appui monte, l’autre pied file au genou. Les bras se rassemblent devant toi."],["Le départ","Le corps part d’un bloc, bassin et épaules ensemble. La tête reste sur ton point le plus longtemps possible."],["Le regard","La tête fouette et revient la première sur ton point. Garde le retiré et le dos long pendant toute la rotation."],["La sortie","Le tour s’achève face à ton point. Le pied quitte le genou sans retomber d’un coup, la jambe d’appui reste tendue."],["Réception","Repose le pied derrière en quatrième, plié, et ouvre les bras. Tiens la fin deux temps."]],"en":[["Preparation","Fourth position, knees bent, weight between both feet. One arm in front, the other open."],["Relevé, retiré","Push into the floor: the standing leg rises, the other foot slides up to the knee. The arms gather in front of you."],["The start","The body turns as one block, hips and shoulders together. The head stays on your spot as long as it can."],["Spot","The head whips round and arrives first on your spot. Keep the retiré and a long back through the whole rotation."],["The exit","The turn ends facing your spot. The foot leaves the knee without dropping, the standing leg stays straight."],["Landing","Set the foot down behind in fourth, in plié, and open the arms. Hold the finish for two counts."]]},
+      "items": {"pir":{"t":{"fr":"Pirouette en dehors","en":"Pirouette en dehors"},"img":"c-pir","m":{"fr":"3 min · TikTok","en":"3 min · TikTok"},"g":"Tours"},"chaine":{"t":{"fr":"Chaînés en diagonale","en":"Chaînés across the floor"},"img":"c-chaine","m":{"fr":"2 min · Instagram","en":"2 min · Instagram"},"g":"Tours"},"jete":{"t":{"fr":"Grand jeté, sans forcer le grand écart","en":"Grand jeté without forcing the split"},"img":"c-jete","m":{"fr":"4 min · Instagram","en":"4 min · Instagram"},"g":"Sauts"},"pdb":{"t":{"fr":"Port de bras lent","en":"Slow port de bras"},"img":"c-pdb","m":{"fr":"3 min · Instagram","en":"3 min · Instagram"},"g":"Échauffement"}},
+      "groupNames": {"fr":{"Tours":"Tours","Sauts":"Sauts","Chorés":"Chorégraphies","Échauffement":"Échauffement"},"en":{"Tours":"Turns","Sauts":"Jumps","Chorés":"Choreography","Échauffement":"Warm-up"}},
+      "session": {"title":{"fr":"Mardi : tours et sauts","en":"Tuesday: turns and jumps"},"format":{"fr":"2 passages · 30 s de repos","en":"2 rounds · 30 s rest"},"items":[["pdb","Dance",{"fr":"2 min","en":"2 min"}],["chaine","Dance",{"fr":"2 diagonales","en":"2 diagonals"}],["pir","Dance",{"fr":"8 / côté","en":"8 / side"}],["jete","Dance",{"fr":"4 diagonales","en":"4 diagonals"}]]}
+    },
+    "stretch": {
+      "nb": "Yoga & stretching",
+      "icon": "yoga",
+      "col": "#2f7a4e",
+      "url": "instagram.com/…",
+      "mine": "yoga",
+      "fk": "diag",
+      "share": [4,"50% 50%"],
+      "drawn": {"fr":"Démonstration générée d’après un reel Instagram : une autre personne, un autre lieu, les mêmes positions.","en":"Generated demo based on an Instagram reel: another person, another place, the same positions."},
+      "crumb": "Yoga & stretching › Hanches",
+      "crumbEn": "Yoga & stretching › Hips",
+      "title": {"fr":"Étirement en diagonale","en":"Diagonal stretch"},
+      "frames": ["st01","st02","st03","st04","st05","st06"],
+      "alts": {"fr":["Talons joints, pieds ouverts à 90 degrés","Le pied recule en diagonale","Fente en diagonale, talon arrière levé","Le poids sur la jambe arrière","La main plonge vers la jambe arrière","La position tenue"],"en":["Heels together, feet at 90 degrees","The foot steps back on a diagonal","Diagonal lunge, back heel up","Weight on the back leg","The hand dives to the back leg","Holding the position"]},
+      "steps": {"fr":[["Talons joints","Colle tes talons l’un contre l’autre et ouvre les pieds à 90 degrés."],["Pas en diagonale","Recule un pied en diagonale, la pointe derrière le talon, sur une ligne de deux fois la largeur de tes épaules."],["Talon arrière levé","Le pied arrière reste dans l’alignement, talon levé. Les deux jambes sont fléchies."],["Poids vers l’arrière","Mets l’essentiel du poids sur la jambe arrière, le buste droit."],["Plonger vers l’arrière","Touche la jambe arrière avec la main opposée : derrière le genou, puis le mollet ou le talon. Ne tourne pas le buste, imagine que tu plonges vers l’arrière."],["Tenir 10 secondes","10 répétitions de chaque côté ; à la dernière, garde la position 10 secondes. 3 tours."]],"en":[["Heels together","Bring your heels together and open your feet to 90 degrees."],["Diagonal step","Step one foot back on a diagonal, toes behind the heel, on a line twice your shoulder width."],["Back heel up","The back foot stays in line, heel lifted. Both legs are bent."],["Weight back","Put most of your weight on the back leg, torso upright."],["Dive back","Reach the back leg with the opposite hand: behind the knee, then the calf or the heel. Don't twist: imagine diving backwards."],["Hold 10 seconds","10 reps per side; on the last one, hold the position for 10 seconds. 3 rounds."]]},
+      "items": {"diag":{"t":{"fr":"Étirement en diagonale","en":"Diagonal stretch"},"img":"st05","m":{"fr":"48 s · Instagram","en":"48 s · Instagram"},"g":"Hanches"},"sal":{"t":{"fr":"Salutation au soleil","en":"Sun salutation"},"img":"y2-salutation","m":{"fr":"5 min · YouTube","en":"5 min · YouTube"},"g":"Enchaînements"},"pigeon":{"t":{"fr":"Le pigeon","en":"Pigeon pose"},"img":"y2-pigeon","m":{"fr":"2 min · Instagram","en":"2 min · Instagram"},"g":"Hanches"},"hips":{"t":{"fr":"Flow hanches : squat large, cosaque, assis","en":"Hip flow: wide squat, cossack, floor sit"},"img":"t-flow-hanches","m":{"fr":"3 min · Instagram","en":"3 min · Instagram"},"g":"Hanches"}},
+      "groupNames": {"fr":{"Hanches":"Hanches","Enchaînements":"Enchaînements"},"en":{"Hanches":"Hips","Enchaînements":"Flows"}},
+      "session": {"title":{"fr":"Le matin : des hanches libres","en":"Morning: hip opener"},"format":{"fr":"Une fois · à ton rythme","en":"Once through · at your pace"},"items":[["sal","Yoga",{"fr":"3 tours","en":"3 rounds"}],["hips","Yoga",{"fr":"2 tours","en":"2 rounds"}],["diag","Yoga",{"fr":"3×10 / côté","en":"3×10 / side"}],["pigeon","Yoga",{"fr":"1 min / côté","en":"1 min / side"}]]}
+    },
+    "snow": {
+      "nb": "Ski & snowboard",
+      "icon": "snow",
+      "col": "#a4521a",
+      "url": "youtube.com/watch?v=…",
+      "mine": "snow",
+      "fk": "bsnp",
+      "share": [4,"50% 50%"],
+      "drawn": {"fr":"Démonstration générée d’après une vidéo YouTube : une autre rideuse, un autre snowpark, les mêmes positions.","en":"Generated demo based on a YouTube video: another rider, another snowpark, the same positions."},
+      "crumb": "Ski & snowboard › Park",
+      "title": {"fr":"Nose press sur un box","en":"Nose press on a box"},
+      "frames": ["sb01","sb02","sb03","sb04","sb05","sb06"],
+      "alts": {"fr":["L’approche du box","Le saut sur le box","À plat sur le box","Le poids passe devant","Nose press, l’arrière levé","La sortie en l’air"],"en":["Approaching the box","Popping onto the box","Flat on the box","Weight moves forward","Nose press, tail up","Off the end, in the air"]},
+      "steps": {"fr":[["L’approche","Arrive droit sur le box, planche à plat, genoux fléchis, bras ouverts pour l’équilibre."],["Le saut","Petit ollie au bord du box : la planche se pose à plat, dans l’axe du box."],["Sur le box","Planche à plat, le poids centré entre les pieds, genoux souples, le regard vers le bout du box."],["Le poids devant","Avance le bassin et les épaules au-dessus du pied avant : la jambe avant se plie."],["Nose press","Appuie sur le nose : l’arrière de la planche se lève. Bras ouverts, tiens l’appui jusqu’au bout du box."],["La sortie","Au bout du box, saute en ramenant la planche à plat, puis pose-toi genoux fléchis."]],"en":[["The approach","Ride straight at the box, board flat, knees bent, arms out for balance."],["The pop","Small ollie at the edge of the box: the board lands flat, in line with the box."],["On the box","Board flat, weight centred between your feet, soft knees, eyes on the end of the box."],["Weight forward","Move your hips and shoulders over the front foot: the front leg bends."],["Nose press","Press the nose: the tail lifts. Arms out, hold the press to the end of the box."],["The exit","At the end of the box, pop and level the board, then land with bent knees."]]},
+      "items": {"bsnp":{"t":{"fr":"Nose press sur un box","en":"Nose press on a box"},"img":"sb05","m":{"fr":"4 min · YouTube","en":"4 min · YouTube"},"g":"Park"},"ollie":{"t":{"fr":"L’ollie à plat","en":"The ollie on flat ground"},"img":"sbt-ollie","m":{"fr":"2 min · TikTok","en":"2 min · TikTok"},"g":"Bases"},"rail":{"t":{"fr":"50-50 sur un rail","en":"50-50 on a rail"},"img":"sbt-rail","m":{"fr":"3 min · Instagram","en":"3 min · Instagram"},"g":"Park"},"fs180":{"t":{"fr":"Frontside 180 sur un kicker","en":"Frontside 180 off a kicker"},"img":"sbt-180","m":{"fr":"6 min · YouTube","en":"6 min · YouTube"},"g":"Sauts"}},
+      "groupNames": {"fr":{"Park":"Park","Bases":"Bases","Sauts":"Sauts"},"en":{"Park":"Park","Bases":"Basics","Sauts":"Jumps"}},
+      "session": {"title":{"fr":"Samedi : snowpark","en":"Saturday: snowpark"},"format":{"fr":"Sur la piste, puis le park","en":"On the piste, then the park"},"items":[["ollie","Snow",{"fr":"5 à plat","en":"5 on flat"}],["bsnp","Snow",{"fr":"5 passages","en":"5 runs"}],["rail","Snow",{"fr":"5 passages","en":"5 runs"}],["fs180","Snow",{"fr":"3 essais","en":"3 tries"}]]}
+    },
+    "hiit": {
+      "nb": "Strength",
+      "icon": "strength",
+      "col": "#5f7d1a",
+      "url": "tiktok.com/@…/video/…",
+      "mine": "strength",
+      "fk": "hiit",
+      "share": [5,"50% 50%"],
+      "drawn": {"fr":"Démonstration générée et mise en scène : la même personne et la même salle dans les six étapes, sans vidéo réelle.","en":"Generated staged demo: the same person and room in all six steps, not footage from a real video."},
+      "crumb": "Strength › HIIT",
+      "title": {"fr":"Pompe, touches et squat sauté","en":"Push-up, taps and jump squat"},
+      "frames": ["hi-plank","hi03","hi04","hi-foot","hi-tuck","hi06"],
+      "alts": {"fr":["Planche, bras tendus","La pompe, poitrine près du sol","La touche d’épaule","La touche de pied, hanches hautes","Les pieds reviennent sous les hanches","Le squat sauté"],"en":["High plank, arms straight","The push-up, chest near the floor","The shoulder tap","The foot touch, hips high","Feet jump in under the hips","The jump squat"]},
+      "steps": {"fr":[["Planche","Bras tendus sous les épaules, le corps aligné de la tête aux talons, pieds écartés de la largeur des hanches."],["Pompe","Descends la poitrine près du sol, coudes vers l’arrière, puis repousse. Le bassin ne s’affaisse pas."],["Touche d’épaule","En haut, touche l’épaule opposée d’une main, puis de l’autre. Les hanches restent face au sol."],["Touche de pied","Monte les hanches en V inversé et va toucher le pied opposé d’une main. Change de côté à chaque répétition."],["Pieds sous les hanches","Saute pour ramener les pieds près des mains, en squat profond, la poitrine qui se relève."],["Squat sauté","Pousse dans le sol et saute, bras au-dessus de la tête. Reviens en planche et enchaîne : 30 secondes, 10 s de repos, 5 tours."]],"en":[["Plank","Arms straight under the shoulders, body in one line from head to heels, feet hip-width apart."],["Push-up","Lower your chest close to the floor, elbows back, then push up. Don't let the hips sag."],["Shoulder tap","At the top, tap the opposite shoulder with one hand, then the other. Hips stay square to the floor."],["Foot touch","Lift the hips into an inverted V and reach one hand to the opposite foot. Switch sides every rep."],["Feet in","Jump the feet in next to the hands into a deep squat, chest lifting."],["Jump squat","Drive through the floor and jump, arms overhead. Back down to the plank and go again: 30 seconds, 10 s rest, 5 rounds."]]},
+      "items": {"hiit":{"t":{"fr":"Pompe, touches et squat sauté","en":"Push-up, taps and jump squat"},"img":"hi04","m":{"fr":"1 min · TikTok","en":"1 min · TikTok"},"g":"HIIT"},"squat":{"t":{"fr":"Goblet squat","en":"Goblet squat"},"img":"n-str-1","m":{"fr":"3 min · YouTube","en":"3 min · YouTube"},"g":"Jambes"},"pushup":{"t":{"fr":"La pompe, sans creuser le dos","en":"The push-up, without sagging"},"img":"n-str-3","m":{"fr":"1 min · TikTok","en":"1 min · TikTok"},"g":"Haut du corps"},"dl":{"t":{"fr":"Soulevé de terre","en":"Deadlift"},"img":"n-str-2","m":{"fr":"5 min · YouTube","en":"5 min · YouTube"},"g":"Dos"}},
+      "groupNames": {"fr":{"HIIT":"HIIT","Jambes":"Jambes","Haut du corps":"Haut du corps","Dos":"Dos"},"en":{"HIIT":"HIIT","Jambes":"Legs","Haut du corps":"Upper body","Dos":"Back"}},
+      "session": {"title":{"fr":"Lundi : HIIT et force","en":"Monday: HIIT and strength"},"format":{"fr":"Force, puis HIIT · 60 s de repos","en":"Strength, then HIIT · 60 s rest"},"items":[["dl","Strength",{"fr":"3×5","en":"3×5"}],["squat","Strength",{"fr":"3×10","en":"3×10"}],["pushup","Strength",{"fr":"3×8","en":"3×8"}],["hiit","Strength",{"fr":"5 tours","en":"5 rounds"}]]}
+    }
+  };
+  const YOGA = {
+    "items": {
+      "sal": {"t":{"fr":"Salutation au soleil : la montée des bras","en":"Sun salutation: the upward reach"},"g":{"fr":"Enchaînements","en":"Flows"},"img":"y2-salutation"},
+      "chien": {"t":{"fr":"Chien tête en bas","en":"Downward dog"},"g":{"fr":"Dos","en":"Back"},"img":"y2-chien"},
+      "corbeau": {"t":{"fr":"Le corbeau","en":"Crow pose"},"g":{"fr":"Épaules","en":"Shoulders"},"img":"y2-corbeau"},
+      "guerrier": {"t":{"fr":"Guerrier II","en":"Warrior II"},"g":{"fr":"Jambes","en":"Legs"},"img":"y2-guerrier"},
+      "pigeon": {"t":{"fr":"Le pigeon","en":"Pigeon pose"},"g":{"fr":"Hanches","en":"Hips"},"img":"y2-pigeon"}
+    },
+    "progress": {
+      "nw": ["sal","chien"],
+      "tr": ["corbeau"],
+      "dn": [["guerrier",{"fr":"6 fois · mardi","en":"6 times · Tuesday"}],["pigeon",{"fr":"3 fois · jeudi dernier","en":"3 times · last Thursday"}]]
+    }
+  };
+  const LIB = [["fight","Fight techniques",2],["dance","Dance",5],["pole","Pole dance",5],["yoga","Yoga & stretching",1],["pilates","Pilates",5],["barre","Barre",5],["strength","Strength",0],["climb","Climbing & bouldering",4],["kitesurf","Kitesurf",3],["surf","Surfing",3],["run","Running",4],["racket","Tennis & padel",4],["kitefoil","Kitefoil",3],["wingfoil","Wingfoil",3],["wakeboard","Wakeboard",3],["swim","Swimming",3],["bike","Cycling",4],["hike","Hiking & trail",4],["snow","Ski & snowboard",4],["ride","Horse riding",4],["golf","Golf",4],["mobility","Mobility & rehab",1],["prenatal","Prenatal & postnatal",5],["floor","Pelvic floor & core",5],["breath","Breathwork & meditation",1],["cook","Cooking",6],["nutrition","Nutrition & meal prep",6],["beauty","Beauty & skincare",7],["crafts","Sewing & crafts",7]];
+  const PAL = ["#5f7d1a","#3f8f5f","#b4432f","#1d7a8c","#c2651d","#b23a6e","#8a6a12","#6b4fa3"];
+  // @gen-end
+  // The screens around the landing: sign-up / sign-in (a.*), #setup (s.*), #welcome (w.*), aria labels the mockup
+  // leaves in French (aria.*). English is the app's copy as it was; French follows the mockup's tone (tu).
+  const APP = {
+    fr: {
+      'a.in': 'Se connecter', 'a.up': 'Créer un compte', 'a.submitUp': 'Créer le compte', 'a.have': 'J’ai déjà un compte',
+      'a.email': 'E-mail', 'a.pass': 'Mot de passe', 'a.backend': 'Serveur :', 'a.none': 'Aucun serveur choisi',
+      'a.own': 'Utiliser mon propre Supabase', 'a.change': 'Changer d’instance', 'a.hosted': ' · Utiliser Reelbook hébergé',
+      'a.ownh': 'Connecter ta propre instance', 'a.ownp': 'Indique une fois sur cet appareil les informations de ton projet Supabase. Guide d’installation :',
+      'a.url': 'URL du projet', 'a.key': 'Clé anon', 'a.useown': 'Utiliser cette instance', 'a.cancel': 'Annuler', 'a.demo': 'Voir une démo',
+      'demo.up': 'Démo · lecture seule · Créer un compte', 'demo.back': 'Démo · lecture seule · Revenir à mes carnets', // L38: the #demo banner
+      'a.fail': 'Connexion impossible.', 'a.e.up': 'Impossible de créer le compte.',
+      'a.e.creds': 'E-mail ou mot de passe incorrect.',
+      'a.e.weak': 'Ce mot de passe est trop faible : choisis-en un plus long.', 'a.e.email': 'Cette adresse e-mail n’est pas valide.',
+      'a.e.rate': 'Trop d’essais : réessaie dans quelques minutes.', 'a.e.closed': 'Ce serveur ne prend pas de nouveaux comptes.',
+      // L31: the refusals of the beta (schema.sql, « Beta locks »), and the waiting-list form
+      'a.e.full': 'La dernière place vient d’être prise : ton compte n’a pas été créé. Inscris-toi sur la liste d’attente : on te prévient dès qu’une place se libère.',
+      'a.e.shut': 'Les inscriptions sont fermées pour l’instant : ton compte n’a pas été créé. Inscris-toi sur la liste d’attente : on te prévient dès qu’une place se libère.',
+      'a.e.today': 'Assez d’inscriptions pour aujourd’hui : ton compte n’a pas été créé. Réessaie demain.',
+      'a.e.retry': 'Ton compte n’a pas été créé : la bêta vient peut-être de se remplir. Réessaie dans un instant.',
+      'a.e.projDay': 'Reelbook a reçu assez de vidéos pour aujourd’hui, tous comptes confondus : réessaie demain.',
+      'a.e.projPhotos': 'L’espace photos de la bêta est plein pour l’instant : réessaie plus tard.',
+      'wl.ok.h': 'C’est noté', 'wl.ok': 'On t’écrit dès qu’une place se libère.',
+      'wl.e.first': 'Indique ton prénom.', 'wl.e.consent': 'Coche la case pour qu’on puisse garder ton prénom et ton e-mail.',
+      'wl.e.today': 'Trop de demandes aujourd’hui : réessaie demain. Si tu as déjà laissé ton e-mail, il reste sur la liste.',
+      'wl.e.open': 'Une place vient de se libérer : recharge la page pour créer ton compte.',
+      'wl.e.fail': 'Ça n’a pas marché : vérifie ta connexion et réessaie.',
+      'a.e.offline': 'Le serveur n’a pas répondu : vérifie ta connexion et réessaie.',
+      // L41: the auth screens (mockup p7-signup)
+      'au.signup.h': 'Crée ton compte',
+      'au.signup.step': 'Compte, étape 1 sur 2 : on t’envoie un code pour vérifier ton adresse.',
+      'au.pw8': 'Mot de passe · 8 caractères au moins',
+      'au.show': 'Afficher',
+      'au.hide': 'Masquer',
+      'au.signup.cta': 'Recevoir mon code',
+      'au.signup.busy': 'Envoi du code…',
+      'au.have': 'Tu as déjà un compte ?',
+      'au.code.h': 'Entre ton code',
+      'au.code.step': 'Compte, étape 2 sur 2 : il est créé dès que le code est bon.',
+      'au.code.sent': 'Un code à 6 chiffres est parti vers <b>{email}</b>.',
+      'au.code.sent.own': 'Un code ou un lien est parti vers <b>{email}</b>.',
+      'au.change': 'Changer d’adresse',
+      'au.code.l': 'Code à 6 chiffres',
+      'au.code.l.own': 'Code reçu par e-mail',
+      'au.code.cta': 'Confirmer',
+      'au.code.busy': 'Vérification…',
+      'au.code.new': 'Recevoir un nouveau code',
+      'au.help.n': 'Rien reçu ? Regarde dans les indésirables, ou renvoie le code dans <b>{n} s</b>.',
+      'au.help.a': 'Rien reçu ? Regarde dans les indésirables, ou {link}.',
+      'au.help.l': 'renvoie le code',
+      'au.help.way': 'Toujours rien ? Vérifie l’adresse <b>{email}</b>, cherche un e-mail de Reelbook ou {us}.',
+      'au.help.way0': 'Toujours rien ? Vérifie l’adresse <b>{email}</b> et cherche un e-mail de Reelbook.',
+      'au.help.us': 'écris-nous',
+      'au.help.again': 'Renvoyer le code',
+      'au.e.email': 'Cette adresse ne ressemble pas à un e-mail : vérifie-la.',
+      'au.e.short': 'Le mot de passe doit faire 8 caractères au moins.',
+      'au.e.off.send': 'Pas de connexion : rien n’a été envoyé. Réessaie quand tu es de nouveau en ligne.',
+      'au.e.off.code': 'Pas de connexion : le code n’a pas pu être vérifié. Réessaie quand tu es de nouveau en ligne.',
+      'au.e.off.in': 'Pas de connexion : vérifie ton réseau et réessaie.',
+      'au.e.rate': 'Limite d’envoi atteinte pour cette adresse : réessaie dans une heure. Rien n’a été créé.',
+      'au.e.rate2': 'Limite d’envoi atteinte pour cette adresse : réessaie dans une heure.',
+      'au.e.wrong': 'Ce code n’est pas le bon. Vérifie les 6 chiffres du dernier e-mail reçu.',
+      'au.e.wrong.own': 'Ce code n’est pas le bon. Vérifie le dernier e-mail reçu.',
+      'au.e.expired': 'Ce code a expiré. Demande-en un nouveau : il arrivera à la même adresse.',
+      'au.e.toomany': 'Trop d’essais. Attends quelques minutes, puis demande un nouveau code.',
+      'au.e.soon': 'Le dernier code vient de partir : attends la fin du décompte avant d’en demander un autre.',
+      'au.e.save': 'Le mot de passe n’a pas pu être enregistré : réessaie.',
+      'au.e.cf': 'La vérification Cloudflare n’a pas abouti. Désactive ton bloqueur de contenu ou essaie un autre navigateur, puis réessaie.',
+      'au.e.cf.us': 'Toujours bloqué ? {us}.',
+      'au.e.cf.us.l': 'Écris-nous',
+      'au.n.resent': 'Nouveau code envoyé à <b>{email}</b>. Seul ce dernier code est valable.',
+      'au.n.resume': 'On reprend là où tu en étais : le code envoyé il y a {n} min à <b>{email}</b> est toujours valable.',
+      'au.n.signin': 'Ton inscription n’est pas terminée : on vient de t’envoyer un nouveau code.',
+      'au.n.full': 'La dernière place vient d’être prise pendant ton inscription. Aucun compte n’a été créé.',
+      'au.setpw.h': 'Choisis ton mot de passe',
+      'au.setpw.step': 'Adresse confirmée, compte créé pour <b>{email}</b>. Il ne manque que ton mot de passe.',
+      'au.setpw.cta': 'Enregistrer et entrer',
+      'au.in.h': 'Connecte-toi',
+      'au.in.busy': 'Connexion…',
+      'au.forgot': 'Mot de passe oublié ?',
+      'au.new': 'Pas encore de compte ?',
+      'au.ex.h': 'Cette adresse a déjà un compte',
+      'au.ex.p': '<b>{email}</b> a déjà un compte Reelbook. Connecte-toi avec ton mot de passe.',
+      'au.ex.you': 'Ce n’est pas toi ?',
+      'au.ex.other': 'Utiliser une autre adresse',
+      'au.fg.h': 'Mot de passe oublié',
+      'au.fg.p': 'Indique ton adresse : on t’envoie un code à 6 chiffres pour choisir un nouveau mot de passe. Ton compte et tes fiches ne bougent pas.',
+      'au.fg.p.own': 'Indique ton adresse : on t’envoie un code ou un lien pour choisir un nouveau mot de passe. Ton compte et tes fiches ne bougent pas.',
+      'au.fg.cta': 'Recevoir un code',
+      'au.back': 'Retour à la connexion',
+      'au.rs.h': 'Nouveau mot de passe',
+      'au.rs.sent': 'Code envoyé à <b>{email}</b>, si un compte y est rattaché.',
+      'au.rs.sent.own': 'Code ou lien envoyé à <b>{email}</b>, si un compte y est rattaché.',
+      'au.rs.pw': 'Nouveau mot de passe · 8 caractères au moins',
+      'au.rs.cta': 'Changer mon mot de passe',
+      'au.rs.none': 'Pas de code dans quelques minutes, même dans les indésirables ? Cette adresse n’a peut-être pas de compte : {link}.',
+      'au.rs.create': 'crée-le',
+      'au.rs.ok': 'Mot de passe changé pour <b>{email}</b>.',
+      'a.badUrl': 'Cette URL n’est pas valide.', 'a.badProto': 'Indique une URL de projet en http ou https.',
+      'a.badKey': 'Cela ne ressemble pas à une clé anon.',
+      's.h1': 'Tes vidéos, en fiches',
+      's.lead': 'Colle les vidéos que tu veux garder (Instagram, TikTok, YouTube, Facebook) : un geste, une technique, une recette. Claude Code fait de chacune une fiche avec photos et points clés, rangée dans tes carnets.',
+      's.h2': 'Où vivra ton nouveau compte ?',
+      's.ownd': 'L’offre gratuite suffit. Tu lances un fichier SQL, puis tu colles ici l’URL du projet et la clé anon.',
+      's.where': 'Les deux sont dans le tableau de bord Supabase, sous Project settings → API. La clé anon peut rester dans un navigateur : la sécurité au niveau des lignes garde tes données à toi. Guide d’installation :',
+      's.limits': '300 fiches, 200 Mo de photos, 10 vidéos par jour.',
+      's.use': 'Utiliser ce projet', 's.back': 'Retour', 's.have': 'Tu as déjà un compte ?', 's.unavailable': 'Pas encore disponible.',
+      's.blurb': 'Gratuit pour l’instant. Une offre hébergée payante est prévue ; rien à configurer.',
+      'w.eyebrow': 'Bienvenue dans Reelbook', 'w.flash': 'Compte créé pour <b>{email}</b>.', 'w.done': 'Ouvrir mes carnets',
+      'w.left3': 'Plus que 3 étapes, à faire une seule fois', 'w.left2': 'Plus que 2 étapes', 'w.left1': 'Plus qu’une étape', 'w.left0': 'Tout est en place',
+      'w.chip.todo': 'À faire', 'w.chip.done': 'Fait', 'w.chip.sent': 'Envoyée', 'w.chip.copied': 'Copiée',
+      'w.pc.t': 'Ton ordinateur',
+      'w.pc.why': 'Cette étape ne se fait pas sur un téléphone : c’est ton ordinateur qui regarde les vidéos et écrit les fiches. Envoie-toi la ligne d’installation, tu la colleras une fois devant.',
+      'w.pc.ask': 'Elle te demandera ton e-mail et ton mot de passe Reelbook. Le mot de passe ne s’affiche pas quand tu le tapes : c’est normal.',
+      'w.pc.needm': 'Ce qu’il faut sur l’ordinateur : Claude Code, Chrome avec Claude in Chrome, Git, Python 3.9+ ↗',
+      'w.send': 'M’envoyer la ligne', 'w.sendtitle': 'Installer Reelbook', 'w.sendtext': 'Installe Reelbook sur ton ordinateur : colle une de ces lignes dans un terminal.',
+      'w.pc.sent': 'Ligne envoyée. Colle-la dans le Terminal quand tu es devant ton ordinateur ; cette étape se cochera toute seule. Tu la retrouves aussi dans <b>Settings</b>.',
+      'w.pc.copied': 'Ligne copiée. Envoie-la-toi, puis colle-la dans le Terminal quand tu es devant ton ordinateur ; cette étape se cochera toute seule. Tu la retrouves aussi dans <b>Settings</b>.',
+      'w.pc.nosend': 'Le partage et la copie n’ont pas marché : sélectionne le texte ci-dessus et envoie-le-toi.',
+      'w.pc.lead': 'C’est lui qui regarde les vidéos et écrit les fiches. Colle cette ligne dans le Terminal : elle installe <code>/reelbook</code> et le relie à ton compte.',
+      'w.pc.leadw': 'C’est lui qui regarde les vidéos et écrit les fiches. Colle cette ligne dans PowerShell : elle installe <code>/reelbook</code> et le relie à ton compte.',
+      'w.sys.mac': 'macOS détecté', 'w.sys.linux': 'Linux détecté', 'w.sys.win': 'Windows détecté',
+      'w.os.win': 'Sur Windows ? PowerShell', 'w.os.unix': 'Sur Mac ou Linux ? Terminal',
+      'w.pc.need': 'Ce qu’il faut : Claude Code, Chrome avec Claude in Chrome, Git, Python 3.9+ ↗', 'w.pc.script': 'Lire le script avant ↗',
+      'w.pc.done': 'Relié. La ligne d’installation reste dans <b>Settings</b>.',
+      'w.ph.t': 'Ton téléphone',
+      'w.ph.1': 'Mets Reelbook sur ton écran d’accueil et connecte-toi là.',
+      'w.ph.1d': 'Ouvre Reelbook sur ton téléphone, mets-le sur l’écran d’accueil et connecte-toi là.',
+      'w.ph.2': 'Ajoute le raccourci « Envoyer à Reelbook » au menu Partager de l’iPhone. Sur Android, colle le lien dans l’app.',
+      'w.ph.tick': 'C’est fait sur mon téléphone', 'w.ph.done': 'Fait sur ce téléphone.', 'w.ph.donepc': 'Fait sur ton téléphone.',
+      'w.fs.t': 'Ta première fiche',
+      'w.fs.p': 'Partage une vidéo depuis Instagram, TikTok, YouTube ou Facebook, ou touche <b>+ Add a video</b> et colle le lien. Puis, sur ton ordinateur, tape <code>/reelbook</code> dans Claude Code : la fiche arrive dans tes carnets.',
+      'w.fs.done1': '1 fiche dans tes carnets. La suite : <b>+ Add a video</b> ou le raccourci.',
+      'w.fs.donen': '{n} fiches dans tes carnets. La suite : <b>+ Add a video</b> ou le raccourci.',
+      'w.gh': 'Comment ça marche',
+      'w.g1h': 'Sur le téléphone, envoie',
+      'w.g1p': 'Une technique te plaît dans ton fil : Partager, Reelbook. La vidéo attend dans la file. Le téléphone ne fait rien de plus.',
+      'w.g2h': 'Sur l’ordinateur, lance',
+      'w.g2p': 'Tape <code>/reelbook</code> dans Claude Code quand tu veux. Garde Chrome ouvert au premier plan, connecté à Instagram, TikTok ou Facebook si tes vidéos en viennent (YouTube ne demande rien). Claude regarde chaque vidéo et écrit la fiche : photos, pourquoi, points clés, étapes dans l’ordre. Sur un Mac, il peut aussi tourner chaque nuit : <code>tools/nightly.sh install</code>.',
+      'w.g3h': 'À l’entraînement, ouvre la fiche',
+      'w.g3p': 'Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets. Sur le tapis, ouvre la fiche : le geste d’abord, en images. Coche <b>Done today</b>.'
+    },
+    en: {
+      'a.in': 'Sign in', 'a.up': 'Create an account', 'a.submitUp': 'Create account', 'a.have': 'I already have an account',
+      'a.email': 'Email', 'a.pass': 'Password', 'a.backend': 'Backend:', 'a.none': 'No backend selected',
+      'a.own': 'Use my own Supabase', 'a.change': 'Change instance', 'a.hosted': ' · Use Reelbook hosted',
+      'a.ownh': 'Connect your own instance', 'a.ownp': 'Enter your Supabase project details once on this device. Setup guide:',
+      'a.url': 'Project URL', 'a.key': 'Anon key', 'a.useown': 'Use this instance', 'a.cancel': 'Cancel', 'a.demo': 'See a demo',
+      'demo.up': 'Demo · read only · Create an account', 'demo.back': 'Demo · read only · Back to my notebooks', // L38: the #demo banner
+      'a.fail': 'Could not sign in.', 'a.e.up': 'Could not create the account.',
+      'a.e.creds': 'Wrong email or password.',
+      'a.e.weak': 'That password is too weak: choose a longer one.', 'a.e.email': 'That email address is not valid.',
+      'a.e.rate': 'Too many attempts: try again in a few minutes.', 'a.e.closed': 'This server does not take new accounts.',
+      // L31: the refusals of the beta (schema.sql, « Beta locks »), and the waiting-list form
+      'a.e.full': 'The last spot has just been taken: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.',
+      'a.e.shut': 'Sign-ups are closed for now: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.',
+      'a.e.today': 'Enough sign-ups for today: your account was not created. Try again tomorrow.',
+      'a.e.retry': 'Your account was not created: the beta may have just filled up. Try again in a moment.',
+      'a.e.projDay': 'Reelbook has taken enough videos for today, across all accounts: try again tomorrow.',
+      'a.e.projPhotos': 'The beta’s photo space is full for now: try again later.',
+      'wl.ok.h': 'You’re on the list', 'wl.ok': 'We’ll email you as soon as a spot opens.',
+      'wl.e.first': 'Enter your first name.', 'wl.e.consent': 'Tick the box so we can keep your first name and email.',
+      'wl.e.today': 'Too many requests today: try again tomorrow. If you already joined, you are still on the list.',
+      'wl.e.open': 'A spot has just opened: reload the page to create your account.',
+      'wl.e.fail': 'That did not work: check your connection and try again.',
+      'a.e.offline': 'The server did not answer: check your connection and try again.',
+      // L41: the auth screens (mockup p7-signup)
+      'au.signup.h': 'Create your account',
+      'au.signup.step': 'Account, step 1 of 2: we’ll email you a code to check your address.',
+      'au.pw8': 'Password · 8 characters or more',
+      'au.show': 'Show',
+      'au.hide': 'Hide',
+      'au.signup.cta': 'Get my code',
+      'au.signup.busy': 'Sending your code…',
+      'au.have': 'Already have an account?',
+      'au.code.h': 'Enter your code',
+      'au.code.step': 'Account, step 2 of 2: it’s created as soon as the code checks out.',
+      'au.code.sent': 'A 6-digit code is on its way to <b>{email}</b>.',
+      'au.code.sent.own': 'A code or a link is on its way to <b>{email}</b>.',
+      'au.change': 'Change address',
+      'au.code.l': '6-digit code',
+      'au.code.l.own': 'Code from the email',
+      'au.code.cta': 'Confirm',
+      'au.code.busy': 'Checking…',
+      'au.code.new': 'Get a new code',
+      'au.help.n': 'Nothing yet? Check your junk folder, or resend the code in <b>{n} s</b>.',
+      'au.help.a': 'Nothing yet? Check your junk folder, or {link}.',
+      'au.help.l': 'resend the code',
+      'au.help.way': 'Still nothing? Check <b>{email}</b>, search your inbox for Reelbook, or {us}.',
+      'au.help.way0': 'Still nothing? Check <b>{email}</b> and search your inbox for Reelbook.',
+      'au.help.us': 'email us',
+      'au.help.again': 'Resend the code',
+      'au.e.email': 'That doesn’t look like an email address: check it.',
+      'au.e.short': 'The password needs at least 8 characters.',
+      'au.e.off.send': 'You’re offline: nothing was sent. Try again once you’re back online.',
+      'au.e.off.code': 'You’re offline: the code could not be checked. Try again once you’re back online.',
+      'au.e.off.in': 'You’re offline: check your connection and try again.',
+      'au.e.rate': 'Sending limit reached for this address: try again in an hour. Nothing was created.',
+      'au.e.rate2': 'Sending limit reached for this address: try again in an hour.',
+      'au.e.wrong': 'That code isn’t right. Check the 6 digits of the latest email.',
+      'au.e.wrong.own': 'That code isn’t right. Check the latest email.',
+      'au.e.expired': 'This code has expired. Ask for a new one: it will reach the same address.',
+      'au.e.toomany': 'Too many attempts. Wait a few minutes, then ask for a new code.',
+      'au.e.soon': 'The last code just left: wait for the countdown before asking for another.',
+      'au.e.save': 'The password could not be saved: try again.',
+      'au.e.cf': 'The Cloudflare check didn’t go through. Turn off your content blocker or try another browser, then try again.',
+      'au.e.cf.us': 'Still stuck? {us}.',
+      'au.e.cf.us.l': 'Email us',
+      'au.n.resent': 'New code sent to <b>{email}</b>. Only the latest one works.',
+      'au.n.resume': 'Picking up where you left off: the code sent {n} min ago to <b>{email}</b> is still valid.',
+      'au.n.signin': 'Your sign-up isn’t finished: we just sent you a new code.',
+      'au.n.full': 'The last seat was taken while you were signing up. No account was created.',
+      'au.setpw.h': 'Choose your password',
+      'au.setpw.step': 'Address confirmed, account created for <b>{email}</b>. Only your password is missing.',
+      'au.setpw.cta': 'Save and continue',
+      'au.in.h': 'Sign in',
+      'au.in.busy': 'Signing in…',
+      'au.forgot': 'Forgot your password?',
+      'au.new': 'New here?',
+      'au.ex.h': 'This address already has an account',
+      'au.ex.p': '<b>{email}</b> already has a Reelbook account. Sign in with your password.',
+      'au.ex.you': 'Not you?',
+      'au.ex.other': 'Use another address',
+      'au.fg.h': 'Forgot your password',
+      'au.fg.p': 'Enter your address: we send a 6-digit code so you can pick a new password. Your account and sheets stay as they are.',
+      'au.fg.p.own': 'Enter your address: we send a code or a link so you can pick a new password. Your account and sheets stay as they are.',
+      'au.fg.cta': 'Get a code',
+      'au.back': 'Back to sign in',
+      'au.rs.h': 'New password',
+      'au.rs.sent': 'Code sent to <b>{email}</b>, if an account uses it.',
+      'au.rs.sent.own': 'Code or link sent to <b>{email}</b>, if an account uses it.',
+      'au.rs.pw': 'New password · 8 characters or more',
+      'au.rs.cta': 'Change my password',
+      'au.rs.none': 'No code after a few minutes, junk folder included? This address may have no account: {link}.',
+      'au.rs.create': 'create one',
+      'au.rs.ok': 'Password changed for <b>{email}</b>.',
+      'a.badUrl': 'That URL is not valid.', 'a.badProto': 'Use an http or https project URL.',
+      'a.badKey': 'That does not look like an anon key.',
+      's.h1': 'Your videos, as sheets',
+      's.lead': 'Paste the videos you want to keep (Instagram, TikTok, YouTube, Facebook): a move, a technique, a recipe. Claude Code turns each one into a sheet with photos and key points, filed in your notebooks.',
+      's.h2': 'Where should your new account live?',
+      's.ownd': 'Free tier is enough. You run one SQL file, then paste the project URL and anon key here.',
+      's.where': 'Both are in your Supabase dashboard under Project settings → API. The anon key is safe to keep in a browser: row level security keeps your data yours. Setup guide:',
+      's.limits': '300 sheets, 200 MB of photos, 10 videos a day.',
+      's.use': 'Use this project', 's.back': 'Back', 's.have': 'Already have an account?', 's.unavailable': 'Not available yet.',
+      's.blurb': null,
+      'w.eyebrow': 'Welcome to Reelbook', 'w.flash': 'Account created for <b>{email}</b>.', 'w.done': 'Open my notebooks',
+      'w.left3': 'Three more steps. You only do this once.', 'w.left2': 'Two steps left', 'w.left1': 'One step left', 'w.left0': 'All set',
+      'w.chip.todo': 'To do', 'w.chip.done': 'Done', 'w.chip.sent': 'Sent', 'w.chip.copied': 'Copied',
+      'w.pc.t': 'Your computer',
+      'w.pc.why': 'This one can’t be done on a phone: your computer is what watches the videos and writes the sheets. Send yourself the install line and paste it when you’re at your computer.',
+      'w.pc.ask': 'It will ask for your Reelbook email and password. The password stays hidden as you type: that’s normal.',
+      'w.pc.needm': 'What the computer needs: Claude Code, Chrome with Claude in Chrome, Git, Python 3.9+ ↗',
+      'w.send': 'Send myself the line', 'w.sendtitle': 'Set up Reelbook', 'w.sendtext': 'Set up Reelbook on your computer: paste one of these lines in a terminal.',
+      'w.pc.sent': 'Line sent. Paste it into Terminal when you’re at your computer; this step will tick itself. It also stays in <b>Settings</b>.',
+      'w.pc.copied': 'Line copied. Send it to yourself, then paste it into Terminal when you’re at your computer; this step will tick itself. It also stays in <b>Settings</b>.',
+      'w.pc.nosend': 'Sharing and copying did not work: select the text above and send it to yourself.',
+      'w.pc.lead': 'It is what watches the videos and writes the sheets. Paste this line into Terminal: it installs <code>/reelbook</code> and links it to your account.',
+      'w.pc.leadw': 'It is what watches the videos and writes the sheets. Paste this line into PowerShell: it installs <code>/reelbook</code> and links it to your account.',
+      'w.sys.mac': 'macOS detected', 'w.sys.linux': 'Linux detected', 'w.sys.win': 'Windows detected',
+      'w.os.win': 'On Windows? PowerShell', 'w.os.unix': 'On a Mac or Linux? Terminal',
+      'w.pc.need': 'What you need: Claude Code, Chrome with Claude in Chrome, Git, Python 3.9+ ↗', 'w.pc.script': 'Read the script first ↗',
+      'w.pc.done': 'Linked. The install line stays in <b>Settings</b>.',
+      'w.ph.t': 'Your phone',
+      'w.ph.1': 'Put Reelbook on your home screen and sign in there.',
+      'w.ph.1d': 'Open Reelbook on your phone, put it on your home screen and sign in there.',
+      'w.ph.2': 'Add the “Send to Reelbook” shortcut to the iPhone Share menu. On Android, paste the link in the app.',
+      'w.ph.tick': 'Done on my phone', 'w.ph.done': 'Done on this phone.', 'w.ph.donepc': 'Done on your phone.',
+      'w.fs.t': 'Your first sheet',
+      'w.fs.p': 'Share a video from Instagram, TikTok, YouTube or Facebook, or tap <b>+ Add a video</b> and paste the link. Then type <code>/reelbook</code> in Claude Code on your computer: the sheet lands in your notebooks.',
+      'w.fs.done1': '1 sheet in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.',
+      'w.fs.donen': '{n} sheets in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.',
+      'w.gh': 'How it works',
+      'w.g1h': 'On your phone, send',
+      'w.g1p': 'A technique catches your eye in your feed: Share, Reelbook. The video waits in the queue. That’s all the phone does.',
+      'w.g2h': 'On your computer, run',
+      'w.g2p': 'Type <code>/reelbook</code> in Claude Code whenever you like. Keep Chrome open in the foreground, signed in to Instagram, TikTok or Facebook if your videos come from there (YouTube needs nothing). Claude watches each video and writes the sheet: photos, why, key points, the steps in order. On a Mac it can also run every night: <code>tools/nightly.sh install</code>.',
+      'w.g3h': 'When you train, open the sheet',
+      'w.g3p': 'Move a sheet to another group, add your notes, build a session from several notebooks. On the mat, open the sheet: the move first, in pictures. Tick <b>Done today</b>.'
+    }
+  };
+  // s.blurb: English is the blurb of config.js (a fork writes its own); French only replaces it.
+  const DICT = {fr: Object.assign({}, LANDING.fr, APP.fr), en: Object.assign({}, LANDING.en, APP.en)};
+  delete DICT.en['s.blurb'];
+
+  const STORE = 'rb.lang', EX_STORE = 'rb.landing.ex';
+  const pickLang = (saved, nav) => (saved === 'fr' || saved === 'en') ? saved : /^fr(?:[-_]|$)/i.test(String(nav || '')) ? 'fr' : 'en';
+  const ls = {
+    get: k => { try { return win.localStorage ? win.localStorage.getItem(k) : null; } catch (e) { return null; } },
+    set: (k, v) => { try { if (win.localStorage) win.localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
+  };
+  let lang = pickLang(ls.get(STORE), win.navigator && win.navigator.language);
+  const t = k => { const v = DICT[lang][k]; return v != null ? v : DICT.en[k]; };
+  const fill = (s, o) => String(s).replace(/\{(\w+)\}/g, (_, k) => o[k] == null ? '' : String(o[k]));
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const $ = id => doc ? doc.getElementById(id) : null;
+  const all = (sel, root) => { const r = root || doc; return r && r.querySelectorAll ? Array.prototype.slice.call(r.querySelectorAll(sel)) : []; };
+  const setText = (id, v) => { const el = $(id); if (el) el.textContent = String(v); };
+  const setHtml = (id, v) => { const el = $(id); if (el) el.innerHTML = v; };
+  const toggle = (el, c, on) => { if (el && el.classList && el.classList.toggle) el.classList.toggle(c, on); };
+
+  // ---------- pictures: assets/<folder>/<name>.jpg (frame) and <name>-t.jpg (thumbnail) ----------
+  const DIR = n => /^(k0|f-|t-(?!flow))/.test(n) ? 'mma' : /^(d0|c-)/.test(n) ? 'dance' : /^st/.test(n) ? 'stretch' : /^sb/.test(n) ? 'snow' : /^hi/.test(n) ? 'hiit' : /^n-/.test(n) ? 'notebooks' : 'yoga';
+  const full = n => 'assets/' + DIR(n) + '/' + n + '.jpg';
+  const thumb = n => 'assets/' + DIR(n) + '/' + n + '-t.jpg';
+  const img = (src, eager, style) => '<img src="' + src + '" alt=""' + (eager ? '' : ' loading="lazy" decoding="async"') + (style ? ' style="' + style + '"' : '') + '>';
+
+  // the mockup's three drawn pictograms (the route's notebook badge); the others are the notebooks' (icons.svg)
+  const IC = {
+    fight: '<path d="M8.5 15V8.5A4.5 4.5 0 0 1 13 4h.5A4.5 4.5 0 0 1 18 8.5V12a3 3 0 0 1-3 3z"/><path d="M8.5 13H7a2.25 2.25 0 0 1 0-4.5h1.5M8.5 10.75H12"/><rect x="8.5" y="15" width="9" height="5" rx="1"/>',
+    dance: '<path d="M9 18V5.5l10-2V16M9 9.5l10-2"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+    yoga: '<path d="M12 4.5c2.6 2.9 2.6 8.1 0 11-2.6-2.9-2.6-8.1 0-11z"/><path d="M12 15.5c-4 0-7-2.4-7.6-6 3.2 0 6 2 7.6 6zM12 15.5c4 0 7-2.4 7.6-6-3.2 0-6 2-7.6 6z"/><path d="M5 19.5h14"/>'
+  };
+  const nbIco = id => '<svg aria-hidden="true"><use href="icons.svg#nb-' + id + '"/></svg>';
+  const icon = k => IC[k] ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[k] + '</svg>' : nbIco(k);
+
+  // « Tout au même endroit »: the app home on a tablet (six notebooks) and the Yoga notebook open on a phone
+  const T = (fr, en) => ({fr, en});
+  const SUB = {
+    fight: T('Frappes, défense, clinch.', 'Striking, defence, clinch.'), yoga: T('Postures, étirements, respiration.', 'Poses, stretches, breathing.'),
+    dance: T('Pas, combinaisons, musicalité.', 'Steps, combos, musicality.'), snow: T('Park, carving, hors-piste.', 'Park, carving, off-piste.'),
+    cook: T('Techniques, recettes, gestes.', 'Techniques, recipes, skills.'), strength: T('Mouvements, programmes, charges.', 'Lifts, programs, loads.')
+  };
+  const NBS = [['fight', 'Fight techniques', 2, 8, ['f-nuque', 'f-osoto', 'f-cravate']], ['yoga', 'Yoga & stretching', 1, 14, ['y2-salutation', 'y2-chien', 'y2-guerrier']],
+    ['dance', 'Dance', 5, 12, ['c-pir', 'c-chaine', 'c-jete']], ['snow', 'Ski & snowboard', 4, 11, ['sb05', 'sb03', 'sb01']],
+    ['cook', 'Cooking', 6, 23, ['n-cook-1', 'n-cook-2', 'n-cook-3']], ['strength', 'Strength', 0, 21, ['n-str-1', 'n-str-2', 'n-str-3']]];
+  const PHONE = [[T('Postures', 'Poses'), 5, ['y-guerrier', 'y-corbeau', 'y-pigeon']], [T('Enchaînements', 'Flows'), 4, ['y2-salutation', 'y-salutation', 'y2-chien']],
+    [T('Dos', 'Back'), 2, ['y-chien', 'y2-guerrier', 'y-pigeon']], [T('Hanches', 'Hips'), 3, ['y-pigeon', 't-flow-hanches', 'y-guerrier']]];
+
+  let ex = EX[ls.get(EX_STORE)] ? ls.get(EX_STORE) : 'mma', step = 0, timer = null, paused = false;
+  const tr = o => o && typeof o === 'object' && ('fr' in o) ? o[lang] : o;
+  const X = () => EX[ex];
+  const nF = () => X().frames.length;
+  const frame = (i, eager, style) => img(full(X().frames[i]), eager, style);
+  const pic = key => '<div class="lp-pic">' + img(thumb(X().items[key].img)) + '</div>';
+  const gname = g => { const e = X(); return (e.groupNames && e.groupNames[lang][g]) || g; };
+
+  // ---------- step 2: the small animated sheet ----------
+  const shotEl = $('lp-shot'), shotStatic = shotEl && typeof shotEl.innerHTML === 'string' ? shotEl.innerHTML : '';
+  const show = k => {
+    step = k; const e = X();
+    all('div', $('lp-shot')).forEach((d, j) => toggle(d, 'lp-on', j === k));
+    all('button', $('lp-thumbs')).forEach((b, j) => b.setAttribute('aria-current', String(j === k)));
+    setText('lp-num', k + 1);
+    setText('lp-stepName', e.steps[lang][k][0]); setText('lp-cue', e.steps[lang][k][1]);
+  };
+  const ppLabel = () => { const pp = $('lp-pp'); if (!pp) return; toggle(pp, 'lp-paused', paused); pp.setAttribute('aria-label', t(paused ? 'ui.play' : 'ui.pause')); };
+  const buildPlayer = () => {
+    const e = X(), N = nF(), alts = tr(e.alts);
+    if (step >= N) step = 0;
+    setHtml('lp-shot', shotStatic + e.frames.map((f, i) => '<div role="img" aria-label="' + esc(alts[i]) + '"' + (i === step ? ' class="lp-on"' : '') + '>' + frame(i, i === step) + '</div>').join(''));
+    setHtml('lp-thumbs', e.frames.map((f, i) => '<button type="button" data-i="' + i + '" aria-label="' + (i + 1) + ' / ' + N + ' · ' + esc(alts[i]) + '" aria-current="' + (i === step) + '"></button>').join(''));
+    setText('lp-pCrumb', lang === 'en' && e.crumbEn ? e.crumbEn : e.crumb);
+    setText('lp-pTitle', tr(e.title));
+    setText('lp-drawn', tr(e.drawn));
+    ppLabel(); show(step);
+  };
+  const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+
+  // ---------- the interface fragments (tablet and phone, sessions, progress, route) ----------
+  const renderAll = () => {
+    const e = X(), intro = $('intro');
+    if (intro) { intro.setAttribute('data-ex', ex); if (intro.style && intro.style.setProperty) intro.style.setProperty('--nb', e.col); }
+    buildPlayer();
+    const sheets = n => fill(t('ui.sheets'), {n});
+    const nbs = NBS.filter(n => n[0] === e.mine).concat(NBS.filter(n => n[0] !== e.mine));
+    const tab = '<div class="lp-dv-tab"><div class="lp-dv-bar"><b>reelbook</b><span>' + t('ui.nbs') + '</span></div><div class="lp-dv-add">' + t('ui.paste') + '<i>+</i></div><div class="lp-dv-grid">' + nbs.map(n =>
+      '<div class="lp-dv-nb" style="--t:' + PAL[n[2]] + '"><div class="lp-dv-cv"><i>' + nbIco(n[0]) + '</i><span><small>' + sheets(n[3]) + '</small><b>' + esc(n[1]) + '</b></span></div><p class="lp-dv-sub">' + tr(SUB[n[0]]) + '</p><div class="lp-dv-th">' + n[4].map(f => img(thumb(f))).join('') + '</div></div>').join('') + '</div></div>';
+    const prow = (g, n, fs) => '<div class="lp-dv-g"><b>' + tr(g) + ' <span>' + n + '</span></b><div class="lp-dv-row">' + fs.map(f => img(thumb(f))).join('') + '</div></div>';
+    const ph = '<div class="lp-dv-ph" style="--t:' + PAL[1] + '"><div class="lp-dv-cv"><i>' + nbIco('yoga') + '</i><span><small>' + sheets(14) + '</small><b>Yoga &amp; stretching</b></span></div>' + PHONE.map(r => prow(r[0], r[1], r[2])).join('') + '</div>';
+    setHtml('lp-nbUi', '<div class="lp-dv-stage">' + tab + ph + '</div><figcaption>' + t('ui.devices') + '</figcaption>');
+    const ss = e.session;
+    setHtml('lp-sessionUi', '<span class="lp-meta">' + t('ui.session') + ' · ' + esc(e.nb) + '</span><div class="lp-st">' + tr(ss.title) + '</div><span class="lp-meta">' + tr(ss.format) + '</span>' +
+      '<ol>' + ss.items.map(r => { const it = e.items[r[0]]; return '<li>' + pic(r[0]) + '<span><b>' + tr(it.t) + '</b><small><i>' + r[1] + '</i>' + gname(it.g) + '</small></span><span class="lp-dose">' + tr(r[2]) + '</span></li>'; }).join('') + '</ol>' +
+      '<span class="lp-done">' + t('ui.done') + '</span>');
+    setHtml('lp-sessionMini', '<span class="lp-m">' + t('ui.session') + ' · ' + tr(ss.format) + '</span><b class="lp-st">' + tr(ss.title) + '</b>' +
+      '<ol>' + ss.items.slice(0, 3).map(r => '<li>' + pic(r[0]) + '<span>' + tr(e.items[r[0]].t) + '</span><span class="lp-dose">' + tr(r[2]) + '</span></li>').join('') + '</ol>' +
+      '<span class="lp-done">' + t('ui.done') + '</span>');
+    setHtml('lp-seq', e.frames.map((f, q) => '<div data-frame="' + q + '"></div>').join(''));
+    const p = YOGA.progress;
+    const it2 = (k, tag) => { const it = YOGA.items[k]; return '<div class="lp-it"><div class="lp-pic">' + img(thumb(it.img)) + '</div><span><b>' + tr(it.t) + '</b><small class="lp-ynb">Yoga &amp; stretching · ' + tr(it.g) + '</small>' + tag + '</span></div>'; };
+    const shelf = (h, d, rows) => '<div data-ui class="lp-shelf"><h3>' + h + '</h3><p>' + d + '</p><div class="lp-items">' + rows + '</div></div>';
+    setHtml('lp-progressUi',
+      shelf(t('ui.nw.h'), t('ui.nw.p'), p.nw.map(k => it2(k, '<span class="lp-tag-new">' + t('ui.new') + '</span>')).join('')) +
+      shelf(t('ui.tr.h'), t('ui.tr.p'), p.tr.map(k => it2(k, '<span class="lp-tag-try">' + t('ui.tr.tag') + '</span>')).join('')) +
+      shelf(t('ui.dn.h'), t('ui.dn.p'), p.dn.map(r => it2(r[0], '<span class="lp-tag-done">' + tr(r[1]) + '</span>')).join('')));
+    all('#intro [data-frame]').forEach(el => { el.innerHTML = frame(+el.getAttribute('data-frame')); });
+    const sh = e.share || [4, '50% 50%'];
+    all('#intro [data-share]').forEach(el => { el.innerHTML = frame(sh[0], false, 'object-position:' + sh[1]); });
+    setText('lp-rUrl', e.url);
+    const fk = e.fk;
+    setHtml('lp-routeNb', '<div class="lp-h"><span class="lp-ui-badge">' + icon(e.icon) + '</span>' + esc(e.nb) + '</div><div class="lp-g">' + gname(e.items[fk].g) + '</div>' + pic(fk) + '<b>' + tr(e.items[fk].t) + '</b><span class="lp-tag-new">' + t('ui.new') + '</span>');
+    all('#intro .lp-ex button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-ex') === ex)));
+  };
+
+  // « Tes activités, tes carnets »: the 29 notebooks of config.js, twice for the endless band (the copy hidden)
+  const renderLib = () => {
+    const one = LIB.map(l => '<span class="lp-lib-t" role="listitem"><i style="background:' + PAL[l[2]] + '">' + nbIco(l[0]) + '</i>' + esc(l[1]) + '</span>').join('');
+    setHtml('lp-lib', '<div class="lp-set" role="list">' + one + '</div><div class="lp-set" aria-hidden="true">' + one + '</div>');
+  };
+
+  // ---------- the beta (beta_seats(), L32: {taken, total, open} or null) ----------
+  let seatData = null, ownForced = false;
+  const seatsOf = d => {
+    const o = Array.isArray(d) ? d[0] : d;
+    if (!o || typeof o !== 'object' || o.taken == null || o.total == null) return null;
+    const taken = Number(o.taken), total = Number(o.total);
+    if (!(Number.isFinite(taken) && Number.isFinite(total) && total >= 0 && taken >= 0)) return null;
+    const tot = Math.round(total), tk = Math.min(Math.round(taken), tot);
+    return {taken: tk, total: tot, full: tk >= tot || o.open === false, closed: !tot || (tk < tot && o.open === false)};
+  };
+  const isFull = () => !!(seatData && seatData.full);
+  // L31: « Notify me » records something (join_waitlist, wired by the app script, which also says how it went). False
+  // would be a full beta without the form, the hero line without « join the waiting list ».
+  const WAITLIST = true;
+  // « Create my notebook » of step 1 hides on a full beta until « On my own Supabase » is picked
+  const syncCta = () => { const cta = $('intro-signup'), own = $('lp-host-own'); if (cta) cta.hidden = isFull() && !(own && own.checked); };
+  const paintSeats = () => {
+    const s = seatData, fullB = isFull(), n = s ? fill(t('seats'), s) : '';
+    const bar = $('lp-seatsBar');
+    if (bar) { bar.hidden = !s; const i = bar.querySelector ? bar.querySelector('i') : null; if (s && i && i.style) i.style.width = (s.total ? Math.round(100 * s.taken / s.total) : 100) + '%'; }
+    setText('lp-betaLine', fullB ? t(WAITLIST ? 'beta.full' : 'beta.closed') : s ? t('beta') + ' · ' + n : t('beta'));
+    const line = $('lp-seatline'); if (line) { line.hidden = !s; line.textContent = n; }
+    // At the limit « On my own Supabase » is the option picked (its button: « Connect my Supabase »); a seat freed
+    // again gives the hosted one back. The app script repaints what follows the choice (step 2) after this.
+    const o = $('lp-host-hosted-opt'), r = $('lp-host-hosted'), own = $('lp-host-own');
+    if (fullB) { if (o) o.hidden = true; if (r) r.checked = false; if (own) own.checked = true; ownForced = true; }
+    else if (ownForced) { if (o) o.hidden = false; if (r) r.checked = true; if (own) own.checked = false; ownForced = false; }
+    const card = $('lp-host-full'); if (card) card.hidden = !fullB;
+    if (s) { setText('lp-wlH', s.closed ? t('beta.closed') : fill(t('wl.h'), s)); setText('lp-lockN', s.closed ? '—' : s.total); }
+    const wl = $('lp-wl'), wlp = $('lp-wlP'); if (wl) wl.hidden = !WAITLIST; if (wlp) wlp.hidden = !WAITLIST;
+    toggle($('lp-installList'), 'lp-full', fullB);
+    setText('intro-signup', t(fullB ? 'i1.cta.full' : 'i1.cta'));
+    all('#intro [data-k="cta"]').forEach(b => { b.textContent = t(fullB && WAITLIST ? 'cta.full' : 'cta'); });
+    syncCta();
+  };
+  const seats = d => { seatData = seatsOf(d); paintSeats(); return !!seatData; };
+
+  // ---------- language ----------
+  const listeners = [];
+  const langButtons = () => all('#intro .lp-lang button').concat(all('#welcome .lp-lang button')); // L43: the switch of #welcome too
+  const apply = () => {
+    if (doc && doc.documentElement) doc.documentElement.lang = lang;
+    all('[data-k]').forEach(el => { const v = t(el.getAttribute('data-k')); if (v != null) el.innerHTML = v; });
+    all('[data-ka]').forEach(el => { const v = t(el.getAttribute('data-ka')); if (v != null) el.setAttribute('aria-label', v); });
+    langButtons().forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang)));
+    if ($('intro')) { renderLib(); renderAll(); paintSeats(); }
+  };
+  const setLang = l => {
+    if (l !== 'fr' && l !== 'en') return;
+    lang = l; ls.set(STORE, l); apply();
+    listeners.forEach(fn => { try { fn(lang); } catch (e) { /* a listener never stops the others */ } });
+  };
+  const setExample = x => { if (!EX[x]) return; ex = x; step = 0; ls.set(EX_STORE, x); renderAll(); };
+
+  // ---------- page behaviour (only where the landing is in the page) ----------
+  const reduce = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const intro = $('intro');
+  const on = (el, type, fn, opts) => { if (el && el.addEventListener) el.addEventListener(type, fn, opts); };
+  const shown = () => intro && !intro.hidden;
+  const live = v => { const cue = $('lp-cue'); if (cue) cue.setAttribute('aria-live', v); };
+  const start = () => {
+    stop(); live('off');
+    if (typeof setInterval === 'function') timer = setInterval(() => { if (shown() && !(doc && doc.hidden)) show((step + 1) % nF()); }, 2600);
+  };
+  langButtons().forEach(b => on(b, 'click', () => setLang(b.getAttribute('data-lang'))));
+  if (intro) {
+    all('#intro .lp-ex button').forEach(b => on(b, 'click', () => setExample(b.getAttribute('data-ex'))));
+    on($('lp-thumbs'), 'click', ev => { const b = ev.target && ev.target.closest ? ev.target.closest('button[data-i]') : null; if (b) { stop(); live('polite'); show(+b.getAttribute('data-i')); } });
+    // in-page links scroll; the app routes on location.hash, so the hash never changes here. #signin, #signup and
+    // #shortcut are the app's (its listeners on #intro-signin, #intro-signup and #intro-shortcut).
+    on(intro, 'click', ev => {
+      const pp = ev.target && ev.target.closest ? ev.target.closest('#lp-pp') : null;
+      if (pp) {
+        paused = !paused; toggle($('lp-top'), 'lp-anim-off', paused);
+        if (paused) { stop(); live('polite'); } else start();
+        ppLabel(); return;
+      }
+      const a = ev.target && ev.target.closest ? ev.target.closest('a[href^="#"]') : null;
+      if (!a) return;
+      ev.preventDefault();
+      const h = a.getAttribute('href'), behavior = reduce ? 'auto' : 'smooth';
+      if (h === '#lp-top') { if (win.scrollTo) win.scrollTo({top: 0, behavior}); return; }
+      const target = h.indexOf('#lp-') === 0 ? $(h.slice(1)) : null;
+      if (target && target.scrollIntoView) target.scrollIntoView({behavior, block: 'start'});
+    });
+    on(intro, 'submit', ev => ev.preventDefault());
+    on($('lp-host-own'), 'change', syncCta); on($('lp-host-hosted'), 'change', syncCta);
+    // step 2: macOS / Linux or Windows
+    const osb = all('#intro .lp-os button');
+    osb.forEach(b => on(b, 'click', () => {
+      osb.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      all('#intro [data-os-pane]').forEach(el => { el.hidden = el.getAttribute('data-os-pane') !== b.getAttribute('data-os'); });
+    }));
+    // « Copy the line » (the pane in view): the clipboard API, else the page's copy command on the selected line;
+    // when neither copies, the line stays selected and a message says to copy it by hand.
+    on($('lp-copy'), 'click', ev => {
+      const b = ev.currentTarget || ev.target, pre = all('#intro pre[data-os-pane]').filter(p => !p.hidden)[0], msg = $('lp-copyMsg'), label = t('i2.copy');
+      if (!pre) return;
+      const say = k => { if (msg) { msg.hidden = !k; msg.textContent = k ? t(k) : ''; } };
+      const copied = () => { say(null); b.textContent = t('ui.copied'); setTimeout(() => { b.textContent = label; }, 1600); };
+      const byHand = () => {
+        let ok = false;
+        try {
+          const range = doc.createRange(), sel = win.getSelection();
+          range.selectNodeContents(pre); sel.removeAllRanges(); sel.addRange(range);
+          ok = !!(doc.execCommand && doc.execCommand('copy'));
+        } catch (e) { ok = false; }
+        if (ok) copied(); else say('ui.copyHand');
+      };
+      const clip = win.navigator && win.navigator.clipboard;
+      if (!clip || typeof clip.writeText !== 'function') { byHand(); return; }
+      Promise.resolve().then(() => clip.writeText(pre.textContent.trim())).then(copied, byHand);
+    });
+    // the bar: a shadow once scrolled, the section in view underlined
+    const bar = $('lp-topbar'), links = all('#lp-topbar nav a');
+    const spy = () => {
+      if (!shown() || !doc.documentElement) return;
+      const y = (win.scrollY || 0) + 120;
+      let cur = null;
+      links.forEach(a => { const el = $(a.getAttribute('href').slice(1)); if (el && el.getBoundingClientRect && el.getBoundingClientRect().top + (win.scrollY || 0) <= y) cur = a; });
+      if ((win.innerHeight || 0) + (win.scrollY || 0) >= doc.documentElement.scrollHeight - 4) cur = links[links.length - 1];
+      links.forEach(a => { if (a === cur) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+      toggle(bar, 'lp-scrolled', (win.scrollY || 0) > 4);
+    };
+    on(win, 'scroll', spy, {passive: true}); on(win, 'resize', spy);
+  }
+  apply();
+  if (intro) { if (!reduce) start(); else live('polite'); }
+
+  win.RBL = {
+    DICT, pickLang, t, fill, setLang, setExample, seats, apply,
+    examples: Object.keys(EX),
+    get lang() { return lang; }, get example() { return ex; }, get step() { return step; }, get full() { return isFull(); },
+    onChange: fn => { if (typeof fn === 'function') listeners.push(fn); }
+  };
+})();

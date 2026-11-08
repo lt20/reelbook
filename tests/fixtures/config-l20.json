@@ -1,0 +1,61 @@
+{"defaults": [ "strength", "yoga", "fight" ], "hosted": {"name": "Reelbook hosted", "url": "https://xgarsygrkfnfyvxkcxdm.supabase.co"
+ }, "library": [
+  {"id": "strength", "title": "Strength", "sub": "Weights, bodyweight, bands. Movements and circuits.", "color": 0, "profile": "gym", "groups": [ "Shoulders", "Arms", "Abs", "Back", "Core", "Hips", "Knees", "Legs", "Mobility" ]
+  },
+  {"id": "yoga", "title": "Yoga & stretching", "sub": "Poses, stretches, breathing, flows.", "color": 1, "profile": "gym", "groups": [ "Back", "Hips", "Shoulders", "Legs", "Breathing", "Flows" ]
+  },
+  {"id": "fight", "title": "Fight techniques", "sub": "Striking, defense, clinch, footwork.", "color": 2, "profile": "partner", "groups": [ "Punches", "Kicks & knees", "Defense", "Clinch & grappling", "Footwork", "Bag & pads" ]
+  },
+  {"id": "kitesurf", "title": "Kitesurf", "sub": "Kite control, water start, riding, jumps, transitions.", "color": 3, "profile": "technique", "groups": [ "Kite control", "Water start", "Riding", "Transitions", "Jumps & tricks", "Safety" ]
+  },
+  {"id": "kitefoil", "title": "Kitefoil", "sub": "Foil start, balance, carving, light wind.", "color": 3, "profile": "technique", "groups": [ "Start", "Balance", "Carving", "Transitions", "Light wind", "Safety" ]
+  },
+  {"id": "wingfoil", "title": "Wingfoil", "sub": "Wing handling, pumping, take-off, jibes, tacks.", "color": 3, "profile": "technique", "groups": [ "Wing handling", "Take-off", "Pumping", "Jibes & tacks", "Waves", "Safety" ]
+  },
+  {"id": "wakeboard", "title": "Wakeboard", "sub": "Cable and boat: starts, edging, jumps, grabs.", "color": 3, "profile": "technique", "groups": [ "Start", "Edging", "Jumps", "Grabs & spins", "Obstacles", "Falls" ]
+  },
+  {"id": "surf", "title": "Surfing", "sub": "Paddling, take-off, bottom turn, cutback, reading waves.", "color": 3, "profile": "technique", "groups": [ "Paddling", "Take-off", "Turns", "Reading waves", "Fitness", "Safety" ]
+  },
+  {"id": "swim", "title": "Swimming", "sub": "Strokes, breathing, drills, open water.", "color": 3, "profile": "gym", "groups": [ "Freestyle", "Breaststroke", "Backstroke", "Butterfly", "Breathing", "Open water" ]
+  },
+  {"id": "run", "title": "Running", "sub": "Form, drills, strength for runners, sessions.", "color": 4, "profile": "gym", "groups": [ "Form", "Drills", "Strength", "Sessions", "Recovery" ]
+  },
+  {"id": "bike", "title": "Cycling", "sub": "Position, pedalling, climbing, descending, maintenance.", "color": 4, "profile": "gym", "groups": [ "Position", "Pedalling", "Climbing", "Descending", "Maintenance", "Sessions" ]
+  },
+  {"id": "hike", "title": "Hiking & trail", "sub": "Uphill, downhill, poles, packing, nutrition on the move.", "color": 4, "profile": "gym", "groups": [ "Uphill", "Downhill", "Poles", "Packing", "Nutrition" ]
+  },
+  {"id": "climb", "title": "Climbing & bouldering", "sub": "Footwork, grips, body position, dynamic moves, finger care.", "color": 4, "profile": "technique", "groups": [ "Footwork", "Grips", "Body position", "Dynamic moves", "Finger care" ]
+  },
+  {"id": "snow", "title": "Ski & snowboard", "sub": "Carving, moguls, powder, park, off-piste basics.", "color": 4, "profile": "technique", "groups": [ "Carving", "Moguls", "Powder", "Park", "Off-piste" ]
+  },
+  {"id": "ride", "title": "Horse riding", "sub": "Seat, aids, transitions, jumping, groundwork.", "color": 4, "profile": "technique", "groups": [ "Seat", "Aids", "Transitions", "Jumping", "Groundwork" ]
+  },
+  {"id": "racket", "title": "Tennis & padel", "sub": "Serve, forehand, backhand, volley, footwork.", "color": 4, "profile": "gym", "groups": [ "Serve", "Forehand", "Backhand", "Volley", "Footwork" ]
+  },
+  {"id": "golf", "title": "Golf", "sub": "Grip, set-up, swing, chipping, putting.", "color": 4, "profile": "gym", "groups": [ "Grip & set-up", "Swing", "Chipping", "Putting", "Course" ]
+  },
+  {"id": "pilates", "title": "Pilates", "sub": "Mat and reformer: core, control, alignment.", "color": 5, "profile": "gym", "groups": [ "Core", "Spine", "Hips", "Shoulders", "Reformer", "Flows" ]
+  },
+  {"id": "barre", "title": "Barre", "sub": "Ballet-inspired strength: legs, glutes, posture.", "color": 5, "profile": "gym", "groups": [ "Legs", "Glutes", "Arms", "Core", "Posture", "Flows" ]
+  },
+  {"id": "pole", "title": "Pole dance", "sub": "Spins, climbs, inverts, holds, floorwork, conditioning.", "color": 5, "profile": "technique", "groups": [ "Spins", "Climbs", "Inverts", "Holds", "Floorwork", "Conditioning" ]
+  },
+  {"id": "dance", "title": "Dance", "sub": "Steps, combos, isolations, musicality.", "color": 5, "profile": "gym", "groups": [ "Basics", "Combos", "Isolations", "Turns", "Musicality" ]
+  },
+  {"id": "mobility", "title": "Mobility & rehab", "sub": "Joint health, injury recovery, daily routines.", "color": 1, "profile": "gym", "groups": [ "Neck", "Shoulders", "Spine", "Hips", "Knees", "Ankles & feet" ]
+  },
+  {"id": "prenatal", "title": "Prenatal & postnatal", "sub": "Safe movement during pregnancy and after birth.", "color": 5, "profile": "gym", "groups": [ "Pregnancy", "Birth prep", "Postnatal", "Core & floor", "Breathing" ]
+  },
+  {"id": "floor", "title": "Pelvic floor & core", "sub": "Breathing, deep core, pelvic floor training.", "color": 5, "profile": "gym", "groups": [ "Breathing", "Deep core", "Pelvic floor", "Posture", "Routines" ]
+  },
+  {"id": "breath", "title": "Breathwork & meditation", "sub": "Breathing techniques, calm, focus, sleep.", "color": 1, "profile": "gym", "groups": [ "Breathing", "Calm", "Focus", "Sleep", "Routines" ]
+  },
+  {"id": "cook", "title": "Cooking", "sub": "Recipes, techniques, knife skills, batch cooking.", "color": 6, "profile": "gym", "groups": [ "Basics & knife skills", "Breakfast", "Mains", "Sides & salads", "Desserts", "Batch cooking" ]
+  },
+  {"id": "nutrition", "title": "Nutrition & meal prep", "sub": "Protein, hydration, planning, recipes for training.", "color": 6, "profile": "gym", "groups": [ "Protein", "Hydration", "Planning", "Snacks", "Supplements" ]
+  },
+  {"id": "beauty", "title": "Beauty & skincare", "sub": "Skin, hair, nails, routines, massage.", "color": 7, "profile": "gym", "groups": [ "Skin", "Hair", "Nails", "Face massage", "Routines" ]
+  },
+  {"id": "crafts", "title": "Sewing & crafts", "sub": "Stitches, patterns, knitting, repairs, DIY.", "color": 7, "profile": "gym", "groups": [ "Sewing", "Knitting & crochet", "Patterns", "Repairs", "DIY" ]
+  } ]
+}

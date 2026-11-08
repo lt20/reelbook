@@ -1,0 +1,7 @@
+[
+  {"name": "l25-01-first-screen", "query": "noauth", "full": true, "actions": [{"wait": "#intro:not([hidden])"}, {"wait": "#intro-signup"}]},
+  {"name": "l25-02-first-screen-wide", "query": "noauth", "full": true, "viewport": {"width": 1024, "height": 800}, "actions": [{"wait": "#intro:not([hidden])"}]},
+  {"name": "l25-03-sign-up", "query": "noauth", "actions": [{"click": "#intro-signup"}, {"wait": "#auth-form:not([hidden])"}, {"wait": "#auth-title >> text=Create an account"}]},
+  {"name": "l25-04-sign-in", "query": "noauth", "actions": [{"click": "#intro-signin"}, {"wait": "#auth-form:not([hidden])"}, {"wait": "#auth-title >> text=Sign in"}]},
+  {"name": "l25-05-own-supabase", "query": "noauth", "full": true, "actions": [{"click": "#intro-signin"}, {"click": "#a-own"}, {"wait": "#login-own-form:not([hidden])"}]}
+]

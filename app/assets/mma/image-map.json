@@ -1,0 +1,101 @@
+{
+  "notice": "Visuels de démonstration générés (Codex, 5-6 nov. 2026) pour l’accueil v3 (L36). Aucun n’est une capture d’une vidéo tierce ; publication validée par le mainteneur.",
+  "source": "images générées pour Reelbook, mêmes noms de fichier",
+  "sizes": {
+    "frame": "640 px de large, JPEG q70",
+    "thumbnail": "240 px de large, JPEG q70, suffixe -t"
+  },
+  "files": {
+    "f-cravate-t.jpg": {
+      "source": "f-cravate.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 13898
+    },
+    "f-nuque-t.jpg": {
+      "source": "f-nuque.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 16186
+    },
+    "f-osoto-t.jpg": {
+      "source": "f-osoto.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 7875
+    },
+    "k01.jpg": {
+      "source": "k01.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 67287
+    },
+    "k02.jpg": {
+      "source": "k02.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 67091
+    },
+    "k03.jpg": {
+      "source": "k03.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 68006
+    },
+    "k04.jpg": {
+      "source": "k04.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 70319
+    },
+    "k05.jpg": {
+      "source": "k05.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 72454
+    },
+    "k06.jpg": {
+      "source": "k06.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 73541
+    },
+    "t-coup-de-pied-tournant-foie-t.jpg": {
+      "source": "t-coup-de-pied-tournant-foie.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 240,
+      "bytes": 13898
+    },
+    "t-defense-prise-de-nuque-t.jpg": {
+      "source": "t-defense-prise-de-nuque.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 240,
+      "bytes": 21598
+    },
+    "t-footwork-drills-boxe-t.jpg": {
+      "source": "t-footwork-drills-boxe.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 240,
+      "bytes": 10391
+    },
+    "t-sortie-cravate-debout-t.jpg": {
+      "source": "t-sortie-cravate-debout.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 240,
+      "bytes": 20855
+    }
+  }
+}

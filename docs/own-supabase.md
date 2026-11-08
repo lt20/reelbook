@@ -1,0 +1,75 @@
+# Run Reelbook on your own Supabase project
+
+Ten minutes, free tier, no card. You get a private backend that only you can read.
+
+## 1. Create the project
+
+1. Sign up at https://supabase.com and create a new project (any name, any region close to you).
+   Keep the database password somewhere: you do not need it for Reelbook, but Supabase asks for it.
+2. Wait for the project to be ready (about a minute).
+
+## 2. Run the schema
+
+1. Dashboard → **SQL Editor** → **New query**.
+2. Paste the whole content of [`supabase/schema.sql`](../supabase/schema.sql) and click **Run**.
+   It creates the tables (`requests`, `sheets`, `notes`, `user_themes`, `sessions`), their row
+   level security policies and a private storage bucket `sheets`. It is safe to run again later.
+   If the app later says `permission denied for table …`, the file did not run to its end: run the latest one again.
+3. **After each Reelbook update**, run the latest `supabase/schema.sql` again the same way: it only
+   adds what is missing (sessions, for instance, need the `sessions` table) and keeps your data.
+   The update that added search in the text of the sheets (`sheets.search_text`) also needs, once,
+   `python3 tools/rb.py backfill-search` (try `--dry-run` first) so that sheets published before it
+   are found by their content too. The one that added the facet chips (`sheets.tags`) needs, once,
+   `python3 tools/rb.py backfill-tags` (try `--dry-run` first) so that sheets published before it get tags.
+   The schema also limits each account (10 links a day, 300 sheets, 200 MB of photos, meant for a shared
+   backend). On your own project, lift the limits of your account with the one `insert` given in the
+   README, « Limits on a shared backend », in the same query or right after.
+
+## 3. Allow password sign-in without email confirmation (recommended for a single user)
+
+Dashboard → **Authentication** → **Providers** → **Email**: keep *Email* enabled and turn
+**Confirm email** off. Otherwise the free built-in mailer sends a confirmation link, limited to a
+few emails per hour, which is fine too: confirm once and sign in.
+
+If you keep **Confirm email** on, tell Supabase where the link may lead back: Dashboard →
+**Authentication** → **URL Configuration**, set **Site URL** to the address you open the app at
+(`https://lt20.github.io/reelbook/`, or your own copy's address) and add the same address under
+**Redirect URLs**. Otherwise the confirmation link opens `localhost:3000` instead of the app.
+
+## 4. Get the two values the app needs
+
+Dashboard → **Project settings** → **API**:
+
+- **Project URL**, like `https://abcdefgh.supabase.co`
+- **anon public** key (a long `eyJ…` string)
+
+The anon key is meant to live in a browser: row level security is what protects your data,
+and every table in the schema is locked to the signed-in user.
+
+## 5. Open the app and sign up
+
+Open the Reelbook app: the hosted copy at https://lt20.github.io/reelbook/ (the link at the top of
+the README), or your own copy of `app/` served from any static host or `python3 -m http.server`
+inside `app/`. Choose **Create an account**, then **My own Supabase project**. Paste the URL and
+anon key, and create your account with an email and a password. On another device, use **Sign in
+to my own instance** to enter the same URL and anon key once before signing in.
+
+Install it on your phone from the browser menu: *Add to Home screen* (Android, Chrome) or
+*Share → Add to Home Screen* (iOS, Safari).
+
+## 6. Connect Claude Code
+
+On the computer where Claude Code and Chrome run, paste the install line shown in the app's
+**Settings** page (it carries your project's URL and anon key): it clones the repository, installs
+Pillow, links the skill and signs you in. Prefer typing each command? See
+[manual-install.md](manual-install.md).
+
+Then, in any Claude Code session: `/reelbook`. See the README for what happens next.
+
+## Limits of the free tier
+
+- 500 MB database, 1 GB storage. A sheet weighs about 2 MB of images: room for roughly 400 sheets.
+- A free project with no activity for 7 days is paused, and opening the app does not wake it up.
+  Restore it by hand from the [Supabase dashboard](https://supabase.com/dashboard) (Project →
+  **Restore**); it takes a few minutes and your data is kept. While the project is paused, the app
+  cannot load your sheets and says your Supabase project may be paused.

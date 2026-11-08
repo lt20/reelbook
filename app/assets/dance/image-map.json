@@ -1,0 +1,80 @@
+{
+  "notice": "Visuels de démonstration générés (Codex, 5-6 nov. 2026) pour l’accueil v3 (L36). Aucun n’est une capture d’une vidéo tierce ; publication validée par le mainteneur.",
+  "source": "images générées pour Reelbook, mêmes noms de fichier",
+  "sizes": {
+    "frame": "640 px de large, JPEG q70",
+    "thumbnail": "240 px de large, JPEG q70, suffixe -t"
+  },
+  "files": {
+    "c-chaine-t.jpg": {
+      "source": "c-chaine.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 10779
+    },
+    "c-jete-t.jpg": {
+      "source": "c-jete.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 9296
+    },
+    "c-pdb-t.jpg": {
+      "source": "c-pdb.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 9995
+    },
+    "c-pir-t.jpg": {
+      "source": "c-pir.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 160,
+      "bytes": 10421
+    },
+    "d01.jpg": {
+      "source": "d01.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 90246
+    },
+    "d02.jpg": {
+      "source": "d02.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 92240
+    },
+    "d03.jpg": {
+      "source": "d03.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 89146
+    },
+    "d04.jpg": {
+      "source": "d04.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 89288
+    },
+    "d05.jpg": {
+      "source": "d05.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 88919
+    },
+    "d06.jpg": {
+      "source": "d06.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 89967
+    }
+  }
+}

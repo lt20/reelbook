@@ -1,0 +1,59 @@
+{
+  "notice": "Visuels de démonstration générés (Codex, 5-6 nov. 2026) pour l’accueil v3 (L36). Aucun n’est une capture d’une vidéo tierce ; publication validée par le mainteneur.",
+  "source": "images générées pour Reelbook, mêmes noms de fichier",
+  "sizes": {
+    "frame": "640 px de large, JPEG q70",
+    "thumbnail": "240 px de large, JPEG q70, suffixe -t"
+  },
+  "files": {
+    "hi-foot.jpg": {
+      "source": "hi-foot.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 84282
+    },
+    "hi-plank.jpg": {
+      "source": "hi-plank.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 86129
+    },
+    "hi-tuck.jpg": {
+      "source": "hi-tuck.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 86033
+    },
+    "hi03.jpg": {
+      "source": "hi03.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 90845
+    },
+    "hi04-t.jpg": {
+      "source": "hi04.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 300,
+      "bytes": 14873
+    },
+    "hi04.jpg": {
+      "source": "hi04.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 92008
+    },
+    "hi06.jpg": {
+      "source": "hi06.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 85566
+    }
+  }
+}

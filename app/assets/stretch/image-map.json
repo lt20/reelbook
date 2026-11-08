@@ -1,0 +1,59 @@
+{
+  "notice": "Visuels de démonstration générés (Codex, 5-6 nov. 2026) pour l’accueil v3 (L36). Aucun n’est une capture d’une vidéo tierce ; publication validée par le mainteneur.",
+  "source": "images générées pour Reelbook, mêmes noms de fichier",
+  "sizes": {
+    "frame": "640 px de large, JPEG q70",
+    "thumbnail": "240 px de large, JPEG q70, suffixe -t"
+  },
+  "files": {
+    "st01.jpg": {
+      "source": "st01.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 94357
+    },
+    "st02.jpg": {
+      "source": "st02.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 90838
+    },
+    "st03.jpg": {
+      "source": "st03.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 87396
+    },
+    "st04.jpg": {
+      "source": "st04.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 93435
+    },
+    "st05-t.jpg": {
+      "source": "st05.jpg",
+      "role": "thumbnail",
+      "width": 240,
+      "height": 300,
+      "bytes": 18898
+    },
+    "st05.jpg": {
+      "source": "st05.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 96247
+    },
+    "st06.jpg": {
+      "source": "st06.jpg",
+      "role": "frame",
+      "width": 640,
+      "height": 800,
+      "bytes": 94036
+    }
+  }
+}
