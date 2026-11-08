@@ -1388,7 +1388,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     <p class="hint" id="a-lead" hidden></p>
     <label id="a-email-row"><span data-k="a.email">Email</span> <input id="a-email" type="email" autocomplete="email" required></label>
     <label id="a-code-row" hidden><span id="a-code-l"></span> <input class="a-codein" id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······"></label>
-    <label class="a-pwrow" id="a-pass-row"><span id="a-pass-l">Password</span> <input id="a-pass" type="password" autocomplete="current-password" minlength="8" required><button type="button" class="a-eye" id="a-eye">Show</button></label>
+    <label class="a-pwrow" id="a-pass-row"><span id="a-pass-l">Password</span> <input id="a-pass" type="password" autocomplete="current-password" minlength="6" required><button type="button" class="a-eye" id="a-eye">Show</button></label>
     <div class="a-cf" id="a-cf"></div>
     <p class="err" id="a-err" role="alert" hidden></p>
     <p class="hint" id="a-wl" hidden><a href="#" id="a-wl-go" data-k="cta.full">Join the waiting list</a></p>
@@ -1631,7 +1631,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <script src="config.js?v=12"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
-<script src="landing.js?v=7"></script>
+<script src="landing.js?v=8"></script>
 <script>
 (() => {
   'use strict';
@@ -1662,7 +1662,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // (the vm harness). Every T(key, english) call matches the English dictionary (tests/landing.test.cjs).
   const T = (k, en) => (window.RBL && window.RBL.t(k)) || en;
   // L41: the auth screens' texts, with {email}-style holes (the English here works without landing.js).
-  const AU_EN = {'au.signup.h': 'Create your account', 'au.signup.step': 'Account, step 1 of 2: we’ll email you a code to check your address.', 'au.pw8': 'Password · 8 characters or more', 'au.show': 'Show', 'au.hide': 'Hide', 'au.signup.cta': 'Get my code', 'au.signup.busy': 'Sending your code…', 'au.have': 'Already have an account?', 'au.code.h': 'Enter your code', 'au.code.step': 'Account, step 2 of 2: it’s created as soon as the code checks out.', 'au.code.sent': 'A 6-digit code is on its way to <b>{email}</b>.', 'au.code.sent.own': 'A code or a link is on its way to <b>{email}</b>.', 'au.change': 'Change address', 'au.code.l': '6-digit code', 'au.code.l.own': 'Code from the email', 'au.code.cta': 'Confirm', 'au.code.busy': 'Checking…', 'au.code.new': 'Get a new code', 'au.help.n': 'Nothing yet? Check your junk folder, or resend the code in <b>{n} s</b>.', 'au.help.a': 'Nothing yet? Check your junk folder, or {link}.', 'au.help.l': 'resend the code', 'au.help.way': 'Still nothing? Check <b>{email}</b>, search your inbox for Reelbook, or {us}.', 'au.help.way0': 'Still nothing? Check <b>{email}</b> and search your inbox for Reelbook.', 'au.help.us': 'email us', 'au.help.again': 'Resend the code', 'au.e.email': 'That doesn’t look like an email address: check it.', 'au.e.short': 'The password needs at least 8 characters.', 'au.e.off.send': 'You’re offline: nothing was sent. Try again once you’re back online.', 'au.e.off.code': 'You’re offline: the code could not be checked. Try again once you’re back online.', 'au.e.off.in': 'You’re offline: check your connection and try again.', 'au.e.rate': 'Sending limit reached for this address: try again in an hour. Nothing was created.', 'au.e.rate2': 'Sending limit reached for this address: try again in an hour.', 'au.e.wrong': 'That code isn’t right. Check the 6 digits of the latest email.', 'au.e.wrong.own': 'That code isn’t right. Check the latest email.', 'au.e.expired': 'This code has expired. Ask for a new one: it will reach the same address.', 'au.e.toomany': 'Too many attempts. Wait a few minutes, then ask for a new code.', 'au.e.soon': 'The last code just left: wait for the countdown before asking for another.', 'au.e.save': 'The password could not be saved: try again.', 'au.e.cf': 'The Cloudflare check didn’t go through. Turn off your content blocker or try another browser, then try again.', 'au.e.cf.us': 'Still stuck? {us}.', 'au.e.cf.us.l': 'Email us', 'au.n.resent': 'New code sent to <b>{email}</b>. Only the latest one works.', 'au.n.resume': 'Picking up where you left off: the code sent {n} min ago to <b>{email}</b> is still valid.', 'au.n.signin': 'Your sign-up isn’t finished: we just sent you a new code.', 'au.n.full': 'The last seat was taken while you were signing up. No account was created.', 'au.setpw.h': 'Choose your password', 'au.setpw.step': 'Address confirmed, account created for <b>{email}</b>. Only your password is missing.', 'au.setpw.cta': 'Save and continue', 'au.in.h': 'Sign in', 'au.in.busy': 'Signing in…', 'au.forgot': 'Forgot your password?', 'au.new': 'New here?', 'au.ex.h': 'This address already has an account', 'au.ex.p': '<b>{email}</b> already has a Reelbook account. Sign in with your password.', 'au.ex.you': 'Not you?', 'au.ex.other': 'Use another address', 'au.fg.h': 'Forgot your password', 'au.fg.p': 'Enter your address: we send a 6-digit code so you can pick a new password. Your account and sheets stay as they are.', 'au.fg.p.own': 'Enter your address: we send a code or a link so you can pick a new password. Your account and sheets stay as they are.', 'au.fg.cta': 'Get a code', 'au.back': 'Back to sign in', 'au.rs.h': 'New password', 'au.rs.sent': 'Code sent to <b>{email}</b>, if an account uses it.', 'au.rs.sent.own': 'Code or link sent to <b>{email}</b>, if an account uses it.', 'au.rs.pw': 'New password · 8 characters or more', 'au.rs.cta': 'Change my password', 'au.rs.none': 'No code after a few minutes, junk folder included? This address may have no account: {link}.', 'au.rs.create': 'create one', 'au.rs.ok': 'Password changed for <b>{email}</b>.', 'a.in': 'Sign in', 'a.up': 'Create an account', 'a.pass': 'Password'};
+  const AU_EN = {'au.signup.h': 'Create your account', 'au.signup.step': 'Account, step 1 of 2: we’ll email you a code to check your address.', 'au.pw': 'Password · 6 characters or more', 'au.show': 'Show', 'au.hide': 'Hide', 'au.signup.cta': 'Get my code', 'au.signup.busy': 'Sending your code…', 'au.have': 'Already have an account?', 'au.code.h': 'Enter your code', 'au.code.step': 'Account, step 2 of 2: it’s created as soon as the code checks out.', 'au.code.sent': 'A 6-digit code is on its way to <b>{email}</b>.', 'au.code.sent.own': 'A code or a link is on its way to <b>{email}</b>.', 'au.change': 'Change address', 'au.code.l': '6-digit code', 'au.code.l.own': 'Code from the email', 'au.code.cta': 'Confirm', 'au.code.busy': 'Checking…', 'au.code.new': 'Get a new code', 'au.help.n': 'Nothing yet? Check your junk folder, or resend the code in <b>{n} s</b>.', 'au.help.a': 'Nothing yet? Check your junk folder, or {link}.', 'au.help.l': 'resend the code', 'au.help.way': 'Still nothing? Check <b>{email}</b>, search your inbox for Reelbook, or {us}.', 'au.help.way0': 'Still nothing? Check <b>{email}</b> and search your inbox for Reelbook.', 'au.help.us': 'email us', 'au.help.again': 'Resend the code', 'au.e.email': 'That doesn’t look like an email address: check it.', 'au.e.short': 'The password needs at least 6 characters.', 'au.e.off.send': 'You’re offline: nothing was sent. Try again once you’re back online.', 'au.e.off.code': 'You’re offline: the code could not be checked. Try again once you’re back online.', 'au.e.off.in': 'You’re offline: check your connection and try again.', 'au.e.rate': 'Sending limit reached for this address: try again in an hour. Nothing was created.', 'au.e.rate2': 'Sending limit reached for this address: try again in an hour.', 'au.e.wrong': 'That code isn’t right. Check the 6 digits of the latest email.', 'au.e.wrong.own': 'That code isn’t right. Check the latest email.', 'au.e.expired': 'This code has expired. Ask for a new one: it will reach the same address.', 'au.e.toomany': 'Too many attempts. Wait a few minutes, then ask for a new code.', 'au.e.soon': 'The last code just left: wait for the countdown before asking for another.', 'au.e.save': 'The password could not be saved: try again.', 'au.e.cf': 'The Cloudflare check didn’t go through. Turn off your content blocker or try another browser, then try again.', 'au.e.cf.us': 'Still stuck? {us}.', 'au.e.cf.us.l': 'Email us', 'au.n.resent': 'New code sent to <b>{email}</b>. Only the latest one works.', 'au.n.resume': 'Picking up where you left off: the code sent {n} min ago to <b>{email}</b> is still valid.', 'au.n.signin': 'Your sign-up isn’t finished: we just sent you a new code.', 'au.n.full': 'The last seat was taken while you were signing up. No account was created.', 'au.setpw.h': 'Choose your password', 'au.setpw.step': 'Address confirmed, account created for <b>{email}</b>. Only your password is missing.', 'au.setpw.cta': 'Save and continue', 'au.in.h': 'Sign in', 'au.in.busy': 'Signing in…', 'au.forgot': 'Forgot your password?', 'au.new': 'New here?', 'au.ex.h': 'This address already has an account', 'au.ex.p': '<b>{email}</b> already has a Reelbook account. Sign in with your password.', 'au.ex.you': 'Not you?', 'au.ex.other': 'Use another address', 'au.fg.h': 'Forgot your password', 'au.fg.p': 'Enter your address: we send a 6-digit code so you can pick a new password. Your account and sheets stay as they are.', 'au.fg.p.own': 'Enter your address: we send a code or a link so you can pick a new password. Your account and sheets stay as they are.', 'au.fg.cta': 'Get a code', 'au.back': 'Back to sign in', 'au.rs.h': 'New password', 'au.rs.sent': 'Code sent to <b>{email}</b>, if an account uses it.', 'au.rs.sent.own': 'Code or link sent to <b>{email}</b>, if an account uses it.', 'au.rs.pw': 'New password · 6 characters or more', 'au.rs.cta': 'Change my password', 'au.rs.none': 'No code after a few minutes, junk folder included? This address may have no account: {link}.', 'au.rs.create': 'create one', 'au.rs.ok': 'Password changed for <b>{email}</b>.', 'a.in': 'Sign in', 'a.up': 'Create an account', 'a.pass': 'Password'};
   const A = (k, vars) => { let out = T(k, AU_EN[k] || ''); for (const v in vars || {}) out = out.split('{' + v + '}').join(vars[v]); return out; };
   const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
   // ---------- L18: bottom sheets ----------
@@ -1865,7 +1865,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     $('a-email-row').hidden = !emailOn; $('a-code-row').hidden = !onCode; $('a-pass-row').hidden = !passOn;
     $('a-code-l').textContent = A(own ? 'au.code.l.own' : 'au.code.l');
     const code = $('a-code'); code.maxLength = own ? 10 : 6; code.placeholder = own ? '' : '······';
-    $('a-pass-l').textContent = s === 'signup' || s === 'set-password' ? A('au.pw8') : s === 'reset' || s === 'new-password' ? A('au.rs.pw') : A('a.pass');
+    $('a-pass-l').textContent = s === 'signup' || s === 'set-password' ? A('au.pw') : s === 'reset' || s === 'new-password' ? A('au.rs.pw') : A('a.pass');
     const pass = $('a-pass'); pass.autocomplete = s === 'signin' ? 'current-password' : 'new-password';
     $('a-eye').textContent = pass.type === 'text' ? A('au.hide') : A('au.show');
     const readOnly = authBusy; $('a-email').readOnly = readOnly; code.readOnly = readOnly; pass.readOnly = readOnly;
@@ -2177,7 +2177,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     async signup(client) {
       const email = $('a-email').value.trim(), password = $('a-pass').value, selected = backend, hostedUp = selected.mode === 'hosted';
       if (!emailOk(email)) return failedInvalid('a-email', 'au.e.email');
-      if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
+      if (password.length < 6) return failedInvalid('a-pass', 'au.e.short');
       // L31: on the hosted backend, beta_seats() first: Auth's own refusal says nothing (signupRefused).
       let seatsKnown = false;
       if (hostedUp) {
@@ -2243,7 +2243,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     },
     async 'set-password'(client) {
       const password = $('a-pass').value;
-      if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
+      if (password.length < 6) return failedInvalid('a-pass', 'au.e.short');
       flowHold = true;
       if (!await savePassword(client, password) || client !== sb) return;
       leaveFlow(client, false);
@@ -2252,7 +2252,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       const f = flow, token = $('a-code').value.trim(), password = $('a-pass').value;
       if (f.expired) return void (await sendAgainInForm());
       if (!token) return failedInvalid('a-code', ownNow() ? 'au.e.wrong.own' : 'au.e.wrong');
-      if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
+      if (password.length < 6) return failedInvalid('a-pass', 'au.e.short');
       flowHold = true;
       const {error} = await client.auth.verifyOtp({email: f.email, token, type: 'recovery'}); if (client !== sb) return;
       if (error) { flowHold = false; if (!codeFailed(error, f)) throw error; return; }
@@ -2263,7 +2263,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     },
     async 'new-password'(client) {
       const password = $('a-pass').value;
-      if (password.length < 8) return failedInvalid('a-pass', 'au.e.short');
+      if (password.length < 6) return failedInvalid('a-pass', 'au.e.short');
       flowHold = true;
       if (!await savePassword(client, password) || client !== sb) return;
       leaveFlow(client, true);

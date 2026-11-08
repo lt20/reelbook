@@ -20,7 +20,7 @@ const ERR = {
   unconfirmed: {status: 400, code: 'email_not_confirmed', message: 'Email not confirmed'},
   creds: {status: 400, code: 'invalid_credentials', message: 'Invalid login credentials'},
   same: {status: 422, code: 'same_password', message: 'New password should be different from the old password.'},
-  weak: {status: 422, code: 'weak_password', message: 'Password should be at least 8 characters.'},
+  weak: {status: 422, code: 'weak_password', message: 'Password should be at least 6 characters.'},
   net: {status: 0, name: 'AuthRetryableFetchError', message: 'Failed to fetch'}
 };
 const failure = e => Object.assign(new Error(e.message), e);
@@ -64,7 +64,7 @@ test('signup: its own title and step line, password rules in the label, the othe
   const {page} = await auth(); await toSignup(page);
   assert.equal(titleOf(page), 'Create your account');
   assert.ok(page.element('a-step').innerHTML.startsWith('Account, step 1 of 2')); assert.ok(shown(page, 'a-step'));
-  assert.equal(page.element('a-pass-l').textContent, 'Password · 8 characters or more');
+  assert.equal(page.element('a-pass-l').textContent, 'Password · 6 characters or more');
   assert.equal(page.element('a-submit').textContent, 'Get my code');
   assert.equal(page.element('a-other-t').textContent, 'Already have an account? '); assert.equal(page.element('a-toggle').textContent, 'Sign in');
   assert.ok(!shown(page, 'a-backend-row'), 'no « Backend » line on the hosted path');
@@ -76,7 +76,7 @@ test('signup: invalid address and short password are said before any call', asyn
   type(page, 'camille@example', PW); await submit(page);
   assert.equal(page.element('a-err').textContent, 'That doesn’t look like an email address: check it.');
   type(page, EMAIL, 'short'); await submit(page);
-  assert.equal(page.element('a-err').textContent, 'The password needs at least 8 characters.');
+  assert.equal(page.element('a-err').textContent, 'The password needs at least 6 characters.');
   assert.deepEqual(log, []);
 });
 
@@ -295,12 +295,34 @@ test('resume: a reload brings the code screen back, with its banner, and asks fo
   assert.equal(pending(page).verified, true, 'a reload here asks again');
 });
 
+test('password minimum is 6 (decision 29): 5 is said before any call, 6 goes, on sign-up, set-password, reset and new-password', async () => {
+  const up = await auth(); await toSignup(up.page);
+  type(up.page, EMAIL, '12345'); await submit(up.page);
+  assert.equal(up.page.element('a-err').textContent, 'The password needs at least 6 characters.'); assert.deepEqual(up.log, []);
+  type(up.page, EMAIL, '123456'); await submit(up.page);
+  assert.equal(up.log.find(l => l[0] === 'signUp')[1].password, '123456');
+  const set = await auth({}, {stored: stored({verified: true}), sessions: {[hostedUrl]: USER}}); await settle();
+  set.page.element('a-pass').value = '12345'; await submit(set.page); assert.equal(set.log.length, 0);
+  set.page.element('a-pass').value = '123456'; await submit(set.page);
+  assert.equal(set.log.at(-1)[0], 'update'); assert.equal(set.log.at(-1)[1].password, '123456');
+  const rs = await atReset();
+  rs.page.element('a-code').value = '123456'; rs.page.element('a-pass').value = '12345'; await submit(rs.page);
+  assert.equal(rs.log.filter(l => l[0] === 'verify').length, 0);
+  rs.page.element('a-pass').value = '123456'; await submit(rs.page);
+  assert.equal(rs.log.filter(l => l[0] === 'verify').length, 1);
+  const np = await auth({}, {stored: stored({verified: true, type: 'recovery'}), sessions: {[hostedUrl]: USER}}); await settle();
+  np.page.element('a-pass').value = '12345'; await submit(np.page);
+  assert.equal(np.page.element('a-err').textContent, 'The password needs at least 6 characters.'); assert.equal(np.log.length, 0);
+  np.page.element('a-pass').value = '123456'; await submit(np.page);
+  assert.equal(np.log.at(-1)[0], 'update'); assert.equal(np.log.at(-1)[1].password, '123456');
+});
+
 test('set-password: too short, then saved, then the app', async () => {
   const {page, log} = await auth({}, {stored: stored({verified: true}), sessions: {[hostedUrl]: USER}});
   await settle();
   assert.equal(titleOf(page), 'Choose your password'); assert.ok(shown(page, 'auth'));
   page.element('a-pass').value = 'short'; await submit(page);
-  assert.equal(page.element('a-err').textContent, 'The password needs at least 8 characters.');
+  assert.equal(page.element('a-err').textContent, 'The password needs at least 6 characters.');
   assert.equal(log.length, 0);
   page.element('a-pass').value = PW; await submit(page);
   assert.equal(log.at(-1)[0], 'update'); assert.equal(log.at(-1)[1].password, PW);
@@ -549,7 +571,7 @@ test('reset: no auto-send at six digits (the password is on the same screen)', a
 test('reset: wrong code, too short a password, too many attempts', async () => {
   const s = await atReset({verify: {data: {}, error: ERR.wrong}});
   s.page.element('a-code').value = '123456'; s.page.element('a-pass').value = 'short'; await submit(s.page);
-  assert.equal(s.page.element('a-err').textContent, 'The password needs at least 8 characters.'); assert.equal(s.log.filter(l => l[0] === 'verify').length, 0);
+  assert.equal(s.page.element('a-err').textContent, 'The password needs at least 6 characters.'); assert.equal(s.log.filter(l => l[0] === 'verify').length, 0);
   s.page.element('a-pass').value = PW; await submit(s.page);
   assert.equal(s.page.element('a-err').textContent, 'That code isn’t right. Check the 6 digits of the latest email.');
   const t = await atReset({verify: {data: {}, error: ERR.limit}});

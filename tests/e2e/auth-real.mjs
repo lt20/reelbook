@@ -107,7 +107,7 @@ if (mode === 'confirm-on') {
     assert.match(await p.locator('#a-note').textContent(), /Picking up where you left off/);
     await p.fill('#a-code', code); await waitTitle(p, 'Choose your password');
     await p.reload(); await waitTitle(p, 'Choose your password'); // a reload here keeps asking
-    await p.fill('#a-pass', 'short'); await p.click('#a-submit'); await errIs(p, 'The password needs at least 8 characters.');
+    await p.fill('#a-pass', 'short'); await p.click('#a-submit'); await errIs(p, 'The password needs at least 6 characters.');
     await p.fill('#a-pass', P2); await p.click('#a-submit'); await inApp(p); await banner(p, a); // set-password and rb.pending do not spend it
     assert.equal(await p.evaluate(() => localStorage.getItem('rb.pending')), null);
     assert.equal(await canSignIn(a, P2), 'ok'); assert.equal(await canSignIn(a, P1), 'invalid_credentials');
