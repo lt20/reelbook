@@ -124,11 +124,12 @@ def cmd_login(args):
         if a == "--key" and i + 1 < len(args): env["anon_key"] = args[i + 1]
     if not sys.stdin.isatty() and not env["password"]:
         die("no terminal to ask for the password: run this in a normal terminal, or set REELBOOK_EMAIL and REELBOOK_PASSWORD")
-    ask = lambda label, cur: (input(f"{label} [{cur or ''}]: ").strip() or cur) if sys.stdin.isatty() else cur
+    prompt = lambda label, shown: f"{label} [{shown}] (press Enter to keep it): " if shown else f"{label}: "
+    ask = lambda label, cur: (input(prompt(label, cur)).strip() or cur) if sys.stdin.isatty() else cur
     url = env["url"] or ask("Supabase project URL", old.get("url", ""))
-    key = env["anon_key"] or (old.get("anon_key", "") if not sys.stdin.isatty() else (input(f"Anon key [{'keep current' if old.get('anon_key') else ''}]: ").strip() or old.get("anon_key", "")))
+    key = env["anon_key"] or (old.get("anon_key", "") if not sys.stdin.isatty() else (input(prompt("Anon key", "keep current" if old.get("anon_key") else "")).strip() or old.get("anon_key", "")))
     email = env["email"] or ask("Email", old.get("email", ""))
-    pwd = env["password"] or getpass.getpass("Password: ")
+    pwd = env["password"] or getpass.getpass("Password of your Reelbook account (hidden as you type): ")
     if not (url and key and email and pwd):
         die("project URL, anon key, email and password are all needed")
     url = url.rstrip("/")

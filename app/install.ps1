@@ -143,6 +143,7 @@ function Install-Reelbook {
   Write-Host "$Dst (copied; run this installer again after updating the repository)"
 
   Say "5/5 Signing this computer in to your Reelbook account"
+  Write-Host "Use the email and password of your Reelbook account (the ones you chose in the app)."
   & python (Join-Path $Dir "tools\rb.py") login --url $Backend.Url --key $Backend.Key
 
   Say "Done."

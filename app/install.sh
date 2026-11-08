@@ -148,6 +148,7 @@ ln -sfn "$DIR/skill/reelbook" "$HOME/.claude/skills/reelbook"
 echo "~/.claude/skills/reelbook -> $DIR/skill/reelbook"
 
 say "5/5 Signing this computer in to your Reelbook account"
+echo "Use the email and password of your Reelbook account (the ones you chose in the app)."
 python3 "$DIR/tools/rb.py" login --url "$URL" --key "$KEY" < /dev/tty
 
 say "Done."
