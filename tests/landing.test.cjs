@@ -157,6 +157,8 @@ const AUTH_ERRORS = {
   ],
   up: [
     [{code: 'weak_password', status: 422, message: 'Password should be at least 6 characters.'}, 'Ce mot de passe est trop faible : choisis-en un plus long.', 'That password is too weak: choose a longer one.'],
+    [{code: 'weak_password', status: 422, message: 'Password is known to be weak and easy to guess, please choose a different one.', reasons: ['pwned']}, 'Ce mot de passe figure dans des fuites de données connues : choisis-en un autre.', 'This password appears in known data leaks: choose another one.'],
+    [{code: 'weak_password', status: 422, message: 'Password should contain at least one character of each: abc.', reasons: ['characters']}, 'Ce mot de passe est trop faible : choisis-en un plus long.', 'That password is too weak: choose a longer one.'],
     [{code: 'email_address_invalid', status: 400, message: 'Email address "x@y" is invalid'}, 'Cette adresse e-mail n’est pas valide.', 'That email address is not valid.'],
     [{code: 'over_email_send_rate_limit', status: 429, message: 'email rate limit exceeded'}, 'Limite d’envoi atteinte pour cette adresse : réessaie dans une heure. Rien n’a été créé.', 'Sending limit reached for this address: try again in an hour. Nothing was created.'],
     [{code: 'signup_disabled', status: 422, message: 'Signups not allowed for this instance'}, 'Ce serveur ne prend pas de nouveaux comptes.', 'This server does not take new accounts.'],

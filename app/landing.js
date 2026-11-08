@@ -371,7 +371,7 @@
       'demo.up': 'Démo · lecture seule · Créer un compte', 'demo.back': 'Démo · lecture seule · Revenir à mes carnets', // L38: the #demo banner
       'a.fail': 'Connexion impossible.', 'a.e.up': 'Impossible de créer le compte.',
       'a.e.creds': 'E-mail ou mot de passe incorrect.',
-      'a.e.weak': 'Ce mot de passe est trop faible : choisis-en un plus long.', 'a.e.email': 'Cette adresse e-mail n’est pas valide.',
+      'a.e.weak': 'Ce mot de passe est trop faible : choisis-en un plus long.', 'a.e.pwned': 'Ce mot de passe figure dans des fuites de données connues : choisis-en un autre.', 'a.e.email': 'Cette adresse e-mail n’est pas valide.',
       'a.e.rate': 'Trop d’essais : réessaie dans quelques minutes.', 'a.e.closed': 'Ce serveur ne prend pas de nouveaux comptes.',
       // L31: the refusals of the beta (schema.sql, « Beta locks »), and the waiting-list form
       'a.e.full': 'La dernière place vient d’être prise : ton compte n’a pas été créé. Inscris-toi sur la liste d’attente : on te prévient dès qu’une place se libère.',
@@ -509,7 +509,7 @@
       'demo.up': 'Demo · read only · Create an account', 'demo.back': 'Demo · read only · Back to my notebooks', // L38: the #demo banner
       'a.fail': 'Could not sign in.', 'a.e.up': 'Could not create the account.',
       'a.e.creds': 'Wrong email or password.',
-      'a.e.weak': 'That password is too weak: choose a longer one.', 'a.e.email': 'That email address is not valid.',
+      'a.e.weak': 'That password is too weak: choose a longer one.', 'a.e.pwned': 'This password appears in known data leaks: choose another one.', 'a.e.email': 'That email address is not valid.',
       'a.e.rate': 'Too many attempts: try again in a few minutes.', 'a.e.closed': 'This server does not take new accounts.',
       // L31: the refusals of the beta (schema.sql, « Beta locks »), and the waiting-list form
       'a.e.full': 'The last spot has just been taken: your account was not created. Join the waiting list: we’ll let you know as soon as a spot opens.',

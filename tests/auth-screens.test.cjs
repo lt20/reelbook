@@ -21,6 +21,8 @@ const ERR = {
   creds: {status: 400, code: 'invalid_credentials', message: 'Invalid login credentials'},
   same: {status: 422, code: 'same_password', message: 'New password should be different from the old password.'},
   weak: {status: 422, code: 'weak_password', message: 'Password should be at least 6 characters.'},
+  pwned: {status: 422, code: 'weak_password', message: 'Password is known to be weak and easy to guess, please choose a different one.', reasons: ['pwned']},
+  short: {status: 422, code: 'weak_password', message: 'Password should be at least 6 characters.', reasons: ['length']},
   net: {status: 0, name: 'AuthRetryableFetchError', message: 'Failed to fetch'}
 };
 const failure = e => Object.assign(new Error(e.message), e);
@@ -577,6 +579,29 @@ test('reset: wrong code, too short a password, too many attempts', async () => {
   const t = await atReset({verify: {data: {}, error: ERR.limit}});
   t.page.element('a-code').value = '123456'; t.page.element('a-pass').value = PW; await submit(t.page);
   assert.equal(t.page.element('a-err').textContent, 'Too many attempts. Wait a few minutes, then ask for a new code.');
+});
+
+// Leaked-password refusal: AuthWeakPasswordError carries reasons; « pwned » has its own line on every screen that sets a password.
+const PWNED = 'This password appears in known data leaks: choose another one.', WEAK = 'That password is too weak: choose a longer one.';
+
+test('pwned: sign-up, set-password (after the code), reset and new-password say the leak; a weak one without it keeps its line', async () => {
+  const up = await auth({signUp: {data: {}, error: ERR.pwned}}); await up.page.fire('intro-signup');
+  up.page.element('a-email').value = EMAIL; up.page.element('a-pass').value = PW; await submit(up.page); await settle();
+  assert.equal(up.page.element('a-err').textContent, PWNED);
+  const set = await atCode({update: {data: {}, error: ERR.pwned}, verify: {data: {session: {}}, error: null}});
+  await code(set.page, '123456');
+  assert.equal(titleOf(set.page), 'Choose your password'); assert.equal(set.page.element('a-err').textContent, PWNED);
+  const weak = await atCode({update: {data: {}, error: ERR.short}, verify: {data: {session: {}}, error: null}});
+  await code(weak.page, '123456'); assert.equal(weak.page.element('a-err').textContent, 'The password could not be saved: try again.'); // unchanged: that screen's own line
+  const up2 = await auth({signUp: {data: {}, error: ERR.short}}); await up2.page.fire('intro-signup');
+  up2.page.element('a-email').value = EMAIL; up2.page.element('a-pass').value = PW; await submit(up2.page); await settle();
+  assert.equal(up2.page.element('a-err').textContent, WEAK);
+  const rs = await atReset({update: {data: {}, error: ERR.pwned}, verify: {data: {session: {}}, error: null}});
+  rs.page.element('a-code').value = '123456'; rs.page.element('a-pass').value = PW; await submit(rs.page);
+  assert.equal(rs.page.element('a-err').textContent, PWNED);
+  const np = await auth({update: {data: {}, error: ERR.pwned}}, {stored: stored({verified: true, type: 'recovery'}), sessions: {[hostedUrl]: USER}}); await settle();
+  np.page.element('a-pass').value = PW; await submit(np.page); await settle();
+  assert.equal(np.page.element('a-err').textContent, PWNED);
 });
 
 test('reset: the same password (HTTP 422 same_password) still counts as changed; a refusal leaves the code behind', async () => {

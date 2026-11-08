@@ -1631,7 +1631,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <script src="config.js?v=13"></script>
 <script src="sessions.js?v=10"></script>
 <script src="sheet.js?v=4"></script>
-<script src="landing.js?v=8"></script>
+<script src="landing.js?v=9"></script>
 <script>
 (() => {
   'use strict';
@@ -2027,6 +2027,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   $('intro-demo').hidden = !views.includes('demo');
   // L30: Supabase words its auth errors in English. The form says the known ones in the page's language (by the
   // error code of supabase-js 2.x, else by the message older servers send), any other one as a generic line.
+  // supabase-js: AuthWeakPasswordError carries `reasons` (the checks that failed); « pwned » = the password is in a known data leak.
+  const isPwned = e => !!e && e.code === 'weak_password' && Array.isArray(e.reasons) && e.reasons.includes('pwned');
+  const pwnedText = () => T('a.e.pwned', 'This password appears in known data leaks: choose another one.');
   const authError = (e, authMode) => {
     const code = String((e && e.code) || ''), msg = String((e && e.message) || ''), status = e && e.status;
     const refused = betaText(msg); if (refused) return refused;
@@ -2035,6 +2038,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (typeof navigator !== 'undefined' && navigator.onLine === false && ((e && e.name === 'AuthRetryableFetchError') || status === 0 || /failed to fetch|network|load failed/i.test(msg))) return A(authMode === 'signin' || authMode === 'in' ? 'au.e.off.in' : authMode === 'code' || authMode === 'reset' ? 'au.e.off.code' : 'au.e.off.send');
     if (code === 'over_email_send_rate_limit' || /email rate limit/i.test(msg)) return A(authMode === 'signup' || authMode === 'up' ? 'au.e.rate' : 'au.e.rate2');
     if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) return T('a.e.creds', 'Wrong email or password.');
+    if (isPwned(e)) return pwnedText();
     if (code === 'weak_password' || /password should|password is (too )?(weak|short)/i.test(msg)) return T('a.e.weak', 'That password is too weak: choose a longer one.');
     if (code === 'email_address_invalid' || /invalid format|validate email|email address .*invalid/i.test(msg)) return T('a.e.email', 'That email address is not valid.');
     if (status === 429 || /rate_limit/.test(code) || /rate limit|too many/i.test(msg)) return T('a.e.rate', 'Too many attempts: try again in a few minutes.');
@@ -2237,7 +2241,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       if (error) { flowHold = false; if (!codeFailed(error, f)) throw error; return; }
       f.verified = true; savePending(); // a reload from here on asks for the password
       if (!heldPw) { flowHold = false; screen = 'set-password'; route(); focusAuth(); return; }
-      try { if (!await savePassword(client, heldPw)) return; } catch (e) { if (client !== sb) return; flowHold = false; heldPw = ''; screen = 'set-password'; authErr = () => A('au.e.save'); console.warn('Password not saved:', (e && (e.code || e.message)) || e); route(); return; }
+      try { if (!await savePassword(client, heldPw)) return; } catch (e) { if (client !== sb) return; flowHold = false; heldPw = ''; screen = 'set-password'; authErr = () => isPwned(e) ? pwnedText() : A('au.e.save'); console.warn('Password not saved:', (e && (e.code || e.message)) || e); route(); return; }
       if (client !== sb) return;
       leaveFlow(client, false);
     },

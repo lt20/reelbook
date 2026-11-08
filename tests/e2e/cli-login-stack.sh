@@ -15,8 +15,8 @@
 # edge inspector then takes <prefix>31 instead of 8093), the same in the environment of cli-login-real.mjs.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-DIR="${RB_L42_DIR:-${TMPDIR:-/tmp}/rb-l42a-stack}"
 ID="${RB_L42_ID:-rb-l42a}"
+DIR="${RB_L42_DIR:-${TMPDIR:-/tmp}/$ID-stack}"
 P="${RB_L42_PORTS:-549}"
 if [ "$P" = 549 ]; then INSPECT=8093; else INSPECT="${P}31"; fi
 FAIL_SECRET="2x0000000000000000000000000000000AA"
