@@ -1,7 +1,7 @@
 // L41: the auth screens against a REAL Supabase Auth, on a local stack (never the hosted project). Not run by the CI.
 //   RB_BASE=http://127.0.0.1:8841/ RB_API=http://127.0.0.1:54721 RB_MAIL=http://127.0.0.1:54724 RB_ANON=<anon key> \
 //   RB_DB=supabase_db_<project> RB_SERVICE=<service key> node tests/e2e/auth-real.mjs [confirm-on|confirm-off]
-// RB_BASE serves a copy of app/ whose config.js points hosted.url and anonKey at the local stack. The hosted address is
+// RB_BASE serves a copy of app/ whose config.js points hosted.url and anonKey at the local stack, turnstileSiteKey ''. The hosted address is
 // blocked at the browser's door. Codes come from the stack's mail server; subject or body must carry {{ .Token }}.
 // confirm-on wants hosted.mailReady true in that copy (its scenes use the forgot link); confirm-off also runs with false, as at the merge.
 import {createRequire} from 'node:module'; import {homedir, tmpdir} from 'node:os'; import {join} from 'node:path'; import {execFileSync} from 'node:child_process'; import {rmSync} from 'node:fs'; import {fileURLToPath} from 'node:url';

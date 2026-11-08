@@ -69,4 +69,8 @@ fi
 sed -i.bak 's#<script src="vendor/supabase.js#<script src="vendor/fake-data.js"></script><script src="vendor/supabase.js#' "$index"
 rm -f "$index.bak"
 grep -q 'vendor/fake-data.js' "$index" || { echo "fake-data.js was not injected" >&2; exit 1; }
+# The fake backend has no captcha, and the real site key only works on lt20.github.io: no Turnstile in the preview.
+sed -i.bak "s#turnstileSiteKey: '[^']*'#turnstileSiteKey: ''#" "$out_abs/config.js"
+rm -f "$out_abs/config.js.bak"
+grep -q "turnstileSiteKey: ''" "$out_abs/config.js" || { echo "turnstileSiteKey was not emptied" >&2; exit 1; }
 echo "preview built in $out_abs"

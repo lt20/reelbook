@@ -15,7 +15,7 @@ window.REELBOOK = {
     mailReady: true,
     // Cloudflare Turnstile site key (public) for this backend's sign-up, sign-in, resend and forgot password (L42b).
     // Empty: no Turnstile script, no widget, no token, as before. Own backends never get one.
-    turnstileSiteKey: ''
+    turnstileSiteKey: '0x4AAAAAAF45RKwsnrh2qxCJ'
   },
   // Notebooks turned on for a brand-new account.
   defaults: ['strength', 'yoga', 'fight'],

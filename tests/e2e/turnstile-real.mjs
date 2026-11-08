@@ -30,7 +30,7 @@ await new Promise(r => server.once('listening', r));
 const BASE = `http://127.0.0.1:${server.address().port}/`;
 const config = key => readFileSync(join(APP, 'config.js'), 'utf8')
   .replace(/url: 'https:\/\/[^']+'/, `url: '${API}'`).replace(/anonKey: '[^']+'/, `anonKey: '${ANON}'`)
-  .replace('mailReady: false', 'mailReady: true').replace("turnstileSiteKey: ''", `turnstileSiteKey: '${key}'`);
+  .replace('mailReady: false', 'mailReady: true').replace(/turnstileSiteKey: '[^']*'/, `turnstileSiteKey: '${key}'`);
 
 const stamp = Date.now().toString(36), addr = n => `${n}-${mode}-${stamp}@example.test`;
 const PW = 'first-password-1', PW2 = 'second-password-2';

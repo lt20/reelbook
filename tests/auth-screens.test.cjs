@@ -786,5 +786,5 @@ test('Turnstile: the service worker never caches Cloudflare\'s script, and the p
   assert.ok(fetchHandler.indexOf('if (url.origin !== location.origin) return;') < fetchHandler.indexOf('respondWith(shell('), 'other origins go straight to the network');
   assert.ok(!/http-equiv=["']?Content-Security-Policy/i.test(html), 'a CSP added later must allow https://challenges.cloudflare.com (script-src, frame-src)');
   const cfg = fs.readFileSync(path.join(__dirname, '../app/config.js'), 'utf8');
-  assert.match(cfg, /turnstileSiteKey: ''/, 'empty until the real key, in its own PR');
+  assert.match(cfg, /turnstileSiteKey: '0x4[A-Za-z0-9_-]+'/, 'the hosted backend\'s public site key (widget for lt20.github.io)');
 });
