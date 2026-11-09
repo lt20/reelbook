@@ -88,7 +88,7 @@ test('R5 single sheet: the player reads its dose, shows one cue, and « Done set
   assert.match(end(page), /Logged[\s\S]*id="end-undo"/);
   assert.doesNotMatch(end(page), /session this week|end-promo/, 'a single sheet is not a session');
   // P8 R18: a sheet's Done has no Share (a sheet is not sent as text) and no story card; Done is the one filled action
-  assert.doesNotMatch(end(page), /end-share-s|>Share<|end-story/);
+  assert.doesNotMatch(end(page), /end-share-s|>Share<|end-story|proud-go/);
   assert.match(end(page), /<p class="actions end-acts"><span class="end-cl" id="end-cl"><button type="button" class="btn" id="end-close">Done<\/button>/);
 });
 
@@ -230,15 +230,16 @@ test('R5 empty week: no rhythm at all (no ordinal, no dots) when no session is l
   assert.doesNotMatch(end(page), /class="rhythm"|rh-week|session this week/);
 });
 
-// P8 R7: the story card's place now shows its card (the first Session done of the week); without card.js loaded (the
-// harness), « Share » opens the session's Share sheet (P8 R18: to a training partner).
-test('R5 Session done: Share filled (to a training partner), Done outlined, the story card place, R9\'s card still there', async () => {
+// « Share » opens the session's Share sheet (P8 R18: to a training partner); P8 R19: the story card is « Share my
+// progress », outlined, between Share and Done (no preview on the screen any more).
+test('R5 Session done: Share filled (to a training partner), Share my progress and Done outlined, R9\'s card still there', async () => {
   const page = await app({...signedIn, tables: tables([{slug: 'a', dose: '40 s'}]), hash: '#session/legs/play', dom: true, stored: {'rb.star.u1': '1'}});
   await settle();
   await fire(page, 'play-set-1', 'change');
   await fire(page, 'play-finish');
   const h = end(page);
-  assert.match(h, /<div class="end-story" id="end-story">[\s\S]*?<!--\/end-story--><\/div>[\s\S]*<button type="button" class="btn" id="end-share-s">Share<\/button><span class="end-cl" id="end-cl"><button type="button" class="btn ghost" id="end-close">Done<\/button>/);
+  assert.match(h, /<button type="button" class="btn" id="end-share-s">Share<\/button><button type="button" class="btn ghost" id="proud-go">Share my progress<\/button><span class="end-cl" id="end-cl"><button type="button" class="btn ghost" id="end-close">Done<\/button>/);
+  assert.doesNotMatch(h, /end-story|end-card/, 'no preview of the card');
   assert.equal((h.match(/class="btn"(?! ghost)/g) || []).length, 1, 'one filled action');
   assert.match(h, /id="end-promo"><section class="end-promo"/);
   await fire(page, 'end-share-s');

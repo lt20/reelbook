@@ -348,7 +348,7 @@ test('R14 Codex pass 3: an own sheet with the slug « demo » opens its practice
   assert.match(player(page), /Step 1 of/);
 });
 
-test('R14 first « Got it » only opens New move: « New move: <title> », « n of N moves learned », Back to the notebook (no Share since P8 R18)', async () => {
+test('R14 first « Got it » only opens New move: « New move: <title> », « n of N moves learned », Back to the notebook (no Share since P8 R18; Share my progress since R19)', async () => {
   const page = await open('#k1/practice', {levels: {k1: 'getting', k2: 'got'}});
   for (let i = 0; i < 3; i++) await fire(page, 'tech-next');
   await fire(page, 'tech-lv-got');
@@ -356,7 +356,8 @@ test('R14 first « Got it » only opens New move: « New move: <title> », « n 
   const h = player(page);
   assert.match(h, /class="tp-star" id="tech-title" tabindex="-1">New move: Water start<\/h1>/);
   assert.match(h, /<p class="tp-n">2 of 3 moves learned<\/p><span class="gauge" role="img" aria-label="2 of 3 moves learned"><i class="on"><\/i><i class="on new"><\/i><i class=""><\/i><\/span>/);
-  assert.match(h, /<p class="actions end-acts"><button type="button" class="btn" id="tech-back">Back to Kitesurf<\/button><\/p>/);
+  // P8 R19: « Share my progress » outlined next to Back, the one filled action
+  assert.match(h, /<p class="actions end-acts"><button type="button" class="btn" id="tech-back">Back to Kitesurf<\/button><button type="button" class="btn ghost" id="proud-go">Share my progress<\/button><\/p>/);
   assert.doesNotMatch(h, /tech-share|>Share</, 'P8 R18: no text share of the sheet');
   assert.doesNotMatch(h, /session this week/);
   await fire(page, 'tech-back');

@@ -71,7 +71,9 @@ const fakeIndexedDB = store => ({
 async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity, href = 'https://app.example.test/reelbook/', win = {}, rpc = null, docEl = null, auth = null, cfg = null, getUser = null, source = null, history = null, globals = {}} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
-  const clients = [], appended = [];
+  const clients = [], appended = [], clicked = [];
+  // P8 R19: an element the app clicks without adding it to the page (a download link) is journalled in page.clicked
+  const made = tag => ({tagName: String(tag).toUpperCase(), click() { clicked.push({tagName: this.tagName, href: this.href, download: this.download}); }});
   // location.hash set by the app fires hashchange, as in a browser
   const winListeners = {};
   // every listener of the window and of the document, by type (win() and doc() fire them all, in order)
@@ -146,7 +148,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       body: {insertAdjacentHTML() {}},
       // L42b: a script the app adds (Turnstile's), journalled in page.appended; a test fires its onload / onerror
       head: {appendChild(n) { appended.push(n); return n; }},
-      createElement: tag => ({tagName: String(tag).toUpperCase()}),
+      createElement: tag => made(tag),
       addEventListener(type, listener) { (docAll[type] = docAll[type] || []).push(listener); },
       title: 'Reelbook'
     },
@@ -209,14 +211,14 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       }
     }
   };
-  if (dom) Object.assign(context.document, sheetDocument);
+  if (dom) Object.assign(context.document, sheetDocument, {createElement: tag => String(tag).toLowerCase() === 'a' ? made(tag) : sheetDocument.createElement(tag)});
   Object.assign(context, globals);
   vm.createContext(context);
   vm.runInContext(sessionsJs, context);
   vm.runInContext(source ? source(script) : script, context);
   await Promise.resolve();
   return {
-    element, clients, storage, appended, focused, history: stack,
+    element, clients, storage, appended, clicked, focused, history: stack,
     window: context.window, // e.g. window.turnstile, set when a test loads Cloudflare's script (L42b)
     location: context.location, // e.g. a mailto: the app opened by setting location.href (L26)
     async fire(id, type = 'click') {

@@ -849,21 +849,17 @@ dialog.share-dlg{gap:var(--s-3)}
 .share-prev{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--s-3) 14px;font:400 var(--fs-sm)/1.45 var(--body);color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere;max-height:44dvh;overflow:auto;user-select:text;-webkit-user-select:text}
 .share-note{display:flex;gap:var(--s-2);align-items:flex-start;font-size:var(--fs-meta);color:var(--muted)}
 .share-note svg{flex:none;margin-top:1px}
-/* P8 R7: the story card, scaled down on Session done (once a week; else the « Share your session » link) and full
-   screen (#story-dlg). The card itself is an image drawn by app/card.js: text and the notebook's colour only. */
-.end-story{margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:10px}
-.end-story-k{align-self:flex-start;margin:0;font:700 var(--fs-meta)/1.2 var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--ink)}
-.end-card{width:200px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:var(--t,var(--tag))}
-.end-card canvas{display:block;width:100%;height:100%}
-.end-story-n{margin:0;text-align:center;font-size:var(--fs-meta);color:var(--muted)}
-.end-story .end-story-l{align-self:flex-start;min-height:44px;padding:0 6px;border-color:transparent}
-dialog.story-dlg{width:100vw;max-width:none;height:100vh;height:100dvh;max-height:none;margin:0;border:0;border-radius:0;box-sizing:border-box;padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));grid-template-rows:auto minmax(0,1fr) auto auto}
+/* P8 R7, R19: the story card (app/card.js: text and the notebook's colour only), shared from « Share my progress » on
+   Session done and New move; full screen (#story-dlg) only where the image can neither be shared nor downloaded. */
+.end-acts #proud-go{flex-basis:100%} /* its own row: « Share my progress » never wraps */
+.proud-said{margin:var(--s-2) 0 0;font-size:var(--fs-meta);color:var(--muted);overflow-wrap:anywhere}
+.proud-said[role="alert"]{color:var(--danger,#b4432f)}
+.proud-said[hidden]{display:none}
+dialog.story-dlg{width:100vw;max-width:none;height:100vh;height:100dvh;max-height:none;margin:0;border:0;border-radius:0;box-sizing:border-box;padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));grid-template-rows:auto minmax(0,1fr) auto}
 .story-top{display:flex;align-items:center;gap:var(--s-2)}
 .story-top h2{flex:1;min-width:0;font:700 var(--fs-lg)/1.2 var(--body);text-transform:none;letter-spacing:normal}
 .story-img{min-height:0;display:flex;justify-content:center;align-items:center}
 .story-img img{display:block;max-width:100%;max-height:100%;aspect-ratio:9/16;object-fit:contain;border-radius:12px}
-dialog.story-dlg a.btn{display:flex;align-items:center;justify-content:center;min-height:48px;box-sizing:border-box;text-decoration:none}
-dialog.story-dlg .actions .btn{min-height:48px}
 dialog.share-dlg .actions .btn{width:100%;min-height:50px}
 .btn.quiet{background:transparent;color:var(--accent)}
 .share-toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:2;margin:0;min-height:44px;display:flex;align-items:center;border-radius:var(--r-pill);padding:10px 20px;background:var(--ink);color:var(--paper);font:600 var(--fs-base) var(--body);box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
@@ -4948,14 +4944,14 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       summary: session ? `${plural(exercises, 'exercise')} · ${plural(sets, 'set')}` : plural(sets, 'set'),
       rows: done.map(({it, k}) => ({slug: it.sheet.slug, title: it.sheet.title, text: r5DoneDose(it, k).slice(0, LOG_MAX)})),
       theme: session && themeById.has(p.s.theme) ? p.s.theme : one ? one.sheet.theme : '',
-      log: sets > 0 && practiceOk ? {state: 'busy'} : {state: 'off'}, promo: session ? starNext() : null,
-      // a single sheet's text share (R6) from what the player read of it
-      share: session ? null : {dose: one ? RS.doseLabel(one) || one.dose : '', keys: (p.keys.get(slug) || []).map(k => [k.cue, k.text].filter(Boolean).join(' '))}};
+      log: sets > 0 && practiceOk ? {state: 'busy'} : {state: 'off'}, promo: session ? starNext() : null, hist: null, read: null, proud: null};
     const e = ended;
     if (session) keepPlace(slug, 0);
     leavePlayer();
     if (sets > 0) logPlay(e);
-    readRhythm(e);
+    // P8 R19: the story card drawn once the rhythm is read (or could not be), ready before « Share my progress »
+    e.read = readRhythm(e);
+    proudSoon(e);
   };
   const stepPlay = d => {
     if (!play || play.kind !== 'session' || play.prompt) return;
@@ -5227,11 +5223,12 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // ---------- L11, P8 R5: Session done ----------
   // Drawn in #view at the session's (or the sheet's) address: « Session done » (« Done » for a sheet), the title,
   // « n exercises · n sets », then « Logged · Undo » (no practice_log table: no log line), the rhythm (rhythmBlock),
-  // the place of the story card (R7), R9's one-time card, and « Share » (filled: R6's text share until R7's card)
-  // and « Done » (outlined: back to the session or sheet page).
+  // « Share » (filled: to a training partner, P8 R18), « Share my progress » (outlined: the story card, P8 R19), « Done »
+  // (outlined: back to the session or sheet page) and R9's one-time card. A sheet's Done: « Done » only.
   // ended: {kind, slug, tok (its address), summary, sets, rows (one per exercise with a checked set: slug, title,
   // text), log {state: 'busy' | 'on' | 'undoing' | 'off' | 'err', rows, before, err}, ids (every row id this screen
-  // made), week, prev (the rows read for the rhythm), promo, share, theme}.
+  // made), week, hist (the session rows of the last 53 weeks), prev (the rows read for the rhythm), promo, proud (the
+  // story card, endProud), theme}.
   const logLine = e => {
     if (!practiceOk) return '';
     const L = e.log || {state: 'off'};
@@ -5265,21 +5262,23 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     }).join('');
     return week || prog ? `<section class="rhythm" aria-label="Your rhythm">${week}${prog}</section>` : '';
   };
-  // ---------- P8 R7: the story card ----------
-  // A 1080 × 1920 image of the session (app/card.js, loaded on first use): the notebook's flat colour, the title, the
-  // exercises with their doses, « n sets · today », the video credits, the wordmark and the address. No photo, no note,
-  // no log. Session done shows it scaled down at most once a week per account (rb.storyWeek.<user id>: the Monday of
-  // the week it was last shown); the other times it folds into « Share your session ». While it shows, « Share »
-  // shares the image (navigator.share with files) where the phone can, else opens it full screen (#story-dlg) with
-  // « Save the image ». P8 R18: no text share any more, and the session's Share sheet no longer has a « Story image »
-  // row (R19 brings the card to Session done and New move).
+  // ---------- P8 R7, P8 R19: the story card ----------
+  // P8 R19: a « proud » image (app/card.js, loaded on first use), offered when the person has just done something:
+  // « Share my progress » (outlined) on Session done (« Legs — done ✓ / 3rd session this week / 11 sessions in
+  // November · 4 weeks in a row », from practice_log) and on New move (« New move: Jab-cross / 5 of 9 / learned in
+  // Fight techniques »). Nowhere else: the session's Share sheet sends the session to a training partner (P8 R18). Text
+  // and the notebook's flat colour only, in the content's language: no photo, no note, no log. The tap copies
+  // REF_URL (?r=story, counted by R13) and says so (proudSaid), then gives the image to the phone's share menu
+  // (navigator.share with the file) where the phone can, else downloads it (else, where a link cannot download: the
+  // image full screen, « Press and hold »). The image is drawn as soon as the screen knows its numbers, so the tap
+  // shares it at once (Safari wants the share inside the tap).
   let cardLoading = null;
   const loadCard = () => {
     if (window.RBCard) return Promise.resolve(window.RBCard);
     if (cardLoading) return cardLoading;
     cardLoading = new Promise((ok, ko) => {
       const s = document.createElement('script');
-      s.src = 'card.js?v=2';
+      s.src = 'card.js?v=3';
       s.onload = () => window.RBCard ? ok(window.RBCard) : ko(new Error('card.js'));
       s.onerror = () => { cardLoading = null; ko(new Error('card.js')); };
       document.head.appendChild(s);
@@ -5287,32 +5286,23 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     return cardLoading;
   };
   const nbColour = id => { const t = themeById.get(id); return t ? (t.color != null ? t.color : hue(t.id)) : 3; };
-  const authorOf = slug => ((bySlug.get(slug) || {}).source || {}).author;
-  // The card of a play just finished (Session done): what was done today.
-  const endCard = e => {
-    const s = e.kind === 'session' ? v2BySlug.get(e.slug) : null, sh = s ? null : bySlug.get(e.slug), t = themeById.get(e.theme);
-    if (s) {
-      return {title: s.title, over: t ? t.title : '', colour: nbColour(e.theme), lang: RS.sessionLang(s), today: true, sets: e.sets,
-        items: e.rows.map(r => ({title: r.title, dose: r.text})), authors: [(s.source || {}).author, ...e.rows.map(r => authorOf(r.slug))], slug: e.slug};
-    }
-    const lang = frOr([sh && sh.title, sh && sh.summary, e.share.dose, ...e.share.keys]), done = (e.rows[0] || {}).text || e.share.dose;
-    return {title: sh ? sh.title : e.slug, over: t ? t.title : '', colour: nbColour(e.theme), lang, today: true, sets: e.sets,
-      items: [{title: 'Dose', dose: done}, {title: lang === 'fr' ? 'Point clé' : 'Key point', dose: e.share.keys[0] || ''}].filter(x => x.dose),
-      authors: [sh && (sh.source || {}).author], slug: e.slug};
+  // The card of a session just done (Session done): its title and the account's rhythm, this session counted once,
+  // today (e.hist: the session rows read by readRhythm, without the rows this screen wrote; null: not read, the card
+  // keeps its title and « done ✓ »).
+  const proudSessionCard = e => {
+    const s = v2BySlug.get(e.slug), day = todayIso();
+    return {kind: 'repetition', title: s ? s.title : e.slug, lang: s ? RS.sessionLang(s) : 'en', colour: nbColour(e.theme), slug: e.slug,
+      days: [...(e.hist || []).filter(r => !e.ids.has(r.id)).map(r => r.done_on), day], today: day}; // stats: makeCard
   };
-  // The card of a session from its page's Share sheet (no play): its exercises and their written doses.
-  const sessionCard = s => {
-    const items = RS.resolveItems(s, bySlug), t = themeById.get(s.theme);
-    return {title: s.title, over: t ? t.title : '', colour: nbColour(s.theme), lang: RS.sessionLang(s), exercises: items.length,
-      items: items.map(it => ({title: it.sheet.title, dose: it.dose})), authors: [(s.source || {}).author, ...items.map(it => (it.sheet.source || {}).author)], slug: s.slug};
+  // The card of a move just learned (New move): its title and « k of N learned » in its notebook.
+  const proudMoveCard = t => {
+    const nb = themeById.get(t.e.theme), {k, n} = learnedIn(t.e.theme);
+    return {kind: 'technique', title: t.e.title, lang: frOr([t.e.title, t.e.summary, ...(t.keys || [])]), colour: nbColour(t.e.theme), slug: t.e.slug,
+      notebook: nb ? nb.title : '', learned: k, total: n};
   };
-  // {card, file, url, label} once drawn. Each image's object URL belongs to a slot: 'end' (Session done's preview, which
-  // « Share » reuses) and 'share' (the Share sheet's « Story image », full screen). A new card lets go of the URL of
-  // its own slot only, and a slot's URL goes when its card is dropped: Session done left, the Story image closed
-  // (Codex #116: the Share sheet's card revoked the URL Session done's card still showed). `live()` is checked once the
-  // card is drawn: a card no longer wanted is let go at once and the promise rejects (STALE).
-  // storyGen: bumped when the account changes and when another row of the Share sheet starts (Codex #116 pass 2); a
-  // Share sheet card drawn under an older generation, or for another account, is let go when it comes.
+  // {card, file, url, label} once drawn. The image's object URL is let go when a new card is drawn, when Session done
+  // or New move is left, and when the account changes. `live()` is checked once the card is drawn: a card no longer
+  // wanted is let go at once and the promise rejects (STALE). storyGen: bumped when the account changes.
   const cardUrls = new Map(), STALE = 'stale card';
   let storyGen = 0;
   const storyBump = () => { storyGen++; };
@@ -5320,12 +5310,15 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const dropCard = slot => { revokeUrl(cardUrls.get(slot)); cardUrls.delete(slot); };
   const makeCard = async (card, slot, live = () => true) => {
     const gen = storyGen, uid = user ? user.id : null;
-    const C = await loadCard(), {canvas, blob} = await C.render(card, document);
-    if ((user ? user.id : null) !== uid || (slot === 'share' && gen !== storyGen) || !live()) throw new Error(STALE);
+    const C = await loadCard();
+    if (!live()) throw new Error(STALE); // the screen changed while card.js loaded: nothing drawn
+    if (card.days) card = {...card, stats: C.progress(card.days, card.today)}; // a session's numbers (card.js's progress)
+    const {canvas, blob} = await C.render(card, document);
+    if ((user ? user.id : null) !== uid || gen !== storyGen || !live()) throw new Error(STALE);
     dropCard(slot);
     const cardUrl = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(blob) : '';
     if (cardUrl) cardUrls.set(slot, cardUrl);
-    const name = `reelbook-${String(card.slug || 'session').replace(/[^a-z0-9-]/gi, '').slice(0, 60) || 'session'}.png`;
+    const name = `reelbook-${String(card.slug || 'progress').replace(/[^a-z0-9-]/gi, '').slice(0, 60) || 'progress'}.png`;
     const file = typeof File === 'function' ? new File([blob], name, {type: 'image/png'}) : null;
     return {card, canvas, blob, file, name, url: cardUrl, label: C.label(card), slot};
   };
@@ -5335,101 +5328,85 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   // A link with `download` saves the image (Safari on iPhone puts it in Files); without it: « Press and hold ».
   const saveOk = () => { try { return typeof HTMLAnchorElement === 'function' && 'download' in HTMLAnchorElement.prototype; } catch { return false; } };
-  // The week the card was last shown on Session done, per account.
-  const storyKey = () => `rb.storyWeek.${user ? user.id : 'local'}`;
-  const thisWeek = () => (RS.weekStart && RS.weekStart(todayIso())) || todayIso();
-  // Decided once per Session done screen: shown (and the week noted), or folded.
-  const storyMode = e => {
-    if (!e.story) {
-      if (!(e.sets > 0)) e.story = {open: false, none: true}; // nothing done: no card, « Share » is the text
-      else if (ls.get(storyKey()) === thisWeek()) e.story = {open: false};
-      else { ls.set(storyKey(), thisWeek()); e.story = {open: true}; }
-    }
-    return e.story;
-  };
-  const storyInner = e => {
-    const st = storyMode(e);
-    if (st.none) return '';
-    if (!st.open) return '<button type="button" class="btn ghost quiet end-story-l" id="end-story-open">Share your session</button>';
-    return '<p class="end-story-k">Your story card</p>'
-      + `<div class="end-card" id="end-card" role="img" aria-label="${esc(st.c ? st.c.label : 'Story card, being drawn')}"></div>`
-      + `<p class="end-story-n">${st.err ? 'The image could not be made. « Share » sends the session to a training partner.' : 'Text and colour only. No photo, no notes.'}</p>`;
-  };
-  const storyPlace = e => region('end-story', 'end-story', storyInner(e));
-  // Draws the preview (once per screen), then puts the canvas in its place.
-  const drawEndCard = e => {
-    const st = storyMode(e); if (!st.open) return;
-    if (!st.wait) st.wait = makeCard(endCard(e), 'end', () => ended === e).then(c => { st.c = c; return c; }, () => { st.err = true; return null; });
-    st.wait.then(c => {
-      if (!endShown(e)) return;
-      const box = $('end-card');
-      if (!c) { repaint('end-story', storyInner(e)); return; }
-      if (box && box.replaceChildren) { box.replaceChildren(c.canvas); box.setAttribute('aria-label', c.label); }
-    });
-  };
-  const openStoryFold = e => {
-    const st = storyMode(e); st.open = true;
-    repaint('end-story', storyInner(e));
-    drawEndCard(e);
-    const k = $('end-card'); if (k && k.focus) k.focus();
-  };
-  // « Share » while the card shows: the image to the phone's share menu (closed by the person: nothing), else full screen.
-  const shareCard = async c => {
-    if (canShareFile(c.file)) {
-      const gen = storyGen, uid = user ? user.id : null;
-      try { await navigator.share({files: [c.file], title: c.card.title}); return 'shared'; }
-      catch (err) { if (err && err.name === 'AbortError') return 'closed'; }
-      // Codex #116 pass 3: the account changed while the phone's share menu was open: its card is gone, nothing opens
-      if (gen !== storyGen || (user ? user.id : null) !== uid) return 'gone';
-    }
-    openStory(c);
-    return 'shown';
-  };
-  // The image full screen: « Share… » (where the phone shares files) or « Save the image » filled. P8 R18: no « Share as
-  // text » any more (nothing is sent as text).
+  // The image full screen (where a link cannot download it): « Press and hold the image to save it ».
   const storyDlg = $('story-dlg');
-  // Closed: a Share sheet card is not shown again (the row draws a new one), so its URL goes; Session done's stays.
   let storyShown = null;
-  storyDlg.addEventListener('close', () => { if (storyShown && storyShown.slot === 'share') dropCard('share'); storyShown = null; });
+  storyDlg.addEventListener('close', () => { storyShown = null; });
   // Another account, or signed out (Codex #116 pass 2): the image of the account before goes, shown or being drawn.
   const storyReset = () => {
     storyBump(); storyShown = null;
     if (storyDlg.open) closeSheet(storyDlg);
     storyDlg.innerHTML = '';
-    dropCard('end'); dropCard('share');
+    dropCard('proud');
   };
   const openStory = c => {
-    const share = canShareFile(c.file), save = !!c.url && saveOk();
-    const saveBtn = cls => save ? `<a class="btn${cls}" id="story-save" href="${esc(c.url)}" download="${esc(c.name)}">Save the image</a>` : '';
-    storyDlg.innerHTML = `<div class="story-top"><h2 id="story-h">Story image</h2><button type="button" class="share-x" id="story-close" aria-label="Close">✕</button></div>
+    storyDlg.innerHTML = `<div class="story-top"><h2 id="story-h">Your progress</h2><button type="button" class="share-x" id="story-close" aria-label="Close">✕</button></div>
       <div class="story-img">${c.url ? `<img id="story-img" src="${esc(c.url)}" alt="${esc(c.label)}">` : ''}</div>
-      <p class="share-note">${LOCK}<span>Text and colour only. No photo, no notes.${save ? '' : ' Press and hold the image to save it.'}</span></p>
-      <div class="actions">${share ? '<button class="btn" type="button" id="story-go">Share…</button>' + saveBtn(' ghost') : saveBtn('')}</div>`;
+      <p class="share-note">${LOCK}<span>Text and colour only. No photo, no notes. Press and hold the image to save it.</span></p>`;
     $('story-close').addEventListener('click', () => closeSheet(storyDlg));
     storyShown = c;
-    if (share) $('story-go').addEventListener('click', async () => {
-      try { await navigator.share({files: [c.file], title: c.card.title}); } catch {}
-    });
     openSheet(storyDlg);
   };
-  // The Share sheet's « Story image » row (a session page), in R11's share-rows after « Send to a training partner »:
-  // the card of its exercises, full screen. It needs no backend, so it shows whether sharing exists or not.
-  // P8 R18: no longer in the Share sheet (sending to a partner only); kept for R19, which puts it on Session done and New move.
-  const storyRow = s => s ? '<button type="button" class="nav-it" id="share-story">Story image<small>A type-only card: exercises, doses, creators. No photos.</small></button><p class="err" id="share-story-err" role="alert" hidden></p>' : '';
-  // Codex #116: the card is drawn after the module and the fonts load; by then the Share sheet may be closed (or
-  // opened again, for another session or account). Only the same opening of the sheet, still open, on the same
-  // session and account, opens the image; otherwise the card is let go.
-  let shareOpens = 0;
-  const wireStoryRow = s => {
-    const b = $('share-story'); if (!s || !b) return;
-    const opened = shareOpens, who = shareWho();
-    const live = () => shareDlg.open === true && shareOpens === opened && !shareGone(who) && !!shownSession() && shownSession().slug === s.slug && !view.hidden;
+  // The link the card leads back to, copied when it is shared (R13 counts ?r=story), and what the app says then, in
+  // the app's language (English; French where the page says fr).
+  const REF_URL = RS.refUrl ? RS.refUrl('story') : 'https://lt20.github.io/reelbook/?r=story';
+  const PROUD_SAID = {
+    en: {copied: 'Link copied: add Instagram\'s Link sticker to your story', copy: `Add Instagram's Link sticker to your story: ${REF_URL}`,
+      err: 'The image could not be made. Try again.'},
+    fr: {copied: 'Lien copié : ajoute l’autocollant Lien dans ta story', copy: `Ajoute l’autocollant Lien dans ta story : ${REF_URL}`,
+      err: 'L’image n’a pas pu être créée. Réessaie.'}
+  };
+  const proudSaid = () => /^fr\b/i.test(String((document.documentElement || {}).lang || '')) ? PROUD_SAID.fr : PROUD_SAID.en;
+  const copyRef = () => {
+    try { const cb = navigator.clipboard; return cb && cb.writeText ? Promise.resolve(cb.writeText(REF_URL)).then(() => true, () => false) : Promise.resolve(false); }
+    catch { return Promise.resolve(false); }
+  };
+  const proudButton = (off = false) => `<button type="button" class="btn ghost" id="proud-go"${off ? ' hidden' : ''}>Share my progress</button>`;
+  const proudLine = () => '<p class="proud-said" id="proud-said" role="status" aria-live="polite" hidden></p>';
+  // The card of a screen (P: {card: () => its data, live: () => still the screen, ready: () => what to wait for first}):
+  // drawn once (P.wait), again after a failure. The tap: the link copied (and said), then the image shared, else downloaded, else full screen.
+  // 'shared' | 'closed' (the share menu closed by the person) | 'saved' | 'shown' | 'gone' (the screen or account
+  // changed meanwhile) | 'failed'.
+  const proudDraw = P => {
+    if (!P.wait) {
+      P.wait = Promise.resolve(P.ready && P.ready()).catch(() => {}).then(() => makeCard(P.card(), 'proud', P.live)).then(c => { P.c = c; return c; }, err => { P.wait = null; throw err; });
+      P.wait.catch(() => {}); // drawn ahead of the tap: a failure is said only if the tap waits for it
+    }
+    return P.wait;
+  };
+  const proudShare = async P => {
+    const said = proudSaid(), out = () => $('proud-said'), say = (m, alert) => { const o = out(); if (o && P.live()) { o.textContent = m; o.hidden = !m; o.setAttribute('role', alert ? 'alert' : 'status'); } };
+    const gen = storyGen, uid = user ? user.id : null, same = () => gen === storyGen && (user ? user.id : null) === uid && P.live();
+    let failed = false; // the image could not be made: that is what stays said, whenever the copy answers (Codex #127)
+    copyRef().then(ok => { if (same() && !failed) say(ok ? said.copied : said.copy); });
+    let c = P.c;
+    // the image ready: shared inside the tap; else drawn first (the phone may then refuse the share: downloaded)
+    if (!c) { try { c = await proudDraw(P); } catch (err) { if (same() && !(err && err.message === STALE)) { failed = true; say(said.err, true); } return same() ? 'failed' : 'gone'; } }
+    if (!same()) return 'gone';
+    if (canShareFile(c.file)) {
+      try { await navigator.share({files: [c.file], title: c.card.title}); return 'shared'; }
+      catch (err) { if (err && err.name === 'AbortError') return 'closed'; }
+      if (!same()) return 'gone'; // Codex #116 pass 3: the account changed while the share menu was open
+    }
+    if (c.url && saveOk() && typeof document.createElement === 'function') {
+      const a = document.createElement('a');
+      if (a && typeof a.click === 'function') {
+        a.href = c.url; a.download = c.name; a.hidden = true;
+        if (document.body && document.body.appendChild) document.body.appendChild(a);
+        a.click();
+        if (a.remove) a.remove();
+        return 'saved';
+      }
+    }
+    openStory(c);
+    return 'shown';
+  };
+  const wireProud = P => {
+    const b = $('proud-go'); if (!b) return;
     b.addEventListener('click', async () => {
       if (b.disabled) return;
       b.disabled = true;
-      try { const c = await makeCard(sessionCard(s), 'share', live); closeSheet(shareDlg); openStory(c); }
-      catch (err) { const m = $('share-story-err'); if (m && live() && !(err && err.message === STALE)) { m.textContent = 'The image could not be made. Try again.'; m.hidden = false; } }
-      finally { b.disabled = false; }
+      try { P.last = await proudShare(P); } finally { b.disabled = false; }
     });
   };
   const showEnd = () => {
@@ -5439,18 +5416,24 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     view.innerHTML = `<div class="wrap fiche pl-end"${band}><p class="end-k" id="end-done" tabindex="-1">${s ? 'Session done' : 'Done'}</p>`
       + `${s ? inLang(RS.sessionLang(s), `<h1>${esc(title)}</h1>`) : `<h1>${esc(title)}</h1>`}<p class="end-sum">${esc(e.summary)}</p>`
       + `<div class="end-log" id="end-logr" aria-live="polite">${logLine(e)}<!--/end-logr--></div>`
-      + region('end-rh', 'end-rh', rhythmBlock(e)) + (s ? storyPlace(e) : '') // P8 R18: a sheet's Done has no Share (nor its card)
-      + `<p class="actions end-acts">${s ? '<button type="button" class="btn" id="end-share-s">Share</button>' : ''}<span class="end-cl" id="end-cl">${closeBtn(e)}<!--/end-cl--></span></p>${s ? promoHtml(e) : ''}</div>`;
+      + region('end-rh', 'end-rh', rhythmBlock(e))
+      // P8 R18: a sheet's Done has no Share; P8 R19: nor « Share my progress » (Session done and New move only)
+      + `<p class="actions end-acts">${s ? '<button type="button" class="btn" id="end-share-s">Share</button>' + proudButton(!proudOk(e)) : ''}<span class="end-cl" id="end-cl">${closeBtn(e)}<!--/end-cl--></span></p>`
+      + `${s ? proudLine() + promoHtml(e) : ''}</div>`;
     wireEnd(e);
     onClick('end-share-s', shareEnd);
     onClick('end-close', closeEnd);
-    onClick('end-story-open', () => openStoryFold(e));
+    if (s) { wireProud(endProud(e)); proudSoon(e); } // Codex #127 pass 3: also when the rhythm was read before this screen showed
     bindPromo(e);
-    if (s) drawEndCard(e);
     $('end-done').focus();
   };
   const wireEnd = e => { onClick('end-undo', () => undoPlay(e)); onClick('end-log', () => logPlay(e)); };
   const endShown = e => ended === e && shown === e.tok && !view.hidden;
+  // Codex #127 pass 2: the proud card only for a session that happened, a checked set or a session row logged
+  // (« Log it » after a Finish with nothing checked); else no button and no card counting today.
+  const proudOk = e => e.kind === 'session' && (e.sets > 0 || !!(e.log && ['on', 'undoing'].includes(e.log.state)));
+  // the card drawn once the rhythm is read (or could not be), on Session done shown, ready before the tap (P.wait: once)
+  const proudSoon = e => { if (!e.read) return; const go = () => { if (endShown(e) && proudOk(e)) proudDraw(endProud(e)).catch(() => {}); }; e.read.then(go, go); };
   // The log line and the rhythm again, in place (focus: the control that replaces the one tapped).
   // Codex R5 pass 3: while Finish's write is on its way, « Done » is « Saving… » and disabled, so the screen that can
   // say « Not logged · Try again » stays until the answer.
@@ -5460,25 +5443,23 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const paintEnd = (e, focusId) => {
     if (!endShown(e)) return;
     repaint('end-logr', logLine(e)); repaint('end-rh', rhythmBlock(e)); repaint('end-cl', closeBtn(e)); wireEnd(e); onClick('end-close', closeEnd);
+    const pb = $('proud-go'); // a session finished with nothing checked: « Share my progress » once « Log it » has logged it
+    if (pb && pb.hidden === proudOk(e)) { pb.hidden = !proudOk(e); if (!pb.hidden) proudDraw(endProud(e)).catch(() => {}); }
     const el = focusId ? $(focusId) : null; if (el && el.focus) el.focus();
   };
   const closeEnd = () => {
-    const e = ended; if (!e || endBusy(e)) return; ended = null; dropCard('end');
+    const e = ended; if (!e || endBusy(e)) return; ended = null; dropCard('proud');
     if (shown === e.tok && !view.hidden) { if (e.kind === 'session') showSession(e.slug); else { shown = null; showSheet(e.slug); } }
   };
-  // P8 R7: while the story card shows, the image (shareCard); else, and when the image could not be made, the session's
-  // Share sheet (P8 R18: to a training partner; its page's « Share »). Session done only: a sheet's Done has no Share.
-  const shareEnd = async () => {
+  // « Share »: the session's Share sheet (P8 R18: to a training partner; its page's « Share »). Session done only: a
+  // sheet's Done has no Share. P8 R19: the story card is « Share my progress » (endProud), not this.
+  const shareEnd = () => {
     const e = ended; if (!e || e.kind !== 'session') return;
-    const st = e.story;
-    if (st && st.open && !st.err) {
-      // still being drawn (the fonts, at most 3 s): waited for a moment, else the Share sheet
-      const c = st.c || (st.wait ? await Promise.race([st.wait, new Promise(ok => setTimeout(() => ok(null), 4000))]) : null);
-      if (ended !== e || !endShown(e)) return; // left while the card was being drawn
-      if (c) { await shareCard(c); return; }
-    }
     openShare();
   };
+  // P8 R19: Session done's « Share my progress », one per screen; its card is drawn once the rhythm is read (e.read:
+  // readRhythm's promise, done or failed), never before: a tap that comes first waits for it (Codex #127).
+  const endProud = e => e.proud || (e.proud = {ready: () => e.read, card: () => proudSessionCard(e), live: () => ended === e && proudOk(e)});
   // The rows of a play (P8 R5), in one insert: session/<slug> with the summary (a session only), then each exercise
   // with a checked set and what was done of it. Their ids are made here: Undo removes exactly them, and a retry of a
   // write whose answer was lost sends the same rows (23505: they are stored), their ids and their day those of the
@@ -5561,14 +5542,19 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const readRhythm = async e => {
     if (!practiceOk || !sb || !r5('weekStart') || !r5('weekRhythm') || !r5('ordinal') || !r5('doseUp')) return; // a previous sessions.js: no rhythm
     const owner = sb, still = logScope(), day = todayIso(), start = RS.weekStart(day), slugs = [...new Set(e.rows.map(r => r.slug))];
+    // P8 R19: the session rows of the last 53 weeks (the month, and the weeks in a row of the story card), newest first
+    const from = new Date(Date.parse(start + 'T00:00:00Z') - 52 * 7 * 86400000).toISOString().slice(0, 10);
     let w = null, pv = null;
     try {
       [w, pv] = await Promise.all([
-        e.kind === 'session' ? owner.from('practice_log').select('id,slug,done_on').gte('done_on', start).order('done_on', {ascending: false}).limit(1000) : null,
+        e.kind === 'session' ? owner.from('practice_log').select('id,slug,done_on').like('slug', RS.ROUTE + '%').gte('done_on', from).order('done_on', {ascending: false}).limit(1000) : null,
         slugs.length ? owner.from('practice_log').select('id,slug,done_on,text,created_at').in('slug', slugs).order('done_on', {ascending: false}).order('created_at', {ascending: false}).limit(500) : null]);
     } catch { return; }
     if (owner !== sb || !still() || ended !== e) return;
-    if (w && !w.error) e.week = (w.data || []).filter(r => r && typeof r.slug === 'string' && r.slug.startsWith(RS.ROUTE) && r.done_on >= start && r.done_on <= day);
+    if (w && !w.error) {
+      e.hist = (w.data || []).filter(r => r && typeof r.slug === 'string' && r.slug.startsWith(RS.ROUTE) && typeof r.done_on === 'string' && r.done_on <= day);
+      e.week = e.hist.filter(r => r.done_on >= start);
+    }
     if (pv && !pv.error) e.prev = (pv.data || []).filter(r => r && slugs.includes(r.slug) && typeof r.text === 'string').sort(newestFirst);
     paintEnd(e);
   };
@@ -5787,8 +5773,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     return `<div class="wrap pl-end tp-end tp-move"><h1 class="tp-star" id="tech-title" tabindex="-1">New move: ${esc(t.e.title)}</h1>`
       + '<p class="tp-said">Saved as <b>Got it</b>. It stays in your notebook, ready to come back to.</p>'
       + (nb && n ? `<section class="rhythm tp-nb" aria-label="${esc(nb.title)}"><p class="tp-nbn"><i aria-hidden="true"></i>${esc(nb.title)}</p><p class="tp-n">${k} of ${plural(n, 'move')} learned</p>${gaugeHtml(k, n, true)}</section>` : '')
-      // P8 R18: no « Share » (a sheet is not sent as text; R19 brings the story card here): Back is the one filled action
-      + `<p class="actions end-acts"><button type="button" class="btn" id="tech-back">Back to ${esc(nb ? nb.title : 'Reelbook')}</button></p></div>`;
+      // P8 R18: no « Share » (a sheet is not sent as text); P8 R19: « Share my progress » outlined, Back the one filled action
+      + `<p class="actions end-acts"><button type="button" class="btn" id="tech-back">Back to ${esc(nb ? nb.title : 'Reelbook')}</button>${proudButton()}</p>${proudLine()}</div>`;
   };
   const renderTech = () => {
     const t = tech; if (!t || playerEl.hidden) return;
@@ -5816,7 +5802,10 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     onClick('tech-save', () => saveTech(t));
     onClick('tech-done', () => leaveTech());
     onClick('tech-back', () => leaveTech(t.e.theme));
+    if (t.phase === 'move') { const P = moveProud(t); wireProud(P); proudDraw(P); } // P8 R19: drawn before the tap
   };
+  // P8 R19: New move's « Share my progress », one per practice; its card goes when the practice is left.
+  const moveProud = t => t.proud || (t.proud = {card: () => proudMoveCard(t), live: () => tech === t && t.phase === 'move' && !playerEl.hidden});
   // Save: the level (notes, the sheet's row: upsert of slug and level only, the note's text untouched) and one
   // practice_log row. The row records only that the sheet was practised (text '', as R5's sheet finished with nothing
   // checked): the level lives in notes.level alone (Codex R14 pass 2). One practice is one attempt: its row (id made at
@@ -6653,7 +6642,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const shareDlg = $('share-dlg');
   const LOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const frOr = texts => RS.isFrench(texts.filter(t => typeof t === 'string').join(' \n ')) ? 'fr' : 'en';
-  let shareGen = 0, partnerFor = ''; // partnerFor (R11): the session whose Share sheet is open
+  let shareGen = 0, partnerFor = '', shareOpens = 0; // partnerFor (R11): the session whose Share sheet is open; shareOpens: its openings
   const shareSay = msg => {
     const t = $('share-toast'), g = ++shareGen; t.textContent = msg; t.hidden = false;
     setTimeout(() => { if (g === shareGen) { t.hidden = true; t.textContent = ''; } }, 2500);
@@ -7336,8 +7325,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     }
     navArrive(tok);
     if (tok !== 'welcome') wBanner = null; // L43: « Account created » is for the first arrival, not a way back to it
-    if (ended && tok !== ended.tok) { ended = null; dropCard('end'); } // L11: another page drops the end screen (P8 R7: and its card)
-    if (tech && tok !== practiceTok(tech.e.slug)) tech = null; // P8 R14: another page drops the practice
+    if (ended && tok !== ended.tok) { ended = null; dropCard('proud'); } // L11: another page drops the end screen (P8 R7: and its card)
+    if (tech && tok !== practiceTok(tech.e.slug)) { if (tech.proud) dropCard('proud'); tech = null; } // P8 R14: another page drops the practice (P8 R19: and its card)
     // R11: #s-<token>, a session sent by a training partner: its sheet over the home page (the link leaves the address)
     const shareTok = typeof RS.shareTokenOf === 'function' ? RS.shareTokenOf(tok) : null; // an older sessions.js: no #s- route
     if (shareTok) { const kept = keptShare(); if (kept && kept.token === shareTok) dropShare(); openReceived(shareTok); if (typeof location.replace === 'function') location.replace('#'); else location.hash = ''; return; }

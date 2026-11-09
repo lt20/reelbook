@@ -24,9 +24,12 @@ test('R13 ?r= validation: one code of [a-z0-9-]{1,32}, exactly; anything else is
   assert.equal(RS.refUrl('Bad Code'), RS.REELBOOK_URL, 'never a malformed query');
 });
 
-test('R13 the shares: R7 card prints ?r=story (R6\'s texts and their ?r=text are gone since P8 R18)', () => {
+test('R13 the shares: the story card prints the address, its share copies ?r=story (R6\'s texts and ?r=text gone since P8 R18)', () => {
   assert.equal(RS.shareSheetText, undefined);
-  assert.equal(C.URL_LINE, 'lt20.github.io/reelbook/?r=story');
+  // P8 R19: the card prints the plain address under the wordmark; the link copied with it carries ?r=story
+  // (tests/p8-r19.test.cjs: « Link copied »)
+  assert.equal(C.URL_LINE, 'lt20.github.io/reelbook');
+  assert.equal(RS.refUrl('story'), 'https://lt20.github.io/reelbook/?r=story');
 });
 
 test('R13 an address with ?r=story: the code is kept on the device, the address loses ?r= and keeps the rest', async () => {

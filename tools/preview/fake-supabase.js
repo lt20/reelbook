@@ -116,6 +116,8 @@
     lte(k, v) { this.f.push(r => r[k] != null && r[k] <= v); return this; }
     gt(k, v) { this.f.push(r => r[k] != null && r[k] > v); return this; }
     lt(k, v) { this.f.push(r => r[k] != null && r[k] < v); return this; }
+    // P8 R19: .like('slug', 'session/%') (PostgREST like: % any run, _ one character, case-sensitive)
+    like(k, pat) { const re = new RegExp('^' + String(pat).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/%/g, '.*').replace(/_/g, '.') + '$'); this.f.push(r => typeof r[k] === 'string' && re.test(r[k])); return this; }
     is(k, v) { this.f.push(r => (v === null ? r[k] == null : r[k] === v)); return this; }
     not(k, op, v) { this.f.push(op === 'is' ? (r => (v === null ? r[k] != null : r[k] !== v)) : (r => r[k] !== v)); return this; } // P8 R14: .not('level', 'is', null)
     match(o) { for (const k in o) this.eq(k, o[k]); return this; }
