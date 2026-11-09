@@ -53,7 +53,7 @@ test('L6 — without the table, every practice control and count is hidden and n
   for (const hash of ['#curl', '#session/routine']) {
     const page = await open(hash, {failing});
     assert.equal(page.element('view').hidden, false);
-    assert.doesNotMatch(page.element('view').innerHTML, /Done today|Last time:|<h[1-6]>Log<\/h[1-6]>|practice_log|Could not find/i);
+    assert.doesNotMatch(page.element('view').innerHTML, /id="practice-done"|Last time:|<h[1-6]>Log<\/h[1-6]>|practice_log|Could not find/i);
   }
 });
 
@@ -62,11 +62,11 @@ test('L6 — an empty table is additive: existing sheets and notes remain, with 
   assert.equal(page.element('view').hidden, false);
   assert.match(page.element('view').innerHTML, /Routine/);
   assert.match(page.element('view').innerHTML, /My notes/);
-  assert.match(page.element('view').innerHTML, /Done today/);
-  assert.doesNotMatch(page.element('view').innerHTML, /Done today ✓|Last time:|done \d/);
+  assert.match(page.element('view').innerHTML, /id="practice-done"[^>]*>Log</);
+  assert.doesNotMatch(page.element('view').innerHTML, /Logged ✓|Last time:|done \d/);
   const home = await open('');
-  assert.match(home.element('count').textContent, /0 practised · 2 saved/);
-  assert.match(home.element('count').textContent, /1 session/);
+  assert.equal(home.element('count').textContent, '', 'P8 R4: no home counter');
+  assert.match(home.element('sess-sec').innerHTML, /href="#session\/routine"/);
 });
 
 test('L6 — catalogue keeps the latest date per sheet and session; cards show done 28 Oct', async () => {
@@ -83,12 +83,12 @@ test('L6 — catalogue keeps the latest date per sheet and session; cards show d
   assert.doesNotMatch(cards.match(/href="#press"[\s\S]*?<\/a>/)[0], /done \d/);
 });
 
-test('L6 — sheet and session pages put Done today under the title and open a one-line prefilled field with Save', async () => {
+test('L6 — sheet and session pages put Log under the title (L6: Done today) and open a one-line prefilled field with Save', async () => {
   for (const [hash, slug] of [['#curl', 'curl'], ['#session/routine', 'session/routine']]) {
     const log = [row(slug, '2026-10-28', '12 kg, 3x10', '2026-10-28T08:00:00Z', 'a')];
     const page = await open(hash, {tables: tables(log)});
     const before = page.element('view').innerHTML;
-    assert.match(before, /<h1[^>]*>[\s\S]*?<\/h1>[\s\S]*?id="practice-done"[^>]*>Done today/);
+    assert.match(before, /<h1[^>]*>[\s\S]*?<\/h1>[\s\S]*?id="practice-done"[^>]*>Log/);
     assert.match(before, /Last time: 28 Oct — 12 kg, 3x10/);
     await click(page, 'practice-done');
     const after = page.element('view').innerHTML;
@@ -98,7 +98,7 @@ test('L6 — sheet and session pages put Done today under the title and open a o
   }
 });
 
-test('L6 — Save appends a practice row and changes the button to Done today ✓', async () => {
+test('L6 — Save appends a practice row and changes the button to Logged ✓ (L6: Done today ✓)', async () => {
   const page = await open('#curl');
   await click(page, 'practice-done');
   page.element('practice-text').value = '12 kg, 3x10';
@@ -108,7 +108,7 @@ test('L6 — Save appends a practice row and changes the button to Done today �
   assert.equal(calls[0][0], 'insert');
   assert.equal(calls[0][2].slug, 'curl');
   assert.equal(calls[0][2].text, '12 kg, 3x10');
-  assert.match(page.element('view').innerHTML, /Done today ✓/);
+  assert.match(page.element('view').innerHTML, /Logged ✓/);
   assert.match(page.element('view').innerHTML, /Last time:/);
   assert.match(page.element('view').innerHTML, /12 kg, 3x10/);
 });
@@ -141,7 +141,7 @@ test('L6 — My notes shows a Log of the last five entries, newest first, on she
   }
 });
 
-test('L6 — home counter counts distinct existing practised slugs, including sessions, and saved sheets', async () => {
+test('L6 / P8 R4 — no home counter (no ratio); a practised session shows under YOUR SESSIONS with its Start', async () => {
   const log = [
     row('curl', '2026-10-27', 'one', '2026-10-27T08:00:00Z', 'a'),
     row('curl', '2026-10-28', 'two', '2026-10-28T08:00:00Z', 'b'),
@@ -150,8 +150,9 @@ test('L6 — home counter counts distinct existing practised slugs, including se
     row('deleted', '2026-10-28', 'orphan', '2026-10-28T08:00:00Z', 'e')
   ];
   const page = await open('', {tables: tables(log)});
-  assert.match(page.element('count').textContent, /^3 practised · 2 saved/);
-  assert.match(page.element('count').textContent, /1 session · 1 notebook/);
+  assert.equal(page.element('count').textContent, '');
+  assert.doesNotMatch(page.element('home').innerHTML || '', /practised ·/);
+  assert.match(page.element('sess-sec').innerHTML, /href="#session\/routine"[\s\S]*href="#session\/routine\/play"[^>]*>[\s\S]*?Start</);
 });
 
 test('L6 — a failed or offline practice read leaves existing pages usable without claiming a completion', async () => {
@@ -159,7 +160,7 @@ test('L6 — a failed or offline practice read leaves existing pages usable with
     const page = await open('#session/routine', {failing: {practice_log: {error, status: error.code ? 403 : 0}}});
     assert.equal(page.element('view').hidden, false);
     assert.match(page.element('view').innerHTML, /Routine/);
-    assert.doesNotMatch(page.element('view').innerHTML, /Done today ✓|Last time:/);
+    assert.doesNotMatch(page.element('view').innerHTML, /Logged ✓|Last time:/);
   }
 });
 
@@ -169,5 +170,5 @@ test('L6 — a failed Save does not mark a practice as done', async () => {
   page.element('practice-text').value = '12 kg, 3x10';
   await click(page, 'practice-save');
   assert.equal(writes(page).length, 1);
-  assert.doesNotMatch(page.element('view').innerHTML, /Done today ✓|Last time:/);
+  assert.doesNotMatch(page.element('view').innerHTML, /Logged ✓|Last time:/);
 });

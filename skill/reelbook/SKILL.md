@@ -32,7 +32,7 @@ pizza was filed in Strength › Cooking):
 
 The command prints the notebook's line: its `id` is the sheet's `theme`, its `profile` picks the template. List
 every notebook added in the end-of-run report: the user can Move the sheet and Remove the notebook in the
-app. Only a video whose subject you cannot tell goes to `rb.py error` (section 4).
+app. Only a video whose subject you cannot tell goes to `rb.py error --reason other` (section 4).
 
 **Language**: write the sheet in the user's language (the one they talk to you in). Section
 titles: one label per function, the same on both templates, translated from this table (other
@@ -313,15 +313,28 @@ languages: translate the English column).
   publishes each exercise sheet, then the session, then deletes the old one-page session of the
   same video if an older backend still has one. « no sessions table »: the user has to re-run
   `supabase/schema.sql` on their project (`docs/own-supabase.md`); say so and flag the request
-  with `rb.py error`. Reprocessing a video rewrites its session: changes made to it in the app
+  with `rb.py error --reason other`. Reprocessing a video rewrites its session: changes made to it in the app
   (order, doses, removed items) are lost.
 - Add `--request <id>` to both. « quota reached on this backend: … »: the account hit a limit of a
-  shared backend (sheets, photos); `rb.py` has already put the request in error with that message.
+  shared backend (sheets, photos); `rb.py` has already put the request in error with that message
+  (reason `quota`: the app tells the user how to make room).
   Tell the user which limit and what it says to do, then stop the run: the next requests would hit
   the same limit.
 - Check in the app (Chrome): open `<app url>#<slug>` (for a session, `<app url>#session/<slug>`, then
   each exercise sheet from it: `#session/<slug>/1`, then « Next »).
 - `python3 tools/rb.py done <id> --slug <slug>` (a session: its slug). On failure:
-  `rb.py error <id> --note "<why>"`.
+  `rb.py error <id> --reason <reason> --note "<why>"`. The reason tells the app who can act (it shows the
+  user a fix, the reason in plain words, or nothing to do); the note keeps the detail in plain words:
+  - `signin_required`: Instagram or TikTok shows a login wall in Chrome (the user signs in again on the
+    computer, then taps « I signed in, try again »);
+  - `private`: the account is private;
+  - `removed`: the video is gone (404, « This content isn't available »);
+  - `not_video`: the link is not a video (a profile, a photo post, a page);
+  - `processing_failed`: the frames or the sheet could not be made. `rb.py` puts the request back in the
+    queue once for the next run; failing again, it becomes `other` by itself;
+  - `other`: anything else (the user sees the note, « Try again » and « Report this »).
+  A « no sessions table » stop is `other`. A « Redo: » request keeps its first line whatever the reason
+  (`rb.py` puts the note after it), so the user can retry the correction from the app. A backend without
+  the column (« no requests.reason column ») gets the error without its reason: nothing to do in the run.
 - Give the user the sheet link (a session: the links of its exercise sheets). Then take the next
   queued request.

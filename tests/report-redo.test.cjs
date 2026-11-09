@@ -13,11 +13,13 @@ const writes = page => JSON.parse(JSON.stringify(page.clients.at(-1).calls.filte
 test('a failed correction shows the error, and Retry queues it again with its « Redo: » line', async () => {
   const requests = [{id: 'r1', url, status: 'error', theme: 'strength', note: 'Redo: the hands are reversed\nVideo unavailable', created_at: '2026-11-01T12:00:00Z'}];
   const page = await app({...signedIn, tables: {user_themes: themes, sheets: [], sessions: [], requests}}); await settle();
-  await page.fire('queue-toggle');
+  await page.fire('otw-band');
   const row = page.element('queue').innerHTML;
   assert.match(row, /class="redo">Redo</);
   assert.match(row, /class="why">Video unavailable</);
-  await page.element('queue').listeners.click({target: {closest: s => s === '[data-retry]' ? {dataset: {retry: 'r1'}, disabled: false} : null}});
+  // P8 R3: Retry is the failed row's fix, « Try again »
+  await page.element('queue').listeners.click({target: {closest: s => s === '[data-row]' ? {dataset: {row: 'r1'}, disabled: false} : null}});
+  await page.element('otw-row').listeners.click({target: {closest: s => s === '[data-fixdone]' ? {dataset: {}} : null}});
   await settle();
   assert.deepEqual(writes(page), [['update', 'requests', {status: 'queued', note: 'Redo: the hands are reversed', processed_at: null}, [['id', 'r1']]]]);
 });

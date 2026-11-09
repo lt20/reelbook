@@ -120,7 +120,7 @@ test('L38 — no editing control on any demo page, and nothing written to localS
   const page = await open('#demo', {win: {RBL: rbl('fr')}, stored});
   await settle();
   const before = JSON.stringify([...page.storage]);
-  const controls = /(?:>\s*|aria-label=")(?:Move|Delete|Edit|Done today|Add to session|My notes|\+ New session|Start)(?:\s*<|\b)|<(?:textarea|input|button)\b/;
+  const controls = /(?:>\s*|aria-label=")(?:Move|Delete|Edit|Log|Logged ✓|Add to session|My notes|\+ New session|Start)(?:\s*<|\b)|<(?:textarea|input|button)\b/;
   for (const h of ['#demo', '#demo/notebook/fight', '#demo/notebook/yoga', '#demo/session/flow', '#demo/session/flow/1', '#demo/down-dog', '#demo/spin-kick']) {
     page.go(h); await settle();
     assert.doesNotMatch(page.element('demo').innerHTML, controls, h);

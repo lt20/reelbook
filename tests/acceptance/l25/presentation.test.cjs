@@ -29,9 +29,10 @@ test('First screen when nobody is signed in: Reelbook is introduced before the a
   assert.equal(page.element('setup').hidden, true);
   assert.equal(page.element('home').hidden, true);
   const intro = introMarkup();
-  const summary = visibleText(intro.match(/<p\b[^>]*\bdata-k="sub"[^>]*>([\s\S]*?)<\/p>/)[1]);
-  assert.match(summary, /Reelbook/i);
-  assert.ok(intro.indexOf('data-k="sub"') < intro.indexOf('id="lp-how"'), 'what Reelbook is, then how it works');
+  // P8 R8: the hero says what Reelbook does for an athlete (the headline, then three steps); its old summary is gone
+  const summary = visibleText(intro.match(/<h1\b[^>]*\bdata-k="h1"[^>]*>([\s\S]*?)<\/h1>/)[1]);
+  assert.match(summary, /videos?\b[\s\S]*notebook/i);
+  assert.ok(intro.indexOf('data-k="hp.3"') < intro.indexOf('id="lp-how"'), 'what Reelbook is, then how it works');
   assert.ok(intro.indexOf('id="lp-how"') < intro.indexOf('data-k="i2.n"'), 'how it works, then what you need');
   assert.ok(intro.indexOf('data-k="i2.n"') > intro.indexOf('id="lp-install"'));
   assert.ok(intro.indexOf('id="lp-install"') < intro.indexOf('id="intro-signup"'), 'the installation leads to the account');

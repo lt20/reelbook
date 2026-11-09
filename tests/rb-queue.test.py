@@ -2,7 +2,7 @@
 
 No network: rb.session / rb.rest are replaced by an in-memory fake. Run: python3 -I tests/rb-queue.test.py
 """
-import contextlib, importlib.util, io, json, os, pathlib, subprocess, time, unittest
+import contextlib, importlib.util, io, json, os, pathlib, re, subprocess, time, unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location("rb", ROOT / "tools" / "rb.py")
@@ -174,6 +174,105 @@ class Queue(Base):
         self.assertEqual(by_id["r"]["note"], "Redo: correct the angle\nVideo unavailable")
         self.assertEqual(by_id["p"]["note"], "Video unavailable")
         self.assertEqual(by_id["r"]["status"], "error")
+
+
+class ReasonFake(Fake):
+    """A backend with or without requests.reason (P8 R3). With it, a read returns the columns selected (reason: null
+    included); without it, a read naming it answers 42703 and a write naming it PGRST204, both HTTP 400."""
+    def __init__(self, requests, column=True):
+        super().__init__(requests)
+        self.column = column
+
+    def rest(self, cfg, method, path, data=None, prefer=None, params=None, tolerate=()):
+        params = params or {}
+        cols = (params.get("select") or "").split(",")
+        if not self.column and method == "GET" and "reason" in cols:
+            self.calls.append((method, path, data, params))
+            raise rb.RbHTTPError(400, '{"code":"42703","message":"column requests.reason does not exist"}')
+        if not self.column and method == "PATCH" and "reason" in (data or {}):
+            self.calls.append((method, path, data, params))
+            raise rb.RbHTTPError(400, '{"code":"PGRST204","message":"Could not find the \'reason\' column of \'requests\' in the schema cache"}')
+        rows = super().rest(cfg, method, path, data, prefer, params, tolerate)
+        if method == "GET" and cols != [""]:
+            rows = [{c: r.get(c) for c in cols} for r in rows]
+        return rows
+
+
+class ErrorReason(Base):
+    def use_reason(self, requests, column=True):
+        self.fake = ReasonFake(requests, column)
+        rb.session, rb.rest = (lambda: CFG), self.fake.rest
+        return self.fake
+
+    def row(self, fake, rid="a"):
+        return next(r for r in fake.requests if r["id"] == rid)
+
+    def test_every_reason_of_the_column_is_accepted_and_written(self):
+        sql = (ROOT / "supabase" / "schema.sql").read_text()
+        check = sql.split("add constraint requests_reason_check", 1)[1].split(";", 1)[0]
+        self.assertEqual(tuple(re.findall(r"'([a-z_]+)'", check)), rb.REASONS, "one list for the column and rb.py")
+        for reason in ("signin_required", "private", "removed", "not_video", "other", "quota"):
+            fake = self.use_reason([{"id": "a", "status": "processing", "note": None, "reason": None}])
+            self.run_cmd(rb.cmd_error, ["a", "--reason", reason, "--note", "Login", "wall"])
+            self.assertEqual({k: self.row(fake)[k] for k in ("status", "reason", "note")}, {"status": "error", "reason": reason, "note": "Login wall"})
+
+    def test_the_reason_may_come_after_the_note(self):
+        fake = self.use_reason([{"id": "a", "status": "processing", "note": None, "reason": None}])
+        self.run_cmd(rb.cmd_error, ["a", "--note", "Private account", "--reason", "private"])
+        self.assertEqual((self.row(fake)["reason"], self.row(fake)["note"]), ("private", "Private account"))
+
+    def test_an_unknown_reason_or_a_missing_value_writes_nothing(self):
+        for args in (["a", "--reason", "login", "--note", "x"], ["a", "--note", "x", "--reason"], ["a", "--reason", "private"]):
+            fake = self.use_reason([{"id": "a", "status": "processing", "note": None, "reason": None}])
+            with self.assertRaises(SystemExit, msg=args):
+                self.run_cmd(rb.cmd_error, args)
+            self.assertEqual(fake.patches(), [], args)
+
+    def test_no_reason_clears_one_left_from_before(self):
+        fake = self.use_reason([{"id": "a", "status": "processing", "note": None, "reason": "processing_failed"}])
+        self.run_cmd(rb.cmd_error, ["a", "--note", "Video unavailable"])
+        self.assertEqual((self.row(fake)["status"], self.row(fake)["reason"]), ("error", None), "no reason reads « other » in the app")
+
+    def test_a_retry_reason_goes_back_in_the_queue_once_then_is_other(self):
+        fake = self.use_reason([{"id": "a", "status": "processing", "note": None, "reason": None, "processed_at": iso(1)}])
+        self.run_cmd(rb.cmd_error, ["a", "--reason", "processing_failed", "--note", "ffmpeg could not read the frames"])
+        r = self.row(fake)
+        self.assertEqual((r["status"], r["reason"], r["processed_at"]), ("queued", "processing_failed", None), "the next run tries it once more")
+        r["status"] = "processing"
+        self.run_cmd(rb.cmd_error, ["a", "--reason", "fetch_blocked", "--note", "blocked again"])
+        r = self.row(fake)
+        self.assertEqual((r["status"], r["reason"], r["note"]), ("error", "other", "blocked again"), "failed twice: the user sees it")
+
+    def test_a_correction_keeps_its_redo_line_with_a_reason(self):
+        fake = self.use_reason([{"id": "a", "status": "processing", "note": "Redo: the hands are reversed", "reason": None}])
+        self.run_cmd(rb.cmd_error, ["a", "--reason", "signin_required", "--note", "Login wall"])
+        self.assertEqual(self.row(fake)["note"], "Redo: the hands are reversed\nLogin wall")
+
+    def test_a_backend_without_the_column_gets_the_error_without_its_reason(self):
+        fake = self.use_reason([{"id": "a", "status": "processing", "note": "Redo: x"}], column=False)
+        _, err = self.run_cmd(rb.cmd_error, ["a", "--reason", "private", "--note", "Private account"])
+        self.assertEqual(self.row(fake), {"id": "a", "status": "error", "note": "Redo: x\nPrivate account", "processed_at": self.row(fake)["processed_at"]})
+        gets = [c[3]["select"] for c in fake.calls if c[0] == "GET"]
+        self.assertEqual(gets, ["note,reason", "note"], "the read is tried again without the column")
+        patches = [c[2] for c in fake.patches()]
+        self.assertEqual(len(patches), 2)
+        self.assertIn("reason", patches[0]); self.assertNotIn("reason", patches[1])
+        self.assertIn("no requests.reason column", err)
+
+    def test_without_the_column_a_retry_reason_stays_an_error(self):
+        fake = self.use_reason([{"id": "a", "status": "processing", "note": None}], column=False)
+        self.run_cmd(rb.cmd_error, ["a", "--reason", "processing_failed", "--note", "no frames"])
+        self.assertEqual(self.row(fake)["status"], "error", "no trace of a first try: it is not queued again forever")
+
+    def test_a_quota_refusal_flags_its_request_with_the_quota_reason(self):
+        fake = self.use_reason([{"id": "q", "status": "processing", "note": None, "reason": None}])
+        saved, rb.REQUEST_ID = rb.REQUEST_ID, "q"
+        try:
+            with self.assertRaises(SystemExit):
+                self.run_cmd(lambda a: rb._quota_stop(CFG, "300 sheets"), [])
+        finally:
+            rb.REQUEST_ID = saved
+        self.assertEqual((self.row(fake, "q")["status"], self.row(fake, "q")["reason"]), ("error", "quota"))
 
 
 class ListSince(Base):

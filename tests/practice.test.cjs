@@ -23,7 +23,7 @@ test('L6 — Save sends the local calendar day, not the server one (UTC), and th
   const sent = inserts(page).map(c => c[2]);
   assert.match(sent[0].id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   assert.deepEqual(sent.map(({id, ...r}) => r), [{slug: 'curl', done_on: localDay(), text: '12 kg, 3x10'}]);
-  assert.match(page.element('view').innerHTML, /id="practice-done"[^>]*>Done today ✓</);
+  assert.match(page.element('view').innerHTML, /id="practice-done"[^>]*>Logged ✓</);
   assert.doesNotMatch(page.element('view').innerHTML, /id="practice-text"/, 'the field closes once saved');
   assert.match(page.element('view').innerHTML, /<h3>Log<\/h3><ol><li><time datetime="\d{4}-\d\d-\d\d">[^<]+<\/time>12 kg, 3x10<\/li><\/ol>/);
 });
@@ -37,18 +37,18 @@ test('L6 — a failed Save keeps the typed text with « Not saved. Try again. »
   const html = page.element('view').innerHTML;
   assert.match(html, /<input[^>]*id="practice-text"[^>]*value="half done"/);
   assert.match(html, /Not saved\. Try again\./);
-  assert.match(html, /id="practice-done"[^>]*>Done today</);
+  assert.match(html, /id="practice-done"[^>]*>Log</);
   assert.doesNotMatch(html, /<h3>Log<\/h3>/);
 });
 
-test('L6 — a saved practice counts at once on the home page and on the card', async () => {
+test('L6 — a saved practice shows at once on the card (P8 R4: no home counter)', async () => {
   const page = await app({...signedIn, tables: tables(), dom: true, hash: '#curl'});
   await settle();
   await click(page, 'practice-done');
   await click(page, 'practice-save');
   page.go('');
   await settle();
-  assert.match(page.element('count').textContent, /^1 practised · 1 saved · 1 notebook$/);
+  assert.equal(page.element('count').textContent, '', 'P8 R4: « n practised · n saved » is gone');
   page.go('#strength');
   await settle();
   assert.match(page.element('groups').innerHTML, /href="#curl"[\s\S]*?<span class="done">done \d{1,2} [A-Z][a-z]{2}<\/span>/);
@@ -106,7 +106,7 @@ test('L6 — Save again after a lost answer sends the same row; a duplicate key 
   assert.equal(sent.length, 2);
   assert.deepEqual(sent[1], sent[0], 'the same id, day and text');
   const html = page.element('view').innerHTML;
-  assert.match(html, /Done today ✓/);
+  assert.match(html, /Logged ✓/);
   assert.equal([...html.matchAll(/<li><time/g)].length, 1, 'one entry in the Log');
   // another text is another try: a new id
   writes.practice_log = undefined;

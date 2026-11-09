@@ -27,7 +27,7 @@ test('L27 — demo editing controls are hidden and viewing attempts no backend w
   assert.equal(page.element('add-video-fab').hidden, true);
   assert.equal(page.element('sheet-new').hidden, true);
   assert.equal(page.element('nav-more').hidden, true);
-  assert.doesNotMatch(demo(page).innerHTML, /(?:>\s*|aria-label=")(?:Move|Delete|Edit|Done today|Add to session)(?:\s*<|\b)/);
+  assert.doesNotMatch(demo(page).innerHTML, /(?:>\s*|aria-label=")(?:Move|Delete|Edit|Log|Logged ✓|Add to session)(?:\s*<|\b)/);
   assert.equal(page.clients.flatMap(client => client.calls).length, 0);
 });
 

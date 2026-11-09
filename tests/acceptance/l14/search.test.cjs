@@ -10,7 +10,8 @@ const tables = (sheets, notes = []) => ({
   sheets, sessions: [], notes, requests: []
 });
 const open = async (sheets, notes = [], extra = {}) => {
-  const page = await app({...signedIn, tables: tables(sheets, notes), ...extra});
+  // P8 R4: the home page's field is on the search page (#search), opened by the loupe
+  const page = await app({...signedIn, tables: tables(sheets, notes), hash: '#search', ...extra});
   await settle();
   return page;
 };
@@ -68,11 +69,12 @@ test('App — matching ignores accents and case and starts at a word boundary', 
   assert.ok(card(await search(page, 'tapis'), 'mat'));
 });
 
-test('App — empty search results show « Nothing matches « x ». Try a body part or a piece of kit. »', async () => {
+test('App — empty search results show « No sheet for “x”. » and Add a video (P8 R4)', async () => {
   const page = await open([sheet('floor', {title: 'Floor exercise', search_text: 'tapis'})]);
   const markup = await search(page, 'unknown');
   assert.equal(page.element('results').hidden, false);
-  assert.match(markup, /Nothing matches « unknown »\. Try a body part or a piece of kit\./);
+  assert.match(markup, /No sheet for “unknown”\./);
+  assert.match(markup, /data-add-video[^>]*>Add a video</);
   assert.equal(card(markup, 'floor'), '');
   await search(page, '');
   assert.equal(page.element('results').hidden, true);

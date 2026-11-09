@@ -45,6 +45,7 @@ class Element extends Node {
   setAttribute(k, v) { this.attrs.set(k, String(v)); }
   hasAttribute(k) { return this.attrs.has(k); }
   removeAttribute(k) { this.attrs.delete(k); }
+  getAttributeNames() { return [...this.attrs.keys()]; }
   get classList() { const list = (this.getAttribute('class') || '').split(/\s+/).filter(Boolean); return {contains: c => list.includes(c)}; }
   matches(sel) { return parseSel(sel).some(chain => matchChain(this, chain)); }
   closest(sel) { for (let n = this; n && n.nodeType === 1; n = n.parentNode) if (n.matches(sel)) return n; return null; }

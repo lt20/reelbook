@@ -85,40 +85,44 @@ const writes = page => page.clients.at(-1).calls.filter(c => c[0] === 'insert' &
   assert.doesNotMatch(screen(page), /id="play-rest"/);
 });
 
- test('End of session — Finish shows Session done, the checked counts and a prefilled practice field; Save to log writes session/<slug>', async () => {
+ // P8 R5 changed the end of session: Finish logs at once (no practice field, no « Save to log »): the session's row
+ // and one row per exercise with a checked set, then « Logged · Undo »; « Close » became « Done ».
+ test('End of session — Finish shows Session done and the checked counts, and logs session/<slug> and each checked exercise at once', async () => {
   const page = await open([{slug: 'first', dose: '3 × 10'}, {slug: 'second', dose: '40 s'}]);
   await click(page, 'play-set-1', 'change');
-  await click(page, 'play-rest-skip');
-  await click(page, 'play-set-2', 'change');
-  await click(page, 'play-rest-skip');
+  await click(page, 'play-rest-next');
+  assert.match(screen(page), /1\/2/);
+  assert.match(screen(page), /Set 2 of 3/);
+  await click(page, 'play-done-set');
+  await click(page, 'play-rest-next');
   await click(page, 'play-next');
   await click(page, 'play-set-1', 'change');
+  assert.match(screen(page), /class="btn" id="play-finish"/);
   await click(page, 'play-finish');
   const end = page.element('view').innerHTML;
   assert.match(end, /Session done/);
   assert.match(end, /2 exercises · 3 sets/);
-  assert.match(end, /<input[^>]*id="end-log-text"[^>]*value="2 exercises · 3 sets"/);
-  assert.match(end, /Save to log/);
-  assert.match(end, /Close/);
-  assert.equal(writes(page).length, 0);
-  await click(page, 'end-save');
+  assert.doesNotMatch(end, /Save to log|id="end-log-text"/);
+  assert.match(end, /Logged[\s\S]*id="end-undo"[^>]*>Undo</);
+  assert.match(end, /class="btn" id="end-share-s">Share</);
+  assert.match(end, /class="btn ghost" id="end-close">Done</);
   assert.equal(writes(page).length, 1);
-  assert.equal(writes(page)[0][2].slug, 'session/routine');
-  assert.equal(writes(page)[0][2].text, '2 exercises · 3 sets');
+  assert.deepEqual(JSON.parse(JSON.stringify(writes(page)[0][2].map(r => [r.slug, r.text]))), [['session/routine', '2 exercises · 3 sets'], ['first', '2 × 10'], ['second', '40 s']]);
 });
 
- test('End of session — Close leaves without saving and clears checks for the next play', async () => {
+ test('End of session — Done leaves (the play was logged at Finish) and clears checks for the next play', async () => {
   const page = await open([{slug: 'first', dose: '40 s'}]);
   await click(page, 'play-set-1', 'change');
   await click(page, 'play-finish');
   assert.match(page.element('view').innerHTML, /Session done/);
   await click(page, 'end-close');
-  assert.equal(writes(page).length, 0);
+  assert.equal(writes(page).length, 1);
+  assert.doesNotMatch(page.element('view').innerHTML, /Session done/);
   page.go('#session/routine/play'); await settle();
   assert.doesNotMatch(boxes(screen(page))[0], /\bchecked\b/);
 });
 
- test('End of session — without the practice_log table, only the summary and Close appear', async () => {
+ test('End of session — without the practice_log table, only the summary, Share and Done appear', async () => {
   const failing = {practice_log: {error: {code: 'PGRST205', message: 'Could not find the table'}, status: 404}};
   const page = await open([{slug: 'first', dose: '40 s'}], {failing});
   await click(page, 'play-set-1', 'change');
@@ -126,19 +130,20 @@ const writes = page => page.clients.at(-1).calls.filter(c => c[0] === 'insert' &
   const end = page.element('view').innerHTML;
   assert.match(end, /Session done/);
   assert.match(end, /1 exercise · 1 set/);
-  assert.match(end, /Close/);
-  assert.doesNotMatch(end, /Save to log|id="end-log-text"/);
+  assert.match(end, /id="end-close">Done</);
+  assert.doesNotMatch(end, /Logged|Undo|Log it|session this week/);
   assert.equal(writes(page).length, 0);
 });
 
- test('End of session — an offline Save keeps the summary and reports the L6 save error', async () => {
+ test('End of session — an offline log keeps the summary, says « Not logged. » and Try again sends the same rows', async () => {
   const writesResponse = {practice_log: {data: null, error: {message: 'Failed to fetch'}}};
   const page = await open([{slug: 'first', dose: '40 s'}], {writes: writesResponse});
   await click(page, 'play-set-1', 'change');
   await click(page, 'play-finish');
-  await click(page, 'end-save');
   assert.equal(writes(page).length, 1);
   assert.match(page.element('view').innerHTML, /Session done/);
-  assert.match(page.element('view').innerHTML, /Not saved\. Try again\./);
-  assert.match(page.element('view').innerHTML, /Save to log/);
+  assert.match(page.element('view').innerHTML, /Not logged\.[\s\S]*id="end-log">Try again</);
+  await click(page, 'end-log');
+  assert.equal(writes(page).length, 2);
+  assert.equal(JSON.stringify(writes(page)[1][2].map(r => r.id)), JSON.stringify(writes(page)[0][2].map(r => r.id)), 'a retry is the same rows');
 });

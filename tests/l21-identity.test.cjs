@@ -45,8 +45,9 @@ test('L21 — protected zone: config.js keeps the L20 ids, titles, colours, grou
   assert.equal(CFG.hosted.name, snap.hosted.name);
   assert.equal(CFG.hosted.url, snap.hosted.url);
   assert.deepEqual(CFG.library.map(({id, title, sub, color, profile, groups}) => ({id, title, sub, color, profile, groups})), snap.library);
-  // L21 adds the key `icon` and nothing else to a notebook (L23 may add its own keys: listed here when it lands)
-  const known = new Set(['id', 'title', 'sub', 'color', 'profile', 'groups', 'icon', 'facets']);
+  // L21 adds the key `icon` and nothing else to a notebook (L23 may add its own keys: listed here when it lands);
+  // P8 R14 adds `family`, the kind of practice by default (tests/p8-r14.test.cjs checks its values)
+  const known = new Set(['id', 'title', 'sub', 'color', 'profile', 'groups', 'icon', 'facets', 'family']);
   for (const t of CFG.library) for (const k of Object.keys(t)) assert.ok(known.has(k), `${t.id}: unexpected key ${k}`);
 });
 

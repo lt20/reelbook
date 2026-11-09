@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "Reelbook",
   "short_name": "Reelbook",
   "description": "Turn the how-to reels you save into sheets you can read anywhere.",
@@ -11,5 +12,17 @@
     {"src": "icons/reelbook-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
     {"src": "icons/reelbook-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
     {"src": "icons/reelbook-icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {"title": "title", "text": "text", "url": "url"}
+  },
+  "shortcuts": [
+    {"name": "Add a video", "short_name": "Add a video", "url": "./?add", "icons": [{"src": "icons/reelbook-icon-192.png", "sizes": "192x192", "type": "image/png"}]}
+  ],
+  "screenshots": [
+    {"src": "screens/home.png", "sizes": "780x1560", "type": "image/png", "form_factor": "narrow", "label": "Your notebooks: the sheets made from the videos you saved"},
+    {"src": "screens/sheet.png", "sizes": "780x1560", "type": "image/png", "form_factor": "narrow", "label": "A sheet: the move first, then the steps in order"}
   ]
 }

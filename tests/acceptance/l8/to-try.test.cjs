@@ -28,18 +28,21 @@ const open = async (rows, options = {}) => {
   return page;
 };
 const shelf = page => page.element('to-try');
-const hrefs = page => [...shelf(page).innerHTML.matchAll(/href="#([^"]+)"/g)].map(match => match[1]);
+// P8 R4: TRY ONE TODAY shows one sheet of the day's choice (its title, Try it, Not for me): the sheets shown are
+// the ones « Not for me » names
+const hrefs = page => [...shelf(page).innerHTML.matchAll(/data-dismiss="([^"]+)"/g)].map(match => match[1]);
 
-test('L8 Home « To try »: up to 3 sheets added more than 3 days ago and never practised', async () => {
+test('L8 / P8 R4 Home « Try one today »: one sheet added more than 3 days ago and never practised', async () => {
   const old = ['a', 'b', 'c', 'd', 'e'].map(slug => sheet(slug));
   const rows = [...old, sheet('recent', 2), sheet('boundary', 3),
     {...sheet('old-session'), kind: 'session'}];
   const page = await open(rows, {tables: tables(rows, [{slug: 'e', done_on: '2026-10-01'}])});
   assert.equal(page.element('home').hidden, false);
   assert.equal(shelf(page).hidden, false);
-  assert.match(shelf(page).innerHTML, /To try/);
+  assert.match(shelf(page).innerHTML, /Try one today/);
   const chosen = hrefs(page);
-  assert.ok(chosen.length > 0 && chosen.length <= 3, chosen.join(', '));
+  assert.equal(chosen.length, 1, chosen.join(', '));
+  assert.match(shelf(page).innerHTML, new RegExp(`href="#${chosen[0]}/play"[^>]*>[\\s\\S]*?Try it<`), 'Try it opens the player');
   assert.equal(new Set(chosen).size, chosen.length);
   assert.ok(chosen.every(slug => ['a', 'b', 'c', 'd'].includes(slug)), chosen.join(', '));
   for (const slug of chosen) {
@@ -54,7 +57,7 @@ test('L8 choice seeded by the date: it remains stable within the same day', asyn
   const rows = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map(slug => sheet(slug));
   const first = await open(rows);
   const selected = hrefs(first);
-  assert.equal(selected.length, 3);
+  assert.equal(selected.length, 1);
   first.go('#strength');
   await settle();
   first.go('');

@@ -1,15 +1,15 @@
 [
   {"name": "l23-01-chips",
-   "actions": [{"wait": "#portal .thumbs img"}, {"wait": "#facets button"}]},
+   "actions": [{"wait": "#portal .thumbs img"}, {"click": "#h-search"}, {"wait": "#facets button"}]},
   {"name": "l23-02-zone-sheet",
-   "actions": [{"wait": "#portal .thumbs img"}, {"click": "#facet-zone"}, {"click": "[data-facet-value=\"shoulders\"]"}, {"wait": 300}]},
+   "actions": [{"wait": "#portal .thumbs img"}, {"click": "#h-search"}, {"click": "#facet-zone"}, {"click": "[data-facet-value=\"shoulders\"]"}, {"wait": 300}]},
   {"name": "l23-03-two-facets",
-   "actions": [{"wait": "#portal .thumbs img"}, {"click": "#facet-zone"}, {"click": "[data-facet-value=\"shoulders\"]"}, {"click": "#facet-done"},
+   "actions": [{"wait": "#portal .thumbs img"}, {"click": "#h-search"}, {"click": "#facet-zone"}, {"click": "[data-facet-value=\"shoulders\"]"}, {"click": "#facet-done"},
                {"click": "#facet-gear"}, {"click": "[data-facet-value=\"band\"]"}, {"click": "#facet-done"}, {"wait": "#results .card img"}]},
   {"name": "l23-04-hash-and-text", "hash": "search?zone=shoulders,back&time=%3C%205",
    "actions": [{"wait": "#results .card img"}, {"fill": "#q", "value": "élastique"}, {"wait": "#results .card"}]},
   {"name": "l23-05-no-match", "hash": "search?zone=shoulders&gear=kettlebell",
    "actions": [{"wait": "#results >> text=No sheet has all these tags"}]},
   {"name": "l23-06-column-missing", "query": "missing=sheets.tags",
-   "actions": [{"wait": "#portal .thumbs img"}, {"fill": "#q", "value": "épaules"}, {"wait": "#results .card"}]}
+   "actions": [{"wait": "#portal .thumbs img"}, {"click": "#h-search"}, {"fill": "#q", "value": "épaules"}, {"wait": "#results .card"}]}
 ]

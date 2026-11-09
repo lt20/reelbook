@@ -1,9 +1,9 @@
 [
   {"name": "l8-01-home-to-try", "full": true,
-   "actions": [{"wait": "#new-sec .card"}, {"wait": "#to-try .card"}, {"wait": "#portal >> text=Strength"}]},
-  {"name": "l8-02-home-to-try-row", "actions": [{"wait": "#to-try .card"}, {"scroll": "#to-try"}]},
+   "actions": [{"wait": "#new-sec .card"}, {"wait": "#to-try .tt"}, {"wait": "#portal >> text=Strength"}]},
+  {"name": "l8-02-home-to-try-row", "actions": [{"wait": "#to-try .tt"}, {"scroll": "#to-try"}]},
   {"name": "l8-03-after-not-for-me", "full": true,
-   "actions": [{"wait": "#to-try .card"}, {"click": "#to-try [data-dismiss] >> nth=0"}, {"wait": 300}, {"wait": "#to-try .card"}]},
+   "actions": [{"wait": "#to-try .tt"}, {"click": "#to-try [data-dismiss] >> nth=0"}, {"wait": 300}, {"wait": "#to-try .tt"}]},
   {"name": "l8-04-no-practice-table", "query": "missing=practice_log", "full": true,
    "actions": [{"wait": "#new-sec .card"}, {"wait": "#portal >> text=Strength"}, {"wait": 300}]}
 ]

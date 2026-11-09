@@ -1,0 +1,4 @@
+[
+  {"name": "r10-06-settings-shortcut-icloud", "hash": "settings", "full": true, "actions": [{"wait": "#shortcut-section"}, {"scroll": "#shortcut-section"}]},
+  {"name": "r10-07-settings-shortcut-icloud-diy", "hash": "settings", "full": true, "actions": [{"wait": "#shortcut-section"}, {"click": "#shortcut-diy-sum"}, {"scroll": "#shortcut-section"}]}
+]

@@ -45,6 +45,14 @@ const sheetDocument = {
 // `getUser`: client.auth.getUser (none by default), e.g. the user_metadata #welcome reads (L43).
 // `docEl`: a document.documentElement (none by default), e.g. {lang: 'en'} to read <html lang> (L30).
 // `win`: more properties of the window, e.g. window.RBL, the landing's API (L30: app/landing.js is not loaded here).
+// `source`: script -> script, the app's script changed before it runs (e.g. a mode constant set otherwise, R9).
+// `history`: the window's history (none by default), e.g. to see the share route's replaceState (R10). 'stack': a
+// browser's session history (P8 R4): setting location.hash pushes an entry (none when it is the same), location.replace
+// replaces it, back / forward / go move in it and fire hashchange, each entry keeps its state; a move before the first
+// entry leaves the app (page.history.left counts them). page.history.entries and .index show where it is,
+// page.history.go(-1) is the browser's Back button.
+// The query of `href` is location.search; page.focused journals the ids focused, in order (R10).
+// `globals`: more globals of the page's realm, e.g. Safari's ClipboardItem and Blob (R10).
 // IndexedDB as the app uses it (open, one 'kv' store, get / put; a ranged delete is not supported and fails).
 const fakeIndexedDB = store => ({
   open() {
@@ -60,7 +68,7 @@ const fakeIndexedDB = store => ({
     return r;
   }
 });
-async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity, href = 'https://app.example.test/reelbook/', win = {}, rpc = null, docEl = null, auth = null, cfg = null, getUser = null} = {}) {
+async function app({remembered, sessions = {}, stored = {}, tables = null, failing = {}, writes = {}, hash = '', dom = false, library = [{id: 'strength', title: 'Strength', groups: []}], nav = {}, idb = null, hold = () => null, missing = [], fetch = null, confirm = null, timerCap = Infinity, href = 'https://app.example.test/reelbook/', win = {}, rpc = null, docEl = null, auth = null, cfg = null, getUser = null, source = null, history = null, globals = {}} = {}) {
   const elements = new Map();
   const storage = new Map([...(remembered ? [['rb.backend', JSON.stringify(remembered)]] : []), ...Object.entries(stored)]);
   const clients = [], appended = [];
@@ -69,25 +77,50 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
   // every listener of the window and of the document, by type (win() and doc() fire them all, in order)
   const winAll = {}, docAll = {};
   let currentHash = hash;
+  const stack = history === 'stack' ? {entries: [{hash, state: null}], index: 0, left: 0} : null;
+  const fireHash = () => queueMicrotask(() => winListeners.hashchange && winListeners.hashchange());
+  const hashOf = u => new URL(String(u), href).hash;
+  if (stack) history = {
+    get state() { return stack.entries[stack.index].state; },
+    get length() { return stack.entries.length; },
+    replaceState(state, title, url) {
+      const e = stack.entries[stack.index]; e.state = state == null ? null : JSON.parse(JSON.stringify(state));
+      if (url != null) e.hash = currentHash = hashOf(url);
+    },
+    go(n) {
+      const to = stack.index + n; if (!n || to >= stack.entries.length) return;
+      if (to < 0) { stack.left++; return; }
+      const was = currentHash; stack.index = to; currentHash = stack.entries[to].hash;
+      if (currentHash !== was) fireHash();
+    },
+    back() { this.go(-1); }, forward() { this.go(1); }
+  };
+  if (stack) stack.go = n => history.go(n); // the browser's Back (-1) and Forward (1) buttons
+  const focused = [];
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
       hidden: true, disabled: false, value: '', textContent: '', innerHTML: '',
       listeners: {}, classList: {toggle() {}},
       addEventListener(type, listener) { this.listeners[type] = listener; },
-      focus() {}, reset() {}, setAttribute() {}, scrollIntoView() {},
+      focus() { focused.push(id); }, reset() {}, setAttribute() {}, scrollIntoView() {},
       showModal() { this.open = true; }, close() { this.open = false; }
     });
     return elements.get(id);
   };
   const context = {
-    URL, console,
+    URL, URLSearchParams, console,
     crypto: globalThis.crypto, // Web Crypto, as every browser has it (L28: the shortcut key and its SHA-256)
     // timers run as microtasks; one of timerCap ms or more never fires (a test that waits for the work, not the time)
     setTimeout: (fn, ms) => { if (tables && !(ms >= timerCap)) queueMicrotask(fn); },
     location: {
-      href, origin: new URL(href).origin, pathname: new URL(href).pathname,
+      href, origin: new URL(href).origin, pathname: new URL(href).pathname, search: new URL(href).search,
       get hash() { return currentHash; },
-      set hash(v) { currentHash = !v || String(v).startsWith('#') ? String(v || '') : '#' + v; queueMicrotask(() => winListeners.hashchange && winListeners.hashchange()); }
+      set hash(v) {
+        const h = !v || String(v).startsWith('#') ? String(v || '') : '#' + v;
+        if (stack) { if (h === currentHash) return; stack.entries.splice(stack.index + 1, Infinity, {hash: h, state: null}); stack.index++; }
+        currentHash = h; fireHash();
+      },
+      ...(stack ? {replace(u) { const h = hashOf(u), was = currentHash; stack.entries[stack.index] = {hash: h, state: null}; currentHash = h; if (h !== was) fireHash(); }} : {})
     },
     localStorage: {
       getItem: key => storage.get(key) ?? null,
@@ -118,6 +151,7 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
       title: 'Reelbook'
     },
     navigator: nav,
+    ...(history ? {history} : {}),
     ...(fetch ? {fetch} : {}),
     ...(dom ? {DOMParser: SheetParser} : {}),
     supabase: {
@@ -176,12 +210,13 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
     }
   };
   if (dom) Object.assign(context.document, sheetDocument);
+  Object.assign(context, globals);
   vm.createContext(context);
   vm.runInContext(sessionsJs, context);
-  vm.runInContext(script, context);
+  vm.runInContext(source ? source(script) : script, context);
   await Promise.resolve();
   return {
-    element, clients, storage, appended,
+    element, clients, storage, appended, focused, history: stack,
     window: context.window, // e.g. window.turnstile, set when a test loads Cloudflare's script (L42b)
     location: context.location, // e.g. a mailto: the app opened by setting location.href (L26)
     async fire(id, type = 'click') {
@@ -198,4 +233,4 @@ async function app({remembered, sessions = {}, stored = {}, tables = null, faili
   };
 }
 
-module.exports = {app, html, hostedUrl, ownUrl, ownKey};
+module.exports = {app, html, script, hostedUrl, ownUrl, ownKey};

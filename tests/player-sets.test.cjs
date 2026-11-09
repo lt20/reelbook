@@ -63,33 +63,40 @@ test('rb.play.<uid>: a place without checks stays a number, with checks it carri
   assert.match(player(old), /Resume at 2\/3/);
 });
 
-test('rest timer: it carries on over the next exercise, and −15 s down to zero ends it', async () => {
+// P8 R5: after a rest, Next (or the end of the countdown) goes on to the next set, or to the next exercise once this
+// one's sets are all checked; « Next: … » says which.
+test('rest timer: −15 s down to zero ends it on the next set; after the last set, Next goes on to the next exercise', async () => {
   const items = [{slug: 'a', dose: '2 × 10', rest_s: 20}, {slug: 'b', dose: '40 s'}];
   const page = await app({...signedIn, tables: tables(items), hash: '#session/legs/play', dom: true});
   await settle();
-  await page.fire('play-set-2', 'change'); await settle();
+  await page.fire('play-set-1', 'change'); await settle();
   assert.match(player(page), /id="play-rest"[^>]*>0:20</);
-  await page.fire('play-next'); await settle();
-  assert.match(player(page), /2\/2/);
-  assert.match(player(page), /id="play-rest"[^>]*>0:20</);
+  assert.match(player(page), /<b>Next: set 2<\/b>/);
   await page.fire('play-rest-minus'); await settle();
   assert.match(player(page), /id="play-rest"[^>]*>0:05</);
   await page.fire('play-rest-minus'); await settle();
   assert.doesNotMatch(player(page), /id="play-rest"/);
+  assert.match(player(page), /1\/2/);
+  assert.match(player(page), /<p class="pl-dose">2 × 10<\/p>/);
+  await page.fire('play-set-2', 'change'); await settle();
+  assert.match(player(page), /<b>Next: Exercise 2<\/b>/);
+  await page.fire('play-rest-next'); await settle();
+  assert.match(player(page), /2\/2/);
+  assert.doesNotMatch(player(page), /id="play-rest"/);
   assert.match(player(page), /<p class="pl-dose">40 s<\/p>/);
 });
 
-test('end of session: Save to log keeps the session page’s « Done today » in step, and Back to another page drops it', async () => {
+test('end of session: Finish logs, Done goes back to the session page, and Back to another page drops the end screen', async () => {
   const items = [{slug: 'a', dose: '40 s'}];
   const page = await app({...signedIn, tables: tables(items), hash: '#session/legs/play', dom: true});
   await settle();
   await page.fire('play-set-1', 'change'); await settle();
   await page.fire('play-finish'); await settle();
   assert.match(page.element('view').innerHTML, /Session done[\s\S]*<h1>Legs<\/h1>[\s\S]*1 exercise · 1 set/);
-  await page.fire('end-save'); await settle();
   const writes = page.clients.at(-1).calls.filter(c => c[0] === 'insert' && c[1] === 'practice_log');
   assert.equal(writes.length, 1);
-  assert.equal(writes[0][2].done_on.length, 10);
+  assert.equal(writes[0][2][0].done_on.length, 10);
+  await page.fire('end-close'); await settle();
   assert.doesNotMatch(page.element('view').innerHTML, /Session done/);
   assert.match(page.element('view').innerHTML, /<h1>Legs<\/h1>/);
   // a second play, then another page: the end screen is not shown again on the way back
@@ -153,18 +160,23 @@ test('sets: Resume after a reorder stores the fitted checks, so restoring the or
   assert.doesNotMatch(player(back), /id="play-set-1"[^>]*checked/);
 });
 
-test('end of session: Close works while Save to log is still on its way', async () => {
+// P8 R5 (Codex pass 3): « Done » is « Saving… » and disabled while the log is on its way, so a failed write can still
+// say « Not logged · Try again » on this screen; once the answer is in, Done goes back.
+test('end of session: Done waits for the log on its way, then goes back', async () => {
   let release;
   const pending = new Promise(resolve => { release = resolve; });
   const hold = (table, ops) => table === 'practice_log' && ops.some(o => o[0] === 'insert') ? pending : null;
   const page = await app({...signedIn, tables: tables([{slug: 'a', dose: '40 s'}]), hash: '#session/legs/play', dom: true, hold});
   await settle();
   await page.fire('play-set-1', 'change'); await settle();
-  await page.fire('play-finish'); await settle();
-  page.fire('end-save'); await settle(); // its answer does not come
+  await page.fire('play-finish'); await settle(); // its log does not answer
+  assert.match(page.element('view').innerHTML, /Logging…/);
+  assert.match(page.element('view').innerHTML, /id="end-close" disabled>Saving…</);
+  await page.fire('end-close'); await settle();
+  assert.match(page.element('view').innerHTML, /Session done/, 'not left while saving');
+  release(null); await settle();
+  assert.match(page.element('view').innerHTML, /id="end-close">Done</);
   await page.fire('end-close'); await settle();
   assert.doesNotMatch(page.element('view').innerHTML, /Session done/);
   assert.match(page.element('view').innerHTML, /<h1>Legs<\/h1>/);
-  release(null); await settle(); // the late answer does not bring the end screen back
-  assert.doesNotMatch(page.element('view').innerHTML, /Session done/);
 });

@@ -14,7 +14,7 @@ create table if not exists public.requests (
   status       text not null default 'queued' check (status in ('queued', 'processing', 'done', 'error')),
   theme        text,            -- hint only: the theme page the link was pasted from
   slug         text,            -- set when the sheet is published
-  note         text,            -- error details
+  note         text,            -- error details (who can act on a failure: requests.reason, below)
   created_at   timestamptz not null default now(),
   processed_at timestamptz
 );
@@ -204,6 +204,22 @@ alter table public.sheets add column if not exists search_text text not null def
 
 alter table public.sheets add column if not exists tags jsonb not null default '{}'::jsonb;
 create index if not exists sheets_tags_idx on public.sheets using gin (tags);
+
+-- ---------------------------------------------------------------------------
+-- Failure reason (P8 R3): requests.reason says who can act on a video that failed. The app shows the fix (sign in
+-- again, then « I signed in, try again »), the reason in plain words for a video nobody can read (Remove only), or
+-- « We're retrying » / « Not started » for a failure Reelbook or the computer tries again. Null until the video
+-- fails; requests.note keeps the free-text detail. Written by `rb.py error --reason` (and later by the hosted
+-- processing). Added after the faceted library: re-run this whole file to create it (idempotent, additive: nothing
+-- else changes). A backend without it keeps working: the app reads every failure as « other » (Try again).
+-- ---------------------------------------------------------------------------
+
+alter table public.requests add column if not exists reason text;
+alter table public.requests drop constraint if exists requests_reason_check;
+alter table public.requests add constraint requests_reason_check
+  check (reason in ('signin_required','quota','needs_computer',
+                    'private','removed','restricted','not_video',
+                    'fetch_blocked','processing_failed','daily_cap','other'));
 
 -- ---------------------------------------------------------------------------
 -- Capture keys (L28): the iPhone shortcut (Share Sheet → Reelbook) sends a video link to the Edge Function
@@ -805,8 +821,8 @@ grant select, insert, update, delete on public.requests to authenticated;
 grant select, insert, update, delete on public.sheets to authenticated;
 grant select, insert, update, delete on public.notes to authenticated;
 grant select, insert, update, delete on public.sessions to authenticated;
-grant select, insert, delete on public.user_themes to authenticated;   -- themes are added and removed, never edited
-grant select, insert on public.practice_log to authenticated;          -- the log only grows
+grant select, insert, delete on public.user_themes to authenticated;   -- themes are added and removed; only their family is edited (P8 R14, below)
+grant select, insert, delete on public.practice_log to authenticated;  -- the log grows; Undo removes the rows just logged (P8 R5)
 grant select on public.account_quotas to authenticated;                -- the limits are set by the operator
 
 -- service_role (L42a). A new project gives service_role no table right either. The Edge Functions use it:
@@ -945,3 +961,556 @@ revoke execute on function public.cli_login_succeeded(text, timestamptz) from pu
 grant execute on function public.cli_login_gate(text, text) to service_role;
 grant execute on function public.cli_login_release(text, timestamptz) to service_role;
 grant execute on function public.cli_login_succeeded(text, timestamptz) to service_role;
+
+-- ---------------------------------------------------------------------------
+-- Session shares (P8 R11): « Send to a training partner ». The sender's app writes one row per shared session; its
+-- token is the link `#s-<token>`. The Edge Function `share` (supabase/functions/share, service role) reads it:
+--   GET  ?token=  the session's title, its notebook's title, the sender's first name and the number of exercises
+--                 (no photo, no exercise list: R12 shows that to people without an account);
+--   POST {token}  copies the session, its sheets (the ones the recipient does not already have by the same video
+--                 URL) and their photos into the recipient's own account and storage folder.
+-- Notes, the practice log and quotas are never read nor copied. The copy counts in the recipient's quotas. One live
+-- token per (owner, session): sharing again gives the same link. « Stop sharing » revokes it; a revoked token never
+-- opens again (sharing after that makes a new one). A share belongs to its session (sessions.id, which never changes):
+-- deleting the session deletes its shares, so an old link never opens a later session that reuses the slug.
+-- Added after the cli-login limits: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- A backend without it keeps working: the share row says « Coming soon » and a `#s-` link « can't be opened yet ».
+-- The table is what turns the share row on: deploy the function first (`supabase functions deploy share`, with the
+-- gateway's JWT check: the caller is signed in, or sends the anon key for GET), then run this section.
+-- ---------------------------------------------------------------------------
+
+-- token: 22 URL-safe characters made by the database (the 16 bytes of a random UUID v4, base64url, 122 random bits).
+create table if not exists public.session_shares (
+  token        text primary key
+               default translate(encode(decode(replace(gen_random_uuid()::text, '-', ''), 'hex'), 'base64'), '+/=', '-_')
+               check (token ~ '^[A-Za-z0-9_-]{22}$'),
+  owner        uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  session_slug text not null check (char_length(session_slug) between 1 and 200),
+  session_id   uuid references public.sessions (id) on delete cascade, -- set by the guard from (owner, session_slug)
+  sender_name  text not null check (char_length(sender_name) between 1 and 40),
+  created_at   timestamptz not null default now(),
+  revoked_at   timestamptz
+);
+
+create unique index if not exists session_shares_one_live on public.session_shares (owner, session_slug)
+  where revoked_at is null;
+
+-- A backend that ran the first version of this section (no session_id): the column is added, and a live share made
+-- then is revoked, never bound by its slug (the session may be a later one): sharing again makes a new link.
+alter table public.session_shares add column if not exists session_id uuid references public.sessions (id) on delete cascade;
+create index if not exists session_shares_session_idx on public.session_shares (session_id);
+update public.session_shares set revoked_at = now() where session_id is null and revoked_at is null;
+
+-- The owner shares its own sessions, reads its own rows and revokes them. Nobody else reads the table (the function
+-- reads it with the service role).
+alter table public.session_shares enable row level security;
+drop policy if exists "own session shares read" on public.session_shares;
+drop policy if exists "own session shares insert" on public.session_shares;
+drop policy if exists "own session shares revoke" on public.session_shares;
+create policy "own session shares read" on public.session_shares for select to authenticated
+  using (owner = auth.uid());
+create policy "own session shares insert" on public.session_shares for insert to authenticated
+  with check (owner = auth.uid()
+    and exists (select 1 from public.sessions s where s.user_id = auth.uid() and s.slug = session_slug));
+create policy "own session shares revoke" on public.session_shares for update to authenticated
+  using (owner = auth.uid()) with check (owner = auth.uid());
+
+-- The app writes a share (session, first name) and a revocation; the token, the owner and the dates are the database's.
+revoke all on public.session_shares from anon, authenticated;
+grant select on public.session_shares to authenticated;
+grant insert (session_slug, sender_name), update (revoked_at) on public.session_shares to authenticated;
+
+create or replace function public.session_shares_guard() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if tg_op = 'INSERT' then
+    new.created_at := now(); new.revoked_at := null; new.sender_name := btrim(new.sender_name);
+    -- the session itself, by its id: the share goes with it (on delete cascade)
+    new.session_id := (select s.id from public.sessions s where s.user_id = new.owner and s.slug = new.session_slug);
+    if new.session_id is null then
+      raise exception 'session_shares: no such session' using errcode = '23503';
+    end if;
+  else
+    new.token := old.token; new.owner := old.owner; new.session_slug := old.session_slug; new.session_id := old.session_id;
+    new.sender_name := old.sender_name; new.created_at := old.created_at;
+    -- revoked once, at the server's time; a revoked token is never live again
+    new.revoked_at := case when old.revoked_at is not null then old.revoked_at
+                           when new.revoked_at is not null then now() end;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists session_shares_guard on public.session_shares;
+create trigger session_shares_guard before insert or update on public.session_shares
+  for each row execute function public.session_shares_guard();
+revoke execute on function public.session_shares_guard() from public, anon, authenticated;
+
+-- A copy is marked in the recipient's session: sessions.source->>'share' holds the token it came from, and
+-- source->>'share_state' is 'copying' while the function fills it (a reservation), then 'done'. One copy per
+-- (recipient, token): a second POST gets the finished copy back, or « still copying » during a reservation.
+create unique index if not exists sessions_one_copy_per_share on public.sessions (user_id, (source->>'share'))
+  where (source->>'share') is not null;
+-- And one copy at a time per recipient: at most one reservation per account. A copy of a second link while one is
+-- running answers « still copying a session », so each copy checks the photo quota on a state no other copy is changing
+-- (the copies themselves run as service role, past the Storage quota policies). The function deletes a reservation
+-- only by its id and while it is still 'copying'.
+create unique index if not exists sessions_one_copying on public.sessions (user_id)
+  where (source->>'share_state') = 'copying';
+
+-- What the function needs to plan a copy, in one call each (service role only).
+-- The photos of some sheets of one account: the files under <owner>/<slug>/, with their size.
+create or replace function public.share_files(p_owner uuid, p_slugs text[])
+returns table (name text, size bigint)
+language sql stable security definer set search_path = '' as $$
+  select o.name, coalesce(case when o.metadata->>'size' ~ '^[0-9]+$' then (o.metadata->>'size')::bigint end, 0)
+  from storage.objects o
+  where o.bucket_id = 'sheets' and o.name like p_owner::text || '/%'
+    and (storage.foldername(o.name))[2] = any (p_slugs)
+  order by o.name
+$$;
+
+-- The recipient's side: its sheets with one of these video URLs (the function keeps those that are the same exercise),
+-- the slugs in use that start like these stems (a copy takes a free one; a stem is the slug cut as the function cuts
+-- it for a « -n » suffix):
+--   taken      sheet slugs: its sheets, folders of its storage, and the notes of deleted sheets (a note is keyed by
+--              the sheet slug: an old note never lands on a copied sheet);
+--   ses_taken  session slugs: its sessions, and the notes kept by deleted sessions (« session/<slug> », as the
+--              app's takenSlugs). Only the keys of notes are read, never their text.
+-- and the room left under its quotas (section « Quotas per account ») and the beta lock on new photos (section
+-- « Beta locks »).
+drop function if exists public.share_recipient(uuid, text[], text[]); -- the first version of this section
+create or replace function public.share_recipient(p_uid uuid, p_urls text[], p_stems text[], p_ses_stem text) returns jsonb
+language plpgsql volatile security definer set search_path = '' as $$
+declare have jsonb; taken jsonb; ses_taken jsonb; room jsonb; lock_msg text; lock_hint text; ses_pat text;
+begin
+  select coalesce(jsonb_agg(jsonb_build_object('url', s.source->>'url', 'slug', s.slug, 'title', s.title) order by s.slug), '[]'::jsonb)
+    into have from public.sheets s where s.user_id = p_uid and s.source->>'url' = any (p_urls);
+  with b as (select replace(replace(replace(x, '\', '\\'), '%', '\%'), '_', '\_') || '%' as pat from unnest(p_stems) x),
+       used as (
+         select s.slug from public.sheets s, b where s.user_id = p_uid and s.slug like b.pat
+         union
+         select (storage.foldername(o.name))[2] from storage.objects o, b
+          where o.bucket_id = 'sheets' and o.name like p_uid::text || '/%' and (storage.foldername(o.name))[2] like b.pat
+         union
+         select n.slug from public.notes n, b where n.user_id = p_uid and n.slug not like 'session/%' and n.slug like b.pat)
+  select coalesce(jsonb_agg(slug order by slug), '[]'::jsonb) into taken from used;
+  ses_pat := replace(replace(replace(coalesce(p_ses_stem, ''), '\', '\\'), '%', '\%'), '_', '\_') || '%';
+  with used as (
+         select s.slug from public.sessions s where s.user_id = p_uid and s.slug like ses_pat
+         union
+         select split_part(n.slug, '/', 2) from public.notes n
+          where n.user_id = p_uid and n.slug ~ '^session/[^/]+(/[1-9][0-9]*)?$' and split_part(n.slug, '/', 2) like ses_pat)
+  select coalesce(jsonb_agg(slug order by slug), '[]'::jsonb) into ses_taken from used where coalesce(p_ses_stem, '') <> '';
+  select jsonb_build_object('storage_bytes', u.storage_bytes, 'max_storage_mb', l.max_storage_mb,
+                            'sheets', u.sheets, 'max_sheets', l.max_sheets)
+    into room from public.quota_limits(p_uid) l, public.quota_usage(p_uid) u;
+  begin
+    perform public.beta_upload_ok(p_uid);
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics lock_msg = message_text, lock_hint = pg_exception_hint;
+  end;
+  return jsonb_build_object('have', have, 'taken', taken, 'ses_taken', ses_taken, 'room', room,
+                            'photo_lock', case when lock_msg is not null then jsonb_build_object('message', lock_msg, 'hint', lock_hint) end);
+end $$;
+
+revoke execute on function public.share_files(uuid, text[]) from public, anon, authenticated;
+revoke execute on function public.share_recipient(uuid, text[], text[], text) from public, anon, authenticated;
+grant execute on function public.share_files(uuid, text[]) to service_role;
+grant execute on function public.share_recipient(uuid, text[], text[], text) to service_role;
+
+-- service_role, for the function: it reads the share, the sender's session, sheets and notebook, and writes the
+-- recipient's copy (a sheet or session it could not finish is deleted again; a finished one gets share_state 'done').
+-- RLS does not apply to service_role;
+-- the sheet quota trigger still does. Storage is reached through the Storage API (copy, remove), as service role.
+grant select on public.session_shares to service_role;
+grant select, insert, update, delete on public.sessions to service_role;
+grant select, insert, delete on public.sheets to service_role;
+grant select, insert on public.user_themes to service_role;
+
+-- ---------------------------------------------------------------------------
+-- Technique family (P8 R14): two kinds of practice, two rewards. A notebook is « repetition » (the rhythm: « 3rd
+-- session this week ») or « technique » (learning a move: each sheet has a level, Learning → Getting it → Got it, and
+-- the notebook shows « 4 of 9 learned »). user_themes.family is the account's choice (Notebook ⋯ › Kind of practice);
+-- null means the default: app/config.js gives each built-in notebook its family, a custom notebook is repetition.
+-- notes.level is the level of one sheet, on the per-sheet notes row of the user (a row with an empty body when the
+-- sheet has no note); null until the sheet is practised. Written by the app only.
+-- Added after the session shares: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- A backend without it keeps working: the app hides the levels and treats every notebook as repetition.
+-- ---------------------------------------------------------------------------
+
+alter table public.user_themes add column if not exists family text;
+alter table public.user_themes drop constraint if exists user_themes_family_check;
+alter table public.user_themes add constraint user_themes_family_check
+  check (family in ('repetition','technique'));
+
+alter table public.notes add column if not exists level text;
+alter table public.notes drop constraint if exists notes_level_check;
+alter table public.notes add constraint notes_level_check
+  check (level in ('learning','getting','got'));
+
+-- The family is the only column of user_themes the app edits (RLS « own themes » already covers update).
+grant update (family) on public.user_themes to authenticated;
+
+-- A level saved on a sheet is not an edit of its note: « Saved <date> » under the note keeps the note's own date.
+-- The app's note save sets body (and slug); a level save sets level (and slug) only.
+drop trigger if exists notes_touch on public.notes;
+create trigger notes_touch before update of body on public.notes
+  for each row execute function public.touch_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Invitations (P8 R12): a share link (session_shares, above) is also an invitation. While the beta locks are on (a
+-- beta_settings row), each account's links together admit at most 2 accounts past a full
+-- beta, outside the seats:
+--   - the app signs up with options.data.invite = <token> (raw_user_meta_data->>'invite'). When every seat is taken,
+--     lock 2 lets the account in if the token is live and its owner has an invite left, and records it in
+--     share_admissions. Lock 2's other refusals stay: sign-ups closed (« beta: closed ») and the sign-ups of the day
+--     (« beta: closed today », admitted accounts counted in them). Locks 3 and 4 apply to the account as to any other;
+--   - an admitted account takes no seat: beta_accounts() leaves it out, as it leaves out the exempt ones;
+--   - an invite is held like a seat: by an admitted account confirmed, or created less than an hour ago;
+--   - with no invite left and the beta full, the link's page offers the waiting list, which keeps the token
+--     (beta_waitlist.share_token, a live link, on a row that has none yet). When that email is confirmed, the token
+--     moves to share_pending; the app reads it (pending_share_invite) and shows « <sender> sent you a session », where
+--     the person chooses to add it (anybody can type someone else's address in the form: nothing is copied unasked).
+--     The token stays in share_pending until the app acknowledges it (ack_share_invite), once that sheet has been
+--     shown or the link refused for good: an answer lost on the way, or a failure, offers it again at the next start.
+-- This section redefines four functions of the beta section (beta_accounts, beta_on_signup, beta_seats,
+-- beta_waitlist_done), which the file creates first: re-run the whole file, never the beta section alone after it.
+-- Current accounts: nothing changes. share_admissions starts empty, so the seats and the sign-ups of the day count
+-- what they counted; a sign-up without an invite, or with seats left, goes through lock 2 as before; join_waitlist
+-- with four arguments is untouched (the new one, five arguments, calls it).
+-- Added after the session shares: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- A backend without it keeps working: the link's page shows no invite line, the sign-up sends the token for nothing
+-- (lock 2 ignores it), the waiting list is joined without the token, and Settings shows no « Invites left ».
+-- ---------------------------------------------------------------------------
+
+-- One row per admitted account: who admitted it (the link's owner) and through which link. The account's own row
+-- comes from lock 2, before auth.users has the account: the reference to it is checked at the end of the transaction.
+create table if not exists public.share_admissions (
+  account uuid primary key references auth.users (id) on delete cascade deferrable initially deferred,
+  owner   uuid not null references auth.users (id) on delete cascade,
+  token   text not null check (token ~ '^[A-Za-z0-9_-]{22}$'),
+  at      timestamptz not null default now()
+);
+create index if not exists share_admissions_owner_idx on public.share_admissions (owner);
+
+alter table public.share_admissions enable row level security;
+revoke all on public.share_admissions from anon, authenticated;
+
+-- The waiting list keeps the link it was joined from (null: joined from the landing, or the link was not live).
+alter table public.beta_waitlist add column if not exists share_token text check (share_token ~ '^[A-Za-z0-9_-]{22}$');
+
+-- A token kept by the waiting list, waiting for its account's visit to the app (pending_share_invite), until the app
+-- acknowledges it (ack_share_invite).
+create table if not exists public.share_pending (
+  account uuid primary key references auth.users (id) on delete cascade,
+  token   text not null check (token ~ '^[A-Za-z0-9_-]{22}$'),
+  at      timestamptz not null default now()
+);
+
+alter table public.share_pending enable row level security;
+revoke all on public.share_pending from anon, authenticated;
+
+-- The invites one account's links hold now: its admitted accounts, confirmed or created less than an hour ago (like a
+-- seat: an address nobody confirms gives the invite back after an hour; a confirmation sent later counts it again).
+create or replace function public.share_invites_used(uid uuid) returns int
+language sql stable security definer set search_path = '' as $$
+  select count(*)::int from public.share_admissions a join auth.users u on u.id = a.account
+  where a.owner = uid
+    and (u.email_confirmed_at is not null or u.phone_confirmed_at is not null or u.created_at > now() - interval '1 hour')
+$$;
+
+-- The accounts created since `since`, counted like the seats (confirmed, or pending for an hour; never the exempt
+-- ones), admitted accounts included: the sign-ups of the day.
+create or replace function public.beta_signups(since timestamptz) returns int
+language sql stable security definer set search_path = '' as $$
+  select count(*)::int from auth.users u
+  where u.created_at >= since
+    and (u.email_confirmed_at is not null or u.phone_confirmed_at is not null or u.created_at > now() - interval '1 hour')
+    and not exists (select 1 from public.account_quotas q where q.user_id = u.id and lower(q.note) like 'exempt%')
+$$;
+
+-- Redefined (beta section): the accounts that take a seat leave out the admitted ones too.
+create or replace function public.beta_accounts(since timestamptz default '-infinity') returns int
+language sql stable security definer set search_path = '' as $$
+  select count(*)::int from auth.users u
+  where u.created_at >= since
+    and (u.email_confirmed_at is not null or u.phone_confirmed_at is not null or u.created_at > now() - interval '1 hour')
+    and not exists (select 1 from public.account_quotas q where q.user_id = u.id and lower(q.note) like 'exempt%')
+    and not exists (select 1 from public.share_admissions a where a.account = u.id)
+$$;
+
+-- Redefined (beta section): lock 2 with the invitation. Same lock, same order and same messages; only « beta: full »
+-- lets through a sign-up whose invite is a live link with an invite left, and records the admission (rolled back
+-- with the sign-up if a later check refuses it). The sign-ups of the day count admitted accounts (beta_signups).
+create or replace function public.beta_on_signup() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare s public.beta_settings; tok text; host uuid;
+begin
+  if exists (select 1 from public.beta_settings) then
+    perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('signup'));
+    select * into s from public.beta_settings b where b.id;
+    if not s.signups_open then
+      raise exception using errcode = 'P0001', message = 'beta: closed',
+        hint = 'Sign-ups are closed for now. Your own Supabase project works without limit.';
+    end if;
+    if s.seats_offset + public.beta_accounts() >= s.seats_total then
+      tok := new.raw_user_meta_data->>'invite';
+      if tok ~ '^[A-Za-z0-9_-]{22}$' then
+        select sh.owner into host from public.session_shares sh
+        where sh.token = tok and sh.revoked_at is null and sh.session_id is not null;
+      end if;
+      -- one account's admissions are counted under the sign-up lock: two at once cannot both take its last invite
+      if host is null or host = new.id or public.share_invites_used(host) >= 2 then
+        raise exception using errcode = 'P0001', message = 'beta: full',
+          hint = 'Every seat of the beta is taken: join the waiting list, or use your own Supabase project.';
+      end if;
+      insert into public.share_admissions (account, owner, token) values (new.id, host, tok);
+    end if;
+    if public.beta_signups(date_trunc('day', now() at time zone 'utc') at time zone 'utc') >= s.signups_per_day then
+      raise exception using errcode = 'P0001', message = 'beta: closed today',
+        hint = 'Enough sign-ups for today: the count starts again at midnight UTC.';
+    end if;
+  end if;
+  return new;
+end $$;
+
+-- Redefined (beta section): today_left counts admitted accounts, as lock 2 does. The rest is unchanged.
+create or replace function public.beta_seats() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('taken', t.taken, 'total', s.seats_total, 'open', s.signups_open and t.taken < s.seats_total,
+                            'today_left', greatest(s.signups_per_day - t.today, 0))
+  from public.beta_settings s, lateral (select s.seats_offset + public.beta_accounts() as taken,
+    public.beta_signups(date_trunc('day', now() at time zone 'utc') at time zone 'utc') as today) t
+  where s.id
+$$;
+
+-- Redefined (beta section): before the waiting-list row of a confirmed email is deleted, the link it kept moves to
+-- share_pending for that account. The rest is unchanged.
+create or replace function public.beta_waitlist_done() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.email is not null and new.email_confirmed_at is not null
+     and (tg_op = 'INSERT' or old.email_confirmed_at is null or new.email is distinct from old.email) then
+    insert into public.share_pending (account, token)
+      select new.id, w.share_token from public.beta_waitlist w
+      where lower(w.email) = lower(new.email) and w.share_token is not null
+      order by w.id limit 1
+      on conflict (account) do nothing;
+    delete from public.beta_waitlist w where lower(w.email) = lower(new.email);
+  end if;
+  return null;
+end $$;
+
+-- The link's page, signed in or not: the invites its owner has left ({left}), or null when the link is not live or
+-- the beta locks are off (no settings row: nobody needs an invite). Never who was admitted.
+create or replace function public.share_invites(p_token text) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('left', greatest(2 - public.share_invites_used(sh.owner), 0))
+  from public.session_shares sh, public.beta_settings b
+  where b.id and sh.token = p_token and sh.revoked_at is null and sh.session_id is not null
+$$;
+
+-- Settings › Reelbook: the signed-in account's invites ({left, total}); null when signed out or the locks are off.
+create or replace function public.my_invites() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('left', greatest(2 - public.share_invites_used(auth.uid()), 0), 'total', 2)
+  from public.beta_settings b
+  where b.id and auth.uid() is not null
+$$;
+
+-- The waiting-list form of a link's page: join_waitlist (four arguments, unchanged: same checks, same answers), and
+-- the row keeps the token when the link is live and the row has none yet: a new row, or an address listed before (by
+-- the landing, or before R12) that now comes through a link. A listed row is otherwise never changed, as before: its
+-- first name, language, consent date, and a token it already keeps (the first link wins) stay as they are. The
+-- waiting-list lock is taken first, so the read of the list and the insert see the same list.
+create or replace function public.join_waitlist(first_name text, email text, lang text, consent boolean, share_token text)
+returns text
+language plpgsql volatile security definer set search_path = '' as $$
+declare
+  mail text := btrim(coalesce(join_waitlist.email, ''));
+  tok text := join_waitlist.share_token;
+  r text;
+begin
+  perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('waitlist'));
+  r := public.join_waitlist(join_waitlist.first_name, join_waitlist.email, join_waitlist.lang, join_waitlist.consent);
+  if tok ~ '^[A-Za-z0-9_-]{22}$'
+     and exists (select 1 from public.session_shares sh where sh.token = tok and sh.revoked_at is null and sh.session_id is not null) then
+    update public.beta_waitlist w set share_token = tok where lower(w.email) = lower(mail) and w.share_token is null;
+  end if;
+  return r;
+end $$;
+
+-- The signed-in account's token kept by the waiting list (null when there is none). Read only: it stays until
+-- ack_share_invite, so an answer lost on the way, or a sheet that could not open, is offered again.
+-- (take_share_invite, its destructive first version in this PR, was never pushed: nothing to drop.)
+create or replace function public.pending_share_invite() returns text
+language sql stable security definer set search_path = '' as $$
+  select p.token from public.share_pending p where p.account = auth.uid()
+$$;
+
+-- The app has shown « <sender> sent you a session » for that token, or the link is refused for good (revoked, or the
+-- account's own): the pending token goes. Only that token, and only the signed-in account's (true when it went).
+create or replace function public.ack_share_invite(p_token text) returns boolean
+language plpgsql volatile security definer set search_path = '' as $$
+begin
+  delete from public.share_pending p where p.account = auth.uid() and p.token = p_token;
+  return found;
+end $$;
+
+-- Internal: run by lock 2 and the functions above as their owner.
+revoke execute on function public.share_invites_used(uuid) from public, anon, authenticated;
+revoke execute on function public.beta_signups(timestamptz) from public, anon, authenticated;
+revoke execute on function public.beta_accounts(timestamptz) from public, anon, authenticated;
+revoke execute on function public.beta_on_signup() from public, anon, authenticated;
+revoke execute on function public.beta_waitlist_done() from public, anon, authenticated;
+-- Public: the link's page and its waiting-list form; signed in: Settings and the token kept by the waiting list.
+revoke execute on function public.beta_seats() from public;
+grant execute on function public.beta_seats() to anon, authenticated;
+revoke execute on function public.share_invites(text) from public;
+grant execute on function public.share_invites(text) to anon, authenticated;
+revoke execute on function public.join_waitlist(text, text, text, boolean, text) from public;
+grant execute on function public.join_waitlist(text, text, text, boolean, text) to anon, authenticated;
+revoke execute on function public.my_invites() from public, anon;
+grant execute on function public.my_invites() to authenticated;
+revoke execute on function public.pending_share_invite() from public, anon;
+grant execute on function public.pending_share_invite() to authenticated;
+revoke execute on function public.ack_share_invite(text) from public, anon;
+grant execute on function public.ack_share_invite(text) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Attribution (P8 R13): which shares bring people in, counted rather than estimated. No third-party analytics, no
+-- cookie; the origin is one short code or a share token, never a name or an email.
+--   - The origin of a sign-up is user_metadata.ref (raw_user_meta_data->>'ref'), sent by the app at sign-up: the share
+--     token when the person came through a link (R11, R12), else the ?r=<code> of the address the app was opened with
+--     (codes: [a-z0-9-]{1,32}; the app's own shares add r=text, r=story and r=app). The app checks the form; the counts
+--     below count only a ref of that form (a user can edit their own metadata later: a count, never a lock).
+--   - The waiting list keeps the same origin (beta_waitlist.ref): join_waitlist with six arguments takes a ref code,
+--     and the five-argument form (a link's page) now keeps its token as the ref too. A listed row gets a ref only when it
+--     has none (the first origin wins), as R12 does for the token; nothing else of a listed row changes.
+--   - The daily ntfy line (beta_alert_message, redefined here) gains « via shares: n » (the sign-ups of yesterday and
+--     today so far, the window of its sign-up figures, whose ref has that form) and « via invites: n » (the accounts
+--     R12's invitations admitted past a full beta, which the seats leave out), each only when n > 0. Its sign-up
+--     figures now count the admitted accounts, as lock 2 does (beta_signups). Counts only.
+--   By hand, which origins brought whom (counts, in the SQL editor):
+--     select raw_user_meta_data->>'ref' as ref, count(*) from auth.users group by 1 order by 2 desc;
+--     select ref, count(*) from public.beta_waitlist group by 1 order by 2 desc;
+-- This section redefines join_waitlist (five arguments, R12's) and beta_alert_message (L33's): re-run the whole file.
+-- Current accounts and waiting-list rows: nothing changes (their ref is null; they are counted as before, under no
+-- origin). An app without this section's calls joins as before; a backend without this section ignores the ref sent
+-- at sign-up (it stays in the account's metadata), and the app falls back to the five- or four-argument join_waitlist.
+-- Added after the invitations: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- ---------------------------------------------------------------------------
+
+-- The origin of a waiting-list row: a ?r= code or a share token (null: none known, or a row from before).
+alter table public.beta_waitlist add column if not exists ref text
+  check (ref ~ '^([a-z0-9-]{1,32}|[A-Za-z0-9_-]{22})$');
+
+-- The accounts created since `since` whose origin is a ?r= code or a share token, counted like the sign-ups (confirmed,
+-- or pending for an hour; never the exempt ones; admitted accounts included). Reads the ref only.
+create or replace function public.beta_signups_ref(since timestamptz) returns int
+language sql stable security definer set search_path = '' as $$
+  select count(*)::int from auth.users u
+  where u.created_at >= since
+    and u.raw_user_meta_data->>'ref' ~ '^([a-z0-9-]{1,32}|[A-Za-z0-9_-]{22})$'
+    and (u.email_confirmed_at is not null or u.phone_confirmed_at is not null or u.created_at > now() - interval '1 hour')
+    and not exists (select 1 from public.account_quotas q where q.user_id = u.id and lower(q.note) like 'exempt%')
+$$;
+
+-- Redefined (R12): a link's waiting-list form, as before (same checks, same answers, the token kept when the link is
+-- live and the row has none), and the row's origin is that token when the row has none yet (live or not: it is where
+-- the person came from).
+create or replace function public.join_waitlist(first_name text, email text, lang text, consent boolean, share_token text)
+returns text
+language plpgsql volatile security definer set search_path = '' as $$
+declare
+  mail text := btrim(coalesce(join_waitlist.email, ''));
+  tok text := join_waitlist.share_token;
+  r text;
+begin
+  perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('waitlist'));
+  r := public.join_waitlist(join_waitlist.first_name, join_waitlist.email, join_waitlist.lang, join_waitlist.consent);
+  if tok ~ '^[A-Za-z0-9_-]{22}$' then
+    if exists (select 1 from public.session_shares sh where sh.token = tok and sh.revoked_at is null and sh.session_id is not null) then
+      update public.beta_waitlist w set share_token = tok where lower(w.email) = lower(mail) and w.share_token is null;
+    end if;
+    update public.beta_waitlist w set ref = tok where lower(w.email) = lower(mail) and w.ref is null;
+  end if;
+  return r;
+end $$;
+
+-- The waiting-list form with the origin: join_waitlist with five arguments (all its checks and answers), then the
+-- ref code on the row when it has none yet (a token, given as share_token, already set it). A ref that is not a code
+-- is ignored, never an error: the form answers the same.
+create or replace function public.join_waitlist(first_name text, email text, lang text, consent boolean, share_token text, ref text)
+returns text
+language plpgsql volatile security definer set search_path = '' as $$
+declare
+  mail text := btrim(coalesce(join_waitlist.email, ''));
+  code text := join_waitlist.ref;
+  r text;
+begin
+  perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('waitlist'));
+  r := public.join_waitlist(join_waitlist.first_name, join_waitlist.email, join_waitlist.lang, join_waitlist.consent,
+                            join_waitlist.share_token);
+  if code ~ '^[a-z0-9-]{1,32}$' then
+    update public.beta_waitlist w set ref = code where lower(w.email) = lower(mail) and w.ref is null;
+  end if;
+  return r;
+end $$;
+
+-- Redefined (L33): the day's line. Seats as before (admitted accounts take none); « via invites: n » the admitted
+-- accounts that hold an invite (beta_signups minus beta_accounts); the sign-up figures with them (beta_signups, as
+-- lock 2 counts the day); « via shares: n » those of yesterday and today with an origin. Each new figure only when
+-- above 0. Everything else unchanged.
+create or replace function public.beta_alert_message() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare
+  s public.beta_settings;
+  midnight timestamptz := date_trunc('day', now() at time zone 'utc') at time zone 'utc';
+  today date := (now() at time zone 'utc')::date;
+  accounts int := public.beta_accounts();
+  invited int := public.beta_signups('-infinity') - public.beta_accounts();
+  signups_today int := public.beta_signups(midnight);
+  signups_yesterday int := public.beta_signups(midnight - interval '1 day') - public.beta_signups(midnight);
+  shared int := public.beta_signups_ref(midnight - interval '1 day');
+  via_shares text := case when shared > 0 then format(' · via shares: %s', shared) else '' end;
+  via_invites text := case when invited > 0 then format(' · via invites: %s', invited) else '' end;
+  photos bigint; videos_today int; videos_yesterday int; listed int; listed_new int; ratio numeric; line text;
+begin
+  select coalesce(sum(case when o.metadata->>'size' ~ '^[0-9]+$' then (o.metadata->>'size')::bigint end), 0)::bigint
+    into photos from storage.objects o where o.bucket_id = 'sheets';
+  -- videos: as in L33's version (the higher of the requests rows and beta_daily)
+  select (count(*) filter (where r.created_at >= midnight))::int, (count(*) filter (where r.created_at < midnight))::int
+    into videos_today, videos_yesterday from public.requests r where r.created_at >= midnight - interval '1 day';
+  select greatest(videos_today, coalesce(sum(d.links) filter (where d.day = today), 0)::int),
+         greatest(videos_yesterday, coalesce(sum(d.links) filter (where d.day = today - 1), 0)::int),
+         coalesce(sum(d.waitlist), 0)::int
+    into videos_today, videos_yesterday, listed_new from public.beta_daily d where d.day >= today - 1;
+  select count(*)::int into listed from public.beta_waitlist;
+  select * into s from public.beta_settings b where b.id;
+  if not found then
+    line := format('beta off (no settings row) · accounts %s · sign-ups today %s (yesterday %s)%s · photos %s GB · videos today %s (yesterday %s) · waiting list %s (+%s since yesterday)',
+      accounts + invited, signups_today, signups_yesterday, via_shares, round(photos / 1073741824.0, 1), videos_today, videos_yesterday, listed, listed_new);
+    return jsonb_build_object('title', 'Reelbook beta', 'message', line, 'tags', '[]'::jsonb, 'priority', 3);
+  end if;
+  -- the highest share of a limit (a limit of 0 is a closure, not a share: left out)
+  ratio := greatest((s.seats_offset + accounts)::numeric / nullif(s.seats_total, 0),
+                    greatest(signups_today, signups_yesterday)::numeric / nullif(s.signups_per_day, 0),
+                    photos::numeric / nullif(s.max_photos_gb::bigint * 1073741824, 0),
+                    greatest(videos_today, videos_yesterday)::numeric / nullif(s.max_videos_per_day, 0));
+  line := format('seats %s/%s%s · sign-ups today %s/%s (yesterday %s)%s · photos %s/%s GB · videos today %s/%s (yesterday %s) · waiting list %s (+%s since yesterday)',
+    s.seats_offset + accounts, s.seats_total, via_invites, signups_today, s.signups_per_day, signups_yesterday, via_shares,
+    round(photos / 1073741824.0, 1), s.max_photos_gb, videos_today, s.max_videos_per_day, videos_yesterday, listed, listed_new);
+  return jsonb_build_object('title', 'Reelbook beta', 'message', line,
+    'tags', case when ratio >= 0.7 then '["70%"]'::jsonb else '[]'::jsonb end,
+    'priority', case when ratio >= 0.9 then 4 else 3 end);
+end $$;
+
+-- Internal: the alert and its count, never a client.
+revoke execute on function public.beta_signups_ref(timestamptz) from public, anon, authenticated;
+revoke execute on function public.beta_alert_message() from public, anon, authenticated;
+-- Public: the waiting-list forms (the landing, #setup, a link's page).
+revoke execute on function public.join_waitlist(text, text, text, boolean, text) from public;
+grant execute on function public.join_waitlist(text, text, text, boolean, text) to anon, authenticated;
+revoke execute on function public.join_waitlist(text, text, text, boolean, text, text) from public;
+grant execute on function public.join_waitlist(text, text, text, boolean, text, text) to anon, authenticated;

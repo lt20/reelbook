@@ -14,15 +14,19 @@ const AUTHENTICATED = {
   sheets: 'select, insert, update, delete',
   notes: 'select, insert, update, delete',
   sessions: 'select, insert, update, delete',
-  user_themes: 'select, insert, delete',
-  practice_log: 'select, insert',
+  user_themes: ['select, insert, delete', 'update (family)'], // P8 R14: the family is the only column edited
+  practice_log: 'select, insert, delete', // P8 R5: Undo
   account_quotas: 'select',
 };
 // No client role reaches these; their triggers and definer functions do (cli_login_limits: L42a, the cli-login function).
-const NO_CLIENT = ['beta_settings', 'beta_waitlist', 'beta_daily', 'cli_login_limits'];
+// P8 R12: share_admissions (lock 2 writes it) and share_pending (pending_share_invite reads it, ack_share_invite deletes it).
+const NO_CLIENT = ['beta_settings', 'beta_waitlist', 'beta_daily', 'cli_login_limits', 'share_admissions', 'share_pending'];
 // L42a: what the Edge Functions do with the service role (add-link: supabase/functions/add-link/core.ts).
-const SERVICE_ROLE = {capture_tokens: 'select, update', requests: 'insert'};
-const OWN_RIGHTS = ['capture_tokens'];
+// P8 R11: share reads the share and the sender's rows, and writes the recipient's copy (supabase/functions/share/store.ts):
+// update marks the reserved session 'done' once its sheets are copied.
+const SERVICE_ROLE = {capture_tokens: 'select, update', requests: 'insert',
+  session_shares: 'select', sessions: 'select, insert, update, delete', sheets: 'select, insert, delete', user_themes: 'select, insert'};
+const OWN_RIGHTS = ['capture_tokens', 'session_shares'];
 
 const tableGrants = [...flat.matchAll(/ grant ([a-z, ()_]+?) on (?:table )?public\.([a-z_]+) to ([a-z_, ]+?);/g)]
   .map(m => ({privs: m[1], table: m[2], roles: m[3]}));
@@ -30,7 +34,7 @@ const tableGrants = [...flat.matchAll(/ grant ([a-z, ()_]+?) on (?:table )?publi
 for (const [table, privs] of Object.entries(AUTHENTICATED)) {
   test(`${table}: authenticated gets exactly ${privs}`, () => {
     const lines = tableGrants.filter(g => g.table === table && g.roles !== 'service_role');
-    assert.deepEqual(lines, [{privs, table, roles: 'authenticated'}]);
+    assert.deepEqual(lines, [].concat(privs).map(p => ({privs: p, table, roles: 'authenticated'})));
     assert.ok(flat.includes(`alter table public.${table} enable row level security;`), 'RLS is what limits the rows');
   });
 }

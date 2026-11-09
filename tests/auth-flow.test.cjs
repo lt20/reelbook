@@ -88,9 +88,12 @@ test('L25: sign-up with my own Supabase keeps the project only once the account 
 });
 
 test('L25 + L27: one « See a demo » link, outside the presentation, so a returning device on Sign in keeps it', async () => {
-  assert.equal(html.match(/>\s*See a demo\s*<\/a>/g).length, 1);
+  // P8 R8: the landing's hero has its own « See a demo » (#lp-demo, inside #intro); one stays outside it
   const auth = html.indexOf('id="auth"'), intro = html.indexOf('id="intro"', auth);
-  const introEnd = html.indexOf('</section>', intro), link = html.indexOf('id="intro-demo"', auth);
+  const introEnd = html.indexOf('id="auth-title"', intro), link = html.indexOf('id="intro-demo"', auth);
+  const outside = html.slice(0, intro) + html.slice(introEnd);
+  assert.equal(outside.match(/>\s*See a demo\s*<\/a>/g).length, 1);
+  assert.equal(html.slice(intro, introEnd).match(/<a [^>]*href="#demo" id="lp-demo"[^>]*>\s*See a demo\s*<\/a>/g).length, 1);
   assert.ok(intro > auth && link > introEnd, '#intro-demo is not inside #intro, which Sign in hides');
   assert.ok(link < html.indexOf('<div id="home"'), '#intro-demo stays in #auth');
   const page = await app({remembered: {mode: 'hosted'}});
@@ -151,6 +154,10 @@ test('keyword search finds sheets, accents and case ignored; an old one-page ses
   });
   for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r));
   assert.equal(page.element('home').hidden, false);
+  // P8 R4: the home page's field shows on the search page, opened by the loupe
+  assert.equal(page.element('search').hidden, true);
+  await page.fire('h-search');
+  for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r));
   assert.equal(page.element('search').hidden, false);
   const search = async q => { page.element('q').value = q; await page.fire('q', 'input'); return page.element('results').innerHTML; };
   let html = await search('HALTERES');
@@ -159,15 +166,19 @@ test('keyword search finds sheets, accents and case ignored; an old one-page ses
   assert.equal(page.element('portal').hidden, true);
   html = await search('EPAULE');
   assert.doesNotMatch(html, /#routine/, 'v1 session hidden, its exercises too');
-  assert.match(html, /Nothing matches/);
+  assert.match(html, /No sheet for/);
   html = await search('shoulders plat');
   assert.match(html, /#ange/);
   assert.doesNotMatch(html, /#routine/);
   html = await search('pilates');
-  assert.match(html, /Nothing matches/);
+  assert.match(html, /No sheet for/);
   await search('');
   assert.equal(page.element('results').hidden, true);
-  assert.equal(page.element('portal').hidden, false);
+  assert.equal(page.element('portal').hidden, true, 'P8 R4: an empty field stays on the search page');
+  await page.fire('q-cancel');
+  for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r));
+  assert.equal(page.element('portal').hidden, false, 'Cancel goes back home');
+  assert.equal(page.element('search').hidden, true);
 });
 
 const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r)); };
@@ -399,7 +410,7 @@ test('old one-page sessions are hidden, and Settings says how to rebuild them', 
   assert.match(page.element('nblist').innerHTML, /Strength<\/b><small>2 sheets · 1 session</);
   page.go('');
   await settle();
-  assert.match(page.element('count').textContent, /^0 practised · 3 saved · 1 session · 2 notebooks$/); // L6: practice_log empty
+  assert.equal(page.element('count').textContent, '', 'P8 R4: no counter on the home page');
   assert.match(page.element('portal').innerHTML, /2 sheets · 1 session/);
   const tables = v2Tables(); tables.sheets = tables.sheets.filter(s => s.kind !== 'session');
   const clean = await app({...signedIn, tables, hash: '#settings'});
@@ -544,10 +555,11 @@ test('C2: a queue row without a notebook shows no notebook label, and its reason
   ];
   const page = await app({...signedIn, tables});
   await settle();
-  const rows = page.element('queue').innerHTML.split('<div class="q">').slice(1);
-  assert.match(rows[0], /<small>added 1 Nov<\/small><small class="why">Video unavailable \(private account\)<\/small>/);
-  assert.match(rows[0], /Failed/);
-  assert.match(rows[1], /<small>added 2 Nov · Strength<\/small><\/div>/);
+  // P8 R2: « <Notebook> · added … », or « Added … » with no notebook; a readable name, never the raw address
+  const rows = page.element('queue').innerHTML.split(/<div class="q fail">|<button type="button" class="q qrow"/).slice(1);
+  assert.match(rows[0], /<small>Added 1 Nov<\/small><small class="why">Video unavailable \(private account\)<\/small>/);
+  assert.match(rows[0], /Needs you/);
+  assert.match(rows[1], /<span class="t1">YouTube video<\/span><small>Strength · added 2 Nov<\/small><\/span>/);
 });
 
 test('C5: sign-up asks Supabase to send the confirmation link back to the app, not to localhost', async () => {
@@ -597,7 +609,7 @@ test('C6: accessibility base — focus ring, live regions, input border token, t
   assert.match(html, /<div class="flash" id="flash" role="status" hidden>/);
   assert.match(html, /<p class="cnt" id="count" aria-live="polite">/);
   assert.match(html, /--line-strong:#8f8a80;/);
-  assert.equal((html.match(/--line-strong:#6b7079;/g) || []).length, 2, 'dark tokens: system and forced');
+  assert.equal((html.match(/--line-strong:#80868f;/g) || []).length, 2, 'dark tokens: system and forced (P8 R4b: ≥ 3:1 on the dark paper)');
   assert.match(html, /\ninput,textarea,select\{[^}]*border:1px solid var\(--line-strong\)/);
   assert.match(html, /<meta name="theme-color" content="#f3f1ec" media="\(prefers-color-scheme: light\)">/);
   assert.match(html, /<meta name="theme-color" content="#15171a" media="\(prefers-color-scheme: dark\)">/);

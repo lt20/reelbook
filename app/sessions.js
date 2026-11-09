@@ -315,7 +315,7 @@
   const secondsLabel = s => s >= 60 && !(s % 60) ? s / 60 + ' min' : s <= 90 ? s + ' s' : Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   const doseLabel = it => {
     if (!it) return '';
-    const min = 'reps' in (it.given || {}) ? null : parseDose(it.dose).repsMin;
+    const min = it.repsMin != null ? it.repsMin : 'reps' in (it.given || {}) ? null : parseDose(it.dose).repsMin;
     const count = it.reps ? (min ? min + '-' : '') + it.reps : it.seconds ? secondsLabel(it.seconds) : '';
     if (!count) return '';
     return (it.sets ? it.sets + ' × ' : '') + count + (it.per_side ? ' / side' : '');
@@ -372,6 +372,89 @@
     return {exercises: lists.length, sets: lists.reduce((a, l) => a + l.length, 0)};
   };
 
+  // ---------- P8 R5: a single sheet's dose, what was done, the week's rhythm, dose progress ----------
+  // A sheet's dose block as [number, label] pairs (« 3 | séries », « 8–12 | répétitions », « 60 s | repos »; the
+  // template's « 2–3 | sets », « 6–8 | reps per set », « 60 s | rest ») read as the one item of its player, like a
+  // session item: sets (the upper bound of a range), reps (the range kept for the label), seconds, rest, per side.
+  // A pair it cannot read only joins the free text (`dose`), which the player shows when there is no number.
+  const W = s => new RegExp(`^(?:${s})${END}`);
+  const SETS_W = W('séries?|series|sets?|rounds?|tours?|fois|times');
+  const REPS_W = W('répétitions?|repetitions?|reps?');
+  const REST_W = W('repos|rest|récup(?:ération)?|recovery|pause');
+  const EACH_W = W('(?:par|per|each|chaque)\\s+(?:côtés?|cotes?|sides?|jambes?|legs?|bras|arms?)');
+  const PER_W = W('par|per|each|chaque');
+  // « per side » anywhere in a cell, not only at the start of its label (Codex R5 pass 2): « reps per side »,
+  // « répétitions par côté », « hold per side », « 10 de chaque côté », « 10 / side ».
+  const SIDE_ANY = new RegExp(`(?:^|[^a-zà-ÿ\\d])(?:(?:par|per|each|chaque)\\s+(?:côtés?|cotes?|sides?|jambes?|legs?|bras|arms?)|/\\s*(?:côtés?|cotes?|sides?))${END}`);
+  const sheetItem = (sheet, pairs) => {
+    const it = {sheet, dose: '', n: 1, sets: null, reps: null, repsMin: null, seconds: null, rest_s: null, per_side: null, given: {}};
+    const text = [];
+    for (const pair of Array.isArray(pairs) ? pairs : []) {
+      const [b0, l0] = (Array.isArray(pair) ? pair : []).map(v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim());
+      if (!b0 && !l0) continue;
+      text.push([b0, l0].filter(Boolean).join(' '));
+      let b, l; try { b = norm(b0 || ''); l = norm(l0 || ''); } catch { continue; }
+      const range = b.match(re.range), t = timeAt(b);
+      if (REST_W.test(l)) { if (t !== null && it.rest_s === null) it.rest_s = t; continue; }
+      if (SETS_W.test(l)) { if (range && it.sets === null) it.sets = Number(range[2] || range[1]); continue; }
+      const side = SIDE_ANY.test(b + (l ? ' ' + l : ''));
+      if (REPS_W.test(l) || (EACH_W.test(l) && t === null)) {
+        if (range && it.reps === null) Object.assign(it, repsOf(range));
+        if (side) it.per_side = true;
+        continue;
+      }
+      if (t !== null && (PER_W.test(l) || !l || it.seconds === null)) {
+        if (it.seconds === null) it.seconds = t;
+        if (side) it.per_side = true;
+        continue;
+      }
+      const c = coreOf(b + (l ? ' ' + l : '')); // « 3 × 10 » in one cell
+      if (c) for (const k of ['sets', 'reps', 'repsMin', 'seconds']) if (c[k] != null && it[k] === null) it[k] = c[k];
+      if (c && side) it.per_side = true;
+    }
+    it.dose = text.join(' · ');
+    return it;
+  };
+  // What was done of an item with `k` sets checked, as its practice_log text: « 2 × 10 » (2 of 3 sets of 10), the
+  // dose label when it has no sets (« 40 s »), the sets checked when it has sets only (« 1 set » of « 3 sets »:
+  // Codex R5 pass 3), else its free text.
+  const doneDose = (it, k) => {
+    if (!it) return '';
+    const label = doseLabel(it.sets && k > 0 ? {...it, sets: k} : it);
+    if (!label && it.sets && k > 0) return k === 1 ? '1 set' : k + ' sets';
+    return label || String(it.dose || '').replace(/\s+/g, ' ').trim();
+  };
+  // The Monday (local calendar day, YYYY-MM-DD) of the ISO week of a day; '' for anything else.
+  const weekStart = day => {
+    const t = isoDay(day); if (isNaN(t)) return '';
+    return new Date(t - ((new Date(t).getUTCDay() + 6) % 7) * DAY_MS).toISOString().slice(0, 10);
+  };
+  // The sessions done in the ISO week of `today` (practice_log rows whose slug is session/<slug>; a sheet's row is not
+  // a session): {count, days: 7 booleans from Monday, today: its index}. Rows of another week, or after today, are out.
+  const weekRhythm = (rows, today) => {
+    const days = [false, false, false, false, false, false, false], s = isoDay(weekStart(today)), now = isoDay(today);
+    let count = 0;
+    if (isNaN(s) || isNaN(now)) return {count, days, today: -1};
+    for (const r of Array.isArray(rows) ? rows : []) {
+      if (!r || typeof r.slug !== 'string' || !r.slug.startsWith(ROUTE)) continue;
+      const t = isoDay(r.done_on), i = Math.round((t - s) / DAY_MS);
+      if (isNaN(t) || t > now || i < 0 || i > 6) continue;
+      count++; days[i] = true;
+    }
+    return {count, days, today: Math.round((now - s) / DAY_MS)};
+  };
+  const ordinal = n => { const t = n % 100, u = n % 10; return n + (t >= 11 && t <= 13 ? 'th' : u === 1 ? 'st' : u === 2 ? 'nd' : u === 3 ? 'rd' : 'th'); };
+  // True when the dose went up from `before` to `now` (two practice_log texts): the same kind (reps or time, per side
+  // or not), no fewer sets and no less per set, and more of one. A text that is not a dose (« 12 kg, 3x10 ») never is.
+  const doseUp = (before, now) => {
+    const a = parseDose(String(before == null ? '' : before)), b = parseDose(String(now == null ? '' : now));
+    const amt = p => p.reps != null ? ['r', p.reps] : p.seconds != null ? ['s', p.seconds] : null;
+    const x = amt(a), y = amt(b), side = t => !!SIDE.test(norm(String(t || ''))) || /\/\s*side/i.test(String(t || ''));
+    if (!x || !y || x[0] !== y[0] || side(before) !== side(now)) return false;
+    const sa = a.sets || 1, sb = b.sets || 1;
+    return sb >= sa && y[1] >= x[1] && (sb > sa || y[1] > x[1]);
+  };
+
   // ---------- content language (L1 for sheets, L22 for sessions) ----------
   // The interface stays English; only the headings the app draws inside a session follow its language. A text is
   // French when it holds at least three distinct common French words (« l' », « d' »… stripped), else English.
@@ -385,15 +468,89 @@
   };
   // The headings drawn inside a session page and the player, by language; an unknown language reads English.
   const HEADINGS = {fr: {'Why': 'Pourquoi', 'Key points': 'Points clés', 'Format': 'Format', 'Exercises': 'Exercices', 'Dose': 'Dose', 'Rest': 'Repos', 'Sets': 'Séries'}};
+  // P8 R5: the player's « Set 2 of 3 » over the dose, in the session's language (« Série 2 sur 3 »).
+  const setHeading = (k, n, lang) => lang === 'fr' ? `Série ${k} sur ${n}` : `Set ${k} of ${n}`;
   const sessionHeading = (heading, lang) => {
     const d = Object.prototype.hasOwnProperty.call(HEADINGS, lang) ? HEADINGS[lang] : null;
     return d && Object.prototype.hasOwnProperty.call(d, heading) ? d[heading] : heading;
   };
 
+  // R6: « Send as text » of a sheet, a session or a notebook. Plain text in the content's language (French, else
+  // English), ending with the Reelbook line. Never a photo, a note, the practice log or a date: the builders are only
+  // given titles, doses, key points and video credits. Each field is one line (its whitespace folded).
+  const REELBOOK_URL = 'https://lt20.github.io/reelbook/';
+  // P8 R13: where a sign-up came from. The app's own shares add ?r=<code> to the Reelbook address (text: R6's texts,
+  // story: R7's card, app: R9's Share Reelbook); any other code of the same form counts too (r=hn…). refCodeOf reads
+  // it from an address's query, else null: one code, [a-z0-9-]{1,32}, exactly (no other case, no space).
+  const REF_CODE = /^[a-z0-9-]{1,32}$/;
+  const refCodeOf = search => {
+    let q; try { q = new URLSearchParams(String(search == null ? '' : search)); } catch { return null; }
+    const v = q.get('r');
+    return v != null && REF_CODE.test(v) ? v : null;
+  };
+  const refUrl = code => REF_CODE.test(String(code)) ? `${REELBOOK_URL}?r=${code}` : REELBOOK_URL;
+  const SHARE_MAX = 20; // sheet titles listed in a notebook's text, then « … and n more »
+  const SHARE_WORDS = {
+    en: {video: 'Video:', videos: 'Videos:', saved: 'Saved with Reelbook:', exercise: ['exercise', 'exercises'], sheet: ['sheet', 'sheets'], colon: ':', more: n => `… and ${n} more`},
+    fr: {video: 'Vidéo :', videos: 'Vidéos :', saved: 'Enregistré avec Reelbook :', exercise: ['exercice', 'exercices'], sheet: ['fiche', 'fiches'], colon: ' :', more: n => `… et ${n} de plus`}
+  };
+  const shareWords = lang => lang === 'fr' ? SHARE_WORDS.fr : SHARE_WORDS.en;
+  const oneLine = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  const count = (n, [one, many]) => `${n} ${n === 1 ? one : many}`;
+  // A credit as written, « @ » added to a one-word handle that lacks it (« Coach Démo » stays as is).
+  const handle = a => { const s = oneLine(a); return !s || s.startsWith('@') || /\s/.test(s) ? s : '@' + s; };
+  const credits = authors => [...new Set((authors || []).map(handle).filter(Boolean))];
+  const httpLink = u => { const s = oneLine(u); return /^https?:\/\/\S+$/i.test(s) ? s : ''; };
+  const savedLine = W => `${W.saved} ${refUrl('text')}`;
+  const langOf = (lang, texts) => lang === 'fr' || lang === 'en' ? lang : isFrench(texts.filter(t => typeof t === 'string').join(' \n ')) ? 'fr' : 'en';
+  // A sheet: title, dose, the key points numbered, « Video: @author <url> », a blank line, the Reelbook line.
+  const shareSheetText = ({title, dose, keys, author, url, lang} = {}) => {
+    const kp = (Array.isArray(keys) ? keys : []).map(oneLine).filter(Boolean), d = oneLine(dose);
+    const W = shareWords(langOf(lang, [title, d, ...kp]));
+    const by = [handle(author), httpLink(url)].filter(Boolean).join(' ');
+    return [oneLine(title), ...(d ? [d] : []), ...kp.map((k, i) => `${i + 1}. ${k}`), ...(by ? [`${W.video} ${by}`] : []), '', savedLine(W)].join('\n');
+  };
+  // A session: « <title> — n exercises », « 1. <title> — <dose> » each, « Videos: @a, @b » (distinct credits).
+  // items: [{title, dose, author}]; author: the session's own video credit (a session made from one video).
+  const shareSessionText = ({title, items, author, lang} = {}) => {
+    const list = (Array.isArray(items) ? items : []).filter(it => it && oneLine(it.title));
+    const W = shareWords(langOf(lang, [title, ...list.map(it => it.title)]));
+    const by = credits([author, ...list.map(it => it.author)]);
+    return [`${oneLine(title)} — ${count(list.length, W.exercise)}`,
+      ...list.map((it, i) => `${i + 1}. ${oneLine(it.title)}${oneLine(it.dose) ? ' — ' + oneLine(it.dose) : ''}`),
+      ...(by.length ? [`${by.length === 1 ? W.video : W.videos} ${by.join(', ')}`] : []), '', savedLine(W)].join('\n');
+  };
+  // A notebook: « <Notebook> — n sheets », one line per group « <Group>: a, b » (a sheet without a group: its title
+  // alone on the line), SHARE_MAX titles at most, then « … and n more ». groups: [[name, [titles]]], in page order.
+  const shareNotebookText = ({title, groups, lang} = {}) => {
+    const gs = (Array.isArray(groups) ? groups : []).map(([g, ts]) => [oneLine(g), (Array.isArray(ts) ? ts : []).map(oneLine).filter(Boolean)]).filter(([, ts]) => ts.length);
+    const all = gs.reduce((n, [, ts]) => n + ts.length, 0);
+    const W = shareWords(langOf(lang, [title, ...gs.flatMap(([g, ts]) => [g, ...ts])]));
+    const lines = [`${oneLine(title)} — ${count(all, W.sheet)}`];
+    let left = SHARE_MAX;
+    for (const [g, ts] of gs) {
+      if (left <= 0) break;
+      const shown = ts.slice(0, left); left -= shown.length;
+      lines.push(g ? `${g}${W.colon} ${shown.join(', ')}` : shown.join(', '));
+    }
+    if (all > SHARE_MAX) lines.push(W.more(all - SHARE_MAX));
+    return [...lines, '', savedLine(W)].join('\n');
+  };
+
+  // R11: « Send to a training partner ». The link of a session_shares row is <app>#s-<token> (22 URL-safe characters,
+  // made by the database). The message: « <sender>: <title>, n exercises. Get your own copy: <link> », in English (the
+  // app's language); the link preview stays the generic one of the app (no photo).
+  const SHARE_TOKEN = /^s-([A-Za-z0-9_-]{22})$/;
+  const shareTokenOf = tok => { const m = SHARE_TOKEN.exec(String(tok == null ? '' : tok)); return m ? m[1] : null; };
+  const sharePartnerText = ({sender, title, count: n, url} = {}) =>
+    `${oneLine(sender)}: ${oneLine(title)}, ${count(Number(n) || 0, ['exercise', 'exercises'])}. Get your own copy: ${oneLine(url)}`;
+
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
     catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel,
-    setCount, restRemaining, restClock, cleanChecks, checksOf, fitChecks, playTally,
-    isFrench, sessionLang, sessionHeading};
+    setCount, restRemaining, restClock, cleanChecks, checksOf, fitChecks, playTally, sheetItem, doneDose, weekStart, weekRhythm,
+    ordinal, doseUp,
+    isFrench, sessionLang, sessionHeading, setHeading, REELBOOK_URL, REF_CODE, refCodeOf, refUrl, SHARE_MAX, shareSheetText, shareSessionText, shareNotebookText,
+    shareTokenOf, sharePartnerText};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

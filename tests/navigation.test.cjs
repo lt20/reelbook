@@ -8,6 +8,8 @@ const {app, ownUrl, ownKey} = require('./harness.cjs');
 const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: {id: 'u1', email: 'user@example.test'}}};
 const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(resolve => setImmediate(resolve)); };
 const url = 'https://www.instagram.com/reel/abc/';
+// P8 R1: a link already a sheet (curl's source is `url`) is not added twice: the tests add a new one
+const fresh = 'https://www.instagram.com/reel/fresh/';
 const tables = () => ({
   user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}],
   sheets: [
@@ -72,7 +74,7 @@ test('L17: an exercise opened from a session goes back to it; a group grid goes 
 test('L17: Back with a link still in « Add a video » asks first, and the queued link keeps its notebook', async () => {
   const page = await open('#strength');
   await page.fire('add-video-fab');
-  page.element('f-url').value = url;
+  page.element('f-url').value = fresh;
   await page.fire('nav-back');
   assert.equal(page.element('pending-dlg').open, true);
   assert.equal(page.element('home').hidden, false);
@@ -83,15 +85,17 @@ test('L17: Back with a link still in « Add a video » asks first, and the queue
   assert.equal(page.element('nav-bar').hidden, true, 'then Back goes on, to home');
 });
 
+// P8 R1: the notebook chip of the add sheet says it (« Notebook: Strength », else « Notebook: Auto »)
 test('L17: « + Add a video » says which notebook the link goes to', async () => {
   const page = await open('#strength');
   await page.fire('add-video-fab');
-  assert.match(page.element('f-hint').innerHTML, /^It goes to Strength; the group is decided when the video is analysed\./);
+  assert.equal(page.element('f-nb').value, 'strength');
+  assert.match(page.element('f-nb').innerHTML, /^<option value="">Auto<\/option><option value="strength" selected>Strength<\/option>/);
   assert.equal(page.element('add-video-fab').hidden, false);
   await page.fire('f-cancel');
   page.go('#'); await settle();
   await page.fire('add-video-fab');
-  assert.match(page.element('f-hint').innerHTML, /^Notebook and group are decided when the video is analysed\./);
+  assert.equal(page.element('f-nb').value, '');
 });
 
 test('L17: the form left open from a notebook to home names no notebook any more, and none is sent', async () => {
@@ -99,11 +103,58 @@ test('L17: the form left open from a notebook to home names no notebook any more
   await page.fire('add-video-fab');
   page.go('#'); await settle();
   assert.equal(page.element('sheet-new').hidden, false, 'the form stays open');
-  assert.match(page.element('f-hint').innerHTML, /^Notebook and group are decided when the video is analysed\./);
-  page.element('f-url').value = url;
+  assert.equal(page.element('f-nb').value, '', 'Auto: the chip follows the page');
+  page.element('f-url').value = fresh;
   await page.fire('sheet-new', 'submit'); await settle();
   const insert = page.clients.at(-1).calls.find(call => call[0] === 'insert' && call[1] === 'requests');
   assert.equal(insert[2].theme, undefined);
   page.go('#strength'); await settle();
-  assert.match(page.element('f-hint').innerHTML, /^It goes to Strength;/);
+  assert.equal(page.element('f-nb').value, 'strength');
+});
+
+// Codex on PR #105: Auto picked in the chip is a choice, kept from one notebook to the next until the sheet closes
+test('R1: Auto picked in the chip stays Auto on another notebook, and no notebook is sent', async () => {
+  const t = tables(); t.user_themes.push({id: 'mobility', title: 'Mobility', groups: [], builtin: true, position: 1});
+  const page = await app({...signedIn, tables: t, hash: '#strength', dom: true}); await settle();
+  await page.fire('add-video-fab');
+  assert.equal(page.element('f-nb').value, 'strength');
+  page.element('f-nb').value = ''; await page.fire('f-nb', 'change');
+  page.go('#mobility'); await settle();
+  assert.equal(page.element('sheet-new').hidden, false, 'the sheet stays open');
+  assert.equal(page.element('f-nb').value, '', 'still Auto on the notebook reached');
+  page.element('f-url').value = fresh;
+  await page.fire('sheet-new', 'submit'); await settle();
+  const insert = page.clients.at(-1).calls.find(call => call[0] === 'insert' && call[1] === 'requests');
+  assert.equal(insert[2].theme, undefined);
+  // closed and opened again, the chip follows the page again
+  await page.fire('add-video-fab');
+  assert.equal(page.element('f-nb').value, 'mobility');
+});
+
+// Codex on PR #105 (pass 2): a link kept in rb.draft reopens the add sheet only once the routing is decided, and
+// the sheet never stays in front of another page (#welcome, the sign-in screen); the link is kept.
+test('R1: a kept link on an account with no sheet and no link waits for #welcome, then comes back on home', async () => {
+  const empty = {user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}], sheets: [], sessions: [], requests: [], notes: []};
+  const page = await app({...signedIn, tables: empty, stored: {'rb.draft': fresh}, dom: true}); await settle();
+  assert.equal(page.location.hash, '#welcome');
+  assert.equal(page.element('welcome').hidden, false);
+  assert.equal(page.element('add-dlg').open, false, 'no sheet in front of the guide');
+  assert.equal(page.element('sheet-new').hidden, true);
+  assert.equal(page.storage.get('rb.draft'), fresh, 'the link is kept');
+  page.go('#'); await settle();
+  assert.equal(page.element('home').hidden, false);
+  assert.equal(page.element('add-dlg').open, true, 'back on home, the kept link in its sheet');
+  assert.equal(page.element('f-url').value, fresh);
+});
+
+test('R1: a session revoked while a link is typed closes the add sheet in front of the sign-in screen', async () => {
+  const page = await open('#strength');
+  await page.fire('add-video-fab');
+  page.element('f-url').value = fresh; await page.fire('f-url', 'input');
+  assert.equal(page.element('add-dlg').open, true);
+  page.clients.at(-1).authListener('SIGNED_OUT', null); await settle();
+  assert.equal(page.element('auth').hidden, false);
+  assert.equal(page.element('add-dlg').open, false, 'no sheet in front of the sign-in screen');
+  assert.equal(page.element('sheet-new').hidden, true);
+  assert.equal(page.element('f-url').value, fresh, 'the link stays in the field');
 });

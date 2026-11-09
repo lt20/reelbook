@@ -13,7 +13,8 @@ const rows = () => [
   sheet('plain')
 ];
 const tables = (sheets, sessions = []) => ({user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}], sheets, sessions, notes: [], requests: []});
-const open = async (extra = {}, sheets = rows(), sessions = []) => { const page = await app({...signedIn, tables: tables(sheets, sessions), ...extra}); await settle(); return page; };
+// P8 R4: the facets show only on the search page (#search)
+const open = async (extra = {}, sheets = rows(), sessions = []) => { const page = await app({...signedIn, tables: tables(sheets, sessions), hash: '#search', ...extra}); await settle(); return page; };
 const pick = async (page, facet, value) => {
   await page.fire('facet-' + facet);
   await page.element('facet-options').listeners.click({target: {closest: () => ({dataset: {facetValue: value}})}});

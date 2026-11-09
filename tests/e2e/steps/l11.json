@@ -19,6 +19,6 @@
    "why": "without the practice_log table: the summary and Close only"},
   {"name": "l11-05-end-saved", "hash": "session/session-gainage-10-min/play/3",
    "actions": [{"wait": "#player .pl-n >> text=3/3"}, {"click": "#play-set-1"}, {"click": "#play-rest-skip"},
-     {"click": "#play-finish"}, {"wait": "#end-save"}, {"click": "#end-save"}, {"wait": "#practice-done >> text=Done today ✓"}],
-   "why": "Save to log: back on the session page, « Done today ✓ »"}
+     {"click": "#play-finish"}, {"wait": "#end-save"}, {"click": "#end-save"}, {"wait": "#practice-done >> text=Logged ✓"}],
+   "why": "Save to log: back on the session page, « Logged ✓ »"}
 ]

@@ -53,6 +53,7 @@ test('B4 — A failed correction insert keeps the dialog open and does not claim
   assert.doesNotMatch(page.element('report-status').textContent || '', /Sent\. Claude will redo this sheet on the next run\./);
 });
 
+// P8 R2: a row shows a readable name, not the URL: « Redo » comes before the name
 test('B4 — Queue rows whose note starts with « Redo: » show « Redo » before the URL', async () => {
   const t = tables();
   t.requests = [
@@ -60,7 +61,8 @@ test('B4 — Queue rows whose note starts with « Redo: » show « Redo » befor
     {id: 2, url: 'https://www.youtube.com/shorts/ordinary', status: 'queued', theme: 'strength', note: 'Other reason', created_at: '2026-11-01T11:00:00Z'}
   ];
   const page = await app({...signedIn, tables: t}); await settle();
-  const rows = page.element('queue').innerHTML.split('<div class="q">').slice(1);
-  assert.match(rows[0], /Redo[\s\S]*?https:\/\/www\.instagram\.com\/reel\/example\//);
-  assert.doesNotMatch(rows[1].split('https://www.youtube.com/shorts/ordinary')[0], /Redo/);
+  const rows = page.element('queue').innerHTML.split('<button type="button" class="q qrow"').slice(1);
+  assert.match(rows[0], /<span class="t1"><span class="redo">Redo<\/span>Instagram reel<\/span>/);
+  assert.match(rows[1], /<span class="t1">YouTube video<\/span>/);
+  assert.doesNotMatch(rows[1], /Redo/);
 });

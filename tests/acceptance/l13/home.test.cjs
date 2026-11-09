@@ -30,20 +30,25 @@ const rule = selector => {
   return css.slice(start, css.indexOf('}', start) + 1);
 };
 
-// L13: compact brand bar, counter under it, and the existing add action.
-test('L13 — Compact brand bar: 28 px mark, about 22 px wordmark, Settings on the same line, no eyebrow above the logo; small counter below; + Add a video remains in the bar', async () => {
+// L13: compact brand bar and the existing add action. P8 R4: a 56 px top bar (wordmark, loupe « Search », round
+// account button « Settings »), no counter.
+test('L13 / P8 R4 — Top bar: 28 px mark, about 22 px wordmark, the loupe and the round account button (Settings); no counter; + Add a video floats', async () => {
   const bar = homeMarkup.match(/<header id="brand-bar"[^>]*>([\s\S]*?)<\/header>/);
   assert.ok(bar, 'the home brand bar is a header');
   assert.match(bar[1], /<img[^>]*width="28"[^>]*height="28"/);
   assert.match(bar[1], /id="h-title"[^>]*>Reelbook<\/h1>/);
-  assert.match(bar[1], /<a[^>]*href="#settings"[^>]*>Settings<\/a>/);
+  assert.match(bar[1], /<button[^>]*id="h-search"[^>]*aria-label="Search"/);
+  assert.match(bar[1], /<a[^>]*id="h-acct"[^>]*href="#settings"[^>]*aria-label="Settings"/);
+  assert.doesNotMatch(bar[1], />Settings<\/a>/, 'no Settings text link any more');
   assert.doesNotMatch(bar[1], /id="btn-new"/); // L17: « + Add a video » is the floating #add-video-fab
   assert.doesNotMatch(bar[1], /eyebrow|h-eyebrow/);
   assert.match(rule('#brand-bar'), /display:flex/);
   assert.match(rule('#brand-bar'), /align-items:center/);
   assert.match(rule('#brand-wordmark'), /font-size:(?:20|21|22|23|24)px/);
-  assert.ok(homeMarkup.indexOf('id="count"') > homeMarkup.indexOf('</header>'), 'the counter follows the bar');
-  assert.match(rule('#count'), /font-size:(?:12|13|14)px/);
+  assert.match(rule('#home:not(.nb) #brand-bar'), /position:sticky/);
+  assert.match(rule('#home:not(.nb) #brand-bar'), /height:calc\(56px/);
+  assert.match(rule('#brand-bar .ib'), /width:44px;height:44px/);
+  assert.match(rule('#brand-bar .acct'), /width:44px;height:44px/);
 
   const rows = Array.from({length: 107}, (_, i) => sheet(`s${i}`));
   const page = await open(rows, {tables: tables(rows, {
@@ -51,14 +56,19 @@ test('L13 — Compact brand bar: 28 px mark, about 22 px wordmark, Settings on t
     practice_log: Array.from({length: 23}, (_, i) => ({slug: `s${i}`, done_on: '2026-10-01'}))
   })});
   assert.equal(page.element('home').hidden, false);
-  assert.equal(page.element('count').textContent, '23 practised · 107 saved · 4 notebooks');
+  assert.equal(page.element('count').textContent, '', 'no « n practised · n saved »');
+  assert.equal(page.element('h-search').hidden, false);
+  assert.equal(page.element('h-acct').hidden, false);
+  assert.match(page.element('h-acct').textContent, /^[A-Z]{1,2}$/);
   await page.fire('add-video-fab');
   assert.equal(page.element('sheet-new').hidden, false);
 });
 
-// L13: the six home blocks must keep this visual order when all are populated.
-test('L13 — Top order: brand bar → search → New → To try → collapsed queue summary → notebooks', async () => {
-  const ids = ['brand-bar', 'search', 'new-sec', 'to-try', 'queue-sec', 'portal'];
+// L13: the home blocks must keep this visual order when all are populated.
+// P8 R1: the queue is the « On the way » band, right under the brand bar, never folded.
+// P8 R4: the field moved to the search page; YOUR SESSIONS after New; TRY ONE TODAY after the notebooks.
+test('L13 / P8 R4 — Top order: top bar → On the way band → New → Your sessions → notebooks → Try one today', async () => {
+  const ids = ['brand-bar', 'otw-band', 'new-sec', 'sess-sec', 'portal', 'to-try'];
   const positions = ids.map(id => homeMarkup.indexOf(`id="${id}"`));
   assert.ok(positions.every(position => position >= 0), `home blocks exist: ${ids.join(', ')}`);
   assert.ok(positions.every((position, i) => i === 0 || positions[i - 1] < position), 'home blocks appear in the specified order');
@@ -66,13 +76,13 @@ test('L13 — Top order: brand bar → search → New → To try → collapsed q
   const page = await open(rows, {tables: tables(rows, {
     requests: [{id: 1, url: 'https://www.instagram.com/reel/example/', status: 'queued', created_at: new Date().toISOString()}]
   })});
-  for (const id of ['search', 'new-sec', 'to-try', 'queue-sec', 'portal']) {
+  for (const id of ['otw-band', 'new-sec', 'to-try', 'portal']) {
     assert.equal(page.element(id).hidden, false, `${id} is visible`);
   }
+  assert.equal(page.element('search').hidden, true, 'the field is on the search page only');
   assert.match(page.element('new-sec').innerHTML, /New/);
-  assert.match(page.element('to-try').innerHTML, /To try/);
-  assert.match(page.element('queue-summary').innerHTML, /aria-expanded="false"/);
-  assert.equal(page.element('queue').hidden, true);
+  assert.match(page.element('to-try').innerHTML, /Try one today/);
+  assert.match(page.element('otw-band').innerHTML, /1 on the way/);
 });
 
 // L13: the home card exposes the three latest sheets as accessible photo thumbnails.
@@ -111,7 +121,7 @@ test('L13 — Empty account keeps the home usable without New, To try, queue or 
   assert.equal(page.element('home').hidden, false);
   assert.equal(page.element('new-sec').hidden, true);
   assert.equal(page.element('to-try').hidden, true);
-  assert.equal(page.element('queue-sec').hidden, true);
+  assert.equal(page.element('otw-band').hidden, true);
   assert.equal(page.element('portal').hidden, false);
   assert.doesNotMatch(page.element('portal').innerHTML, /<div class="thumbs">/);
   assert.equal(page.element('howto').hidden, false);
@@ -132,14 +142,14 @@ test('L13 — A missing sessions or practice table, a failed request, and an off
     requests: [{id: 2, url: 'https://www.instagram.com/reel/failure/', status: 'error', note: 'Video unavailable', created_at: new Date().toISOString()}]
   })});
   assert.equal(failedRequest.element('home').hidden, false);
-  assert.match(failedRequest.element('queue-summary').innerHTML, /aria-expanded="false"/);
-  assert.equal(failedRequest.element('queue').hidden, true);
+  assert.match(failedRequest.element('otw-band').innerHTML, /1 needs you/);
+  assert.notEqual(failedRequest.element('otw-dlg').open, true, 'the list stays closed until the band is tapped');
   assert.match(failedRequest.element('portal').innerHTML, /Strength/);
 
   const offline = await open(rows, {failing: {sheets: {error: {message: 'Failed to fetch'}, status: 0}}});
   assert.equal(offline.element('home').hidden, false);
   assert.equal(offline.element('new-sec').hidden, true);
   assert.equal(offline.element('to-try').hidden, true);
-  assert.equal(offline.element('queue-sec').hidden, true);
+  assert.equal(offline.element('otw-band').hidden, true);
   assert.ok(offline.element('count').textContent.length > 0, 'the failed load is reported in the counter area');
 });

@@ -19,8 +19,11 @@ The hosted backend is a beta with a limited number of accounts. The first screen
 many spots are taken, read from `beta_seats()`.
 
 - When the beta is full or closed, the hosted card becomes a **waiting list**: first name, email and a consent box.
-  No account is created. Reelbook keeps those two fields only to say a spot has opened; they are deleted when that
-  address signs up, or on request. An address already listed gets the same answer as a new one.
+  No account is created. Reelbook keeps those two fields, the code of the link that brought the person (for
+  example `story`, `text` or `app`, or the link of a shared session) and the session a friend shared, if any, only
+  to say a spot has opened and to know which link brought the entry; they are deleted with the entry, when that
+  address signs up, or on request. An address already listed gets the
+  same answer as a new one.
 - **Your own Supabase is always open**, without these limits: it is the way in when the beta is full
   ([docs/own-supabase.md](own-supabase.md)). Its choice is made on the first screen or on the « Where should your
   new account live? » screen, and on the sign-in form; the hosted sign-up form no longer offers it.

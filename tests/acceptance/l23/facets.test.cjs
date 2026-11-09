@@ -17,7 +17,8 @@ const tables = sheets => ({user_themes: [
   {id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0},
   {id: 'mobility', title: 'Mobility', groups: [], builtin: true, position: 1}
 ], sheets, sessions: [], notes: [], requests: []});
-const open = async (sheets = rows(), extra = {}) => { const page = await app({...signedIn, tables: tables(sheets), ...extra}); await settle(); return page; };
+// P8 R4: the facets show only on the search page (#search), opened by the loupe of the home page's bar
+const open = async (sheets = rows(), extra = {}) => { const page = await app({...signedIn, tables: tables(sheets), hash: '#search', ...extra}); await settle(); return page; };
 const query = async (page, value) => { page.element('q').value = value; await page.fire('q', 'input'); await settle(); return page.element('results').innerHTML; };
 const has = (markup, slug) => new RegExp('href="#' + slug + '"').test(markup);
 const choose = async (page, facet, value) => {
@@ -32,6 +33,9 @@ const choose = async (page, facet, value) => {
 
 test('App — a row of Zone, Gear, Time, Type facet chips sits under the search field; each opens a bottom sheet', async () => {
   assert.match(html, /id="q"[\s\S]*id="facets"[\s\S]*id="results"/);
+  const home = await open(rows(), {hash: ''});
+  assert.equal(home.element('facets').hidden, true, 'P8 R4: no facets on the home page');
+  assert.equal(home.element('search').hidden, true, 'P8 R4: no field on the home page, the loupe opens it');
   const page = await open();
   assert.equal(page.element('facets').hidden, false);
   for (const [id, label] of [['zone', 'Zone'], ['gear', 'Gear'], ['time', 'Time'], ['type', 'Type']]) {

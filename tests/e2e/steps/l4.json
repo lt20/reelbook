@@ -1,7 +1,7 @@
 [
-  {"name": "l4-01-queue-collapsed", "actions": [{"wait": "#queue-toggle >> text=3 in the queue · 1 failed"}, {"scroll": "#queue-sec"}]},
-  {"name": "l4-02-queue-expanded", "full": true, "actions": [{"click": "#queue-toggle"}, {"wait": "#queue >> text=Last run"}, {"wait": "#queue >> text=Processing"}]},
-  {"name": "l4-03-queue-removed-toast", "actions": [{"click": "#queue-toggle"}, {"click": "#queue [data-del=\"req-1\"]"}, {"wait": "#queue-undo >> text=Removed · Undo"}, {"wait": 1500}]},
+  {"name": "l4-01-queue-band", "actions": [{"wait": "#otw-band >> text=3 on the way"}, {"wait": "#otw-band >> text=1 needs you"}]},
+  {"name": "l4-02-queue-open", "actions": [{"click": "#otw-band"}, {"wait": "#otw-mode >> text=Your computer picks these up on its next run."}, {"wait": "#queue >> text=Being made"}]},
+  {"name": "l4-03-queue-removed-toast", "actions": [{"click": "#otw-band"}, {"click": "#queue [data-row=\"req-1\"]"}, {"click": "#otw-row [data-rdel]"}, {"wait": "#queue-undo >> text=Removed · Undo"}, {"wait": 1500}]},
   {"name": "l4-04-notebook-session-cards", "hash": "strength", "full": true, "actions": [{"wait": "#home .card .fmt"}]},
   {"name": "l4-05-delete-sheet-dialog", "hash": "pompes-inclinees",
    "actions": [{"wait": "#view h1 >> text=Pompes inclinées"}, {"wait": "#nav-more"}, {"click": "#nav-more"}, {"click": "#sd-open"}, {"wait": "#sd-dlg[open]"}],

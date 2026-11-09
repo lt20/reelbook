@@ -140,6 +140,58 @@
     }).filter(k => k.cue || k.text);
   };
 
-  const api = {arrange, markPhotos, photosOf, keyPoints, MORE};
+  // R11 (Codex #114): a sheet's html is shown inside the app's own page, and since R11 it can come from another account
+  // (a shared session). clean keeps only what templates/ write, in place, before anything else reads the sheet — the
+  // same lists as supabase/functions/share/clean.ts, which cleans a copy once more on the server:
+  //   - the elements of DROP go with their content (scripts, styles, frames, objects, forms, base, meta, link, SVG…);
+  //   - another element not in ALLOW is unwrapped (its content stays); comments go;
+  //   - attributes: ATTRS and aria-* only (no on*, style, id, name, data-*); href relative, #anchor, http(s) or mailto;
+  //     src relative (the sheet's own folder) or data:image/(png|jpeg|gif|webp) — with {signed: true}, also http(s):
+  //     a sheet kept on the device (L19) already holds the app's signed photo URLs.
+  const ALLOW = new Set(['A', 'ABBR', 'ARTICLE', 'ASIDE', 'B', 'BLOCKQUOTE', 'BR', 'CAPTION', 'CITE', 'CODE', 'DD', 'DEL',
+    'DETAILS', 'DFN', 'DIV', 'DL', 'DT', 'EM', 'FIGCAPTION', 'FIGURE', 'FOOTER', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HEADER',
+    'HR', 'I', 'IMG', 'INS', 'KBD', 'LI', 'MAIN', 'MARK', 'NAV', 'OL', 'P', 'PRE', 'Q', 'S', 'SECTION', 'SMALL', 'SPAN',
+    'STRONG', 'SUB', 'SUMMARY', 'SUP', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TIME', 'TR', 'U', 'UL', 'WBR']);
+  const DROP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'TITLE', 'XMP', 'IFRAME', 'NOEMBED', 'NOFRAMES', 'NOSCRIPT', 'OBJECT',
+    'EMBED', 'APPLET', 'FORM', 'INPUT', 'BUTTON', 'SELECT', 'OPTION', 'OPTGROUP', 'BASE', 'META', 'LINK', 'SVG', 'MATH',
+    'TEMPLATE', 'FRAME', 'FRAMESET', 'AUDIO', 'VIDEO', 'SOURCE', 'TRACK', 'CANVAS', 'DIALOG', 'PORTAL', 'PICTURE', 'MAP',
+    'AREA', 'PARAM', 'SLOT', 'PLAINTEXT']);
+  const ATTRS = new Set(['class', 'src', 'alt', 'title', 'href', 'width', 'height', 'loading', 'lang', 'dir', 'start',
+    'reversed', 'type', 'colspan', 'rowspan', 'datetime', 'open', 'role']);
+  const BLANKS = /[\u0000-\u0020\u007f-\u009f\u00a0\u1680\u2000-\u200f\u2028\u2029\u202f\u205f\u3000\ufeff]/g;
+  const HTML_NS = 'http://www.w3.org/1999/xhtml';
+  const safeUrl = (value, attr, signed) => {
+    const bare = String(value).replace(BLANKS, ''), m = /^([a-z][a-z0-9+.-]*):/i.exec(bare), scheme = m ? m[1].toLowerCase() : '';
+    if (attr === 'src') return m ? /^data:image\/(png|jpeg|gif|webp)[;,]/i.test(bare) || (!!signed && (scheme === 'https' || scheme === 'http')) : !/^[\/\\]{2}/.test(bare);
+    return !m || ['http', 'https', 'mailto'].includes(scheme);
+  };
+  const attrNames = el => el.getAttributeNames ? el.getAttributeNames() : [...(el.attributes || [])].map(a => a.name);
+  const clean = (doc, {signed = false} = {}) => {
+    const walk = parent => {
+      for (const n of [...parent.childNodes]) {
+        if (n.nodeType === 8) { parent.removeChild(n); continue; }
+        if (n.nodeType !== 1) continue;
+        const t = tag(n);
+        if (DROP.has(t) || (n.namespaceURI && n.namespaceURI !== HTML_NS)) { parent.removeChild(n); continue; }
+        walk(n);
+        if (!ALLOW.has(t)) { while (n.firstChild) parent.insertBefore(n.firstChild, n); parent.removeChild(n); continue; }
+        for (const a of attrNames(n)) {
+          const k = a.toLowerCase();
+          if (!(ATTRS.has(k) || /^aria-[a-z]+$/.test(k)) || ((k === 'href' || k === 'src') && !safeUrl(n.getAttribute(a), k, signed))) n.removeAttribute(a);
+        }
+      }
+    };
+    walk(doc.body || doc);
+    return doc;
+  };
+
+  // P8 R5: the first dose block of a page, as [number, label] pairs (« <b>3</b><span>séries</span> »), for the
+  // single-sheet player (RBSessions.sheetItem reads them as sets, reps, seconds and rest).
+  const doseOf = page => {
+    const d = page && page.querySelector ? page.querySelector('div.dose') : null;
+    return d ? [...d.querySelectorAll('.d')].map(x => [text(x.querySelector('b')), text(x.querySelector('span'))]).filter(([b, l]) => b || l) : [];
+  };
+
+  const api = {arrange, markPhotos, photosOf, keyPoints, doseOf, clean, MORE};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSheet = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -15,8 +15,10 @@ const tables = () => ({
 const ios = {userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'};
 const card = page => page.element('install-card');
 const cardText = page => card(page).textContent + ' ' + card(page).innerHTML;
+// P8 R4: the card is off the first screen until a sheet was opened on this device (rb.seen.<user id>)
+const seen = {'rb.seen.user-a': '["first-sheet"]', 'rb.seen.user-b': '["first-sheet"]'};
 const open = async (options = {}) => {
-  const page = await app({...signedIn(), tables: tables(), nav: ios, ...options});
+  const page = await app({...signedIn(), tables: tables(), nav: ios, ...options, stored: {...seen, ...(options.stored || {})}});
   await settle();
   return page;
 };
@@ -27,6 +29,14 @@ test('iOS Safari: a signed-in user with at least one sheet sees the quiet home c
   assert.equal(card(page).hidden, false);
   assert.match(cardText(page), /Install Reelbook: tap Share, then Add to Home Screen/);
   assert.match(card(page).innerHTML, /<svg\b[\s\S]*?<\/svg>/i);
+});
+
+test('P8 R4: no invitation before a first sheet is opened, and it sits below the notebooks', async () => {
+  const page = await open({stored: {'rb.seen.user-a': '[]'}});
+  assert.equal(page.element('home').hidden, false);
+  assert.equal(card(page).hidden, true);
+  const markup = require('../../harness.cjs').html;
+  assert.ok(markup.indexOf('id="install-card"') > markup.indexOf('id="portal"'), 'below the notebooks');
 });
 
 test('At least one sheet: an empty catalogue does not show the invitation', async () => {

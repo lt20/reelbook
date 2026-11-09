@@ -50,9 +50,12 @@ under « What you add » are deleted within `[DELETION DELAY, e.g. 30 days]`; te
 ## Waiting list
 
 When every seat of the beta is taken, you can leave your first name and your email (and the language of the
-page) on the waiting list, with your consent. They are used for one thing only: the maintainer writes to you,
-by hand, when a seat is free. No newsletter, never shared. Your entry is deleted when you sign up with that email,
-or as soon as you ask (`[CONTACT EMAIL]`). Only the maintainer can read the list.
+page) on the waiting list, with your consent. The entry also keeps the code of the link that brought you (for
+example `story`, `text` or `app`, or the link of a session someone shared), and, if you came from a session a friend
+shared with you, that session. They are used for two things only: the maintainer writes to you, by hand, when a
+seat is free, and the shared session opens once you sign up; the link code says which link brought the entry. No
+newsletter, never shared. Your entry, link code included, is deleted when you sign up with that email, or as soon
+as you ask (`[CONTACT EMAIL]`). Only the maintainer can read the list.
 
 ## Your data, your copy
 

@@ -26,7 +26,7 @@ function stub(attrs = {}) {
 }
 
 // Runs landing.js. `language`: navigator.language; `stored`: localStorage entries.
-function landing({language, stored = {}} = {}) {
+function landing({language, stored = {}, title = (html.match(/<title>([^<]*)<\/title>/) || [])[1]} = {}) {
   const storage = new Map(Object.entries(stored));
   const ids = new Map(), lists = new Map();
   const byId = id => { if (!ids.has(id)) ids.set(id, stub({id})); return ids.get(id); };
@@ -48,7 +48,9 @@ function landing({language, stored = {}} = {}) {
   for (const p of pres) p.textContent = '\n' + html.match(new RegExp(`<pre\\b[^>]*id="${p.attrs.id}"[^>]*>([^<]*)</pre>`))[1] + '\n';
   lists.set('#intro pre[data-os-pane]', pres);
   const documentElement = {lang: 'en', scrollHeight: 0};
-  const document = {getElementById: byId, querySelectorAll: sel => lists.get(sel) || [], documentElement};
+  const description = stub({name: 'description', content: (html.match(/<meta name="description" content="([^"]*)">/) || [])[1]});
+  const document = {getElementById: byId, querySelectorAll: sel => lists.get(sel) || [], documentElement, title,
+    querySelector: sel => sel === 'meta[name="description"]' ? description : null};
   const window = {
     navigator: {language},
     localStorage: {getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, String(v)), removeItem: k => storage.delete(k)},
@@ -57,7 +59,7 @@ function landing({language, stored = {}} = {}) {
   const timers = [];
   vm.runInNewContext(landingJs, {window, document, console, setTimeout: fn => timers.push(fn)});
   const click = (el, target) => el.listeners.click({preventDefault() {}, target: target || el, currentTarget: el});
-  return {RBL: window.RBL, byId, lists, storage, documentElement, click, window, document, pre: pres[0], pres, timers};
+  return {RBL: window.RBL, byId, lists, storage, documentElement, click, window, document, description, pre: pres[0], pres, timers};
 }
 const dk = (page, k) => page.lists.get('[data-k]').find(el => el.attrs['data-k'] === k);
 const imgs = s => [...s.matchAll(/<img src="([^"]+)"/g)].map(m => m[1]);
@@ -80,7 +82,7 @@ test('L30 — a French browser gets the French landing; the choice is saved and 
   assert.equal(page.RBL.lang, 'fr');
   assert.equal(page.documentElement.lang, 'fr');
   const h1 = page.lists.get('[data-k]').find(el => el.attrs['data-k'] === 'h1');
-  assert.match(h1.innerHTML, /^Un <span class="lp-slash">\/skill<\/span> Claude Code/);
+  assert.equal(h1.innerHTML, 'Tes vidéos d’entraînement, en carnet qu’on suit vraiment.');
   const heard = [];
   page.RBL.onChange(l => heard.push(l));
   const en = page.lists.get('#intro .lp-lang button').find(b => b.attrs['data-lang'] === 'en');
@@ -88,7 +90,7 @@ test('L30 — a French browser gets the French landing; the choice is saved and 
   assert.equal(page.RBL.lang, 'en');
   assert.equal(page.documentElement.lang, 'en');
   assert.equal(page.storage.get('rb.lang'), 'en', 'saved on the device, not per user');
-  assert.match(h1.innerHTML, /^A Claude Code <span class="lp-slash">\/skill<\/span>/);
+  assert.equal(h1.innerHTML, 'Your saved workout videos, turned into a training notebook.');
   assert.equal(en.attrs['aria-pressed'], 'true');
   assert.deepEqual(heard, ['en'], 'the app script relabels what it writes');
   // next visit: the saved choice beats the browser's language
@@ -358,13 +360,13 @@ test('L36 — the beta follows beta_seats(): open without an answer, the count w
   assert.equal(q.RBL.seats({taken: 0, total: 0, open: false}), true);
   assert.equal(q.RBL.full, true); assert.equal(q.byId('lp-wlH').textContent, 'Bêta complète'); assert.equal(q.byId('lp-host-full').hidden, false);
   assert.equal(q.byId('lp-seatsBar').bar.style.width, '100%');
-  // the coordinator's wording, and the consent text of decision 20, word for word
+  // the coordinator's wording, and the consent text of decision 20 (P8 R15: plus the session a friend shared; R16: plus the link that brought them), word for word
   const {DICT} = q.RBL;
   assert.equal(DICT.fr['wl.p'], 'Aucun compte n’est créé ici : laisse ton prénom et ton e-mail, on te prévient dès qu’une place se libère.');
   assert.equal(DICT.fr['wl.ok.h'], 'C’est noté'); assert.equal(DICT.fr['wl.ok'], 'On t’écrit dès qu’une place se libère.');
   assert.equal(DICT.en['wl.ok.h'], 'You’re on the list'); assert.equal(DICT.en['wl.ok'], 'We’ll email you as soon as a spot opens.');
-  assert.equal(DICT.fr['wl.c'], 'J’accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d’une place libre, et rien d’autre. Effacés à mon inscription ou sur simple demande.');
-  assert.equal(DICT.en['wl.c'], 'I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.');
+  assert.equal(DICT.fr['wl.c'], 'J’accepte que Reelbook garde mon prénom, mon e-mail, le lien qui m’a amené et, s’il y en a une, la séance qu’un ami m’a partagée, pour me prévenir d’une place libre et savoir quel lien m’a amené, et rien d’autre. Effacés à mon inscription ou sur simple demande.');
+  assert.equal(DICT.en['wl.c'], 'I agree that Reelbook keeps my first name, my email, the link that brought me and, if any, the session a friend shared with me, to tell me when a spot opens and to know which link brought me, and for nothing else. Deleted when I sign up or whenever I ask.');
 });
 
 test('L36 — five examples: each step has its frame, its dot and its words, from the example\'s data', () => {
@@ -456,15 +458,15 @@ test('L36 — <head>: title, description, canonical, Open Graph and Twitter card
   assert.equal(meta('og:locale'), 'fr_FR'); assert.equal(meta('og:locale:alternate'), 'en_GB');
   assert.equal(meta('og:url'), 'https://lt20.github.io/reelbook/');
   const og = meta('og:image');
-  assert.match(og, /^https:\/\/lt20\.github\.io\/reelbook\/assets\/og\/[\w-]+\.jpg$/);
+  assert.match(og, /^https:\/\/lt20\.github\.io\/reelbook\/assets\/og\/[\w-]+\.png$/);
+  assert.equal(meta('og:image:type'), 'image/png');
   assert.equal(meta('og:image:width'), '1200'); assert.equal(meta('og:image:height'), '630');
   assert.equal(meta('twitter:card'), 'summary_large_image'); assert.equal(meta('twitter:image'), og);
-  const file = path.join(ROOT, 'app', og.replace('https://lt20.github.io/reelbook/', ''));
-  const jpg = fs.readFileSync(file);
-  let i = 2, size = null;
-  while (i < jpg.length) { const marker = jpg[i + 1], len = jpg.readUInt16BE(i + 2); if (marker >= 0xc0 && marker <= 0xc2) { size = [jpg.readUInt16BE(i + 7), jpg.readUInt16BE(i + 5)]; break; } i += 2 + len; }
-  assert.deepEqual(size, [1200, 630], 'the preview picture is 1200 × 630');
-  assert.ok(jpg.length < 300 * 1024);
+  assert.ok(meta('og:image:alt').length > 30); assert.equal(meta('twitter:image:alt'), meta('og:image:alt'));
+  const png = fs.readFileSync(path.join(ROOT, 'app', og.replace('https://lt20.github.io/reelbook/', '')));
+  assert.equal(png.toString('latin1', 1, 4), 'PNG');
+  assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [1200, 630], 'the preview picture is 1200 × 630');
+  assert.ok(png.length < 300 * 1024);
   assert.match(head, /<link rel="icon" href="icons\/reelbook-app\.svg"/);
 });
 
@@ -518,9 +520,116 @@ test('L36 — the copy is the v3 mockup\'s, word for word, in French and in Engl
   const {DICT} = landing().RBL;
   const scoped = s => s.replace(/class="([^"]*)"/g, (m, v) => 'class="' + v.split(/\s+/).map(c => 'lp-' + c).join(' ') + '"');
   const STATE = new Set(['beta', 'i1.seats', 'wl.h']); // written from beta_seats(), checked in the beta test
+  const R8 = new Set(['h1', 'sub', 'cta2', 'fit']); // P8 R8 rewrote the hero for athletes: checked in the R8 tests
+  R8.add('i3.p2'); // P8 R10: Android shares to the installed app, checked in the R10 test below
+  R8.add('wl.c'); R8.add('i3.p'); // P8 R15: the consent keeps a friend's session, the shortcut is « Add to Reelbook »: checked in the beta test and in the R15 test below
+  R8.add('v4.p'); R8.add('d4.p'); // P8 R5: « Done today » became « Log » / « Noter », checked in tests/p8-r5.test.cjs
   const enStart = mock.indexOf('var EN={'), en = new Function('return ' + mock.slice(enStart + 7, mock.indexOf('\n  };', enStart)) + '\n}')();
   let n = 0;
-  for (const [k, v] of Object.entries(en)) if (!k.startsWith('nav.') && !STATE.has(k)) { assert.equal(DICT.en[k], scoped(v), `en: ${k}`); n++; }
-  for (const m of mock.slice(0, mock.indexOf('<script>')).matchAll(/<(\w+)\b[^>]*\bdata-k="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g)) if (!STATE.has(m[2])) { assert.equal(DICT.fr[m[2]], scoped(m[3]), `fr: ${m[2]}`); n++; }
-  assert.ok(n > 150, `${n} strings compared`);
+  for (const [k, v] of Object.entries(en)) if (!k.startsWith('nav.') && !STATE.has(k) && !R8.has(k)) { assert.equal(DICT.en[k], scoped(v), `en: ${k}`); n++; }
+  for (const m of mock.slice(0, mock.indexOf('<script>')).matchAll(/<(\w+)\b[^>]*\bdata-k="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g)) if (!STATE.has(m[2]) && !R8.has(m[2])) { assert.equal(DICT.fr[m[2]], scoped(m[3]), `fr: ${m[2]}`); n++; }
+  assert.ok(n > 135, `${n} strings compared`); // 138 since R15 (R8: the hero's 4 keys, R10: i3.p2, R15: wl.c and i3.p, FR and EN)
+});
+
+test('P8 R15 — the shortcut is « Add to Reelbook », FR and EN', () => {
+  const {DICT} = landing().RBL;
+  assert.equal(DICT.en['i3.p'], 'Put Reelbook on your home screen, then the “Add to Reelbook” shortcut in the iPhone Share menu.');
+  assert.match(DICT.fr['i3.p'], /^Mets Reelbook sur ton écran d’accueil, puis le raccourci «\s?Add to Reelbook\s?» dans le menu Partager de l’iPhone\.$/);
+  for (const lang of ['fr', 'en']) for (const v of Object.values(DICT[lang])) assert.ok(!/Send to Reelbook|Envoyer à Reelbook/.test(v), `${lang}: ${v}`);
+});
+
+test('R10 — step 3: on Android, the video is shared to the installed app (no more « paste the link »), FR and EN', () => {
+  const {DICT} = landing().RBL;
+  assert.equal(DICT.en['i3.p2'], 'On Android, once the app is installed, share the video to Reelbook from the Share menu.');
+  assert.equal(DICT.fr['i3.p2'], 'Sur Android, une fois l’app installée, partage la vidéo à Reelbook depuis le menu Partager.');
+  assert.match(html, /<p data-k="i3\.p2">On Android, once the app is installed, share the video to Reelbook from the Share menu\.<\/p>/);
+  assert.doesNotMatch(html + JSON.stringify(DICT), /paste the link in the app|colle simplement le lien/);
+});
+
+// ---------- P8 R8: the front door speaks to athletes ----------
+const NOT_FOR_ATHLETES = [/\/skill/i, /Claude Code/i, /\b\d+\s*(?:s|sec|secondes?|seconds?|min|minutes?|h|heures?|hours?)\b/i, /\b(?:nuit|overnight|night)\b/i];
+const forAthletes = (s, what) => { for (const re of NOT_FOR_ATHLETES) assert.doesNotMatch(s, re, `${what}: ${re}`); };
+const heroOf = s => s.slice(s.indexOf('<section class="lp-frame lp-hero"'), s.indexOf('</section>', s.indexOf('<section class="lp-frame lp-hero"')));
+
+test('R8 — link previews: one French title and description for <title>, Open Graph and Twitter, the English in landing.js', () => {
+  const head = html.slice(0, html.indexOf('</head>'));
+  const meta = k => { const m = head.match(new RegExp(`<meta (?:property|name)="${k}" content="([^"]*)">`)); return m && m[1]; };
+  const {DICT} = landing().RBL;
+  const title = head.match(/<title>([^<]*)<\/title>/)[1];
+  assert.equal(title, 'Reelbook · Tes vidéos d’entraînement, en carnet qu’on suit vraiment');
+  assert.equal(DICT.en['head.title'], 'Reelbook · Your saved workout videos, turned into a training notebook');
+  for (const k of ['og:title', 'twitter:title']) assert.equal(meta(k), title, k);
+  assert.equal(DICT.fr['head.title'], title, 'landing.js knows the <title> of index.html');
+  for (const k of ['description', 'og:description', 'twitter:description']) assert.equal(meta(k), DICT.fr['head.desc'], k);
+  for (const l of ['fr', 'en']) for (const k of ['head.title', 'head.desc']) forAthletes(DICT[l][k], `${l} ${k}`);
+  forAthletes(meta('og:image:alt'), 'og:image:alt');
+  assert.equal(meta('og:image'), 'https://lt20.github.io/reelbook/assets/og/reelbook-og.png');
+});
+
+test('R8 — the preview picture: typographic, French and English, made by tools/og-image.mjs; the old one kept until P8 ships', () => {
+  const tool = fs.readFileSync(path.join(ROOT, 'tools/og-image.mjs'), 'utf8');
+  const {DICT} = landing().RBL;
+  for (const [l, file] of [['fr', 'reelbook-og.png'], ['en', 'reelbook-og-en.png']]) {
+    const png = fs.readFileSync(path.join(ROOT, 'app/assets/og', file));
+    assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [1200, 630], file);
+    assert.ok(png.length < 300 * 1024, file);
+    // the same words as the hero: the line (without its full stop) and the three steps
+    assert.ok(tool.includes(`'${DICT[l].h1.replace(/\.$/, '')}'`), `${l}: the line`);
+    for (const k of ['hp.1', 'hp.2', 'hp.3']) assert.ok(tool.includes(`'${DICT[l][k]}'`), `${l}: ${k}`);
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, 'app/assets/og/reelbook-og.jpg')), 'the old picture stays for cached previews');
+  // nothing from a video or another host: the app's fonts and logo only, any request aborted
+  assert.doesNotMatch(tool, /https?:\/\/|\.jpe?g\b|<img\b/i);
+  assert.match(tool, /route\('\*\*\/\*', r => r\.abort\(\)\)/);
+});
+
+test('R8 — the hero: the athlete line, three steps, « Create my notebook » then « See a demo »; Claude Code is in Installation', () => {
+  const hero = heroOf(html);
+  const order = ['data-k="h1"', 'data-k="hp.1"', 'data-k="hp.2"', 'data-k="hp.3"', 'data-k="cta"', 'data-k="a.demo"'].map(k => hero.indexOf(k));
+  assert.ok(order.every(i => i > 0), 'all in the hero');
+  assert.deepEqual([...order].sort((a, b) => a - b), order, 'in that order');
+  assert.match(hero, /<a class="lp-btn" href="#lp-carnet" data-k="cta">/, 'one filled action');
+  assert.match(hero, /<a class="lp-btn lp-quiet" href="#demo" id="lp-demo" data-k="a.demo">/);
+  assert.doesNotMatch(hero, /data-k="(?:sub|cta2|fit)"/);
+  forAthletes(hero.replace(/<[^>]+>/g, ' '), 'hero markup');
+  const {DICT} = landing().RBL;
+  for (const l of ['fr', 'en']) {
+    for (const k of ['h1', 'hp.1', 'hp.2', 'hp.3', 'hp.l', 'cta', 'a.demo', 'beta']) forAthletes(DICT[l][k], `${l} ${k}`);
+    for (const k of ['sub', 'cta2', 'fit']) assert.equal(DICT[l][k], undefined, `${l}: ${k} retired`);
+    assert.match(DICT[l]['inst.k'], /Claude Code/);
+    assert.match(DICT[l]['inst.k'], /<span class="lp-slash">\/skill<\/span>/);
+  }
+  assert.deepEqual(['hp.1', 'hp.2', 'hp.3'].map(k => DICT.en[k]), ['Share a video', 'It becomes a sheet', 'Practise it']);
+  assert.deepEqual(['hp.1', 'hp.2', 'hp.3'].map(k => DICT.fr[k]), ['Partage une vidéo', 'Elle devient une fiche', 'Entraîne-toi']);
+  const install = html.slice(html.indexOf('id="lp-install"'), html.indexOf('id="lp-installList"'));
+  assert.match(install, /data-k="inst\.k"/, 'the /skill line now opens the Installation section');
+});
+
+test('R8 — <title> and the description follow the landing language; an app page keeps its own title', () => {
+  const page = landing({language: 'fr-FR'});
+  const {DICT} = page.RBL;
+  assert.equal(page.document.title, DICT.fr['head.title']);
+  assert.equal(page.description.attrs.content, DICT.fr['head.desc']);
+  page.RBL.setLang('en');
+  assert.equal(page.document.title, DICT.en['head.title']);
+  assert.equal(page.description.attrs.content, DICT.en['head.desc']);
+  page.RBL.setLang('fr');
+  assert.equal(page.document.title, DICT.fr['head.title']);
+  const app = landing({language: 'en', title: 'Kicks du mardi · Reelbook'});
+  app.RBL.setLang('fr');
+  assert.equal(app.document.title, 'Kicks du mardi · Reelbook', 'the app\'s own title is not replaced');
+  assert.equal(app.description.attrs.content, DICT.fr['head.desc']);
+});
+
+test('R8 — « See a demo » changes the address (the app shows #demo); the landing\'s own links scroll', () => {
+  const page = landing({language: 'en'});
+  const intro = page.byId('intro');
+  const link = href => ({getAttribute: k => k === 'href' ? href : null});
+  const clickLink = href => {
+    let prevented = false;
+    intro.listeners.click({preventDefault() { prevented = true; }, target: {closest: sel => sel === 'a[href^="#"]' ? link(href) : null}});
+    return prevented;
+  };
+  assert.equal(clickLink('#demo'), false, '#demo is left to the browser: the hash changes');
+  assert.equal(clickLink('#lp-carnet'), true, 'in-page: scrolled, the hash stays');
 });

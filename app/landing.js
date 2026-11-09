@@ -27,7 +27,7 @@
       "foot": "Les fiches personnelles gardent le lien vers leur vidéo et leur auteur. Les visuels de cette page sont des démonstrations générées. Reelbook est open source, sous licence MIT : <a href=\"https://github.com/lt20/reelbook\" target=\"_blank\" rel=\"noopener\">github.com/lt20/reelbook</a>.",
       "cta": "Créer mon carnet",
       "c.p": "Tes vidéos de technique, enfin prêtes pour l’entraînement. Gratuit pendant la bêta, 50 places.",
-      "d4.p": "Ouvre la fiche ou la séance sur ton téléphone : le geste d’abord, en images, puis les détails. Coche « Fait aujourd’hui ».",
+      "d4.p": "Ouvre la fiche ou la séance sur ton téléphone : le geste d’abord, en images, puis les détails. Touche « Noter ».",
       "d4.v": "Entraîne-toi",
       "d3.p": "Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets.",
       "d3.v": "Organise",
@@ -37,8 +37,8 @@
       "d1.v": "Envoie",
       "d.h": "Au quotidien.",
       "i3.cta": "Ajouter le raccourci",
-      "i3.p2": "Sur Android, colle simplement le lien dans l’app.",
-      "i3.p": "Mets Reelbook sur ton écran d’accueil, puis le raccourci « Envoyer à Reelbook » dans le menu Partager de l’iPhone.",
+      "i3.p2": "Sur Android, une fois l’app installée, partage la vidéo à Reelbook depuis le menu Partager.",
+      "i3.p": "Mets Reelbook sur ton écran d’accueil, puis le raccourci « Add to Reelbook » dans le menu Partager de l’iPhone.",
       "i3.h": "Ajoute Reelbook à ton téléphone",
       "i2.src": "Lire le script avant de le lancer ↗",
       "i2.copy": "Copier la ligne",
@@ -50,7 +50,7 @@
       "i1.bd": "Ton propre projet, tes limites. Un fichier SQL à lancer, puis colle l’adresse et la clé.",
       "i1.b": "Sur mon Supabase",
       "wl.cta": "Me prévenir",
-      "wl.c": "J’accepte que Reelbook garde mon prénom et mon e-mail pour me prévenir d’une place libre, et rien d’autre. Effacés à mon inscription ou sur simple demande.",
+      "wl.c": "J’accepte que Reelbook garde mon prénom, mon e-mail, le lien qui m’a amené et, s’il y en a une, la séance qu’un ami m’a partagée, pour me prévenir d’une place libre et savoir quel lien m’a amené, et rien d’autre. Effacés à mon inscription ou sur simple demande.",
       "wl.e": "E-mail",
       "wl.n": "Prénom",
       "wl.p": "Aucun compte n’est créé ici : laisse ton prénom et ton e-mail, on te prévient dès qu’une place se libère.",
@@ -78,7 +78,7 @@
       "r1.h": "Tu envoies la vidéo",
       "how.p": "<strong class=\"lp-brand\">Reelbook</strong> est un skill pour Claude Code. Avec l’extension Claude in Chrome, il ouvre les vidéos que tu lui as envoyées, les découpe en séquence d’images et range chaque fiche dans le bon carnet.",
       "how.h": "Un skill Claude fait le travail.",
-      "v4.p": "Les nouvelles fiches t’attendent en haut de l’accueil, celles que tu n’as jamais essayées remontent d’elles-mêmes, et chaque « Fait aujourd’hui » s’ajoute au compteur de la fiche.",
+      "v4.p": "Les nouvelles fiches t’attendent en haut de l’accueil, celles que tu n’as jamais essayées remontent d’elles-mêmes, et chaque « Noter » s’ajoute au compteur de la fiche.",
       "v4.h": "Ta progression, fiche par fiche.",
       "v3.p": "Pioche dans tous tes carnets et mélange-les : la technique, la mobilité, l’échauffement dans la même séance. Mets les exercices dans l’ordre, donne à chacun son dosage, puis suis la séance fiche après fiche.",
       "v3.h": "Tes fiches font tes séances.",
@@ -114,7 +114,7 @@
       "ui.sheets": "{n} fiches",
       "ui.devices": "6 carnets · 89 fiches, sur ton téléphone et sur ta tablette.",
       "ui.session": "Séance",
-      "ui.done": "Fait aujourd’hui",
+      "ui.done": "Noter",
       "ui.new": "Nouveau",
       "ui.nw.h": "Nouveautés",
       "ui.nw.p": "Arrivées ces derniers jours, pas encore ouvertes.",
@@ -162,7 +162,7 @@
       "v3.h": "Sheets become sessions.",
       "v3.p": "Pick from all your notebooks and mix them: technique, mobility and warm-up in the same session. Put the exercises in order, give each one its dose, then follow the session sheet by sheet.",
       "v4.h": "Your progress, sheet by sheet.",
-      "v4.p": "New sheets wait at the top of the home page, the ones you’ve never tried resurface on their own, and every “Done today” adds to the sheet’s count.",
+      "v4.p": "New sheets wait at the top of the home page, the ones you’ve never tried resurface on their own, and every “Log” adds to the sheet’s count.",
       "how.h": "A Claude skill does the work.",
       "how.p": "<strong class=\"lp-brand\">Reelbook</strong> is a skill for Claude Code. With the Claude in Chrome extension, it opens the videos you sent, cuts each one into a sequence of frames and files each sheet in the right notebook.",
       "r1.h": "You send the video",
@@ -188,7 +188,7 @@
       "wl.p": "No account is created here: leave your first name and email, we’ll let you know as soon as a spot opens.",
       "wl.n": "First name",
       "wl.e": "Email",
-      "wl.c": "I agree that Reelbook keeps my first name and email to tell me when a spot opens, and for nothing else. Deleted when I sign up or whenever I ask.",
+      "wl.c": "I agree that Reelbook keeps my first name, my email, the link that brought me and, if any, the session a friend shared with me, to tell me when a spot opens and to know which link brought me, and for nothing else. Deleted when I sign up or whenever I ask.",
       "wl.cta": "Notify me",
       "i1.b": "On my own Supabase",
       "i1.bd": "Your own project, your limits. Run one SQL file, then paste the URL and key.",
@@ -199,8 +199,8 @@
       "i2.copy": "Copy the line",
       "i2.pw": "Paste this line into PowerShell. It installs the <code>/reelbook</code> skill and links it to your account.",
       "i3.h": "Add it to your phone",
-      "i3.p": "Put Reelbook on your home screen, then the “Send to Reelbook” shortcut in the iPhone Share menu.",
-      "i3.p2": "On Android, just paste the link in the app.",
+      "i3.p": "Put Reelbook on your home screen, then the “Add to Reelbook” shortcut in the iPhone Share menu.",
+      "i3.p2": "On Android, once the app is installed, share the video to Reelbook from the Share menu.",
       "i3.cta": "Add the shortcut",
       "d.h": "Day to day.",
       "d1.v": "Send",
@@ -210,7 +210,7 @@
       "d3.v": "Organise",
       "d3.p": "Move a sheet to another group, add your notes, build a session from several notebooks.",
       "d4.v": "Train",
-      "d4.p": "Open the sheet or the session on your phone: the move first, in pictures, then the details. Tick “Done today”.",
+      "d4.p": "Open the sheet or the session on your phone: the move first, in pictures, then the details. Tap “Log”.",
       "c.p": "Your technique videos, ready for training at last. Free during the beta, 50 spots.",
       "foot": "Personal sheets keep the link to their video and author. The visuals on this page are generated demonstrations. Reelbook is open source, under the MIT licence: <a href=\"https://github.com/lt20/reelbook\" target=\"_blank\" rel=\"noopener\">github.com/lt20/reelbook</a>.",
       "oss.p": "<b>Reelbook is open source.</b> The skill, the app and the server are public on GitHub, under the MIT licence: you can read what you install, and host it yourself.",
@@ -226,7 +226,7 @@
       "ui.sheets": "{n} sheets",
       "ui.devices": "6 notebooks · 89 sheets, on your phone and on your tablet.",
       "ui.session": "Session",
-      "ui.done": "Done today",
+      "ui.done": "Log",
       "ui.new": "New",
       "ui.nw.h": "New",
       "ui.nw.p": "Arrived in the last few days, not opened yet.",
@@ -359,6 +359,28 @@
   const LIB = [["fight","Fight techniques",2],["dance","Dance",5],["pole","Pole dance",5],["yoga","Yoga & stretching",1],["pilates","Pilates",5],["barre","Barre",5],["strength","Strength",0],["climb","Climbing & bouldering",4],["kitesurf","Kitesurf",3],["surf","Surfing",3],["run","Running",4],["racket","Tennis & padel",4],["kitefoil","Kitefoil",3],["wingfoil","Wingfoil",3],["wakeboard","Wakeboard",3],["swim","Swimming",3],["bike","Cycling",4],["hike","Hiking & trail",4],["snow","Ski & snowboard",4],["ride","Horse riding",4],["golf","Golf",4],["mobility","Mobility & rehab",1],["prenatal","Prenatal & postnatal",5],["floor","Pelvic floor & core",5],["breath","Breathwork & meditation",1],["cook","Cooking",6],["nutrition","Nutrition & meal prep",6],["beauty","Beauty & skincare",7],["crafts","Sewing & crafts",7]];
   const PAL = ["#5f7d1a","#3f8f5f","#b4432f","#1d7a8c","#c2651d","#b23a6e","#8a6a12","#6b4fa3"];
   // @gen-end
+  // P8 R8: the front door speaks to athletes. The hero's headline is the athlete's benefit, then three steps (the
+  // same as the link-preview picture, tools/og-image.mjs), then « Create my notebook » and « See a demo ». The mockup's
+  // « /skill Claude Code » headline moves down to the Installation section (inst.k); the hero's line, its « See how
+  // it works » and its « You need Claude Pro… » leave (RETIRED: Installation already says what it takes).
+  // head.title / head.desc are the <title> and description of index.html, in the landing's language.
+  const FRONT = {
+    fr: {
+      'head.title': 'Reelbook · Tes vidéos d’entraînement, en carnet qu’on suit vraiment',
+      'head.desc': 'Partage une vidéo d’entraînement repérée sur Instagram, TikTok, YouTube ou Facebook : elle devient une fiche image par image, avec les points clés et le dosage. Range tes fiches en carnets, compose tes séances, entraîne-toi.',
+      'h1': 'Tes vidéos d’entraînement, en carnet qu’on suit vraiment.',
+      'hp.1': 'Partage une vidéo', 'hp.2': 'Elle devient une fiche', 'hp.3': 'Entraîne-toi', 'hp.l': 'En trois temps',
+      'inst.k': 'Sous le capot, un <span class="lp-slash">/skill</span> Claude Code transforme tes vidéos de technique en carnet d’entraînement.'
+    },
+    en: {
+      'head.title': 'Reelbook · Your saved workout videos, turned into a training notebook',
+      'head.desc': 'Share a workout video you spotted on Instagram, TikTok, YouTube or Facebook: it becomes a frame-by-frame sheet with the key points and the dose. Keep your sheets in notebooks, build your sessions, practise.',
+      'h1': 'Your saved workout videos, turned into a training notebook.',
+      'hp.1': 'Share a video', 'hp.2': 'It becomes a sheet', 'hp.3': 'Practise it', 'hp.l': 'In three steps',
+      'inst.k': 'Under the hood, a Claude Code <span class="lp-slash">/skill</span> turns your technique videos into a training notebook.'
+    }
+  };
+  const RETIRED = ['sub', 'cta2', 'fit'];
   // The screens around the landing: sign-up / sign-in (a.*), #setup (s.*), #welcome (w.*), aria labels the mockup
   // leaves in French (aria.*). English is the app's copy as it was; French follows the mockup's tone (tu).
   const APP = {
@@ -456,6 +478,9 @@
       'au.rs.none': 'Pas de code dans quelques minutes, même dans les indésirables ? Cette adresse n’a peut-être pas de compte : {link}.',
       'au.rs.create': 'crée-le',
       'au.rs.ok': 'Mot de passe changé pour <b>{email}</b>.',
+      // P8 R12: a share link's session kept through the auth screens
+      'au.share.open': 'Ouvrir « {title} »', 'au.share.invite': 'Invitation de {who} : tu passes la liste d’attente.',
+      'au.share.next': 'La séance de {who} s’ouvre juste après.', 'au.share.next0': 'La séance s’ouvre juste après.',
       'a.badUrl': 'Cette URL n’est pas valide.', 'a.badProto': 'Indique une URL de projet en http ou https.',
       'a.badKey': 'Cela ne ressemble pas à une clé anon.',
       's.h1': 'Tes vidéos, en fiches',
@@ -486,19 +511,26 @@
       'w.ph.t': 'Ton téléphone',
       'w.ph.1': 'Mets Reelbook sur ton écran d’accueil et connecte-toi là.',
       'w.ph.1d': 'Ouvre Reelbook sur ton téléphone, mets-le sur l’écran d’accueil et connecte-toi là.',
-      'w.ph.2': 'Ajoute le raccourci « Envoyer à Reelbook » au menu Partager de l’iPhone. Sur Android, colle le lien dans l’app.',
+      // R10: the phone step per platform
+      'w.ph.2i': 'Ajoute le raccourci « Add to Reelbook » au menu Partager de l’iPhone.',
+      'w.ph.2a': 'Installe l’app, puis partage n’importe quel reel vers Reelbook.',
+      'w.ph.2a2': 'Dans Instagram, TikTok ou YouTube : Partager › Reelbook. Le lien s’ouvre dans Reelbook, prêt à mettre en file.',
+      'w.ph.2b': 'Sur iPhone, ajoute le raccourci « Add to Reelbook » au menu Partager. Sur Android, installe l’app, puis partage n’importe quel reel vers Reelbook.',
+      'w.ph.inst': 'Installer l’app',
       'w.ph.tick': 'C’est fait sur mon téléphone', 'w.ph.done': 'Fait sur ce téléphone.', 'w.ph.donepc': 'Fait sur ton téléphone.',
       'w.fs.t': 'Ta première fiche',
       'w.fs.p': 'Partage une vidéo depuis Instagram, TikTok, YouTube ou Facebook, ou touche <b>+ Add a video</b> et colle le lien. Puis, sur ton ordinateur, tape <code>/reelbook</code> dans Claude Code : la fiche arrive dans tes carnets.',
       'w.fs.done1': '1 fiche dans tes carnets. La suite : <b>+ Add a video</b> ou le raccourci.',
       'w.fs.donen': '{n} fiches dans tes carnets. La suite : <b>+ Add a video</b> ou le raccourci.',
+      'w.fs.done1a': '1 fiche dans tes carnets. La suite : <b>+ Add a video</b>, ou partage un reel vers Reelbook.',
+      'w.fs.donena': '{n} fiches dans tes carnets. La suite : <b>+ Add a video</b>, ou partage un reel vers Reelbook.',
       'w.gh': 'Comment ça marche',
       'w.g1h': 'Sur le téléphone, envoie',
       'w.g1p': 'Une technique te plaît dans ton fil : Partager, Reelbook. La vidéo attend dans la file. Le téléphone ne fait rien de plus.',
       'w.g2h': 'Sur l’ordinateur, lance',
       'w.g2p': 'Tape <code>/reelbook</code> dans Claude Code quand tu veux. Garde Chrome ouvert au premier plan, connecté à Instagram, TikTok ou Facebook si tes vidéos en viennent (YouTube ne demande rien). Claude regarde chaque vidéo et écrit la fiche : photos, pourquoi, points clés, étapes dans l’ordre. Sur un Mac, il peut aussi tourner chaque nuit : <code>tools/nightly.sh install</code>.',
       'w.g3h': 'À l’entraînement, ouvre la fiche',
-      'w.g3p': 'Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets. Sur le tapis, ouvre la fiche : le geste d’abord, en images. Coche <b>Done today</b>.'
+      'w.g3p': 'Déplace une fiche d’un groupe à l’autre, ajoute tes notes, compose une séance à partir de plusieurs carnets. Sur le tapis, ouvre la fiche : le geste d’abord, en images. Touche <b>Noter</b>.'
     },
     en: {
       'a.in': 'Sign in', 'a.up': 'Create an account', 'a.submitUp': 'Create account', 'a.have': 'I already have an account',
@@ -594,6 +626,9 @@
       'au.rs.none': 'No code after a few minutes, junk folder included? This address may have no account: {link}.',
       'au.rs.create': 'create one',
       'au.rs.ok': 'Password changed for <b>{email}</b>.',
+      // P8 R12: a share link's session kept through the auth screens
+      'au.share.open': 'Open “{title}”', 'au.share.invite': '{who}’s invite: you skip the waiting list.',
+      'au.share.next': '{who}’s session opens right after.', 'au.share.next0': 'The session opens right after.',
       'a.badUrl': 'That URL is not valid.', 'a.badProto': 'Use an http or https project URL.',
       'a.badKey': 'That does not look like an anon key.',
       's.h1': 'Your videos, as sheets',
@@ -624,23 +659,31 @@
       'w.ph.t': 'Your phone',
       'w.ph.1': 'Put Reelbook on your home screen and sign in there.',
       'w.ph.1d': 'Open Reelbook on your phone, put it on your home screen and sign in there.',
-      'w.ph.2': 'Add the “Send to Reelbook” shortcut to the iPhone Share menu. On Android, paste the link in the app.',
+      // R10: the phone step per platform
+      'w.ph.2i': 'Add the “Add to Reelbook” shortcut to the iPhone Share menu.',
+      'w.ph.2a': 'Install the app, then share any reel to Reelbook.',
+      'w.ph.2a2': 'In Instagram, TikTok or YouTube: Share › Reelbook. The link opens in Reelbook, ready to queue.',
+      'w.ph.2b': 'On an iPhone, add the “Add to Reelbook” shortcut to the Share menu. On Android, install the app, then share any reel to Reelbook.',
+      'w.ph.inst': 'Install the app',
       'w.ph.tick': 'Done on my phone', 'w.ph.done': 'Done on this phone.', 'w.ph.donepc': 'Done on your phone.',
       'w.fs.t': 'Your first sheet',
       'w.fs.p': 'Share a video from Instagram, TikTok, YouTube or Facebook, or tap <b>+ Add a video</b> and paste the link. Then type <code>/reelbook</code> in Claude Code on your computer: the sheet lands in your notebooks.',
       'w.fs.done1': '1 sheet in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.',
       'w.fs.donen': '{n} sheets in your notebooks. From now on: <b>+ Add a video</b> or the shortcut.',
+      'w.fs.done1a': '1 sheet in your notebooks. From now on: <b>+ Add a video</b>, or share a reel to Reelbook.',
+      'w.fs.donena': '{n} sheets in your notebooks. From now on: <b>+ Add a video</b>, or share a reel to Reelbook.',
       'w.gh': 'How it works',
       'w.g1h': 'On your phone, send',
       'w.g1p': 'A technique catches your eye in your feed: Share, Reelbook. The video waits in the queue. That’s all the phone does.',
       'w.g2h': 'On your computer, run',
       'w.g2p': 'Type <code>/reelbook</code> in Claude Code whenever you like. Keep Chrome open in the foreground, signed in to Instagram, TikTok or Facebook if your videos come from there (YouTube needs nothing). Claude watches each video and writes the sheet: photos, why, key points, the steps in order. On a Mac it can also run every night: <code>tools/nightly.sh install</code>.',
       'w.g3h': 'When you train, open the sheet',
-      'w.g3p': 'Move a sheet to another group, add your notes, build a session from several notebooks. On the mat, open the sheet: the move first, in pictures. Tick <b>Done today</b>.'
+      'w.g3p': 'Move a sheet to another group, add your notes, build a session from several notebooks. On the mat, open the sheet: the move first, in pictures. Tap <b>Log</b>.'
     }
   };
   // s.blurb: English is the blurb of config.js (a fork writes its own); French only replaces it.
-  const DICT = {fr: Object.assign({}, LANDING.fr, APP.fr), en: Object.assign({}, LANDING.en, APP.en)};
+  const DICT = {fr: Object.assign({}, LANDING.fr, FRONT.fr, APP.fr), en: Object.assign({}, LANDING.en, FRONT.en, APP.en)};
+  RETIRED.forEach(k => { delete DICT.fr[k]; delete DICT.en[k]; });
   delete DICT.en['s.blurb'];
 
   const STORE = 'rb.lang', EX_STORE = 'rb.landing.ex';
@@ -804,6 +847,10 @@
     all('[data-k]').forEach(el => { const v = t(el.getAttribute('data-k')); if (v != null) el.innerHTML = v; });
     all('[data-ka]').forEach(el => { const v = t(el.getAttribute('data-ka')); if (v != null) el.setAttribute('aria-label', v); });
     langButtons().forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang)));
+    // R8: <title> follows while it is the page's own (an app page writes its own title); the description always
+    if (doc && [DICT.fr['head.title'], DICT.en['head.title']].indexOf(doc.title) >= 0) doc.title = t('head.title');
+    const desc = doc && doc.querySelector ? doc.querySelector('meta[name="description"]') : null;
+    if (desc && desc.setAttribute) desc.setAttribute('content', t('head.desc'));
     if ($('intro')) { renderLib(); renderAll(); paintSeats(); }
   };
   const setLang = l => {
@@ -827,8 +874,8 @@
   if (intro) {
     all('#intro .lp-ex button').forEach(b => on(b, 'click', () => setExample(b.getAttribute('data-ex'))));
     on($('lp-thumbs'), 'click', ev => { const b = ev.target && ev.target.closest ? ev.target.closest('button[data-i]') : null; if (b) { stop(); live('polite'); show(+b.getAttribute('data-i')); } });
-    // in-page links scroll; the app routes on location.hash, so the hash never changes here. #signin, #signup and
-    // #shortcut are the app's (its listeners on #intro-signin, #intro-signup and #intro-shortcut).
+    // in-page links scroll; the app routes on location.hash, so the hash never changes here, except for #demo. #signin,
+    // #signup and #shortcut are the app's (its listeners on #intro-signin, #intro-signup and #intro-shortcut).
     on(intro, 'click', ev => {
       const pp = ev.target && ev.target.closest ? ev.target.closest('#lp-pp') : null;
       if (pp) {
@@ -838,8 +885,9 @@
       }
       const a = ev.target && ev.target.closest ? ev.target.closest('a[href^="#"]') : null;
       if (!a) return;
-      ev.preventDefault();
       const h = a.getAttribute('href'), behavior = reduce ? 'auto' : 'smooth';
+      if (h === '#demo') return; // R8: the hero's « See a demo » is the app's route: the hash changes, the app shows #demo
+      ev.preventDefault();
       if (h === '#lp-top') { if (win.scrollTo) win.scrollTo({top: 0, behavior}); return; }
       const target = h.indexOf('#lp-') === 0 ? $(h.slice(1)) : null;
       if (target && target.scrollIntoView) target.scrollIntoView({behavior, block: 'start'});

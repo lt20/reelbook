@@ -12,7 +12,8 @@ const tables = (sheets, notes = [], sessions = []) => ({
   user_themes: [{id: 'strength', title: 'Strength', groups: [], builtin: true, position: 0}],
   sheets, sessions, notes, requests: []
 });
-const open = async (opts) => { const page = await app({...signedIn, ...opts}); await settle(); return page; };
+// P8 R4: the home page's field is on the search page (#search), opened by the loupe
+const open = async (opts) => { const page = await app({...signedIn, hash: '#search', ...opts}); await settle(); return page; };
 const search = async (page, query) => {
   page.element('q').value = query;
   await page.fire('q', 'input');
@@ -31,7 +32,7 @@ test('a backend without search_text: one 42703, then the sheets read as before, 
   assert.doesNotMatch(asked[1], /search_text/);
   assert.doesNotMatch(page.element('count').textContent, /Could not load/);
   assert.deepEqual(slugs(await search(page, 'mat')), ['mat']);
-  assert.match(await search(page, 'tapis'), /Nothing matches « tapis »/);
+  assert.match(await search(page, 'tapis'), /No sheet for “tapis”/);
 });
 
 test('a backend with the column reads search_text in the one sheets read, and the notes with their body', async () => {
@@ -93,10 +94,10 @@ test('a note whose text changes is saved in the cached catalogue: the new words 
   const offline = {error: {message: 'offline'}, status: 0};
   const again = await open({idb, tables: tables([]), failing: {sheets: offline, notes: offline, sessions: offline}});
   assert.match(await search(again, 'tapis'), /in your note/);
-  assert.match(await search(again, 'genoux'), /Nothing matches/);
+  assert.match(await search(again, 'genoux'), /No sheet for/);
 });
 
-test('in a notebook the empty state names it and still suggests a body part or a piece of kit', async () => {
+test('in a notebook the empty state names it and offers Add a video (P8 R4)', async () => {
   const page = await open({tables: tables([sheet('a', {title: 'Floor'})]), hash: '#strength'});
-  assert.match(await search(page, 'zzz'), /Nothing matches « zzz » in this notebook\. Try a body part or a piece of kit\./);
+  assert.match(await search(page, 'zzz'), /No sheet for “zzz” in this notebook\.<\/p><button[^>]*data-add-video[^>]*>Add a video</);
 });

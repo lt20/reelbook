@@ -23,8 +23,14 @@
                                 A backend with quotas (L29) may refuse a new sheet or photo: the limit is said in plain
                                 words and, with --request, that request goes to error with the same message
     rb.py done <id> --slug S    close a request once its sheet or session is published
-    rb.py error <id> --note T   flag a request that could not be processed (a « Redo: » note keeps its first
-                                line, T goes after it: Retry in the app queues the correction again)
+    rb.py error <id> [--reason R] --note T
+                                flag a request that could not be processed (a « Redo: » note keeps its first
+                                line, T goes after it: Retry in the app queues the correction again). R says who
+                                can act (requests.reason, P8 R3): signin_required, quota, needs_computer, private,
+                                removed, restricted, not_video, fetch_blocked, processing_failed, daily_cap, other.
+                                A reason the computer retries (fetch_blocked, processing_failed, daily_cap) puts the
+                                request back in the queue once; failing again, it is an error with reason « other ».
+                                A backend without the column: the error is written without a reason
     rb.py list [--since ISO]    list published sheets and sessions; --since: only those added at or after ISO
                                 (UTC, e.g. 2026-11-03T02:00:00Z), oldest first, video sessions only, without the
                                 exercise sheets of a session listed too (nightly.sh: its « 2 new sheets: … » notice)
@@ -334,7 +340,16 @@ def _published_from(cfg, url):
 def _patch_request(cfg, rid, patch, expect=None):
     params = {"id": f"eq.{rid}"}
     if expect: params["status"] = f"eq.{expect}"
-    rows = rest(cfg, "PATCH", "requests", patch, prefer="return=representation", params=params)
+    try:
+        rows = rest(cfg, "PATCH", "requests", patch, prefer="return=representation", params=params, tolerate=(400,))
+    except RbHTTPError as e:
+        # P8 R3: a backend without requests.reason (PostgREST PGRST204, HTTP 400) gets the same write without it
+        if "reason" not in patch or not _no_column(e, "reason"): die(f"PATCH requests → {e}")
+        patch = {k: v for k, v in patch.items() if k != "reason"}
+        if patch.get("status") == "queued": patch.update(status="error", processed_at=now())  # no trace of a first try
+        print("rb: this backend has no requests.reason column: the error is written without its reason "
+              "(re-run supabase/schema.sql, see docs/own-supabase.md)", file=sys.stderr)
+        rows = rest(cfg, "PATCH", "requests", patch, prefer="return=representation", params=params)
     if not rows:
         die(f"request {rid} not found" + (f" with status {expect}" if expect else ""))
     print(json.dumps(rows[0], ensure_ascii=False))
@@ -347,16 +362,47 @@ def cmd_done(args):
     if len(args) < 3 or args[1] != "--slug": die("usage: rb.py done <id> --slug <slug>")
     _patch_request(session(), args[0], {"status": "done", "slug": args[2], "processed_at": now()})
 
-def _error_request(cfg, rid, note):
+# requests.reason (P8 R3, supabase/schema.sql): who can act on a request that failed. The same list as the check of
+# the column and as the app (REASONS in app/index.html). The computer tries the RETRY ones again by itself.
+REASONS = ("signin_required", "quota", "needs_computer", "private", "removed", "restricted", "not_video",
+           "fetch_blocked", "processing_failed", "daily_cap", "other")
+RETRY_REASONS = ("fetch_blocked", "processing_failed", "daily_cap")
+
+def _request_before(cfg, rid):
+    """The request's note and reason before an error is written; without the reason column (PostgREST 42703, HTTP
+    400), its note only: the dict then has no "reason" key."""
+    try:
+        was = rest(cfg, "GET", "requests", params={"id": f"eq.{rid}", "select": "note,reason"}, tolerate=(400,)) or []
+    except RbHTTPError as e:
+        if not _no_column(e, "reason"): die(f"GET requests → {e}")
+        was = rest(cfg, "GET", "requests", params={"id": f"eq.{rid}", "select": "note"}) or []
+    return was[0] if was else {}
+
+def _error_request(cfg, rid, note, reason=None):
+    was = _request_before(cfg, rid)
     # a correction keeps its « Redo: … » line first: the app shows the error, and Retry queues the instruction again
-    was = rest(cfg, "GET", "requests", params={"id": f"eq.{rid}", "select": "note"}) or []
-    redo = str((was[0].get("note") if was else "") or "").split("\n")[0]
+    redo = str(was.get("note") or "").split("\n")[0]
     if redo.startswith("Redo:"): note = f"{redo}\n{note}"
-    _patch_request(cfg, rid, {"status": "error", "note": note, "processed_at": now()})
+    patch = {"status": "error", "note": note, "processed_at": now(), "reason": reason}
+    if reason in RETRY_REASONS and "reason" in was:
+        if was.get("reason") in RETRY_REASONS:
+            patch["reason"] = "other"   # it failed on its second try too: the user sees it (Try again, Report this)
+        else:
+            # the next run tries it once more: the app shows it as Not started; the reason marks the first try
+            patch.update(status="queued", processed_at=None)
+    _patch_request(cfg, rid, patch)
 
 def cmd_error(args):
-    if len(args) < 3 or args[1] != "--note": die("usage: rb.py error <id> --note <text>")
-    _error_request(session(), args[0], " ".join(args[2:]))
+    usage = "usage: rb.py error <id> [--reason <reason>] --note <text>"
+    if not args: die(usage)
+    rid, opts, reason = args[0], list(args[1:]), None
+    if "--reason" in opts:
+        i = opts.index("--reason")
+        if i + 1 >= len(opts): die(usage)
+        reason = opts[i + 1]; del opts[i:i + 2]
+        if reason not in REASONS: die(f"unknown reason '{reason}': one of {', '.join(REASONS)}")
+    if len(opts) < 2 or opts[0] != "--note": die(usage)
+    _error_request(session(), rid, " ".join(opts[1:]), reason)
 
 def now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -621,7 +667,7 @@ def _quota_stop(cfg, limit, added=()):
     _remove_files(cfg, list(added))
     msg = quota_message(limit)
     if REQUEST_ID:
-        _error_request(cfg, REQUEST_ID, msg)
+        _error_request(cfg, REQUEST_ID, msg, reason="quota")
     die(msg)
 
 def _publish_sheet(cfg, d, meta, q=None):

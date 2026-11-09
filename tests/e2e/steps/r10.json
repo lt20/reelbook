@@ -1,0 +1,10 @@
+[
+  {"name": "r10-01-share-link", "query": "title=Reel&text=Check+this+out+https%3A%2F%2Fwww.instagram.com%2Freel%2FEXAMPLE0001%2F%3Figsh%3Dabc", "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
+   "actions": [{"wait": "#portal >> text=Strength"}, {"wait": "#f-url"}, {"wait": 300}]},
+  {"name": "r10-02-share-no-link", "query": "text=A+great+article+https%3A%2F%2Fexample.com%2Fpost", "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
+   "actions": [{"wait": "#portal >> text=Strength"}, {"wait": "#f-err"}, {"wait": 300}]},
+  {"name": "r10-03-welcome-android", "hash": "welcome", "query": "empty=all&new", "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
+   "full": true, "actions": [{"wait": "#w-steps li"}, {"wait": 300}]},
+  {"name": "r10-04-welcome-iphone", "hash": "welcome", "query": "empty=all&new", "full": true, "actions": [{"wait": "#w-steps li"}, {"wait": 300}]},
+  {"name": "r10-05-settings-shortcut-today", "hash": "settings", "full": true, "actions": [{"wait": "#shortcut-section"}, {"scroll": "#shortcut-section"}]}
+]

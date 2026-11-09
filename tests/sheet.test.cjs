@@ -242,7 +242,11 @@ test('the player on a technique sheet: step photos without the mistake, no dose 
   // the player's dose comes from the session item only (playAct: RS.doseLabel(it), it.dose), never from the sheet
   const html = fs.readFileSync(path.join(__dirname, '../app/index.html'), 'utf8');
   assert.match(html, /const big = RS\.doseLabel\(it\), free = it \? it\.dose\.trim\(\) : '';/);
-  assert.doesNotMatch(html, /querySelector(All)?\(['"][^'"]*\.dose/, 'no sheet .dose grid is read by the app');
+  // R6: the one reader of a sheet's .dose grid is the « Send as text » preview (pageDose, copied as written), not the player
+  const reads = [...html.matchAll(/^.*querySelector(All)?\(['"][^'"]*\.dose.*$/gm)].map(m => m[0]);
+  assert.equal(reads.length, 1, 'no other sheet .dose grid is read by the app');
+  const at = html.indexOf(reads[0]), fn = html.lastIndexOf('const pageDose = () => {', at);
+  assert.ok(fn >= 0 && at - fn < 200, 'it is pageDose (share as text)');
 });
 
 test('a technique sheet without go / no-go box is arranged like a sheet; the go / no-go box alone is enough to move', () => {

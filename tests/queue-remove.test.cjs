@@ -13,7 +13,7 @@ const tables = () => ({user_themes: [], sheets: [], sessions: [], notes: [], req
   {id: 'waiting', status: 'queued', url: 'https://www.instagram.com/reel/waiting/', theme: null, note: null, created_at: new Date().toISOString(), processed_at: null}
 ]});
 const remove = async page => {
-  await page.fire('queue-toggle');
+  await page.fire('otw-band');
   await page.element('queue').listeners.click({target: {closest: s => s === '[data-del]' ? {dataset: {del: 'waiting'}, disabled: false} : null}});
   await settle();
 };
@@ -28,7 +28,7 @@ test('L4: the delete is sent when the toast ends, for that row only', async () =
   await settle();
   assert.deepEqual(deletes(page).map(c => c[3]), [[['id', 'waiting']]]);
   assert.equal(page.element('queue-undo').hidden, true);
-  assert.doesNotMatch(page.element('queue').innerHTML, /reel\/waiting/);
+  assert.doesNotMatch(page.element('queue').innerHTML, /data-row="waiting"/);
 });
 
 test('L4: a failed delete puts the row back with the reason', async () => {
@@ -38,15 +38,17 @@ test('L4: a failed delete puts the row back with the reason', async () => {
   await page.fire('queue-undo', 'animationend');
   await settle();
   assert.equal(deletes(page).length, 1);
-  assert.equal(page.element('queue-sec').hidden, false);
-  assert.match(page.element('queue').innerHTML, /reel\/waiting/);
+  assert.equal(page.element('otw-band').hidden, false);
+  assert.match(page.element('queue').innerHTML, /data-row="waiting"/);
   assert.match(page.element('queue').innerHTML, /Could not remove it: network down/);
 });
 
+// P8 R1: a read that fails is no longer silent: the band says so (see tests/otw.test.cjs).
 test('L4: a queue that cannot be read shows no row and does not throw', async () => {
   const page = await app({...signedIn, tables: tables(), failing: {requests: {error: {message: 'offline'}, status: 0}}});
   await settle();
-  assert.equal(page.element('queue-sec').hidden, true);
+  assert.doesNotMatch(page.element('queue').innerHTML, /data-row="waiting"/);
+  assert.match(page.element('otw-band').innerHTML, /Couldn't load your videos/);
 });
 
 // Coordinator's arbitration of Codex pass 4.
@@ -55,11 +57,14 @@ test('L4: Retry on a request the computer already moved (no row in error) re-rea
   // the backend answers the filtered update with no row: the request is no longer in error (e.g. done)
   const page = await app({...signedIn, tables: t, writes: {requests: {data: [], error: null}}});
   await settle();
-  await page.fire('queue-toggle');
-  await page.element('queue').listeners.click({target: {closest: s => s === '[data-retry]' ? {dataset: {retry: 'waiting'}, disabled: false} : null}});
+  await page.fire('otw-band');
+  // P8 R3: Retry is the failed row's fix, « Try again »; a request no longer in error goes back to the list
+  await page.element('queue').listeners.click({target: {closest: s => s === '[data-row]' ? {dataset: {row: 'waiting'}, disabled: false} : null}});
+  await page.element('otw-row').listeners.click({target: {closest: s => s === '[data-fixdone]' ? {dataset: {}} : null}});
   await settle();
+  assert.equal(page.element('otw-row').hidden, true, 'the list again');
   const html = page.element('queue').innerHTML;
-  assert.doesNotMatch(html, /Waiting/, 'not shown as queued again');
+  assert.doesNotMatch(html, /Not started/, 'not shown as queued again');
   assert.doesNotMatch(html, /Retry failed/);
   assert.equal(page.clients.at(-1).calls.filter(c => c[0] === 'update').length, 1);
 });

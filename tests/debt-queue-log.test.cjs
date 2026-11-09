@@ -11,12 +11,12 @@ const plain = v => JSON.parse(JSON.stringify(v)); // objects of the vm realm
 const waiting = () => ({id: 'waiting', status: 'queued', url: 'https://www.instagram.com/reel/waiting/', theme: null, note: null, created_at: new Date().toISOString(), processed_at: null});
 const queueTables = () => ({user_themes: [], sheets: [], sessions: [], notes: [], requests: [waiting()]});
 const remove = async page => {
-  await page.fire('queue-toggle');
+  await page.fire('otw-band');
   await page.element('queue').listeners.click({target: {closest: s => s === '[data-del]' ? {dataset: {del: 'waiting'}, disabled: false} : null}});
   await settle();
 };
 const deletes = page => page.clients.at(-1).calls.filter(c => c[0] === 'delete');
-const shows = page => /reel\/waiting/.test(page.element('queue').innerHTML) && page.element('queue-sec').hidden === false;
+const shows = page => /data-row="waiting"/.test(page.element('queue').innerHTML) && page.element('otw-band').hidden === false;
 
 // ---------- 1. a read sent before the DELETE answered, answering after it ----------
 

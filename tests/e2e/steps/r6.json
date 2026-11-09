@@ -1,0 +1,8 @@
+[
+  {"name": "r6-01-sheet-menu", "hash": "pompes-inclinees", "actions": [{"wait": "#view h1"}, {"click": "#nav-more"}, {"wait": "#nav-actions #nav-share"}], "allow": ["^http 404: .*/img/thumb\\.jpg$"], "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"},
+  {"name": "r6-02-sheet-share", "hash": "pompes-inclinees", "actions": [{"wait": "#view h1"}, {"wait": 400}, {"click": "#nav-more"}, {"click": "#nav-share"}, {"wait": "#share-dlg[open]"}], "allow": ["^http 404: .*/img/thumb\\.jpg$"], "why": "known app bug listed in smoke.json: the sheet header photo is first requested as img/thumb.jpg"},
+  {"name": "r6-03-session-share", "hash": "session/session-gainage-10-min", "actions": [{"wait": "#view h1"}, {"click": "#nav-more"}, {"click": "#nav-share"}, {"wait": "#share-dlg[open]"}]},
+  {"name": "r6-04-notebook-menu", "hash": "strength", "actions": [{"wait": "#groups section"}, {"click": "#nav-more"}, {"wait": "#nav-actions #nav-share"}]},
+  {"name": "r6-05-notebook-share", "hash": "strength", "actions": [{"wait": "#groups section"}, {"click": "#nav-more"}, {"click": "#nav-share"}, {"wait": "#share-dlg[open]"}]},
+  {"name": "r6-06-copied", "hash": "session/session-gainage-10-min", "actions": [{"wait": "#view h1"}, {"click": "#nav-more"}, {"click": "#nav-share"}, {"wait": "#share-dlg[open]"}, {"click": "#share-copy"}, {"wait": "#share-toast:not([hidden])"}]}
+]

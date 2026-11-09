@@ -50,7 +50,9 @@ test('L22 — session player translates Rest and Sets, marks French content, and
   const en = await open(english, '/play');
   assert.equal(fr.element('player').hidden, false);
   contentLang(fr.element('player').innerHTML, 'fr');
-  assert.match(fr.element('player').innerHTML, />Dose</);
+  // P8 R5: a dose with sets has « Set 1 of 2 » over it instead of « Dose », in the session's language
+  assert.match(fr.element('player').innerHTML, />Série 1 sur 2</);
+  assert.match(en.element('player').innerHTML, />Set 1 of 2</);
   assert.match(fr.element('player').innerHTML, /aria-label="Séries"/);
   assert.match(en.element('player').innerHTML, /aria-label="Sets"/);
   assert.equal(fr.element('play-finish').textContent, en.element('play-finish').textContent);
@@ -68,7 +70,7 @@ test('L22 — the player end screen keeps the session language and English inter
   assert.equal(en.element('view').hidden, false);
   contentLang(fr.element('view').innerHTML, 'fr');
   assert.doesNotMatch(en.element('view').innerHTML, /lang="fr"/);
-  for (const id of ['end-save', 'end-close']) assert.equal(fr.element(id).textContent, en.element(id).textContent);
+  for (const id of ['end-share-s', 'end-close']) assert.equal(fr.element(id).textContent, en.element(id).textContent);
 });
 
 test('L22 — an empty session has no translated exercise content', async () => {
