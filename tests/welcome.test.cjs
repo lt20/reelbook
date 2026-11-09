@@ -439,11 +439,13 @@ test('the steps are not redrawn when nothing changed (the focus keeps « Copied 
   assert.equal(page.element('w-steps').innerHTML, 'kept');
 });
 
-test('« Add the shortcut » goes to Settings', async () => {
+test('« Add the shortcut » goes to Settings › iPhone shortcut (P9 S: its own page)', async () => {
   const page = await open();
   await clickW(page, 'shortcut');
-  assert.equal(page.location.hash, '#settings');
+  assert.equal(page.location.hash, '#settings/shortcut');
   assert.equal(page.element('settings').hidden, false);
+  assert.equal(page.element('s-shortcut').hidden, false);
+  assert.equal(page.element('s-root').hidden, true);
 });
 
 // ---------- FR / EN ----------

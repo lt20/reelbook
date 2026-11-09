@@ -10,7 +10,10 @@
 //   ?empty=sheets,sessions,...      those tables start with no row (an empty account: ?empty=all)
 //   ?links=2                        requests: only the first 2 not done, queued (P8 R1: a new account with 2 links sent)
 //   ?fixes=2                        requests: adds that many « Something wrong? » fixes (P8 R20: note « Redo: … », slug the sheet)
+//   ?more                           P9 H: 8 notebooks, 5 sessions, videos on the way for every tile badge
+//   ?nbs=1                          P9 H: only the first n notebooks and what is theirs
 //   ?quota                          my_quota() answers (L29: the usage line of Settings); without it, PGRST202
+//   ?nb=cook                        adds that library notebook, empty (P9 S: Delete notebook); ?sckey: an iPhone shortcut key
 //   ?quota=full                     and a new link is refused: « quota: 10 links per day » (P0001, HTTP 400)
 //   ?confirm=off                    signUp gives a session at once (email confirmation off, today's hosted project)
 //   ?own                            nothing here: pick an own backend in the app; a code may be longer than 6 digits
@@ -46,6 +49,10 @@
     if (t === 'all') { for (const k of Object.keys(D)) if (k !== 'user_themes') D[k] = []; } else D[t] = [];
   }
   if (params.has('name')) U.user_metadata = {...(U.user_metadata || {}), share_name: 'Laurent'};
+  // P9 S: ?nb=cook adds that empty notebook (Notebook ⋯ › Delete notebook, active); ?sckey: an iPhone shortcut key
+  // made on 1 Nov, last used on 7 Nov (the line of Settings › iPhone shortcut)
+  if (params.get('nb')) D.user_themes = [...(D.user_themes || []), {id: params.get('nb'), title: null, description: '', groups: [], builtin: true, position: 9, created_at: '2026-11-08T10:00:00Z'}];
+  if (params.has('sckey')) D.capture_tokens = [{id: 'k1', label: 'iPhone', created_at: '2026-11-01T10:00:00Z', last_used_at: '2026-11-07T18:00:00Z', revoked_at: null}];
   // R11: the sender's side of the incoming share. Its two new sheets are taken out of this account (their photos stay
   // in files/, so the copy shows them under the same slugs); the session that held them goes too.
   const SHARE_TOKEN = 'PREVIEWshareToken00001', SENT = ['session-shadow-garde', 'session-shadow-esquives'];
@@ -95,6 +102,27 @@
       const s = (D.sheets || []).find(x => x.slug === slug); if (!s) continue;
       (D.requests = D.requests || []).push({id: 'fix-' + slug, url: (s.source || {}).url, status: 'queued', theme: s.theme, slug, note: 'Redo: ' + text, created_at: new Date(Date.now() - 3600e3).toISOString(), processed_at: null});
     }
+  }
+  // P9 H: ?more, a fuller account for the home page: 4 more notebooks (8 in all, one with a long name), 1 more session
+  // (5) made of sheets already there, and videos on the way for every badge (a count, a red dot); ?nbs=<n> keeps the
+  // first n notebooks and what belongs to them (an account with one notebook).
+  if (params.has('more')) {
+    const ago = h => new Date(Date.now() - h * 3600e3).toISOString();
+    for (const id of ['mobility', 'run', 'climb', 'cook']) (D.user_themes = D.user_themes || []).push({id, title: null, description: '', groups: null, builtin: true, position: D.user_themes.length});
+    const base = (D.sessions || []).find(x => x.theme === 'strength');
+    if (base) for (const [slug, title, d] of [['session-haut-du-corps', 'Haut du corps express', 9]]) D.sessions.push({...base, id: 'ses-' + slug, slug, title, origin: 'user', created_at: `2026-10-0${d}T08:00:00Z`, updated_at: `2026-10-0${d}T08:00:00Z`});
+    const r = (id, url, status, theme, h, note = null) => (D.requests = D.requests || []).push({id, url, status, theme, slug: null, note, created_at: ago(h), processed_at: null});
+    r('more-1', 'https://www.instagram.com/reel/PREVIEW0901/', 'queued', 'strength', 5);
+    r('more-2', 'https://www.tiktok.com/@coach.demo/video/7400000000000000201', 'queued', 'strength', 4);
+    r('more-3', 'https://www.instagram.com/reel/PREVIEW0903/', 'error', 'fight', 6, 'Video unavailable: the post is private or was deleted.');
+    r('more-4', 'https://www.youtube.com/shorts/PREVIEW0904', 'queued', 'mobility', 3);
+    r('more-5', 'https://www.instagram.com/reel/PREVIEW0905/', 'error', 'mobility', 2, 'Video unavailable: the post is private or was deleted.');
+    r('more-6', 'https://www.instagram.com/reel/PREVIEW0906/', 'queued', 'run', 1);
+  }
+  if (params.has('nbs')) {
+    const keep = new Set((D.user_themes || []).slice(0, Number(params.get('nbs')) || 1).map(t => t.id));
+    D.user_themes = D.user_themes.filter(t => keep.has(t.id));
+    for (const k of ['sheets', 'sessions', 'requests']) D[k] = (D[k] || []).filter(x => !x.theme || keep.has(x.theme));
   }
   const local = p => 'files/' + String(p).replace(/^u1\//, '');
   const uid = () => 'fake-' + Math.random().toString(36).slice(2, 10);

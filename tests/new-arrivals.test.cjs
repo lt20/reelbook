@@ -56,7 +56,7 @@ test('a new card shows the name of its notebook on the photo, a session card too
 test('the notebook tag: a notebook no longer on the account has the name the home page gives it; no tag on a notebook page', async () => {
   const gone = await app({...signedIn, tables: tables([{...sheet('lost', 1), theme: 'cook'}])}); await settle();
   const name = gone.element('new-cards').innerHTML.match(/<span class="nbtag"[^>]*>([^<]*)<\/span>/)[1];
-  assert.ok(gone.element('portal').innerHTML.includes(`<h2>${name}</h2>`));
+  assert.ok(gone.element('portal').innerHTML.includes(`<span class="nbt-nm">${name}</span>`)); // P9 H: its home tile
   const page = await app({...signedIn, tables: tables([sheet('fresh', 1)])}); await settle();
   page.go('#strength'); await settle();
   assert.ok(page.element('groups').innerHTML.includes('href="#fresh"'));

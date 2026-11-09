@@ -84,7 +84,7 @@ test('R20: the band never counts a fix as a video on the way', async () => {
 test('R20: a notebook page shows no ghost card for a fix; the sheet\'s card says « Fix requested »; the home card does not count it', async () => {
   const page = await open({tables: tables([fix('f', 'curl', 'the hands are reversed'), req('v', 'queued', {theme: 'strength'})], [sheet('curl'), sheet('row')]), hash: '#strength'});
   const ghosts = page.element('otw-ghosts').innerHTML;
-  assert.match(ghosts, /On the way <span class="n">1<\/span>/);
+  assert.match(ghosts, /<\/svg>1 on the way<\/p>/); // P9 Q: the micro-legend
   assert.match(ghosts, /data-ghost="v"/);
   assert.doesNotMatch(ghosts, /data-ghost="f"/);
   const groups = page.element('groups').innerHTML, card = slug => (groups.split('<a class="card').find(c => c.includes(`href="#${slug}"`)) || '');

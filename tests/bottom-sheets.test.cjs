@@ -153,7 +153,8 @@ test('the sheet CSS: under 600 px, bottom-anchored, bounded by the visual viewpo
   assert.match(block, /\.sh-h\{display:grid;[^}]*position:sticky;top:0;z-index:1;margin:0 -16px;/);
   assert.match(block, /@media \(max-width:599\.98px\) and \(prefers-reduced-motion:no-preference\)\{\s*dialog\.dlg\[open\]\{animation:sheet-up/);
   assert.doesNotMatch(html.replace(block, ''), /animation:sheet-up/, 'the slide-up runs nowhere else');
-  // every dialog.dlg goes through the helper; the full-screen photo viewer keeps its own showModal
+  // every dialog.dlg goes through the helper; the full-screen photo viewer and a ghost card's anchored menu (P9 Q, no
+  // sheet) keep their own showModal
   const script = html.slice(html.indexOf('<script>\n'));
-  assert.deepEqual([...script.matchAll(/(\w+)\.showModal\(\)/g)].map(m => m[1]), ['dlg', 'phDlg']);
+  assert.deepEqual([...script.matchAll(/(\w+)\.showModal\(\)/g)].map(m => m[1]), ['dlg', 'gmDlg', 'phDlg']);
 });

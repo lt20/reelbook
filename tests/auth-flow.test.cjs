@@ -407,11 +407,10 @@ test('old one-page sessions are hidden, and Settings says how to rebuild them', 
   assert.equal(page.element('settings').hidden, false);
   assert.equal(page.element('s-v1').hidden, false);
   assert.match(page.element('s-v1').innerHTML, /^1 old-format session hidden: run <code>python3 tools\/rb.py requeue-sessions<\/code>, then <code>\/reelbook<\/code>, to rebuild them\.$/);
-  assert.match(page.element('nblist').innerHTML, /Strength<\/b><small>2 sheets · 1 session</);
   page.go('');
   await settle();
   assert.equal(page.element('count').textContent, '', 'P8 R4: no counter on the home page');
-  assert.match(page.element('portal').innerHTML, /2 sheets · 1 session/);
+  assert.match(page.element('portal').innerHTML, /<span class="nbt-ct">2 sheets<\/span>/, 'P9 H: a tile counts its sheets only');
   const tables = v2Tables(); tables.sheets = tables.sheets.filter(s => s.kind !== 'session');
   const clean = await app({...signedIn, tables, hash: '#settings'});
   await settle();
@@ -533,18 +532,18 @@ test('C2: the add-notebook card counts « N more to pick from » and suggests no
   tables.user_themes.push({id: 'kitesurf', title: 'Kitesurf', groups: [], builtin: true, position: 2});
   const page = await app({...signedIn, tables, library: lib});
   await settle();
+  // P9 H: the last tile, « + Add a notebook » and « n more to pick from », without examples
   let card = page.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
-  assert.match(card, /<p class="eyebrow">3 more to pick from<\/p>/);
-  assert.match(card, /<p>Cooking, pilates, golf… or one you describe yourself\.<\/p>/, 'Kitesurf is already a notebook');
+  assert.match(card, /<span class="nbt-nm">\+ Add a notebook<\/span><span class="nbt-ct">3 more to pick from<\/span>/, 'Kitesurf is already a notebook');
   const one = await app({...signedIn, tables, library: lib.slice(0, 4)});
   await settle();
   card = one.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
-  assert.match(card, /1 more to pick from<\/p>[\s\S]*<p>Cooking… or one you describe yourself\.<\/p>/);
+  assert.match(card, /<span class="nbt-ct">1 more to pick from<\/span>/);
   const none = await app({...signedIn, tables, library: lib.slice(0, 3)});
   await settle();
   card = none.element('portal').innerHTML.match(/<button[^>]*id="add-nb">[\s\S]*?<\/button>/)[0];
-  assert.doesNotMatch(card, /more to pick|class="eyebrow"/, 'nothing left to pick: no eyebrow at all');
-  assert.match(card, /<h2>\+ Add a notebook<\/h2><p>Describe one yourself\.<\/p>/);
+  assert.doesNotMatch(card, /more to pick/, 'nothing left to pick: no count');
+  assert.match(card, /<span class="nbt-nm">\+ Add a notebook<\/span><span class="nbt-ct">Describe one yourself<\/span>/);
 });
 
 test('C2: a queue row without a notebook shows no notebook label, and its reason sits on its own line', async () => {

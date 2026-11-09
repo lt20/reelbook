@@ -480,7 +480,7 @@ test('L36 — the landing\'s #signin, #signup and #shortcut open the app\'s scre
   await b.fire('intro-shortcut');
   assert.equal(b.element('intro').hidden, true, 'the sign-in form');
   assert.equal(b.element('auth-form').hidden, false);
-  assert.equal(b.location.hash.replace('#', ''), 'settings', 'Settings › iPhone shortcut, once signed in');
+  assert.equal(b.location.hash.replace('#', ''), 'settings/shortcut', 'Settings › iPhone shortcut, once signed in (P9 S: its own page)');
   const c = await app();
   await c.fire('intro-signup');
   assert.equal(c.element('auth-title').textContent, 'Create your account');

@@ -35,8 +35,10 @@ test('R2: a row names the video by its handle or its kind, never by its address'
   assert.equal(name('fw'), 'Facebook video');
   assert.equal(name('vm'), 'TikTok video');
   assert.equal(name('odd'), 'Video link');
-  assert.match(q, /data-row="tt"[^]*?<span class="pf lg" aria-hidden="true">TT<\/span>/, 'the platform tile');
-  assert.match(q, /data-row="fb"[^]*?>FB<\/span>/);
+  assert.match(q, /data-row="tt"[^]*?<span class="pf lg" aria-hidden="true"><svg width="22" height="22"[^>]*><path d="M14 3.5v11a3.75[^]*?<\/svg><\/span>/, 'the platform tile: the TikTok logo (P9 Q)');
+  assert.doesNotMatch(q, /aria-hidden="true">(TT|IG|YT|FB)<\/span>/, 'no letters any more');
+  assert.match(q, /data-row="fb"[^]*?<span class="pf lg" aria-hidden="true"><svg[^>]*><circle cx="12" cy="12" r="9"\/>/, 'the Facebook logo');
+  assert.match(q, /data-row="odd"[^]*?<span class="pf lg" aria-hidden="true"><svg[^>]*><path d="M10 14a4 4/, 'a link for anything else');
   assert.doesNotMatch(q, /https?:\/\/|tiktok\.com|instagram\.com/, 'no address on a row that has not failed');
 });
 
@@ -49,7 +51,7 @@ test('R2: a row says its notebook and « added today | yesterday | 7 Nov », its
   assert.match(q, /data-row="y"[^]*?<small>MMA · added yesterday<\/small>/);
   const old = new Date(at(9)).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
   assert.match(q, new RegExp(`data-row="o"[^]*?<small>Added ${old}</small>`), 'Auto: no notebook named');
-  assert.match(q, /data-row="t"[^]*?<span class="pf lg" style="--t:var\(--p\d\)" aria-hidden="true">IG<\/span>/);
+  assert.match(q, /data-row="t"[^]*?<span class="pf lg" style="--t:var\(--p\d\)" aria-hidden="true"><svg[^>]*><rect x="3.5" y="3.5" width="17" height="17" rx="5"\/>/, 'the Instagram logo (P9 Q)');
   assert.match(q, /data-row="y"[^]*?Being made<\/span>/);
   assert.doesNotMatch(q, /Waiting|\d+ ?min|hour/i, 'no « Waiting », no duration');
 });
@@ -127,16 +129,19 @@ test('R2: Remove in the detail is the list\'s removal, with its Undo', async () 
   assert.match(page.element('queue').innerHTML, /data-row="a"/);
 });
 
-test('R2: a notebook page shows « On the way » ghost cards before its sheets, for its own videos only', async () => {
+test('R2 / P9 Q: a notebook page shows its own videos on the way before its sheets, under a micro-legend, as sheet-shaped cards', async () => {
   const t = tables([req('s1', 'queued', {theme: 'strength', url: 'https://www.tiktok.com/@coach/video/1'}), req('s2', 'error', {theme: 'strength'}),
     req('m1', 'processing', {theme: 'mma'}), req('auto', 'queued')]);
   const page = await open({tables: t, hash: '#strength'});
   const g = page.element('otw-ghosts');
   assert.equal(g.hidden, false);
-  assert.match(g.innerHTML, /^<h2 id="otw-gh">On the way <span class="n">2<\/span><\/h2><div class="group-row gcards">/);
+  // P9 Q: no « On the way » title, a grey micro-legend; a card of the shape of a sheet card (decision 6)
+  assert.match(g.innerHTML, /^<p class="otw-leg" id="otw-gh"><svg[^>]*>[^]*?<\/svg>2 on the way<span class="red">· 1 needs you<\/span><\/p><div class="group-row gcards">/);
+  assert.doesNotMatch(g.innerHTML, /<h2|On the way/);
   assert.ok(g.innerHTML.indexOf('data-ghost="s2"') < g.innerHTML.indexOf('data-ghost="s1"'), 'Needs you first');
-  assert.match(g.innerHTML, /<button type="button" class="gcard" data-ghost="s1" aria-haspopup="dialog" aria-label="@coach, Not started"><span class="pf lg" style="--t:var\(--p\d\)" aria-hidden="true">TT<\/span><span class="gh-t">@coach<\/span><span class="gh-m">Added today<\/span><span class="sp"><\/span><span class="st">/);
-  assert.match(g.innerHTML, /data-ghost="s2"[^]*?Needs you/);
+  assert.match(g.innerHTML, /<button type="button" class="card gcard" id="otw-g-s1" data-ghost="s1" aria-haspopup="menu" aria-label="@coach, Not started" style="--t:var\(--p\d\)"><span class="gimg"><span class="pfg"><svg[^>]*>[^]*?<\/svg><\/span><span class="gst"><svg[^>]*>[^]*?<\/svg>Not started<\/span><\/span><span class="b"><span class="gh-t">@coach<\/span><span class="gh-m">Added today<\/span><\/span><\/button>/);
+  assert.doesNotMatch(g.innerHTML, />TT</, 'a logo, not « TT »');
+  assert.match(g.innerHTML, /data-ghost="s2"[^]*?<span class="gst fail"><span class="bang" aria-hidden="true">!<\/span>Needs you<\/span>/);
   assert.doesNotMatch(g.innerHTML, /data-ghost="m1"|data-ghost="auto"/, 'another notebook\'s video, or one sent with Auto, is not here');
   const home = require('./harness.cjs').html.split('<div id="home"')[1];
   assert.ok(home.indexOf('id="otw-ghosts"') < home.indexOf('id="groups"'), 'before the sheets');
@@ -147,33 +152,58 @@ test('R2: a notebook page shows « On the way » ghost cards before its sheets, 
   assert.equal(g.innerHTML, '');
 });
 
-test('R2: a ghost card opens its detail; Cancel closes the sheet back to the notebook; a failed one opens its fix (R3)', async () => {
+// P9 Q: a ghost card opens its anchored menu, not the sheet (tests/p9-q.test.cjs); a failed one's « What to do » opens
+// its fix (R3), whose × closes the sheet back to the notebook.
+test('R2 / P9 Q: a ghost card opens its menu; a failed one\'s What to do opens its fix; its × closes the sheet back to the notebook', async () => {
   const page = await open({tables: tables([req('s1', 'queued', {theme: 'strength'}), req('s2', 'error', {theme: 'strength'})]), hash: '#strength'});
   await tap(page, 'otw-ghosts', '[data-ghost]', {ghost: 's1'});
+  assert.equal(page.element('otw-menu').open, true);
+  assert.notEqual(page.element('otw-dlg').open, true, 'no sheet');
+  assert.match(page.element('otw-cm').innerHTML, /Not started · added today/);
+  await tap(page, 'otw-menu', '.otw-cm'); // inside the menu, on its state line: nothing
+  assert.equal(page.element('otw-menu').open, true);
+  await tap(page, 'otw-menu', 'the veil'); // a tap outside the menu closes it
+  assert.equal(page.element('otw-menu').open, false);
+  await tap(page, 'otw-ghosts', '[data-ghost]', {ghost: 's2'});
+  await tap(page, 'otw-menu', '[data-cm]', {cm: 'fix'});
+  assert.equal(page.element('otw-menu').open, false);
   assert.equal(page.element('otw-dlg').open, true);
-  assert.equal(page.element('otw-row').hidden, false);
-  assert.match(page.element('otw-row').innerHTML, /<p>Strength · added today<\/p>/);
+  assert.equal(page.element('otw-row').hidden, false, 'P8 R3: its fix');
+  assert.match(page.element('otw-row').innerHTML, /data-fixdone>Try again</);
   await tap(page, 'otw-row', '[data-rback]');
   assert.equal(page.element('otw-dlg').open, false);
-  await tap(page, 'otw-ghosts', '[data-ghost]', {ghost: 's2'});
-  assert.equal(page.element('otw-dlg').open, true);
-  assert.equal(page.element('otw-row').hidden, false, 'P8 R3: its fix, directly');
-  assert.match(page.element('otw-row').innerHTML, /data-fixdone>Try again</);
 });
 
-test('R2: a home notebook card with videos on the way says « 1 on the way » or « 1 needs you », instead of « Nothing yet »', async () => {
-  const page = await open({tables: tables([req('s1', 'queued', {theme: 'strength'}), req('m1', 'queued', {theme: 'mma'}), req('m2', 'error', {theme: 'mma'}), req('auto', 'queued')])});
-  const cards = page.element('portal').innerHTML.split('<a class="tcard"').slice(1);
-  const strength = cards.find(c => /<h2>Strength<\/h2>/.test(c)), mma = cards.find(c => /<h2>MMA<\/h2>/.test(c));
-  assert.match(strength, /<p class="nbqs"><span class="nbq"><svg[^]*?<\/svg>1 on the way<\/span><\/p>/);
-  assert.match(strength, /aria-label="Strength, 1 sheet, 1 on the way"/);
-  assert.match(mma, /<span class="nbq bad"><svg[^]*?<\/svg>1 needs you<\/span>/, 'what needs you comes first');
-  assert.doesNotMatch(mma, /Nothing yet/, 'the chip stands in for « Nothing yet »');
-  // nothing on the way: no chip, « Nothing yet » is back
+// P9 H (decision 5): the chips of R2 became the tile's badge: a clock and the count, or a red dot when one needs you
+test('P9 H: a home notebook tile shows a clock and its count of videos on the way, a red dot when one needs you', async () => {
+  const page = await open({tables: tables([req('s1', 'queued', {theme: 'strength'}), req('s2', 'processing', {theme: 'strength'}), req('m1', 'queued', {theme: 'mma'}), req('m2', 'error', {theme: 'mma'}), req('auto', 'queued')])});
+  const tiles = page.element('portal').innerHTML.split('<a class="nbt"').slice(1);
+  const strength = tiles.find(c => /class="nbt-nm">Strength</.test(c)), mma = tiles.find(c => /class="nbt-nm">MMA</.test(c));
+  assert.match(strength, /<span class="nbt-bdg" aria-hidden="true"><svg[^]*?<\/svg>2<\/span>/);
+  assert.doesNotMatch(strength, /nbt-dot/);
+  assert.match(strength, /aria-label="Strength, 1 sheet, 2 on the way"/);
+  assert.match(mma, /<span class="nbt-dot" aria-hidden="true"><\/span>/, 'the dot wins');
+  assert.doesNotMatch(mma, /nbt-bdg/);
+  assert.match(mma, /aria-label="MMA, no sheet yet, 2 on the way, 1 needs you"/);
+  assert.match(mma, /<span class="nbt-ct">No sheet yet<\/span>/);
+  // nothing on the way: no badge, no dot
   const none = await open({tables: tables([req('auto', 'queued')])});
-  const m = none.element('portal').innerHTML.split('<a class="tcard"').slice(1).find(c => /<h2>MMA<\/h2>/.test(c));
-  assert.doesNotMatch(none.element('portal').innerHTML, /class="nbq/);
-  assert.match(m, /Nothing yet/);
+  assert.doesNotMatch(none.element('portal').innerHTML, /nbt-bdg|nbt-dot/);
+  assert.match(none.element('portal').innerHTML, /aria-label="Strength, 1 sheet"/);
+});
+
+test('P9 H: the tiles follow the queue: a video added on the way, then one that fails, redraw the badge', async () => {
+  const t = tables([req('auto', 'queued')]), page = await open({tables: t});
+  const strength = () => page.element('portal').innerHTML.split('<a class="nbt"').slice(1).find(c => /class="nbt-nm">Strength</.test(c));
+  assert.doesNotMatch(strength(), /nbt-bdg/);
+  t.requests.push(req('s1', 'queued', {theme: 'strength'}));
+  await page.doc('visibilitychange', {visibilityState: 'visible'}); await settle();
+  assert.match(strength(), /nbt-bdg[^]*?<\/svg>1<\/span>/);
+  assert.match(strength(), /aria-label="Strength, 1 sheet, 1 on the way"/);
+  t.requests.push(req('s2', 'error', {theme: 'strength'}));
+  await page.doc('visibilitychange', {visibilityState: 'visible'}); await settle();
+  assert.match(strength(), /nbt-dot/);
+  assert.match(strength(), /aria-label="Strength, 1 sheet, 2 on the way, 1 needs you"/);
 });
 
 test('R2: an Add from a notebook page shows its ghost card at once, before the read that follows', async () => {
@@ -188,7 +218,7 @@ test('R2: an Add from a notebook page shows its ghost card at once, before the r
   const g = page.element('otw-ghosts');
   assert.equal(g.hidden, false);
   assert.match(g.innerHTML, /<span class="gh-t">@coach<\/span>/);
-  assert.match(g.innerHTML, /On the way <span class="n">1<\/span>/);
+  assert.match(g.innerHTML, /<\/svg>1 on the way<\/p>/);
 });
 
 test('R2: once done, the ghost card goes and its sheet shows in New', async () => {

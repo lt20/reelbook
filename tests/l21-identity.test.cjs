@@ -84,12 +84,12 @@ const tables = () => ({
 const settle = async () => { for (let i = 0; i < 20; i++) await new Promise(resolve => setImmediate(resolve)); };
 const ico = name => new RegExp(`<svg class="nb-ico"[^>]*aria-hidden="true"[^>]*><use href="icons\\.svg#nb-${name}"/></svg>`);
 
-test('L21 — home: each notebook card has a cover (pictogram, counter, title); a custom notebook shows « custom »', async () => {
+test('L21 — home: each notebook tile has its pictogram, name and counter (P9 H); a custom notebook shows « custom »', async () => {
   const page = await app({...signedIn, library, tables: tables()});
   await settle();
   const portal = page.element('portal').innerHTML;
-  const card = id => portal.match(new RegExp(`<a class="tcard" href="#${id}"[\\s\\S]*?</a>`))[0];
-  assert.match(card('strength'), /<div class="cover"><span class="nb-badge"><svg[\s\S]*?<\/svg><\/span><div><p class="eyebrow">1 sheet<\/p><h2>Strength<\/h2><\/div><\/div>/);
+  const card = id => portal.match(new RegExp(`<a class="nbt" href="#${id}"[\\s\\S]*?</a>`))[0];
+  assert.match(card('strength'), /<svg class="nb-ico"[\s\S]*?<\/svg><span class="nbt-b"><span class="nbt-nm">Strength<\/span><span class="nbt-ct">1 sheet<\/span><\/span>/);
   assert.match(card('strength'), ico('strength'));
   assert.match(card('kitesurf'), ico('kitesurf'));
   assert.match(card('pottery'), ico('custom'));

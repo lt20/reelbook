@@ -1,0 +1,15 @@
+[
+  {"name": "p9s-01-settings", "query": "sckey&quota", "hash": "settings", "actions": [{"wait": "#s-sc-row >> text=last used"}, {"wait": "#s-reelbook"}]},
+  {"name": "p9s-01b-settings-bottom", "query": "sckey&quota", "hash": "settings", "actions": [{"wait": "#s-sc-row >> text=last used"}, {"scroll": "bottom"}]},
+  {"name": "p9s-02-account", "query": "quota", "hash": "settings/account", "full": true, "actions": [{"wait": "#s-usage-rows >> text=Links today"}]},
+  {"name": "p9s-03-computer", "hash": "settings/computer", "full": true, "actions": [{"wait": "#s-install pre"}]},
+  {"name": "p9s-04-computer-windows", "hash": "settings/computer", "actions": [{"click": "[data-seg=ps]"}, {"wait": "[data-seg=ps][aria-pressed=true]"}, {"scroll": "#s-install"}]},
+  {"name": "p9s-05-shortcut", "query": "sckey", "hash": "settings/shortcut", "full": true, "actions": [{"wait": "#shortcut-info >> text=last used"}]},
+  {"name": "p9s-06-shortcut-no-key", "hash": "settings/shortcut", "actions": [{"wait": "#shortcut-create"}]},
+  {"name": "p9s-07-notebook-menu-full", "hash": "strength", "actions": [{"wait": "#home >> text=Pompes inclinées"}, {"click": "#nav-more"}, {"wait": "#nav-nb-delete[disabled]"}]},
+  {"name": "p9s-08-notebook-menu-empty", "query": "nb=cook", "hash": "cook", "actions": [{"wait": "#nav-more:not([hidden])"}, {"click": "#nav-more"}, {"wait": "#nav-nb-delete:not([disabled])"}]},
+  {"name": "p9s-09-deleted-undo", "query": "nb=cook", "hash": "cook", "actions": [{"wait": "#nav-more:not([hidden])"}, {"click": "#nav-more"}, {"click": "#nav-nb-delete"}, {"wait": "#nb-undo >> text=Cooking deleted"}, {"wait": 400}]},
+  {"name": "p9s-10-settings-no-sessions-table", "query": "missing=sessions", "hash": "settings", "actions": [{"wait": "#s-sessions"}]},
+  {"name": "p9s-11-settings-deep-link-unknown", "hash": "settings/nope", "actions": [{"wait": "#s-root"}]},
+  {"name": "p9s-12-notebook-menu-last", "query": "empty=all&nbs=1", "hash": "strength", "actions": [{"wait": "#nav-more:not([hidden])"}, {"click": "#nav-more"}, {"wait": "#nav-nb-delete[disabled] >> text=Keep at least one notebook."}]}
+]

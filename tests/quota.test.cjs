@@ -8,6 +8,7 @@ const signedIn = {remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions:
 const reel = 'https://www.instagram.com/reel/EXAMPLE0001/';
 const usage = {requests_today: 4, max_requests_per_day: 10, sheets: 120, max_sheets: 300, storage_bytes: 80 * 1048576, max_storage_mb: 200};
 
+const rows = page => [...page.element('s-usage-rows').innerHTML.matchAll(/<span class="rb-t">([^<]*)<\/span><span class="s-v">([^<]*)<\/span>/g)].map(m => [m[1], m[2]]);
 const openSettings = async (rpc) => {
   const page = await app(signedIn);
   await settle();
@@ -23,16 +24,17 @@ test('Settings shows the usage line when the backend has my_quota()', async () =
   const {page, asked} = await openSettings(async () => ({data: usage, error: null}));
   assert.deepEqual(asked, ['my_quota']);
   assert.equal(page.element('s-usage').hidden, false);
-  assert.equal(page.element('s-usage').textContent, 'Usage: 4/10 links today · 120/300 sheets · 80/200 MB');
+  // P9 S: three rows in Settings › Account
+  assert.deepEqual(rows(page), [['Links today', '4 of 10'], ['Sheets', '120 of 300'], ['Storage', '80 of 200 MB']]);
 });
 
 test('small photo totals keep one decimal, an empty account reads 0', async () => {
   let answer = {...usage, storage_bytes: 0.42 * 1048576};
   const {page} = await openSettings(async () => ({data: answer, error: null}));
-  assert.match(page.element('s-usage').textContent, / · 0\.4\/200 MB$/);
+  assert.deepEqual(rows(page)[2], ['Storage', '0.4 of 200 MB']);
   answer = {...usage, requests_today: 0, sheets: 0, storage_bytes: 0};
   page.go('#'); await settle(); page.go('#settings'); await settle();
-  assert.equal(page.element('s-usage').textContent, 'Usage: 0/10 links today · 0/300 sheets · 0/200 MB');
+  assert.deepEqual(rows(page), [['Links today', '0 of 10'], ['Sheets', '0 of 300'], ['Storage', '0 of 200 MB']]);
 });
 
 test('the usage line stays hidden on a backend without my_quota (no rpc, PGRST202, a thrown error, no data)', async () => {

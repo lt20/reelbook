@@ -85,8 +85,9 @@ test('L13 / P8 R4 — Top order: top bar → On the way band → New → Your se
   assert.match(page.element('otw-band').innerHTML, /1 on the way/);
 });
 
-// L13: the home card exposes the three latest sheets as accessible photo thumbnails.
-test('L13 — Notebook cards show three photo thumbnails of their latest sheets in 4:5 format', async () => {
+// L13 showed the three latest sheets as photo thumbnails on the home card; P9 H (decision 5): a tile has no photo,
+// only its pictogram, name and count, and its accessible name says them.
+test('L13 / P9 H — A notebook tile on home has no photo thumbnail; its name says the notebook and its sheets', async () => {
   const rows = [
     sheet('oldest', '2026-09-01T00:00:00Z'),
     sheet('third', '2026-10-01T00:00:00Z'),
@@ -94,13 +95,12 @@ test('L13 — Notebook cards show three photo thumbnails of their latest sheets 
     sheet('second', '2026-10-02T00:00:00Z')
   ];
   const page = await open(rows);
-  const card = page.element('portal').innerHTML.match(/<a class="tcard" href="#strength"[\s\S]*?<\/a>/);
-  assert.ok(card, 'the Strength notebook card is visible');
-  const photos = [...card[0].matchAll(/<img\b[^>]*>/g)].map(match => match[0]);
-  assert.equal(photos.length, 3);
-  assert.deepEqual(photos.map(photo => photo.match(/alt="([^"]*)"/)[1]),
-    ['Title newest', 'Title second', 'Title third']);
-  assert.match(rule('.tcard .thumbs img'), /aspect-ratio:\s*4\s*\/\s*5/);
+  const card = page.element('portal').innerHTML.match(/<a class="nbt" href="#strength"[\s\S]*?<\/a>/);
+  assert.ok(card, 'the Strength notebook tile is visible');
+  assert.doesNotMatch(card[0], /<img\b/, 'no photo');
+  assert.match(card[0], /aria-label="Strength, 4 sheets"/);
+  assert.match(card[0], /<span class="nbt-ct">4 sheets<\/span>/);
+  assert.match(rule('.nbt'), /min-height:\s*84px/, '84 px, taller with large text');
 });
 
 // L13: five sheets is the boundary; the Settings guide remains reachable.

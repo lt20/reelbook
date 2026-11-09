@@ -117,6 +117,39 @@ pre{font:var(--fs-xs)/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;backgroun
 .rb-row small{display:block;font-size:var(--fs-meta);font-weight:400;color:var(--muted)}
 .rb-row .rb-chev{flex:none;color:var(--muted)}
 .prob-dlg .rb-rows{margin:var(--s-3) 0 var(--s-4)}
+/* P9 S: Settings as an iOS grouped list (P9-refonte.md, decisions 1, 8, 9): the account card, groups of rows, the
+   sub-pages (one .s-page shown), the computer's numbered steps with a macOS / Windows switch */
+.s-acard{display:flex;align-items:center;gap:14px;padding:14px 14px 14px 16px;margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:14px;color:var(--ink);text-decoration:none;min-width:0}
+.s-av{flex:none;width:56px;height:56px;border-radius:50%;background:var(--tag);color:var(--accent);display:grid;place-items:center;font:700 23px/1 var(--display);letter-spacing:.03em}
+.s-acard .s-at{flex:1;min-width:0}
+.s-acard b{display:block;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.s-acard small{display:block;font-size:var(--fs-meta);color:var(--muted);line-height:1.3;overflow-wrap:anywhere}
+.s-acard .rb-chev{flex:none;color:var(--muted)}
+.s-grp{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:6px 16px;margin-top:22px;min-width:0}
+.s-glab{font:600 var(--fs-meta) var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:22px 4px -14px}
+.s-foot{margin:10px 4px 0;font-size:var(--fs-meta);color:var(--muted);line-height:1.35}
+#s-root>.panel{margin-top:22px}
+.rb-row.s-blue{color:var(--accent)}
+.rb-row.s-red{color:var(--danger)}
+.rb-row .s-v{flex:none;color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+.rb-row.s-app{cursor:default}
+.s-app-b p{margin:2px 0 0;font-size:var(--fs-meta);font-weight:400;color:var(--muted);line-height:1.35}
+.s-app-b .ic-share{width:1.1em;height:1.1em;vertical-align:-.15em;margin-right:4px}
+.s-app-b .actions{margin-top:8px}
+.s-lede{margin:6px 0 18px;line-height:1.4}
+.s-steps{list-style:none;margin:0;padding:0;display:grid;gap:18px}
+.s-steps>li{display:grid;grid-template-columns:32px minmax(0,1fr);gap:12px}
+.s-steps .k{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--tag);font:700 var(--fs-base)/1 var(--body);color:var(--ink)}
+.s-steps .s1{font-weight:600;line-height:1.3;padding-top:4px}
+.s-steps .s2{font-size:var(--fs-meta);color:var(--muted);line-height:1.4;margin-top:2px}
+.s-steps .s2 a{color:var(--accent);font-weight:600}
+.s-steps .x{display:grid;gap:8px;margin-top:10px;min-width:0}
+.s-steps .x .actions{margin:0}
+.s-seg{display:grid;grid-template-columns:1fr 1fr;padding:2px;border-radius:9px;background:var(--tag)}
+.s-seg button{appearance:none;min-height:36px;border:0;border-radius:7px;background:none;color:var(--muted);font:600 var(--fs-meta) var(--body);cursor:pointer}
+.s-seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.s-again{margin-top:24px}
+.s-again p{margin:0}
 /* P8 R9: the one-time card under Session done, outlined actions only (the screen keeps one filled action) */
 .end-promo{margin-top:28px;border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--paper)}
 .end-promo p{margin:0 0 12px;font-weight:600;line-height:1.3}
@@ -210,9 +243,6 @@ dialog.pick-dlg{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24p
 .picker .lib button{appearance:none;text-align:left;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px var(--s-3);cursor:pointer;display:grid;gap:2px;border-left:5px solid var(--t,var(--line))}
 .picker .lib button b{font-family:var(--display);font-size:var(--fs-md);line-height:1}
 .picker .lib button span{font-size:var(--fs-meta);color:var(--muted)}
-.nblist{display:grid;gap:var(--s-2)}
-.nblist div{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:var(--s-2) var(--s-3);border-left:5px solid var(--t,var(--line))}
-.nblist small{color:var(--muted);display:block}
 .howto{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px var(--s-4)}
 .howto h2{margin:0 0 10px}
 .howto ol{margin:0;padding-left:22px;display:grid;gap:10px;font-size:var(--fs-base);line-height:1.45}
@@ -357,7 +387,7 @@ dialog.dlg .btn.danger{border:1px solid var(--danger)}
 .otw-band .lead{width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
 .otw-band.needs .lead,.otw-band.fail .lead{background:var(--danger);color:var(--paper)}
 .otw-band .tiles{display:flex;align-items:center;flex:none}
-.otw-band .pf{width:28px;height:28px;border-radius:8px;display:inline-grid;place-items:center;font:600 13px/1 var(--body);letter-spacing:.02em;color:var(--ink);background:color-mix(in srgb,var(--t,var(--accent)) 18%,var(--paper));box-shadow:inset 0 3px 0 var(--t,var(--accent));outline:2px solid var(--tag)}
+.otw-band .pf{width:28px;height:28px;border-radius:8px;display:inline-grid;place-items:center;color:color-mix(in srgb,var(--t,var(--accent)) 55%,var(--ink));background:color-mix(in srgb,var(--t,var(--accent)) 18%,var(--paper));box-shadow:inset 0 3px 0 var(--t,var(--accent));outline:2px solid var(--tag)}
 .otw-band.needs .pf{outline-color:var(--danger-bg)}
 .otw-band .pf+.pf{margin-left:-6px}
 .otw-band .bt{flex:1;min-width:0;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
@@ -428,14 +458,53 @@ dialog.otw-dlg .otw-mode{margin-top:var(--s-2)}
 .fx-sub{margin:0 0 var(--s-2);color:var(--muted)}
 .toast .said{margin:0;min-height:44px;display:flex;align-items:center;border-radius:var(--r-pill);padding:10px 20px;background:var(--ink);color:var(--paper);font:600 var(--fs-base) var(--body);box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}
 .toast .said[hidden]{display:none}
-.otw-nb>h2{font-size:var(--fs-lg);margin:22px 0 var(--s-2)}
-.gcard{appearance:none;flex:none;width:150px;aspect-ratio:4/5;border:2px dashed var(--t,var(--accent));border-radius:16px;background:transparent;padding:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;color:var(--ink);font:inherit;cursor:pointer;scroll-snap-align:start}
-.gcard .gh-t{font:700 var(--fs-md)/1.05 var(--display);overflow-wrap:anywhere}
-.gcard .gh-m{font-size:var(--fs-meta);color:var(--muted)}
-.gcard .sp{flex:1}
-.tcard .nbqs{margin:0}
-.nbq{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:0 10px;border-radius:var(--r-pill);font:600 var(--fs-sm) var(--body);background:var(--tag);color:var(--ink)}
-.nbq.bad{background:var(--danger-bg);color:var(--danger)}
+/* ---- P9 Q: a video on the way has the shape of a sheet card (P9-refonte.md decision 6; board p9-planche.html
+   .gimg, .gst): its notebook's tint, the platform logo in the middle, its state bottom left (an icon and its words),
+   « @handle » or the kind of video in muted, « Added 2 Nov ». One row under a grey micro-legend, no section title. */
+.otw-leg{display:flex;align-items:center;gap:6px;margin:20px 0 8px;font:600 var(--fs-meta)/1.3 var(--body);color:var(--muted)}
+.otw-leg svg{flex:none}
+.otw-leg .red{color:var(--danger)}
+.card.gcard{appearance:none;width:min(44%,220px);flex:none;padding:0;font:inherit;text-align:left;color:var(--ink);cursor:pointer;scroll-snap-align:start}
+.gcard .gimg{position:relative;display:grid;place-items:center;aspect-ratio:4/5;background:color-mix(in srgb,var(--t,var(--accent)) 13%,var(--paper))}
+.gcard .pfg{display:flex;color:color-mix(in srgb,var(--t,var(--accent)) 45%,var(--muted))}
+.gcard .b{display:block}
+.gcard .gh-t{display:block;font:700 var(--fs-md)/1.05 var(--display);color:var(--muted);margin:0 0 var(--s-1);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gcard .gh-m{display:block;font-size:var(--fs-meta);line-height:1.3;color:var(--muted)}
+.gst{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);box-sizing:border-box;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px 0 7px;border-radius:var(--r-pill);background:var(--paper);font:600 var(--fs-sm)/1 var(--body);color:var(--ink);white-space:nowrap;overflow:hidden}
+.gst svg{flex:none;color:var(--muted)}
+.gst.proc svg{color:var(--accent)}
+.gst.fail{color:var(--danger)}
+.bang{flex:none;width:17px;height:17px;border-radius:50%;background:var(--danger);color:var(--paper);display:inline-grid;place-items:center;font:700 12px/1 var(--body)}
+.otw-spin{animation:otw-spin 1s linear infinite;transform-origin:50% 50%}
+@keyframes otw-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.otw-spin{animation:none}}
+/* P9 Q: a tap on a ghost card opens its anchored menu (decision 7; board .veil, .lift, .cm): a veil, the card lifted
+   where it is, a 254 px menu under it (above when there is no room), 44 px rows, Remove in red after a gap. */
+dialog.otw-menu{--veil:rgba(20,22,26,.34);--shadow:0 14px 44px rgba(0,0,0,.22),0 2px 8px rgba(0,0,0,.08);position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:var(--veil);color:var(--ink);overflow:hidden}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) dialog.otw-menu{--veil:rgba(0,0,0,.55);--shadow:0 14px 44px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}}
+:root[data-theme="dark"] dialog.otw-menu{--veil:rgba(0,0,0,.55);--shadow:0 14px 44px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
+dialog.otw-menu:not([open]){display:none}
+dialog.otw-menu::backdrop{background:transparent}
+.otw-lift{position:absolute;pointer-events:none;transform:scale(1.03);transform-origin:50% 50%;border-radius:var(--r-md);box-shadow:var(--shadow)}
+.otw-lift .card{width:100%;height:100%;margin:0}
+.otw-cm{position:absolute;width:254px;max-width:calc(100vw - 32px);max-height:calc(100% - 32px);overflow-y:auto;background:var(--paper);border-radius:14px;box-shadow:var(--shadow)}
+.otw-cm .cst{display:flex;align-items:center;gap:6px;margin:0;padding:10px 16px 9px;font:400 var(--fs-meta)/1.3 var(--body);color:var(--muted)}
+.otw-cm .cst.bad{color:var(--danger)}
+.otw-cm .it{appearance:none;display:flex;align-items:center;gap:12px;width:100%;min-height:44px;margin:0;padding:6px 16px;border:0;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-radius:0;background:transparent;color:var(--ink);font:400 var(--fs-base)/1.2 var(--body);text-align:left;text-decoration:none;cursor:pointer}
+.otw-cm .it:first-child,.otw-cm .cst[hidden]+.it{border-top:0}
+.otw-cm:focus{outline:none}
+.otw-cm .it:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.otw-cm .it:active{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.otw-cm .it[disabled]{opacity:.5;cursor:default}
+.otw-cm .it .l{flex:1;min-width:0}
+.otw-cm .it small{display:block;font-size:var(--fs-meta);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.otw-cm .it svg{flex:none}
+.otw-cm .it.red{color:var(--danger)}
+.otw-cm .it.hd{font-weight:600}
+.otw-cm .it .ck{flex:none;width:18px;display:inline-flex;color:var(--accent)}
+.otw-cm .it .nb-ico{width:20px;height:20px;color:var(--t,var(--accent))}
+.otw-cm .gap{height:8px;background:color-mix(in srgb,var(--bg) 70%,var(--line))}
+.otw-cm .gap+.it{border-top:0}
 dialog.add-dlg form{display:grid;gap:var(--s-3)}
 dialog.add-dlg .addpaste{width:100%;min-height:52px}
 dialog.add-dlg .nbchip{display:inline-flex;align-items:center;gap:2px;width:max-content;max-width:100%;min-height:44px;padding:0 0 0 14px;border:1px solid var(--line-strong);border-radius:var(--r-pill);font:600 var(--fs-base) var(--body);color:var(--ink)}
@@ -614,6 +683,25 @@ dialog.ph-dlg::backdrop{background:#000}
 .scard-s{display:flex;align-items:center;gap:6px;padding:var(--s-1) var(--s-3) var(--s-3) var(--s-4)}
 .scard-p{flex:1;min-width:0;display:flex;gap:4px;overflow:hidden}
 .scard-p img{width:32px;height:40px;flex:none;object-fit:cover;object-position:50% 30%;border-radius:6px;background:var(--tag)}
+/* P9 H: « Show n more » / « Show less » under the session cards, full width, 48 px */
+.morebtn{appearance:none;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:48px;margin-top:4px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:var(--accent);font:600 1.0625rem/1.2 var(--body);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.morebtn svg{flex:none;width:1.05em;height:1.05em}
+/* P9 H: NOTEBOOKS, tiles 2 per row (84 px, taller with large text, never clipped); badge or red dot top right */
+.nbg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:var(--s-1)}
+@media (min-width:720px){.nbg{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.nbt{position:relative;box-sizing:border-box;min-width:0;min-height:84px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;padding:10px 12px;border:0;border-radius:14px;background:color-mix(in srgb,var(--t,var(--accent)) 14%,var(--paper));color:var(--ink);text-decoration:none;-webkit-tap-highlight-color:transparent}
+.nbt .nb-ico{width:22px;height:22px;color:var(--t,var(--accent))}
+.nbt-b{display:block;min-width:0}
+.nbt-nm,.nbt-ct{display:block}
+.nbt-nm{font:700 1.1875rem/1.05 var(--display);color:color-mix(in srgb,var(--t,var(--accent)) 60%,var(--ink));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nbt-ct{font-size:.8625rem;line-height:1.2;color:var(--muted)}
+.nbt-bdg{position:absolute;top:9px;right:9px;display:inline-flex;align-items:center;gap:3px;min-height:22px;box-sizing:border-box;padding:0 7px 0 5px;border-radius:999px;background:var(--paper);color:var(--ink);font:600 .8125rem/1 var(--body);font-variant-numeric:tabular-nums}
+.nbt-bdg svg{flex:none;width:1em;height:1em}
+.nbt-dot{position:absolute;top:11px;right:11px;width:12px;height:12px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 2.5px var(--paper)}
+.nbt.add{appearance:none;background:transparent;border:1.5px dashed var(--line-strong);font:inherit;text-align:left;cursor:pointer}
+.nbt.add .nbt-nm{color:var(--muted);white-space:normal}
+.nbt:active{transform:scale(.97)}
+@media (prefers-reduced-motion:no-preference){.nbt{transition:transform .12s}}
 #home .btn.ghost:is(.scard .btn,.tt .btn,.noresult .btn){display:inline-flex;align-items:center;gap:6px;min-height:44px;box-sizing:border-box;padding:0 18px;border:1.5px solid var(--line-strong);text-decoration:none}
 .btn.txt{background:none;border:0;color:var(--accent);min-height:44px;padding:0 12px}
 /* TRY ONE TODAY: one sheet */
@@ -840,6 +928,7 @@ dialog.nav-menu h2{font:600 var(--fs-base) var(--body);text-transform:none;lette
 .nav-it small{flex-basis:100%;font-size:var(--fs-meta);font-weight:400;color:var(--muted)}
 .nav-it:disabled{color:var(--muted);cursor:default}
 .nav-it.danger{color:var(--danger)}
+.nav-it.danger:disabled{color:color-mix(in srgb,var(--danger) 50%,transparent)} /* P9 S: Delete notebook, not yet */
 .nav-it.wake::after{content:"Off";font-weight:400;color:var(--muted)}
 .nav-it.wake[aria-pressed="true"]::after{content:"On";font-weight:700;color:var(--ok)}
 .nav-it:not(:disabled):active{background:var(--tag)}
@@ -1831,7 +1920,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   <section class="sesssec" id="sess-sec" aria-labelledby="sess-h" hidden></section>
 
   <h2 class="sec" id="nb-h" hidden>Notebooks<span class="n" id="nb-n"></span></h2>
-  <div id="portal" class="portal" hidden></div>
+  <div id="portal" class="nbg" hidden></div>
   <section class="panel picker" id="picker" hidden>
     <h2>Add a notebook</h2>
     <p class="hint">Pick one from the list, or describe your own. The description tells Claude what belongs in it.</p>
@@ -1882,66 +1971,84 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 </div>
 
 <!-- ===== Settings ===== -->
+<!-- P9 S (docs/audit-design/P9-refonte.md, decisions 1, 2, 8, 9): an iOS grouped list. #settings is the root: the account
+     card, a group of rows, Settings › Reelbook; #settings/account, #settings/computer and #settings/shortcut are its
+     sub-pages (data-sub), one shown at a time under the one title (#s-title) with « ‹ Settings » as back. -->
 <div id="settings" class="wrap" hidden>
-  <h1>Settings</h1>
-  <div class="panel">
-    <h2>Account</h2>
-    <p id="s-user"></p>
-    <p class="hint">Backend: <span id="s-backend"></span></p>
-    <!-- L29: what the account uses against its limits (my_quota); hidden on a backend without quotas -->
-    <p class="hint" id="s-usage" hidden></p>
-    <p class="hint" id="s-sessions" hidden>Re-run <code>supabase/schema.sql</code> to enable sessions.</p>
-    <p class="hint" id="s-v1" hidden></p>
-    <div class="actions"><button class="btn ghost" type="button" id="s-signout">Sign out</button><button class="btn ghost" type="button" id="s-reset">Change backend</button></div>
-  </div>
-  <div class="panel">
-    <h2>Notebooks</h2>
-    <div class="nblist" id="nblist"></div>
-    <p class="hint">A notebook with sheets or sessions in it cannot be removed. Add notebooks from the home page.</p>
-  </div>
-  <div class="panel">
-    <h2>Your computer</h2>
-    <p class="hint">Claude turns your queued videos into sheets on a computer that has <a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>, Chrome with the Claude in Chrome extension, and, for Instagram, TikTok or Facebook, is signed in to them. You type <code>/reelbook</code> in Claude Code, keep Chrome open and in front, and wait. <a href="#welcome">Full guide</a>.</p>
-    <p><b>Set it up once</b> <span class="hint">· paste one line in a terminal: code, Python tools, the skill, then your email and password.</span></p>
-    <div id="s-install"></div>
-    <p><b>Already installed, sign in again</b> <span class="hint">· inside the Reelbook folder.</span></p>
-    <pre id="s-cli"></pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-cli">Copy</button><span class="hint" data-copied="s-cli"></span></div>
-    <p class="hint">The computer keeps its own session in <code>~/.config/reelbook/</code>; signing out here does not sign it out.</p>
-  </div>
-  <!-- L28: the iPhone shortcut's key (capture_tokens, Edge Function add-link); hidden on a backend without that table -->
-  <section class="panel" id="shortcut-section" aria-labelledby="shortcut-h" hidden>
-    <h2 id="shortcut-h">iPhone shortcut</h2>
-    <p class="hint">Send a video to your queue from the Share Sheet of Instagram, TikTok, YouTube or Safari, without opening Reelbook. The shortcut uses a key that can add links to your queue, nothing else.</p>
-    <div id="shortcut-none">
-      <label for="shortcut-label">Name of the key</label>
-      <div class="addrow"><input id="shortcut-label" type="text" maxlength="60" autocomplete="off" placeholder="iPhone"><button class="btn" type="button" id="shortcut-create">Create a key</button></div>
+  <h1 id="s-title">Settings</h1>
+  <div class="s-page" id="s-account" data-sub="account" hidden>
+    <div class="s-acard"><span class="s-av" id="s-acc-av" aria-hidden="true"></span><span class="s-at"><b id="s-acc-user"></b><small id="s-acc-backend"></small></span></div>
+    <!-- L29: what the account uses against its limits (my_quota), three rows; hidden on a backend without quotas -->
+    <div id="s-usage" hidden>
+      <p class="s-glab">Usage</p>
+      <div class="s-grp"><div class="rb-rows" id="s-usage-rows"></div></div>
+      <p class="s-foot">Links start again at midnight UTC.</p>
     </div>
-    <div id="shortcut-active" hidden>
-      <p id="shortcut-info"></p>
-      <div class="actions"><button class="btn ghost sm" type="button" id="shortcut-revoke">Revoke the key</button></div>
-    </div>
-    <div id="shortcut-new" hidden>
-      <p><b>Copy the key now: it is shown only once.</b></p>
-      <pre id="shortcut-token"></pre>
-      <div class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-token">Copy</button><span class="hint" data-copied="shortcut-token"></span><button class="btn sm" type="button" id="shortcut-add" hidden>Add the shortcut</button></div>
-    </div>
-    <p class="err" id="shortcut-err" hidden></p>
-    <!-- R10: with the shortcut published on iCloud (SHORTCUT_ICLOUD_URL), « Add the shortcut » copies the key and opens it; the steps fold -->
-    <p id="shortcut-icloud" role="status" hidden></p>
-    <details class="rb-more" id="shortcut-diy" open><summary id="shortcut-diy-sum" hidden>Build it yourself</summary>
-    <p><b>Build the shortcut once</b> <span class="hint">· in the Shortcuts app on the iPhone.</span></p>
-    <ol class="sc-steps">
-      <li>Tap <b>+</b> for a new shortcut and name it <b>Add to Reelbook</b>. In its details (ⓘ), turn on <b>Show in Share Sheet</b>.</li>
-      <li>Add the action <b>Get URLs</b> from <b>Shortcut Input</b>.</li>
-      <li>Add the action <b>Get contents of URL</b> with this URL:<pre id="shortcut-url"></pre><span class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-url">Copy</button><span class="hint" data-copied="shortcut-url"></span></span>Tap <b>Show More</b>: Method <b>POST</b>; Headers: add <code>Authorization</code> with the key as its value (it starts with <code>Bearer</code>); Request Body <b>JSON</b>: add a text field <code>url</code> set to <b>URLs</b>.</li>
-      <li>Add the action <b>Show Notification</b> with <b>Contents of URL</b>: it reads « Queued in Reelbook. », or why not.</li>
+    <div class="s-grp"><div class="rb-rows">
+      <button class="rb-row s-blue" type="button" id="s-reset"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span><span class="rb-t">Change backend<small id="s-reset-sub" hidden>Use your own Supabase project</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="rb-row s-red" type="button" id="s-signout"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg></span><span class="rb-t">Sign out</span></button>
+    </div></div>
+    <p class="s-foot">Signing out here does not sign out your computer.</p>
+  </div>
+  <div class="s-page" id="s-computer" data-sub="computer" hidden>
+    <p class="s-lede">Claude makes your sheets on your own computer. Set it up once; after that you only type one command.</p>
+    <ol class="s-steps">
+      <li><span class="k" aria-hidden="true">1</span><div><div class="s1">Get the tools</div><div class="s2"><a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a>, and Chrome with the Claude in Chrome extension. Sign in to Instagram, TikTok or Facebook in Chrome if your videos come from there.</div></div></li>
+      <li><span class="k" aria-hidden="true">2</span><div><div class="s1">Paste one line in a terminal</div><div class="s2">It installs the code, the Python tools and the skill.</div><div class="x" id="s-install"></div></div></li>
+      <li><span class="k" aria-hidden="true">3</span><div><div class="s1">Sign in when it asks</div><div class="s2">With your Reelbook email and password.</div></div></li>
+      <li><span class="k" aria-hidden="true">4</span><div><div class="s1">Type <code>/reelbook</code> in Claude Code</div><div class="s2">Keep Chrome open and in front, and wait. Your sheets appear here. <a href="#welcome">Full guide</a></div></div></li>
     </ol>
-    </details>
-    <p class="hint">Then, in Instagram or TikTok: Share › Add to Reelbook. A lost phone, or a key shared by mistake: revoke it here, create a new one and paste it in the shortcut.</p>
-  </section>
-  <!-- P8 R4: « Install the app » in Settings too (the home card waits for a first sheet opened); filled by paintAppInstall -->
-  <section class="panel" id="s-app" aria-labelledby="s-app-h" hidden><h2 id="s-app-h">Install the app</h2><div id="s-app-body"></div></section>
+    <div class="panel s-again">
+      <p><b>Already installed? Sign in again</b><br><span class="hint">Inside the Reelbook folder.</span></p>
+      <pre id="s-cli"></pre>
+      <div class="actions"><button class="btn sm ghost" type="button" data-copy="s-cli">Copy</button><span class="hint" data-copied="s-cli"></span></div>
+      <p class="hint">The computer keeps its own session in <code>~/.config/reelbook/</code>; signing out here does not sign it out.</p>
+    </div>
+  </div>
+  <div class="s-page" id="s-shortcut" data-sub="shortcut" hidden>
+    <section class="panel" id="shortcut-section" aria-labelledby="shortcut-h" hidden>
+      <h2 class="vh" id="shortcut-h">iPhone shortcut</h2>
+      <p class="hint">Send a video to your queue from the Share Sheet of Instagram, TikTok, YouTube or Safari, without opening Reelbook. The shortcut uses a key that can add links to your queue, nothing else.</p>
+      <div id="shortcut-none">
+        <label for="shortcut-label">Name of the key</label>
+        <div class="addrow"><input id="shortcut-label" type="text" maxlength="60" autocomplete="off" placeholder="iPhone"><button class="btn" type="button" id="shortcut-create">Create a key</button></div>
+      </div>
+      <div id="shortcut-active" hidden>
+        <p id="shortcut-info"></p>
+        <div class="actions"><button class="btn ghost sm" type="button" id="shortcut-revoke">Revoke the key</button></div>
+      </div>
+      <div id="shortcut-new" hidden>
+        <p><b>Copy the key now: it is shown only once.</b></p>
+        <pre id="shortcut-token"></pre>
+        <div class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-token">Copy</button><span class="hint" data-copied="shortcut-token"></span><button class="btn sm" type="button" id="shortcut-add" hidden>Add the shortcut</button></div>
+      </div>
+      <p class="err" id="shortcut-err" hidden></p>
+      <!-- R10: with the shortcut published on iCloud (SHORTCUT_ICLOUD_URL), « Add the shortcut » copies the key and opens it; the steps fold -->
+      <p id="shortcut-icloud" role="status" hidden></p>
+      <details class="rb-more" id="shortcut-diy" open><summary id="shortcut-diy-sum" hidden>Build it yourself</summary>
+      <p><b>Build the shortcut once</b> <span class="hint">· in the Shortcuts app on the iPhone.</span></p>
+      <ol class="sc-steps">
+        <li>Tap <b>+</b> for a new shortcut and name it <b>Add to Reelbook</b>. In its details (ⓘ), turn on <b>Show in Share Sheet</b>.</li>
+        <li>Add the action <b>Get URLs</b> from <b>Shortcut Input</b>.</li>
+        <li>Add the action <b>Get contents of URL</b> with this URL:<pre id="shortcut-url"></pre><span class="actions"><button class="btn sm ghost" type="button" data-copy="shortcut-url">Copy</button><span class="hint" data-copied="shortcut-url"></span></span>Tap <b>Show More</b>: Method <b>POST</b>; Headers: add <code>Authorization</code> with the key as its value (it starts with <code>Bearer</code>); Request Body <b>JSON</b>: add a text field <code>url</code> set to <b>URLs</b>.</li>
+        <li>Add the action <b>Show Notification</b> with <b>Contents of URL</b>: it reads « Queued in Reelbook. », or why not.</li>
+      </ol>
+      </details>
+      <p class="hint">Then, in Instagram or TikTok: Share › Add to Reelbook. A lost phone, or a key shared by mistake: revoke it here, create a new one and paste it in the shortcut.</p>
+    </section>
+  </div>
+  <div class="s-page" id="s-root">
+    <a class="s-acard" id="s-acard" href="#settings/account"><span class="s-av" id="s-av" aria-hidden="true"></span><span class="s-at"><b id="s-user"></b><small id="s-backend"></small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
+    <p class="hint s-foot" id="s-sessions" hidden>Re-run <code>supabase/schema.sql</code> to enable sessions.</p>
+    <p class="hint s-foot" id="s-v1" hidden></p>
+    <div class="s-grp"><div class="rb-rows">
+      <a class="rb-row" id="s-pc-row" href="#settings/computer"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span><span class="rb-t">Set up your computer<small>Turns your videos into sheets</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
+      <!-- L28: the iPhone shortcut's key (capture_tokens, Edge Function add-link); hidden on a backend without that table -->
+      <a class="rb-row" id="s-sc-row" href="#settings/shortcut" hidden><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="11" height="11" rx="3"/><path d="M9.5 9.5h8a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-5a3 3 0 0 1-3-3z"/></svg></span><span class="rb-t">iPhone shortcut<small id="s-sc-sub"></small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
+      <!-- P8 R4: « Install the app » (the home card waits for a first sheet opened); filled by paintAppInstall. P9: a row
+           without chevron or sub-page -->
+      <div class="rb-row s-app" id="s-app" hidden><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></span><span class="rb-t">Install the app<span class="s-app-b" id="s-app-body"></span></span></div>
+    </div></div>
   <!-- P8 R9: Settings › Reelbook. Links to the public repo (window.REELBOOK.repo); « Report a problem » opens a new
        issue that carries the app version and the platform only (never a video URL, an address or the backend).
        R17: « Contact us », « Ask for a feature » and the email choice of « Report a problem » write to the project's
@@ -1960,8 +2067,11 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     </div>
     <p class="hint" id="s-share-out" role="status" hidden></p>
   </section>
+  </div>
 </div>
 
+<!-- P9 S: Notebook ⋯ › Delete notebook, then home with « Cooking deleted · Undo » (5 s); Undo puts the user_themes row back -->
+<div class="toast" role="status"><button type="button" id="nb-undo" hidden><span id="nb-toast"></span></button><p class="said" id="nb-said" hidden></p></div>
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
 <!-- L27: the demo notebook (#demo), read only, from app/demo/ -->
@@ -2009,8 +2119,10 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   <p class="hint otw-mode" id="otw-mode"></p>
   <!-- P8 R2: a row's detail (Open the video, Move to notebook, Remove) and its notebook picker, in place of the list -->
   <div class="otw-row" id="otw-row" hidden></div>
-  <div class="toast" role="status"><button type="button" id="queue-undo" hidden><span id="queue-toast"></span></button><p class="said" id="otw-said" hidden></p></div>
+  <div class="toast" id="otw-toast" role="status"><button type="button" id="queue-undo" hidden><span id="queue-toast"></span></button><p class="said" id="otw-said" hidden></p></div>
 </dialog>
+<!-- P9 Q: a ghost card's anchored menu (a veil, the card lifted where it is, the menu under or above it) -->
+<dialog class="otw-menu" id="otw-menu" aria-labelledby="otw-cst"><div class="otw-lift" id="otw-lift" aria-hidden="true" inert></div><div class="otw-cm" id="otw-cm" role="menu" aria-labelledby="otw-cst" tabindex="-1"></div></dialog>
 <!-- P8 R1: « + Add a video », a bottom sheet: Paste link first, the notebook chip, then Add -->
 <dialog class="dlg add-dlg" id="add-dlg" aria-labelledby="add-h">
   <form id="sheet-new" novalidate hidden>
@@ -2515,7 +2627,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   $('intro-signin').addEventListener('click', () => { introOpen = false; setMode('in'); route(); $('a-email').focus(); });
   // L36: « Add the shortcut » (installation, step 3): the shortcut is made in Settings › iPhone shortcut (L28), behind
   // an account: the sign-in form now, Settings once signed in.
-  $('intro-shortcut').addEventListener('click', () => { introOpen = false; setMode('in'); location.hash = 'settings'; route(); $('a-email').focus(); });
+  $('intro-shortcut').addEventListener('click', () => { introOpen = false; setMode('in'); location.hash = 'settings/shortcut'; route(); $('a-email').focus(); }); // P9 S: its own page
   // « See a demo » appears once the demo notebook exists (L27 adds its view).
   $('intro-demo').hidden = !views.includes('demo');
   // L30: Supabase words its auth errors in English. The form says the known ones in the page's language (by the
@@ -2891,7 +3003,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   const loadThemes = async () => { themeRows = await readThemes(); setThemes(themeRows); saveCatalogue(); };
   const addTheme = async row => { touched(); const {error} = await sb.from('user_themes').insert(row); if (error) throw error; await loadThemes(); };
-  const removeTheme = async id => { touched(); const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; await loadThemes(); };
+  // The write only: once it is done the row is gone, whatever a read after it says (deleteNotebook updates the list).
+  const removeTheme = async id => { touched(); const {error} = await sb.from('user_themes').delete().eq('id', id); if (error) throw error; };
   const SESSION_COLS = 'slug,theme,title,format,why,key_points,source,origin,thumbnail,items,created_at,updated_at';
   const isCopying = s => !!(s && s.source && typeof s.source === 'object' && s.source.share_state === 'copying');
   let copyingSlugs = new Set(); // the slugs of those hidden sessions
@@ -3105,31 +3218,36 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       <div class="b"><h3>${esc(e.title)}</h3>${extra && extra.lv ? `<p class="lvp">${extra.lv}</p>` : ''}${extra && extra.where && extra.where.length ? `<p class="where">${esc(extra.where.join(' · '))}</p>` : ''}<p>${esc(e.summary)}</p>${extra && extra.fmt ? `<p class="fmt">${esc(extra.fmt)}</p>` : ''}
       <div class="m">${(extra && extra.meta || []).slice(0, 2).map(m => `<span class="${esc(m.cls || '')}">${m.sr ? `<i class="vh"${langAttr(m.lang)}>${esc(m.sr)}</i> ` : ''}${esc(m.txt)}</span>`).join('')}</div></div></a>`;
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
-  // The « + Add a notebook » card: its examples are the first three library notebooks not added yet; with none
-  // left, no count and no examples, only the custom notebook.
-  const addNotebookCard = rest => {
-    const ex = rest.slice(0, 3).map((t, i) => i ? t.title.charAt(0).toLowerCase() + t.title.slice(1) : t.title);
-    const hint = ex.length ? `${ex.join(', ')}… or one you describe yourself.` : 'Describe one yourself.';
-    return `<button type="button" class="tcard add" id="add-nb">${rest.length ? `<p class="eyebrow">${rest.length} more to pick from</p>` : ''}<h2>+ Add a notebook</h2><p>${esc(hint)}</p></button>`;
-  };
-  // A notebook's card: `n` its sheets, `nS` its sessions, `pics` [title, photo url] newest first (L38: the demo too).
-  // P8 R2: `chip`, its videos on the way (« 1 on the way », « 1 needs you »), stands in for « Nothing yet ».
-  const tcard = (t, href, n, nS, pics, empty, chip = '') => {
+  // P9 H: the « + Add a notebook » tile, last of the grid: « n more to pick from » the library, or, with none left,
+  // only the custom notebook.
+  const addNotebookTile = rest => `<button type="button" class="nbt add" id="add-nb"><span class="nbt-nm">+ Add a notebook</span>`
+    + `<span class="nbt-ct">${rest.length ? `${rest.length} more to pick from` : 'Describe one yourself'}</span></button>`;
+  // A notebook's card: `n` its sheets, `nS` its sessions, `pics` [title, photo url] newest first. L38: the demo's
+  // notebooks; the home page draws tiles since P9 H.
+  const tcard = (t, href, n, nS, pics, empty) => {
     const cnt = (n ? plural(n, 'sheet') : 'no sheet yet') + (nS ? ` · ${plural(nS, 'session')}` : '');
     const thumbs = pics.slice(0, 3).map(([title, src]) => `<img src="${esc(src)}" alt="${esc(title)}">`).join('');
-    const said = chip ? `, ${chip.replace(/<[^>]*>/g, '')}` : '';
     // L13: an explicit name (« Strength, 78 sheets »): VoiceOver reads it instead of the thumbnails' alt text
-    return `<a class="tcard" href="${href}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}${said}`)}" style="--t:${colorOf(t)}">
+    return `<a class="tcard" href="${href}" aria-label="${esc(`${t.title}, ${cnt.replace(/ · /g, ', ')}`)}" style="--t:${colorOf(t)}">
         <div class="cover"><span class="nb-badge">${nbIcon(t)}</span><div><p class="eyebrow">${esc(cnt)}</p><h2>${esc(t.title)}</h2></div></div><p>${esc(t.sub)}</p>
-        ${chip ? `<p class="nbqs">${chip}</p>` : ''}${thumbs ? `<div class="thumbs">${thumbs}</div>` : chip ? '' : `<p class="empty">${empty}</p>`}</a>`;
+        ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="empty">${empty}</p>`}</a>`;
   };
-  let chipSig = null; // the notebook chips last drawn on the home page (renderQueue redraws the cards when they change)
+  // P9 H: a notebook's videos on the way (a fix of a sheet is not one) and those that need you, for its home tile
+  const nbOtw = id => { const p = queueRows.filter(d => d.theme === id); return {vids: p.filter(d => !isFix(d)).length, needs: p.filter(needsYou).length}; };
+  // P9 H: a notebook's home tile (decision 5): tinted, pictogram, name, « n sheets »; top right a clock and the count
+  // of its videos on the way, or a red dot when one needs you (the dot wins). No description, no photos.
+  const nbTile = t => {
+    const n = sheets.filter(e => e.theme === t.id).length, q = nbOtw(t.id);
+    const cnt = n ? plural(n, 'sheet') : loading ? 'Loading…' : 'No sheet yet';
+    const said = [n ? plural(n, 'sheet') : 'no sheet yet', q.vids ? `${q.vids} on the way` : '', q.needs ? `${q.needs} needs you` : ''].filter(Boolean).join(', ');
+    const mark = q.needs ? '<span class="nbt-dot" aria-hidden="true"></span>' : q.vids ? `<span class="nbt-bdg" aria-hidden="true">${qic('clock', 13, 2.5)}${q.vids}</span>` : '';
+    return `<a class="nbt" href="#${esc(t.id)}" aria-label="${esc(`${t.title}, ${said}`)}" style="--t:${colorOf(t)}">${nbIcon(t)}${mark}`
+      + `<span class="nbt-b"><span class="nbt-nm">${esc(t.title)}</span><span class="nbt-ct">${esc(cnt)}</span></span></a>`;
+  };
+  let chipSig = null; // the tiles' queue counts last drawn on the home page (renderQueue redraws the tiles when they change)
   const renderPortal = () => {
     chipSig = chipsNow();
-    $('portal').innerHTML = themes.map(t => {
-      const list = sheets.filter(e => e.theme === t.id).sort((a, b) => (b.added_at || '').localeCompare(a.added_at || '')).map(e => [e.title, thumb(e.slug, e.thumbnail)]);
-      return tcard(t, `#${esc(t.id)}`, list.length, v2Sessions.filter(s => s.theme === t.id).length, list, loading ? 'Loading your sheets…' : 'Nothing yet. Paste a first link from this page.', nbChip(t.id));
-    }).join('') + addNotebookCard(library.filter(t => !themeById.has(t.id)));
+    $('portal').innerHTML = themes.map(nbTile).join('') + addNotebookTile(library.filter(t => !themeById.has(t.id)));
     $('add-nb').addEventListener('click', () => { renderPicker(); $('picker').hidden = !$('picker').hidden; if (!$('picker').hidden) $('picker').scrollIntoView({block: 'start'}); });
   };
   const renderPicker = () => {
@@ -3221,22 +3339,39 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       + `<button type="button" class="btn txt" data-dismiss="${esc(e.slug)}" aria-label="Not for me: ${esc(e.title)}">Not for me</button></div></div></div>` : '';
   };
   // ---------- P8 R4: YOUR SESSIONS on the home page ----------
-  // Up to 3 sessions, the last practised first, then the newest; each card opens its session, and its outlined Start
+  // The sessions, the last practised first, then the newest; each card opens its session, and its outlined Start
   // opens the player (#session/<slug>/play). The count is all the sessions. Hidden with no session.
+  // P9 H (decision 4): 3 cards, then « Show n more »; unfolded, all of them and « Show less » at the end. The state
+  // lives in memory only: a reload folds the list again.
   const SESS_MAX = 3;
+  let sessOpen = false;
+  const SESS_CHEV = d => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
   const renderSessions = show => {
     const sec = $('sess-sec'), done = s => lastDone.get(RS.noteKey(s.slug)) || '';
-    const list = show ? [...v2Sessions].sort((a, b) => done(b).localeCompare(done(a)) || String(b.created_at || '').localeCompare(String(a.created_at || ''))).slice(0, SESS_MAX) : [];
+    const all = show ? [...v2Sessions].sort((a, b) => done(b).localeCompare(done(a)) || String(b.created_at || '').localeCompare(String(a.created_at || ''))) : [];
+    if (all.length <= SESS_MAX) sessOpen = false;
+    const list = sessOpen ? all : all.slice(0, SESS_MAX);
+    const more = all.length > SESS_MAX ? `<button type="button" class="morebtn" id="sess-more" data-sess-more aria-expanded="${sessOpen}" aria-controls="sess-list">`
+      + (sessOpen ? `Show less${SESS_CHEV('M6 15l6-6 6 6')}` : `Show ${all.length - SESS_MAX} more${SESS_CHEV('M6 9l6 6 6-6')}`) + '</button>' : '';
     sec.hidden = !list.length;
-    sec.innerHTML = list.length ? `<h2 class="sec" id="sess-h">Your sessions<span class="n">${v2Sessions.length}</span></h2><div class="scards">${list.map(s => {
+    sec.innerHTML = list.length ? `<h2 class="sec" id="sess-h">Your sessions<span class="n">${v2Sessions.length}</span></h2><div class="scards" id="sess-list">${list.map((s, i) => {
       const t = themeById.get(s.theme), items = RS.resolveItems(s, bySlug), slug = esc(s.slug);
       const pics = items.slice(0, 4).map(i => thumb(i.sheet.slug, i.sheet.thumbnail)).filter(Boolean).map(u => `<img src="${esc(u)}" alt="" loading="lazy">`).join('');
-      return `<div class="scard"${t ? ` style="--t:${colorOf(t)}"` : ''}><a class="scard-o" href="${RS.sessionHref(slug)}">${t ? `<span class="nbn">${esc(t.title)}</span>` : ''}`
+      return `<div class="scard"${t ? ` style="--t:${colorOf(t)}"` : ''}><a class="scard-o"${i === SESS_MAX ? ' id="sess-next"' : ''} href="${RS.sessionHref(slug)}">${t ? `<span class="nbn">${esc(t.title)}</span>` : ''}`
         + `<span class="scard-t">${esc(s.title)}</span><span class="scard-m">${plural(items.length, 'exercise')}</span></a>`
         + `<div class="scard-s"><span class="scard-p" aria-hidden="true">${pics}</span>`
         + (items.length ? `<a class="btn ghost" href="${RS.playHref(slug)}" aria-label="Start ${esc(s.title)}">${PLAY_GLYPH}Start</a>` : '') + '</div></div>';
-    }).join('')}</div>` : '';
+    }).join('')}</div>${more}` : '';
   };
+  // P9 H: unfolded, the focus goes to the first card just revealed (#sess-next), without scrolling: the page stays
+  // where it was. Folded, the button keeps it, brought back into view when the fold left it above the screen.
+  $('sess-sec').addEventListener('click', ev => {
+    if (!(ev.target.closest && ev.target.closest('[data-sess-more]'))) return;
+    sessOpen = !sessOpen; renderSessions(true);
+    const f = $(sessOpen ? 'sess-next' : 'sess-more'); if (!f || !f.focus) return;
+    f.focus({preventScroll: true});
+    if (!sessOpen && f.getBoundingClientRect && f.getBoundingClientRect().top < 0) f.scrollIntoView({block: 'center'});
+  });
   $('to-try').addEventListener('click', ev => {
     const b = ev.target.closest && ev.target.closest('[data-dismiss]');
     if (!b) return;
@@ -3705,9 +3840,15 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // Add sent together each answer 42703; the first answer switches queueCols, the second still needs its fallback).
   const noReason = (e, cols) => /\breason\b/.test(cols) && noColumn(e, 'reason');
   // A short line at the bottom of « On the way » (no action): « Back in line … ». '' hides it.
+  // P9 Q: the toast (this line and « Removed · Undo ») sits in the sheet while it is open, in the anchored menu while
+  // that one is, else on the page (an action of the menu shows it on the notebook page, the sheet never opened).
+  const toastHome = () => {
+    const t = $('otw-toast'), dl = $('otw-dlg'), m = $('otw-menu'), home = dl && dl.open ? dl : m && m.open ? m : document.body;
+    if (t && home && t.parentNode !== home && typeof home.appendChild === 'function') home.appendChild(t);
+  };
   let saidSeq = 0;
   const otwSaid = text => {
-    const el = $('otw-said'), n = ++saidSeq; el.textContent = text; el.hidden = !text;
+    const el = $('otw-said'), n = ++saidSeq; el.textContent = text; el.hidden = !text; if (text) toastHome();
     if (text) setTimeout(() => { if (n === saidSeq) { el.hidden = true; el.textContent = ''; } }, 4000);
   };
   // queueGen: bumped by every read and every write; a read that answers after a newer one, or after a write, is dropped.
@@ -3719,7 +3860,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear(); removed.clear(); moving.clear();
     needCatalogue = 0; makeBusy = false; makeAfter = 0; queueCols = QUEUE_COLS; retrying.clear(); otwSaid(''); fixSlugs = new Set();
     $('queue-undo').hidden = true; queueCount = 0; readyRows = []; queueFailed = false; queueBump = false; $('queue').innerHTML = '';
-    closeSheet($('otw-dlg')); renderBand(); $('first-steps').hidden = true;
+    closeSheet($('otw-dlg')); gmEnd(false); renderBand(); $('first-steps').hidden = true; // P9 Q: and the ghost's menu
   };
   const rowErr = new Map();
   // L7: a correction's note is « Redo: <text> » on one line; when its run fails, `rb.py error` keeps that line
@@ -3777,7 +3918,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     return t ? `${esc(t.title)}${a ? ` · added ${a}` : ''}` : a ? `Added ${a}` : '';
   };
   // The platform tile, on the colour of the notebook asked for (the accent with Auto).
-  const tile = d => { const t = d.theme && themeById.get(d.theme); return `<span class="pf lg"${t ? ` style="--t:${colorOf(t)}"` : ''} aria-hidden="true">${esc(videoOf(d.url).tag)}</span>`; };
+  // P9 Q: the platform's monochrome logo, as on the ghost cards and the band (no « IG / TT » letters any more)
+  const tile = d => { const t = d.theme && themeById.get(d.theme); return `<span class="pf lg"${t ? ` style="--t:${colorOf(t)}"` : ''} aria-hidden="true">${pfLogo(videoOf(d.url).tag, 22, 1.8)}</span>`; };
   const webHref = url => { try { const u = new URL(url); return /^https?:$/.test(u.protocol) ? u.toString() : ''; } catch { return ''; } };
   // P8 R3: the one line a failed row says under its notebook: what happened, in plain words (« other »: its error).
   const UNREAD_WORDS = {private: () => 'This video is private', removed: () => 'This video was removed',
@@ -3806,8 +3948,17 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const QIC = {clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', sync: '<path d="M20 12a8 8 0 0 1-13.7 5.6M4 12a8 8 0 0 1 13.7-5.6"/><path d="M17.7 2.5v4h-4M6.3 21.5v-4h4"/>',
     alert: '<path d="M10.3 4.1 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 4.1a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4"/><path d="M12 17h.01"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
     chevR: '<path d="M9 5l7 7-7 7"/>', open: '<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
-    move: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M10 13h6M13.5 10.5 16 13l-2.5 2.5"/>', trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>', monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'};
+    move: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M10 13h6M13.5 10.5 16 13l-2.5 2.5"/>', trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>', monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+    chevL: '<path d="M15 5l-7 7 7 7"/>', wrench: '<path d="M14.5 6.5a4 4 0 0 0 5 5l-8 8a2.1 2.1 0 0 1-3-3l8-8a4 4 0 0 0-2-2z"/>'}; // P9 Q: the anchored menu
   const qic = (n, s = 16, w = 2.25) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${QIC[n]}</svg>`;
+  // P9 Q: the platform logos, monochrome line glyphs drawn here (board p9-planche.html PF; no third-party logo file),
+  // a link for an address of no known platform (videoOf's « · »). On the ghost cards and the band's tiles.
+  const PFG = {IG: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r=".6" fill="currentColor"/>',
+    TT: '<path d="M14 3.5v11a3.75 3.75 0 1 1-3.75-3.75"/><path d="M14 3.5c.6 2.7 2.4 4.4 5.5 4.7"/>',
+    YT: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10.2 9.3v5.4l4.6-2.7z" fill="currentColor"/>',
+    FB: '<circle cx="12" cy="12" r="9"/><path d="M15.5 7.5H14a2 2 0 0 0-2 2V21M9 13h6"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'};
+  const pfLogo = (tag, s, w) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${PFG[tag] || PFG.link}</svg>`;
   const ST = {queued: ['clock', 'Not started', ''], processing: ['sync', 'Being made', 'proc'], error: ['alert', 'Needs you', 'fail'], retry: ['sync', "We're retrying", ''], done: ['check', 'Ready', 'ok']};
   const stPill = status => { const d = ST[status] || ST.queued; return `<span class="st${d[2] ? ' ' + d[2] : ''}">${qic(d[0], 14)}${d[1]}</span>`; };
   // The sheet's sections, in this order. Ready: a request done in the last 72 h whose sheet (or session) exists and
@@ -3867,9 +4018,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       return;
     }
     const tiles = rows.slice().sort((a, c) => (needsYou(a) ? 0 : 1) - (needsYou(c) ? 0 : 1)).slice(0, 3).map(d => {
-      let host = ''; try { host = new URL(d.url).hostname; } catch {}
       const t = d.theme && themeById.get(d.theme);
-      return `<span class="pf"${t ? ` style="--t:${colorOf(t)}"` : ''}>${platformTag(host)}</span>`;
+      return `<span class="pf"${t ? ` style="--t:${colorOf(t)}"` : ''}>${pfLogo(videoOf(d.url).tag, 16, 2)}</span>`; // P9 Q: its logo
     }).join('');
     // One line of about 206 px on an iPhone 14 (24 characters): « 2 on the way », « 1 fix requested » when alone,
     // « 2 on the way · 1 fix »; « · 1 needs you » is never cut, so with it a count of fixes shows only when there is
@@ -3903,7 +4053,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       <li>${ck}<div><div class="t1">${plural(queueRows.length, 'video')} sent</div></div></li>
       <li><span class="ck n" aria-hidden="true">3</span><div><div class="t1">Turn them into sheets</div><div class="t2">Your computer builds the sheets. Set it up once.</div><a class="btn" href="#welcome">${qic('monitor', 20, 2)}Set up my computer</a></div></li></ol>`;
   };
-  const openOtw = () => { rowView = null; renderQueue(); openSheet($('otw-dlg')); };
+  const openOtw = () => { rowView = null; renderQueue(); openSheet($('otw-dlg')); toastHome(); };
   // ---------- P8 R2: a row's detail, the ghost cards, the notebook chips ----------
   // A tap on a row that has not failed (in « On the way », or its ghost card in a notebook) shows its detail in the
   // sheet, in place of the list: its state in one line, Open the video, Move to notebook (its picker), Remove (the
@@ -3940,7 +4090,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       ? {title: 'Wait for tomorrow', why: 'Your account reached its daily limit on this backend.', steps: ['The count starts again at midnight UTC.', 'For a higher limit, ask whoever runs this backend.', 'Then come back here and tap the button below.'], act: 'Try again'}
       : {title: 'Make room for new sheets', why: 'Your account reached its limit on this backend.', steps: ['Open a sheet you no longer need.', 'Tap ⋯, then Delete sheet.', back], act: 'I made room, try again'};
     if (r === 'needs_computer') return {title: 'Make it on your computer', why: 'Reelbook could not open this video. Your computer can, in Chrome.',
-      steps: ['Set up your computer once: Settings, then Set up my computer.', 'Leave it on: it picks up your videos on its next run.', back], act: 'Do it on my computer'};
+      steps: ['Set up your computer once: Settings, then Set up your computer.', 'Leave it on: it picks up your videos on its next run.', back], act: 'Do it on my computer'};
     const why = errText(d).split('\n')[0].trim();
     return {title: 'This video could not be made', why: why || 'Something went wrong while making its sheet.', steps: [], act: 'Try again', report: true};
   };
@@ -3980,30 +4130,35 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (moveErr.has(String(d.id))) { moveErr.delete(String(d.id)); rowErr.delete(String(d.id)); }
     rowView = {id: String(d.id), from, pick: false, msg: '', bad: false}; renderQueue();
     if (!$('otw-dlg').open) openSheet($('otw-dlg'));
+    toastHome();
   };
   // The list's removal (its « Removed · Undo » toast, the delete sent when its bar ends or the sheet closes).
   const removeRow = id => {
     const i = queueRows.findIndex(d => String(d.id) === String(id)); if (i < 0) return;
     commitDel();
     pendingDel = {row: queueRows[i], i}; queueRows.splice(i, 1); rowErr.delete(String(pendingDel.row.id)); renderQueue();
-    $('queue-toast').innerHTML = 'Removed · Undo<span class="qbar" aria-hidden="true"></span>'; $('queue-undo').hidden = false;
+    $('queue-toast').innerHTML = 'Removed · Undo<span class="qbar" aria-hidden="true"></span>'; $('queue-undo').hidden = false; toastHome();
   };
   // Move to notebook: requests.theme (RLS « own requests »), shown at once; only a video not started yet moves (once
   // being made, the computer may have read its notebook already; none matched: it changed meanwhile, the list is read
   // again). One Move at a time per video (moving): two PATCHes could land in the other order. A failed write puts the
   // notebook back and says so: in the detail when it is still open, else on the row (moveErr: until its detail opens).
   const moveErr = new Set();
-  const moveRow = async (id, theme) => {
-    const d = queueRows.find(x => String(x.id) === id), t = themeById.get(theme), view = rowView; if (!d || !t || !view || moveBusy(id)) return;
+  // P9 Q: `by` is who asked when it is not the open detail: the anchored menu, closed by then, whose say() puts the
+  // outcome in the toast.
+  const moveRow = async (id, theme, by = null) => {
+    const d = queueRows.find(x => String(x.id) === id), t = themeById.get(theme), view = by || rowView; if (!d || !t || !view || moveBusy(id)) return;
     view.pick = false;
     if (d.theme === theme) { view.msg = ''; paintRow(); return; }
     const was = d.theme, epoch = queueEpoch;
-    d.theme = theme; queueGen++; moving.set(id, {theme, at: null}); view.msg = `Moved to ${t.title}.`; view.bad = false; renderQueue();
+    d.theme = theme; queueGen++; moving.set(id, {theme, at: null}); view.msg = `Moved to ${t.title}.`; view.bad = false;
+    if (view.say) view.say(`Moved to ${t.title}`);
+    renderQueue();
     const back = msg => {
       if (epoch !== queueEpoch) return;
       moving.delete(id);
       const r = queueRows.find(x => String(x.id) === id); if (r && r.theme === theme) r.theme = was;
-      if (rowView === view) { view.msg = msg; view.bad = true; } else { rowErr.set(id, msg); moveErr.add(id); }
+      if (view.say) view.say(msg); else if (rowView === view) { view.msg = msg; view.bad = true; } else { rowErr.set(id, msg); moveErr.add(id); }
       renderQueue();
     };
     try {
@@ -4029,23 +4184,136 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // « Notebook: Auto » has no notebook: it shows only in « On the way ». Not on a group page, nor while searching.
   const QORDER = {error: 0, retry: 1, processing: 2, queued: 3};
   const pendingIn = id => queueRows.filter(d => d.theme === id && !isFix(d)).sort((a, c) => (QORDER[qst(a)] ?? 4) - (QORDER[qst(c)] ?? 4));
+  // P9 Q: a ghost card has the shape of a sheet card of its notebook (decision 6): the notebook's tint, the platform
+  // logo in the middle, its state bottom left (Not started: a clock; Being made: a ring that turns, still with reduced
+  // motion; Needs you: a red « ! »), « @handle » or the kind of video, « Added 2 Nov ». A tap opens its anchored menu.
+  const otwRing = s => `<svg class="otw-spin" width="${s}" height="${s}" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  const BANG = '<span class="bang" aria-hidden="true">!</span>';
+  const GST = {queued: ['', () => qic('clock', 15)], processing: ['proc', () => otwRing(15)], error: ['fail', () => BANG], retry: ['', () => qic('sync', 15)]};
+  const ghostState = s => { const k = GST[s] ? s : 'queued'; return `<span class="gst${GST[k][0] ? ' ' + GST[k][0] : ''}">${GST[k][1]()}${ST[k][1]}</span>`; };
   const ghostCard = d => {
-    const v = videoOf(d.url), a = addedOn(d.created_at), s = qst(d), st = (ST[s] || ST.queued)[1];
-    return `<button type="button" class="gcard" data-ghost="${esc(d.id)}" aria-haspopup="dialog" aria-label="${esc(`${v.name}, ${st}`)}">${tile(d)}<span class="gh-t">${esc(v.name)}</span>${a ? `<span class="gh-m">Added ${a}</span>` : ''}<span class="sp"></span>${stPill(s)}</button>`;
+    const v = videoOf(d.url), a = addedOn(d.created_at), s = qst(d), st = (ST[s] || ST.queued)[1], t = d.theme && themeById.get(d.theme), id = esc(d.id);
+    return `<button type="button" class="card gcard" id="otw-g-${id}" data-ghost="${id}" aria-haspopup="menu" aria-label="${esc(`${v.name}, ${st}`)}"${t ? ` style="--t:${colorOf(t)}"` : ''}>`
+      + `<span class="gimg"><span class="pfg">${pfLogo(v.tag, 34, 1.6)}</span>${ghostState(s)}</span>`
+      + `<span class="b"><span class="gh-t">${esc(v.name)}</span>${a ? `<span class="gh-m">Added ${a}</span>` : ''}</span></button>`;
   };
+  // One row at the top of the notebook page, under a grey micro-legend (« 3 on the way · 1 needs you »), no title.
   const renderGhosts = () => {
     const sec = $('otw-ghosts'), t = currentTheme && themeById.get(currentTheme);
-    const list = t && !$('groups').hidden && !groupOf(t) && !loadError ? pendingIn(t.id) : [];
+    const list = t && !$('groups').hidden && !groupOf(t) && !loadError ? pendingIn(t.id) : [], needs = list.filter(needsYou).length;
     sec.hidden = !list.length;
-    sec.innerHTML = list.length ? `<h2 id="otw-gh">On the way <span class="n">${list.length}</span></h2><div class="group-row gcards">${list.map(ghostCard).join('')}</div>` : '';
+    sec.innerHTML = list.length ? `<p class="otw-leg" id="otw-gh">${qic('clock', 15)}${list.length} on the way${needs ? `<span class="red">· ${needs} needs you</span>` : ''}</p><div class="group-row gcards">${list.map(ghostCard).join('')}</div>` : '';
+    gmPaint();
   };
-  $('otw-ghosts').addEventListener('click', ev => { const g = ev.target.closest && ev.target.closest('[data-ghost]'); if (g) openRow(g.dataset.ghost, 'ghost'); });
-  // A home notebook card with videos on the way: « 1 on the way », or « 1 needs you » when one of them failed.
-  const nbChip = id => {
-    const p = queueRows.filter(d => d.theme === id), needs = p.filter(needsYou).length, vids = p.filter(d => !isFix(d)).length; // R20
-    return needs ? `<span class="nbq bad">${qic('alert', 15)}${needs} needs you</span>` : vids ? `<span class="nbq">${qic('clock', 15)}${vids} on the way</span>` : '';
+  $('otw-ghosts').addEventListener('click', ev => { const g = ev.target.closest && ev.target.closest('[data-ghost]'); if (g) gmOpen(g.dataset.ghost, ev.detail === 0); });
+  // ---------- P9 Q: a ghost card's anchored menu (P9-refonte.md decision 7), in place of the row's detail ----------
+  // The card lifts above a veil and a 254 px menu opens under it (above when there is no room; right-aligned for a card
+  // at the right edge): its state in one line, What to do (Needs you: the fix of R3), Open the video, Move to notebook
+  // (Not started only; its notebooks in place, a check on the current one), a gap, Remove in red (the list's removal
+  // and its « Removed · Undo »). Focus goes to its first item, the arrows move in it; Escape, a tap outside or an
+  // action closes it, and Escape or a tap outside gives the focus back to the card. Its actions are the row's own
+  // (openRow, moveRow, removeRow). gmView: {id, pick} or null. A video that left this page meanwhile closes it.
+  let gmView = null, gmHtml = '';
+  const gmLine = d => {
+    const s = qst(d), a = addedOn(d.created_at);
+    if (s === 'error') return `<p class="cst bad" id="otw-cst" role="none">${BANG}<span>Needs you · ${esc(UNREADABLE.has(reasonOf(d)) ? UNREAD_WORDS[reasonOf(d)](d) : fixOf(d).title)}</span></p>`;
+    return `<p class="cst" id="otw-cst" role="none">${(ST[s] || ST.queued)[1]}${a ? ` · added ${a}` : ''}</p>`;
   };
-  const chipsNow = () => themes.map(t => nbChip(t.id)).join('|');
+  const gmItem = (act, label, icon, o = {}) => `<button type="button" class="it${o.cls ? ' ' + o.cls : ''}" role="menuitem" data-cm="${act}"${o.off ? ' disabled aria-disabled="true"' : ''}><span class="l">${label}${o.sub ? `<small>${o.sub}</small>` : ''}</span>${icon}</button>`;
+  const gmBody = d => {
+    if (gmView.pick) return `<p class="cst" id="otw-cst" role="none" hidden>Move to notebook</p><button type="button" class="it hd" role="menuitem" data-cm="back">${qic('chevL', 18)}<span class="l">Move to notebook</span></button>`
+      + themes.map(t => `<button type="button" class="it" role="menuitemradio" aria-checked="${t.id === d.theme}" data-cm="pick" data-pick="${esc(t.id)}" style="--t:${colorOf(t)}"><span class="ck">${t.id === d.theme ? qic('check', 18, 2.5) : ''}</span><span class="l">${esc(t.title)}</span>${nbIcon(t)}</button>`).join('');
+    const href = webHref(d.url), busy = moveBusy(d.id), t = d.theme && themeById.get(d.theme);
+    const err = rowErr.get(String(d.id)); // a removal that failed (or a move refused from the list), as its row says
+    return gmLine(d) + (err ? `<p class="cst bad gerr" role="alert">${esc(err)}</p>` : '') + (needsYou(d) ? gmItem('fix', 'What to do', qic('wrench', 20, 2)) : '')
+      + (href ? `<a class="it" role="menuitem" data-cm="open" href="${esc(href)}" target="_blank" rel="noopener"><span class="l">Open the video</span>${qic('open', 20, 2)}</a>` : '')
+      + (d.status === 'queued' && !isFix(d) ? gmItem('move', busy ? 'Moving…' : 'Move to notebook', qic('chevR', 18), {sub: t ? esc(t.title) : 'Auto', off: busy}) : '')
+      + '<div class="gap" role="separator"></div>' + gmItem('rm', 'Remove', qic('trash', 20, 2), {cls: 'red', off: busy || retrying.has(String(d.id))});
+  };
+  const gmItems = () => { const cm = $('otw-cm'); return cm && cm.querySelectorAll ? [...cm.querySelectorAll('.it:not([disabled])')] : []; };
+  const gmFocus = i => {
+    const it = gmItems();
+    if (it.length) it[((i % it.length) + it.length) % it.length].focus(); else if ($('otw-cm').focus) $('otw-cm').focus();
+  };
+  const gmKey = el => el && el.dataset ? `${el.dataset.cm || ''}|${el.dataset.pick || ''}` : '';
+  const gmCard = id => $('otw-g-' + id);
+  // Under the card when the menu fits there, else above it; inside the screen with 16 px to spare. Read again on a
+  // scroll or a resize (the page can still scroll under a modal on iOS).
+  const gmPlace = () => {
+    const dlg = $('otw-menu'), cm = $('otw-cm'), lift = $('otw-lift'), card = gmView && gmCard(gmView.id);
+    if (!dlg.open || !card || typeof card.getBoundingClientRect !== 'function' || !lift.style) return;
+    const r = card.getBoundingClientRect(), W = dlg.clientWidth || window.innerWidth, H = dlg.clientHeight || window.innerHeight, pad = 16, gap = 10;
+    Object.assign(lift.style, {left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px'});
+    const mw = cm.offsetWidth, mh = cm.offsetHeight;
+    const left = Math.max(pad, Math.min(r.left + mw > W - pad ? r.right - mw : r.left, W - pad - mw));
+    let top = r.bottom + gap;
+    if (top + mh > H - pad) top = r.top - gap - mh >= pad ? r.top - gap - mh : Math.max(pad, H - pad - mh);
+    Object.assign(cm.style, {left: left + 'px', top: top + 'px'});
+  };
+  const gmPaint = () => {
+    if (!gmView) return;
+    const d = queueRows.find(x => String(x.id) === gmView.id);
+    if (!d || d.theme !== currentTheme || isFix(d) || $('otw-ghosts').hidden) { gmEnd(false); return; } // done, removed or moved meanwhile
+    if (gmView.pick && d.status !== 'queued') gmView.pick = false; // started meanwhile: no Move any more
+    const h = gmBody(d), card = gmCard(gmView.id), lift = $('otw-lift');
+    if (h !== gmHtml) {
+      // A redraw keeps the focus on the same action (its data-cm, and data-pick in the sub-menu), never on its index:
+      // Move gone (started meanwhile) must not hand the focus to Remove. The action gone or disabled: the menu itself.
+      const a = document.activeElement, key = gmItems().includes(a) ? gmKey(a) : '', had = gmHtml !== '';
+      $('otw-cm').innerHTML = gmHtml = h;
+      if (had && key) { const same = gmItems().find(x => gmKey(x) === key); if (same) same.focus(); else if ($('otw-cm').focus) $('otw-cm').focus(); }
+    }
+    if (card && card.cloneNode && lift.replaceChildren) { const c = card.cloneNode(true); c.removeAttribute('id'); c.tabIndex = -1; lift.replaceChildren(c); }
+    gmPlace();
+  };
+  // kbd: opened from the keyboard (a click of detail 0): the focus on its first item; by a tap, on the menu itself (no
+  // focus ring drawn on an item nobody pointed at), where the arrows start.
+  const gmOpen = (id, kbd = false) => {
+    const d = queueRows.find(x => String(x.id) === String(id)), gmDlg = $('otw-menu'); if (!d) return;
+    if (gmView) gmEnd(false);
+    gmView = {id: String(d.id), pick: false}; gmHtml = '';
+    const card = gmCard(gmView.id); if (card && card.scrollIntoView) card.scrollIntoView({block: 'nearest', inline: 'nearest'});
+    if (typeof gmDlg.showModal === 'function') gmDlg.showModal(); else gmDlg.open = true; // a menu, not a sheet: no openSheet
+    gmPaint(); toastHome();
+    if (kbd) gmFocus(0); else if ($('otw-cm').focus) $('otw-cm').focus();
+  };
+  // back: the focus goes back to the card (Escape, a tap outside); an action moves it elsewhere.
+  function gmEnd(back = true) {
+    if (!gmView) return;
+    const id = gmView.id, dlg = $('otw-menu'), lift = $('otw-lift');
+    gmView = null; gmHtml = ''; $('otw-cm').innerHTML = ''; if (lift.replaceChildren) lift.replaceChildren();
+    if (dlg.open) closeSheet(dlg);
+    toastHome();
+    const c = back && gmCard(id); if (c && c.focus) c.focus();
+  }
+  $('otw-menu').addEventListener('close', () => { if (!$('otw-menu').open) gmEnd(); }); // Escape, by the browser
+  $('otw-menu').addEventListener('click', ev => {
+    const at = sel => ev.target.closest && ev.target.closest(sel);
+    if (!gmView) return;
+    const it = at('[data-cm]');
+    if (!it) { if (!at('.otw-cm')) gmEnd(); return; } // the veil
+    if (it.disabled) return;
+    const id = gmView.id, act = it.dataset.cm;
+    if (act === 'open') gmEnd(false); // the link opens the video
+    else if (act === 'fix') { gmEnd(false); openRow(id, 'ghost'); }
+    else if (act === 'move') { if (!moveBusy(id)) { gmView.pick = true; gmPaint(); gmFocus(Math.max(0, gmItems().findIndex(x => x.getAttribute && x.getAttribute('aria-checked') === 'true'))); } }
+    else if (act === 'back') { gmView.pick = false; gmPaint(); gmFocus(gmItems().findIndex(x => x.dataset && x.dataset.cm === 'move')); }
+    else if (act === 'pick') { gmEnd(false); moveRow(id, it.dataset.pick, {say: otwSaid}); }
+    else if (act === 'rm' && !moveBusy(id) && !retrying.has(id)) { gmEnd(false); removeRow(id); }
+  });
+  $('otw-menu').addEventListener('keydown', ev => {
+    if (!gmView) return;
+    if (ev.key === 'Escape') { if (ev.preventDefault) ev.preventDefault(); gmEnd(); return; }
+    if (ev.key === 'ArrowLeft' && gmView.pick) { if (ev.preventDefault) ev.preventDefault(); gmView.pick = false; gmPaint(); gmFocus(0); return; }
+    const it = gmItems(), i = it.indexOf(document.activeElement);
+    const k = {ArrowDown: i + 1, ArrowUp: i < 0 ? -1 : i - 1, Home: 0, End: -1}[ev.key];
+    if (k == null) return;
+    if (ev.preventDefault) ev.preventDefault();
+    gmFocus(k);
+  });
+  for (const t of ['resize', 'scroll']) window.addEventListener(t, () => { if (gmView) gmPlace(); }, {passive: true});
+  // P9 H: what the home tiles' badges show, per notebook (renderQueue redraws the tiles when it changes)
+  const chipsNow = () => themes.map(t => { const q = nbOtw(t.id); return `${q.vids}/${q.needs}`; }).join('|'); // P9 H
   $('otw-band').addEventListener('click', () => { if (queueFailed) refreshQueue(); else openOtw(); });
   $('otw-close').addEventListener('click', () => closeSheet($('otw-dlg')));
   // A removal waiting on its toast is sent when the sheet closes (the toast, inside it, is gone).
@@ -4128,6 +4396,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       deleting.delete(key);
       if (!queueRows.some(d => String(d.id) === String(row.id))) queueRows.splice(Math.min(i, queueRows.length), 0, row);
       rowErr.set(String(row.id), `Could not remove it: ${(e && e.message) || 'try again in a moment.'}`); renderQueue();
+      // P9 Q: removed from a ghost's menu, the list (which shows rowErr) is closed: the card comes back with a word
+      if (!$('otw-dlg').open) otwSaid('Could not remove it. Try again.');
     };
     const sent = (leaving === true && leaveDelete(row.id)) || sb.from('requests').delete().eq('id', row.id);
     sent.then(r => {
@@ -6208,11 +6478,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const installPs = () => !backend ? '' : backend.mode === 'hosted'
     ? `${ownConfig ? `$env:REELBOOK_CONFIG_URL = "${base}config.js"; ` : ''}irm ${base}install.ps1 | iex`
     : `$env:REELBOOK_URL = "${backend.url}"; $env:REELBOOK_KEY = "${backend.key}"; irm ${base}install.ps1 | iex`;
-  const installBlock = () => `<p class="hint"><b>macOS / Linux</b> (Terminal)</p><pre data-cmd="sh">${esc(installSh())}</pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="sh">Copy</button><span class="hint" data-copied="sh"></span></div>
-    <p class="hint"><b>Windows</b> (PowerShell)</p><pre data-cmd="ps">${esc(installPs())}</pre>
-    <div class="actions"><button class="btn sm ghost" type="button" data-copy="ps">Copy</button><span class="hint" data-copied="ps"></span></div>
-    <div class="actions"><button class="btn sm ghost" type="button" data-send>Send to my computer</button></div>`;
+  // P9 S: Settings › Set up your computer, step 2: a macOS / Windows switch (the device's own system first, then the
+  // person's pick) and the one line of that system, with Copy and Send to my computer. Both lines stay in the page.
+  let sOs = null;
+  const installOs = () => sOs || (wSystem() === 'win' ? 'ps' : 'sh');
+  const installBlock = () => {
+    const os = installOs(), one = (k, where, cmd) => `<div class="s-os" data-os="${k}"${k === os ? '' : ' hidden'}><p class="hint">${where}</p><pre data-cmd="${k}">${esc(cmd)}</pre>
+    <div class="actions"><button class="btn sm ghost" type="button" data-copy="${k}">Copy</button><button class="btn sm ghost" type="button" data-send>Send to my computer</button><span class="hint" data-copied="${k}"></span></div></div>`;
+    return `<div class="s-seg" role="group" aria-label="System of your computer"><button type="button" data-seg="sh" aria-pressed="${os === 'sh'}">macOS / Linux</button><button type="button" data-seg="ps" aria-pressed="${os === 'ps'}">Windows</button></div>`
+      + one('sh', 'In Terminal.', installSh()) + one('ps', 'In PowerShell.', installPs());
+  };
   // L26: « Send to my computer »: the two lines and one sentence, through the share sheet (mail, messages, AirDrop),
   // else a mail to the signed-in address. A share closed by the person (AbortError) does nothing more.
   const installText = () => `Set up Reelbook on this computer: paste one of these lines in a terminal.\n\nmacOS / Linux (Terminal):\n${installSh()}\n\nWindows (PowerShell):\n${installPs()}\n`;
@@ -6383,7 +6658,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (what === 'send') return wSend();
     if (what === 'copy') return wCopy(b);
     if (what === 'os') { wOs = (wOs || (wSystem() === 'win' ? 'win' : 'unix')) === 'win' ? 'unix' : 'win'; return paintWelcome(); }
-    if (what === 'shortcut') { wantShortcut = true; location.hash = 'settings'; }
+    if (what === 'shortcut') location.hash = 'settings/shortcut'; // P9 S: its own page
     if (what === 'install') return runInstall().then(paintWelcome); // R10: Android, the browser's own install window
   });
   $('welcome').addEventListener('change', ev => {
@@ -6395,13 +6670,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // L29: « Usage: 4/10 links today · 120/300 sheets · 80/200 MB », from my_quota(); hidden when the backend has no
   // quotas (no such function), on any error, and for an answer meant for an account signed out since.
   const mbOf = b => { const mb = (Number(b) || 0) / 1048576; return mb > 0 && mb < 10 ? String(Math.round(mb * 10) / 10) : String(Math.round(mb)); };
+  // P9 S: three rows in Settings › Account (« Links today 4 of 10 », « Sheets 120 of 300 », « Storage 80 of 200 MB »).
+  const usageRow = (d, label, v) => `<div class="rb-row">${sIcon(d)}<span class="rb-t">${label}</span><span class="s-v">${v}</span></div>`;
   const renderUsage = async () => {
     const el = $('s-usage'), uid = user && user.id; el.hidden = true;
     if (!sb || typeof sb.rpc !== 'function' || !uid) return;
     let r; try { r = await sb.rpc('my_quota'); } catch { return; }
     const q = r && !r.error && r.data;
     if (!q || typeof q !== 'object' || !user || user.id !== uid) return;
-    el.textContent = `Usage: ${q.requests_today}/${q.max_requests_per_day} links today · ${q.sheets}/${q.max_sheets} sheets · ${mbOf(q.storage_bytes)}/${q.max_storage_mb} MB`;
+    $('s-usage-rows').innerHTML = usageRow(S_IC.link, 'Links today', `${q.requests_today} of ${q.max_requests_per_day}`)
+      + usageRow(S_IC.sheets, 'Sheets', `${q.sheets} of ${q.max_sheets}`) + usageRow(S_IC.disk, 'Storage', `${mbOf(q.storage_bytes)} of ${q.max_storage_mb} MB`);
     el.hidden = false;
   };
   // L28: Settings › iPhone shortcut. One active key per account (capture_tokens): made here, its secret shown once
@@ -6423,6 +6701,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const t = scActive;
     $('shortcut-none').hidden = !!t; $('shortcut-active').hidden = !t;
     $('shortcut-info').textContent = t ? `Key « ${t.label || 'iPhone'} », made ${fmtDate(t.created_at)} · ${t.last_used_at ? 'last used ' + fmtDate(t.last_used_at) : 'not used yet'}.` : '';
+    $('s-sc-sub').textContent = t ? `Key « ${t.label || 'iPhone'} » · ${t.last_used_at ? 'last used ' + fmtDate(t.last_used_at) : 'not used yet'}` : 'Add videos from the Share Sheet'; // P9 S
     $('shortcut-url').textContent = backend ? backend.url.replace(/\/+$/, '') + '/functions/v1/add-link' : '';
     const ic = scIcloud();
     $('shortcut-create').textContent = ic ? 'Add the shortcut' : 'Create a key';
@@ -6431,18 +6710,22 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (scFolded !== ic) { scFolded = ic; $('shortcut-diy').open = !ic; } // set once per mode: a fold the person opened stays open
   };
   let scFolded = null;
-  let wantShortcut = false;
+  // P9 S: the row of Settings and the section of its page show together. Hidden on Settings › iPhone shortcut (a
+  // backend without the table, a deep link): back to Settings.
+  const scShow = on => {
+    $('shortcut-section').hidden = !on; $('s-sc-row').hidden = !on;
+    if (!on && settingsSub === 'shortcut' && !$('settings').hidden) leaveTo('settings');
+  };
   const loadShortcut = async () => {
-    const uid = user && user.id, scroll = wantShortcut; wantShortcut = false;
-    if (!sb || !uid) { $('shortcut-section').hidden = true; return; }
+    const uid = user && user.id;
+    if (!sb || !uid) { scShow(false); return; }
     let r;
     try { r = await sb.from('capture_tokens').select('id,label,created_at,last_used_at,revoked_at').is('revoked_at', null).order('created_at', {ascending: false}); } catch (e) { r = {error: e}; }
     if (!user || user.id !== uid) return;
     // a failed read right after a key was made keeps the section (and the key's only copy) on screen
-    if (!r || r.error || !Array.isArray(r.data)) { if ($('shortcut-new').hidden) $('shortcut-section').hidden = true; return; }
+    if (!r || r.error || !Array.isArray(r.data)) { if ($('shortcut-new').hidden) scShow(false); return; }
     scActive = r.data.find(t => !t.revoked_at) || null;
-    paintShortcut(); $('shortcut-section').hidden = false;
-    if (scroll && $('shortcut-section').scrollIntoView) $('shortcut-section').scrollIntoView({block: 'start'}); // L43: « Add the shortcut »
+    paintShortcut(); scShow(true);
   };
   const SC_FAIL = 'Could not save it right now. Try again in a moment.';
   // Makes a key: its text (« Bearer rb_… ») once saved and on screen, else null (the reason is on screen).
@@ -6498,18 +6781,37 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       await loadShortcut();
     } catch { scErr(SC_FAIL); } finally { $('shortcut-revoke').disabled = false; }
   });
-  const renderSettings = () => {
+  // P9 S: #settings and its sub-pages (#settings/<sub>), under one title; an unknown sub goes to #settings (route).
+  const S_SUBS = new Map([['account', 'Account'], ['computer', 'Set up your computer'], ['shortcut', 'iPhone shortcut']]);
+  const settingsSubOf = tok => tok === 'settings' ? '' : tok.startsWith('settings/') ? tok.slice(9) : null;
+  let settingsSub = '';
+  const S_IC = {link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    sheets: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    disk: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'};
+  const sIcon = d => `<span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${d}</svg></span>`;
+  const renderSettings = (sub = '') => {
+    settingsSub = sub;
+    $('s-title').textContent = sub ? S_SUBS.get(sub) : 'Settings';
+    $('s-root').hidden = !!sub;
+    for (const k of S_SUBS.keys()) $('s-' + k).hidden = k !== sub;
     renderUsage(); paintReelbook(); paintAppInstall(); paintInvites(); // P8 R12: « Invites left »
     $('shortcut-token').textContent = ''; $('shortcut-new').hidden = true; scErr(''); $('shortcut-icloud').hidden = true; loadShortcut(); // a key is shown once
     $('s-sessions').hidden = sessionsOk;
     // Old one-page sessions left on an older backend: hidden by the app, rebuilt as v2 by requeue-sessions + /reelbook.
     $('s-v1').hidden = !v1Hidden;
     $('s-v1').innerHTML = v1Hidden ? `${plural(v1Hidden, 'old-format session')} hidden: run <code>python3 tools/rb.py requeue-sessions</code>, then <code>/reelbook</code>, to rebuild them.` : '';
-    $('s-user').textContent = user ? user.email : ''; $('s-backend').textContent = backendLabel(); $('s-cli').textContent = cliCmd(); $('s-install').innerHTML = installBlock();
-    $('nblist').innerHTML = themes.map(t => { const n = sheets.filter(e => e.theme === t.id).length, k = v2Sessions.filter(s => s.theme === t.id).length, cnt = plural(n, 'sheet') + (k ? ' · ' + plural(k, 'session') : ''); return `<div style="--t:${colorOf(t)}"><span><b>${esc(t.title)}</b><small>${esc(t.builtin ? cnt : (t.description || '') + ' · ' + cnt)}</small></span><button class="btn sm ghost" type="button" data-rm="${esc(t.id)}" ${n + k ? 'disabled' : ''}>Remove</button></div>`; }).join('') || '<p class="hint">No notebook yet.</p>';
+    $('s-user').textContent = $('s-acc-user').textContent = user ? user.email : '';
+    $('s-backend').textContent = $('s-acc-backend').textContent = backendLabel();
+    $('s-av').textContent = $('s-acc-av').textContent = user ? initialsOf(user) : '';
+    $('s-reset-sub').hidden = !(backend && backend.mode === 'hosted'); // P9 S: « Use your own Supabase project » from hosted only
+    $('s-cli').textContent = cliCmd(); $('s-install').innerHTML = installBlock();
   };
-  $('nblist').addEventListener('click', async ev => { const b = ev.target.closest('[data-rm]'); if (!b) return; b.disabled = true; try { await removeTheme(b.dataset.rm); renderSettings(); } catch { b.disabled = false; } });
-  $('settings').addEventListener('click', copyHandler($('settings')));
+  const sCopy = copyHandler($('settings'));
+  $('settings').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-seg]'); // P9 S: macOS / Windows
+    if (!b) return sCopy(ev);
+    sOs = b.dataset.seg === 'ps' ? 'ps' : 'sh'; $('s-install').innerHTML = installBlock();
+  });
 
   // ---------- L17: native navigation ----------
   // #nav-bar sticks on top of every signed-in page but home and the player: « ‹ <parent> » on the left, the page
@@ -6530,7 +6832,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const navPage = () => {
     if (!user || !$('player').hidden) return null;
     const nbUp = id => { const th = themeById.get(id); return th ? [th.id, th.title] : ['', 'Reelbook']; };
-    if (!$('settings').hidden) return {title: 'Settings', up: ['', 'Reelbook']};
+    if (!$('settings').hidden) return settingsSub ? {title: S_SUBS.get(settingsSub), up: ['settings', 'Settings']} : {title: 'Settings', up: ['', 'Reelbook']}; // P9 S
     if (!$('welcome').hidden) return {title: T('w.eyebrow', 'Welcome to Reelbook'), up: ['', 'Reelbook']};
     if (!view.hidden && shown) {
       const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown);
@@ -6547,9 +6849,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const t = themeById.get(nb) || (nb && (loading || loadError || !themes.length) ? libById.get(nb) || {id: nb, title: nb} : null);
     if (!t) return null;
     const one = currentTheme === t.id ? groupOf(t) : null;
-    // R6: a notebook page (not one group's grid) has a « ⋯ » menu once the notebook is known. P8 R18: Share left it, so
-    // the menu shows only where « Kind of practice » can be changed (its one row).
-    return one ? {title: one, up: [t.id, t.title], nb: t, upNb: t} : {title: t.title, up: ['', 'Reelbook'], nb: t, menu: themeById.has(t.id) && !!kindIt(t)};
+    // R6: a notebook page (not one group's grid) has a « ⋯ » menu once the notebook is known. P8 R18: Share left it.
+    // P9 S: « Delete notebook » is always in it, so every known notebook has the menu.
+    return one ? {title: one, up: [t.id, t.title], nb: t, upNb: t} : {title: t.title, up: ['', 'Reelbook'], nb: t, menu: themeById.has(t.id)};
   };
   // The « ⋯ » menu of a sheet or session page. An action this page cannot do stays listed, greyed, with the reason.
   // R6: « Share » comes first. P8 R18: on a session page only (it sends the session to a training partner); a sheet's
@@ -6559,7 +6861,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const menuNotebook = () => { const p = view.hidden ? navPage() : null; return p && p.nb && p.menu ? p.nb : null; };
   const menuHtml = () => {
     const nb = menuNotebook();
-    if (nb) return `<h2 id="nav-actions-h">${esc(nb.title)}</h2><div class="nav-list">${kindIt(nb)}</div>${closeIt}`;
+    if (nb) return `<h2 id="nav-actions-h">${esc(nb.title)}</h2><div class="nav-list">${kindIt(nb)}${delNbIt(nb)}</div>${closeIt}`;
     if (view.hidden || !shown || edit) return '';
     const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown), x = s || e;
     if (!x) return '';
@@ -6649,11 +6951,15 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const p = navPage(); if (!p) return;
     if (edit && editDirty() && !discardOk()) return;
     edit = null;
-    const H = hist(), st = entry(), up = p.up[0];
+    leaveTo(p.up[0]);
+  };
+  // To the route `up`, in place of this page: Back when the entry before is `up`, else this entry replaced by it.
+  function leaveTo(up) {
+    const H = hist(), st = entry();
     if (H && st && st.prev === up && H.length > 1) { H.back(); return; }
     replacing = {i: navIndex == null ? 0 : navIndex, prev: st ? st.prev : null};
     if (typeof location.replace === 'function') location.replace('#' + up); else location.hash = up;
-  };
+  }
   // A link still in « Add a video » (a notebook page): asked first, as for any link; Back waits for the answer.
   navBack.addEventListener('click', ev => {
     ev.preventDefault();
@@ -6663,7 +6969,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     paintMenu(); if (!navMenu.open) openSheet(navMenu);
     if (shownSession()) readShares().then(() => { if (navMenu.open) paintMenu(); }); // R11: « Stop sharing » once known
   });
-  const MENU = ['#nav-share', '#ses-unshare', '#nav-kind', '#ed-open', '#mv-open', '#as-open', '#wake', '#nav-report', '#sd-open', '#ses-delete', '#nav-close'];
+  const MENU = ['#nav-share', '#ses-unshare', '#nav-kind', '#nav-nb-delete', '#ed-open', '#mv-open', '#as-open', '#wake', '#nav-report', '#sd-open', '#ses-delete', '#nav-close'];
   wireSheet(navMenu);
   navMenu.addEventListener('click', ev => {
     const hit = ev.target.closest ? MENU.find(sel => ev.target.closest(sel)) : null; if (!hit) return;
@@ -6671,7 +6977,75 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (hit === '#nav-share') openShare();
     else if (hit === '#ses-unshare') stopSharing(RS.sessionSlugOf(shown));
     else if (hit === '#nav-kind') openKind(menuNotebook());
+    else if (hit === '#nav-nb-delete') deleteNotebook(menuNotebook());
     else if (hit !== '#nav-close') pageAction(ev);
+  });
+
+  // ---------- P9 S: Notebook ⋯ › Delete notebook ----------
+  // Red and last in the notebook's menu. Only an empty notebook (no sheet, no session) can go; otherwise it stays listed,
+  // disabled, with the reason and the real counts (as the Notebooks section of Settings did before P9). Before the
+  // catalogue is read its counts are unknown: disabled too. A delete is sent at once (removeTheme), with no question;
+  // the page goes back home with « Cooking deleted · Undo » for 5 s (the queue's toast and bar). Undo inserts the same
+  // user_themes row again (id, title, description, groups, builtin, position, family), for the account that deleted it.
+  // Deleting a session keeps its sheets (del-ok), so the reason counts every sheet of the notebook and says how many
+  // of them its sessions hold: « Move or delete its 25 sheets (9 of them in its 3 sessions) and its 3 sessions first. »
+  // The last notebook stays (Codex arbitration on #131): an account never has none, so the defaults are never seeded
+  // again under an Undo on its way. nbDeleting: the notebook whose DELETE is on its way (one at a time; it no longer
+  // counts, so a second tap or another notebook cannot empty the list meanwhile).
+  let nbDeleting = null;
+  const delNbWhy = t => {
+    if (loading || loadError) return 'Available once your notebooks are loaded.';
+    const mine = sheets.filter(e => e.theme === t.id), n = mine.length, k = v2Sessions.filter(x => x.theme === t.id).length;
+    if (!n && !k) return themeRows.filter(r => r.id !== nbDeleting).length > 1 ? '' : 'Keep at least one notebook.';
+    const inK = mine.filter(e => (inSessions.get(e.slug) || []).some(x => x.theme === t.id)).length;
+    const its = k === 1 ? 'its session' : `its ${k} sessions`;
+    const held = !inK ? '' : inK === n ? (n === 1 ? ` (in ${its})` : ` (all in ${its})`) : ` (${inK} of them in ${its})`;
+    const what = [n ? `its ${plural(n, 'sheet')}${held}` : '', k ? its : ''].filter(Boolean).join(' and ');
+    return `Only an empty notebook can be deleted. Move or delete ${what} first.`;
+  };
+  const delNbIt = t => {
+    const why = delNbWhy(t);
+    return `<button type="button" class="nav-it danger" id="nav-nb-delete"${why ? ' disabled' : ''}>Delete notebook${why ? `<small>${esc(why)}</small>` : ''}</button>`;
+  };
+  let nbUndo = null, nbSaid = 0; // nbUndo: {row, title, uid, client}, the notebook the toast can bring back
+  const nbSay = msg => {
+    const el = $('nb-said'), g = ++nbSaid; $('nb-undo').hidden = true; el.textContent = msg; el.hidden = false;
+    setTimeout(() => { if (g === nbSaid) el.hidden = true; }, 4000);
+  };
+  const nbToast = text => { ++nbSaid; $('nb-said').hidden = true; $('nb-toast').innerHTML = `${esc(text)}<span class="qbar" aria-hidden="true"></span>`; $('nb-undo').hidden = false; };
+  const deleteNotebook = async t => {
+    if (!t || !user || !sb || nbDeleting || delNbWhy(t)) return;
+    const row = themeRows.find(r => r.id === t.id); if (!row) return;
+    const uid = user.id, client = sb, kept = {...row}, here = navHere;
+    nbDeleting = t.id;
+    try { await removeTheme(t.id); } catch {
+      if (user && user.id === uid && sb === client) nbSay(`${t.title} was not deleted. Try again.`);
+      return;
+    } finally { nbDeleting = null; }
+    if (!user || user.id !== uid || sb !== client) return;
+    // Deleted: the list follows here, with no read again (the next catalogue read brings any other change).
+    themeRows = themeRows.filter(r => r.id !== t.id); setThemes(themeRows); saveCatalogue();
+    nbUndo = {row: kept, title: t.title, uid, client};
+    // Still on its page: home. Gone home while the DELETE was on its way: its tile goes now.
+    if (navHere === here && here === t.id) leaveTo(''); else if (!$('home').hidden) renderHome();
+    nbToast(`${t.title} deleted · Undo`);
+  };
+  $('nb-undo').addEventListener('animationend', () => { nbUndo = null; $('nb-undo').hidden = true; });
+  $('nb-undo').addEventListener('click', async () => {
+    const u = nbUndo; nbUndo = null; $('nb-undo').hidden = true;
+    if (!u || !user || user.id !== u.uid || sb !== u.client) return;
+    try { touched(); const {error} = await sb.from('user_themes').insert(u.row); if (error) throw error; } catch (e) {
+      if (!user || user.id !== u.uid || sb !== u.client) return;
+      // 23505: a row with that id is there already (added again from « + Add a notebook », or an insert whose answer
+      // was lost): nothing to retry, the list is read again quietly.
+      if (e && e.code === '23505') { loadThemes().then(() => { if (!$('home').hidden) renderHome(); }, () => {}); return; }
+      nbUndo = u; nbToast(`${u.title} not restored · Try again`);
+      return;
+    }
+    if (!user || user.id !== u.uid || sb !== u.client) return;
+    // Restored as it was (Kind of practice included), with no read again, as for the delete.
+    themeRows = [...themeRows.filter(r => r.id !== u.row.id), {...u.row}]; setThemes(themeRows); saveCatalogue();
+    if (!$('home').hidden) renderHome();
   });
 
   // ---------- R6, P8 R18: Share a session = send it to a training partner ----------
@@ -7374,7 +7748,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const shareTok = typeof RS.shareTokenOf === 'function' ? RS.shareTokenOf(tok) : null; // an older sessions.js: no #s- route
     if (shareTok) { const kept = keptShare(); if (kept && kept.token === shareTok) dropShare(); openReceived(shareTok); if (typeof location.replace === 'function') location.replace('#'); else location.hash = ''; return; }
     if (!takeShare()) askShareInvite(); // P8 R12: a token kept through sign-in, else one the waiting list kept
-    if (tok === 'settings') { renderSettings(); show('settings'); return; }
+    const sSub = settingsSubOf(tok); // P9 S: #settings and #settings/<sub>; an unknown sub is replaced by #settings
+    if (sSub !== null) { if (tok !== 'settings' && !S_SUBS.has(sSub)) { leaveTo('settings'); return; } renderSettings(sSub); show('settings'); settleScroll(); return; }
     if (tok === 'welcome') { renderWelcome(); show('welcome'); return; }
     // P8 R4: #search is the search page even when a sheet's slug is « search » (that sheet is left without its route)
     if (tok && tok !== 'search' && bySlug.has(tok)) { showSheet(tok); return; }
@@ -7410,7 +7785,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // P8 R1: every move inside the app reads the queue again on arrival at home or a notebook (not only on load and on
   // visibilitychange); « On the way » closes (a Ready row is a link to its sheet).
   window.addEventListener('hashchange', () => {
-    closeSheet($('otw-dlg'));
+    closeSheet($('otw-dlg')); gmEnd(false); // P9 Q: the ghost's menu too (it belongs to the page left)
     route();
     if (user && sb && !$('home').hidden) refreshQueue();
   });

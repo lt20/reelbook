@@ -23,7 +23,9 @@ test('R1: a pending link shows the band right under the bar, with what needs you
   assert.equal(band.hidden, false);
   assert.match(band.innerHTML, /<span class="cnt">4 on the way<\/span><span class="sep" aria-hidden="true">·<\/span><span class="red">1 needs you<\/span>/);
   assert.equal((band.innerHTML.match(/class="pf"/g) || []).length, 3, 'three platform tiles at most');
-  assert.match(band.innerHTML, /<span class="pf" style="--t:var\(--p\d\)">IG<\/span>/, 'a tile in the colour of the notebook asked for');
+  // P9 Q: the platform's logo (Instagram's rounded square), not « IG »
+  assert.match(band.innerHTML, /<span class="pf" style="--t:var\(--p\d\)"><svg width="16" height="16" viewBox="0 0 24 24"[^>]*aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="5"\/>/, 'a tile in the colour of the notebook asked for');
+  assert.doesNotMatch(band.innerHTML, />(IG|TT|YT|FB)</);
   // markup: a button, right after the brand bar, before everything else of the home page
   const home = html.split('<div id="home"')[1];
   assert.ok(home.indexOf('id="otw-band"') > home.indexOf('</header>') && home.indexOf('id="otw-band"') < home.indexOf('id="count"'));
