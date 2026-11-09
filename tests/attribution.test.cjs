@@ -24,10 +24,8 @@ test('R13 ?r= validation: one code of [a-z0-9-]{1,32}, exactly; anything else is
   assert.equal(RS.refUrl('Bad Code'), RS.REELBOOK_URL, 'never a malformed query');
 });
 
-test('R13 the shares: R6 texts end with ?r=text, R7 card prints ?r=story', () => {
-  for (const t of [RS.shareSheetText({title: 'Row'}), RS.shareSessionText({title: 'S', items: []}), RS.shareNotebookText({title: 'N', groups: []})]) {
-    assert.match(t, /Saved with Reelbook: https:\/\/lt20\.github\.io\/reelbook\/\?r=text$/);
-  }
+test('R13 the shares: R7 card prints ?r=story (R6\'s texts and their ?r=text are gone since P8 R18)', () => {
+  assert.equal(RS.shareSheetText, undefined);
   assert.equal(C.URL_LINE, 'lt20.github.io/reelbook/?r=story');
 });
 

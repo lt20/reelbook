@@ -55,10 +55,10 @@ test('R4b sheet: one row, Start filled then the outlined Log (no Â« Done today Â
   assert.match(rule('.acts2 .pl-start .btn'), /min-height:56px/);
 });
 
-test('R4b session: Start filled, full width, Log under it', async () => {
+test('R4b session: Start filled, full width, Log under it (P8 R18: Share next to Log)', async () => {
   const page = await open('#session/arms');
   const view = page.element('view').innerHTML;
-  assert.match(view, /<div class="acts2 stack"><p class="pl-start"><button[^>]*id="play-start">Start<\/button><\/p><div class="practice" id="practice">[\s\S]*?id="practice-done"[^>]*>Log</);
+  assert.match(view, /<div class="acts2 stack duo"><p class="pl-start"><button[^>]*id="play-start">Start<\/button><\/p><div class="practice" id="practice">[\s\S]*?id="practice-done"[^>]*>Log</);
   assert.match(rule('.acts2.stack>.pl-start'), /flex-basis:100%/);
 });
 

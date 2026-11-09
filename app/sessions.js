@@ -475,9 +475,8 @@
     return d && Object.prototype.hasOwnProperty.call(d, heading) ? d[heading] : heading;
   };
 
-  // R6: « Send as text » of a sheet, a session or a notebook. Plain text in the content's language (French, else
-  // English), ending with the Reelbook line. Never a photo, a note, the practice log or a date: the builders are only
-  // given titles, doses, key points and video credits. Each field is one line (its whitespace folded).
+  // R6 / P8 R13: the Reelbook address, and the ?r=<code> a share adds to it. P8 R18: a sheet, a session or a notebook
+  // is no longer sent as text (R6's texts are gone); a session goes to a training partner (sharePartnerText below).
   const REELBOOK_URL = 'https://lt20.github.io/reelbook/';
   // P8 R13: where a sign-up came from. The app's own shares add ?r=<code> to the Reelbook address (text: R6's texts,
   // story: R7's card, app: R9's Share Reelbook); any other code of the same form counts too (r=hn…). refCodeOf reads
@@ -489,68 +488,37 @@
     return v != null && REF_CODE.test(v) ? v : null;
   };
   const refUrl = code => REF_CODE.test(String(code)) ? `${REELBOOK_URL}?r=${code}` : REELBOOK_URL;
-  const SHARE_MAX = 20; // sheet titles listed in a notebook's text, then « … and n more »
-  const SHARE_WORDS = {
-    en: {video: 'Video:', videos: 'Videos:', saved: 'Saved with Reelbook:', exercise: ['exercise', 'exercises'], sheet: ['sheet', 'sheets'], colon: ':', more: n => `… and ${n} more`},
-    fr: {video: 'Vidéo :', videos: 'Vidéos :', saved: 'Enregistré avec Reelbook :', exercise: ['exercice', 'exercices'], sheet: ['fiche', 'fiches'], colon: ' :', more: n => `… et ${n} de plus`}
-  };
-  const shareWords = lang => lang === 'fr' ? SHARE_WORDS.fr : SHARE_WORDS.en;
   const oneLine = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
   const count = (n, [one, many]) => `${n} ${n === 1 ? one : many}`;
-  // A credit as written, « @ » added to a one-word handle that lacks it (« Coach Démo » stays as is).
-  const handle = a => { const s = oneLine(a); return !s || s.startsWith('@') || /\s/.test(s) ? s : '@' + s; };
-  const credits = authors => [...new Set((authors || []).map(handle).filter(Boolean))];
-  const httpLink = u => { const s = oneLine(u); return /^https?:\/\/\S+$/i.test(s) ? s : ''; };
-  const savedLine = W => `${W.saved} ${refUrl('text')}`;
-  const langOf = (lang, texts) => lang === 'fr' || lang === 'en' ? lang : isFrench(texts.filter(t => typeof t === 'string').join(' \n ')) ? 'fr' : 'en';
-  // A sheet: title, dose, the key points numbered, « Video: @author <url> », a blank line, the Reelbook line.
-  const shareSheetText = ({title, dose, keys, author, url, lang} = {}) => {
-    const kp = (Array.isArray(keys) ? keys : []).map(oneLine).filter(Boolean), d = oneLine(dose);
-    const W = shareWords(langOf(lang, [title, d, ...kp]));
-    const by = [handle(author), httpLink(url)].filter(Boolean).join(' ');
-    return [oneLine(title), ...(d ? [d] : []), ...kp.map((k, i) => `${i + 1}. ${k}`), ...(by ? [`${W.video} ${by}`] : []), '', savedLine(W)].join('\n');
-  };
-  // A session: « <title> — n exercises », « 1. <title> — <dose> » each, « Videos: @a, @b » (distinct credits).
-  // items: [{title, dose, author}]; author: the session's own video credit (a session made from one video).
-  const shareSessionText = ({title, items, author, lang} = {}) => {
-    const list = (Array.isArray(items) ? items : []).filter(it => it && oneLine(it.title));
-    const W = shareWords(langOf(lang, [title, ...list.map(it => it.title)]));
-    const by = credits([author, ...list.map(it => it.author)]);
-    return [`${oneLine(title)} — ${count(list.length, W.exercise)}`,
-      ...list.map((it, i) => `${i + 1}. ${oneLine(it.title)}${oneLine(it.dose) ? ' — ' + oneLine(it.dose) : ''}`),
-      ...(by.length ? [`${by.length === 1 ? W.video : W.videos} ${by.join(', ')}`] : []), '', savedLine(W)].join('\n');
-  };
-  // A notebook: « <Notebook> — n sheets », one line per group « <Group>: a, b » (a sheet without a group: its title
-  // alone on the line), SHARE_MAX titles at most, then « … and n more ». groups: [[name, [titles]]], in page order.
-  const shareNotebookText = ({title, groups, lang} = {}) => {
-    const gs = (Array.isArray(groups) ? groups : []).map(([g, ts]) => [oneLine(g), (Array.isArray(ts) ? ts : []).map(oneLine).filter(Boolean)]).filter(([, ts]) => ts.length);
-    const all = gs.reduce((n, [, ts]) => n + ts.length, 0);
-    const W = shareWords(langOf(lang, [title, ...gs.flatMap(([g, ts]) => [g, ...ts])]));
-    const lines = [`${oneLine(title)} — ${count(all, W.sheet)}`];
-    let left = SHARE_MAX;
-    for (const [g, ts] of gs) {
-      if (left <= 0) break;
-      const shown = ts.slice(0, left); left -= shown.length;
-      lines.push(g ? `${g}${W.colon} ${shown.join(', ')}` : shown.join(', '));
-    }
-    if (all > SHARE_MAX) lines.push(W.more(all - SHARE_MAX));
-    return [...lines, '', savedLine(W)].join('\n');
-  };
 
   // R11: « Send to a training partner ». The link of a session_shares row is <app>#s-<token> (22 URL-safe characters,
-  // made by the database). The message: « <sender>: <title>, n exercises. Get your own copy: <link> », in English (the
-  // app's language); the link preview stays the generic one of the app (no photo).
+  // made by the database); the link preview stays the generic one of the app (no photo).
   const SHARE_TOKEN = /^s-([A-Za-z0-9_-]{22})$/;
   const shareTokenOf = tok => { const m = SHARE_TOKEN.exec(String(tok == null ? '' : tok)); return m ? m[1] : null; };
-  const sharePartnerText = ({sender, title, count: n, url} = {}) =>
-    `${oneLine(sender)}: ${oneLine(title)}, ${count(Number(n) || 0, ['exercise', 'exercises'])}. Get your own copy: ${oneLine(url)}`;
+  // P8 R18: the first name partners see, as typed: its spaces folded, 40 characters at most, its first letter upper
+  // case (« laurent » → « Laurent », « élodie » → « Élodie »); the rest as written (« Jean-marc » stays).
+  const shareFirstName = v => {
+    const [first = '', ...rest] = [...oneLine(v)].slice(0, 40);
+    return first.toLocaleUpperCase() + rest.join('');
+  };
+  // P8 R18: the message, in the session's language (sessionLang: French, else English), French spacing (U+00A0
+  // before « : » and inside « »):
+  //   fr « Laurent vous partage la séance « <title> » (n exercices). Ouvrez-la dans Reelbook : <link> »
+  //   en « Laurent is sharing the session “<title>” with you (n exercises). Open it in Reelbook: <link> »
+  const NB = '\u00a0';
+  const sharePartnerText = ({sender, title, count: n, url, lang} = {}) => {
+    const who = shareFirstName(sender), t = oneLine(title), k = Number(n) || 0, u = oneLine(url);
+    return lang === 'fr'
+      ? `${who} vous partage la séance «${NB}${t}${NB}» (${count(k, ['exercice', 'exercices'])}). Ouvrez-la dans Reelbook${NB}: ${u}`
+      : `${who} is sharing the session “${t}” with you (${count(k, ['exercise', 'exercises'])}). Open it in Reelbook: ${u}`;
+  };
 
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
     catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel,
     setCount, restRemaining, restClock, cleanChecks, checksOf, fitChecks, playTally, sheetItem, doneDose, weekStart, weekRhythm,
     ordinal, doseUp,
-    isFrench, sessionLang, sessionHeading, setHeading, REELBOOK_URL, REF_CODE, refCodeOf, refUrl, SHARE_MAX, shareSheetText, shareSessionText, shareNotebookText,
-    shareTokenOf, sharePartnerText};
+    isFrench, sessionLang, sessionHeading, setHeading, REELBOOK_URL, REF_CODE, refCodeOf, refUrl,
+    shareTokenOf, shareFirstName, sharePartnerText};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

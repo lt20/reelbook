@@ -96,7 +96,7 @@ test('R14 override: the account\'s family wins over the default, both ways; a cu
 test('R14 Notebook ⋯ › Kind of practice: Repetition / Technique with one sentence each; a tap saves user_themes.family', async () => {
   const page = await open('#strength');
   await page.fire('nav-more');
-  assert.match(page.element('nav-actions').innerHTML, /id="nav-share">Share<\/button><button type="button" class="nav-it" id="nav-kind">Kind of practice<small>Repetition<\/small>/);
+  assert.match(page.element('nav-actions').innerHTML, /<div class="nav-list"><button type="button" class="nav-it" id="nav-kind">Kind of practice<small>Repetition<\/small>/);
   clickIn(page, 'nav-actions', '#nav-kind'); await settle();
   const dlg = page.element('kind-dlg');
   assert.equal(dlg.open, true);
@@ -348,7 +348,7 @@ test('R14 Codex pass 3: an own sheet with the slug « demo » opens its practice
   assert.match(player(page), /Step 1 of/);
 });
 
-test('R14 first « Got it » only opens New move: « New move: <title> », « n of N moves learned », Share, Back to the notebook', async () => {
+test('R14 first « Got it » only opens New move: « New move: <title> », « n of N moves learned », Back to the notebook (no Share since P8 R18)', async () => {
   const page = await open('#k1/practice', {levels: {k1: 'getting', k2: 'got'}});
   for (let i = 0; i < 3; i++) await fire(page, 'tech-next');
   await fire(page, 'tech-lv-got');
@@ -356,10 +356,9 @@ test('R14 first « Got it » only opens New move: « New move: <title> », « n 
   const h = player(page);
   assert.match(h, /class="tp-star" id="tech-title" tabindex="-1">New move: Water start<\/h1>/);
   assert.match(h, /<p class="tp-n">2 of 3 moves learned<\/p><span class="gauge" role="img" aria-label="2 of 3 moves learned"><i class="on"><\/i><i class="on new"><\/i><i class=""><\/i><\/span>/);
-  assert.match(h, /<button type="button" class="btn" id="tech-share">Share<\/button><button type="button" class="btn ghost" id="tech-back">Back to Kitesurf<\/button>/);
+  assert.match(h, /<p class="actions end-acts"><button type="button" class="btn" id="tech-back">Back to Kitesurf<\/button><\/p>/);
+  assert.doesNotMatch(h, /tech-share|>Share</, 'P8 R18: no text share of the sheet');
   assert.doesNotMatch(h, /session this week/);
-  await fire(page, 'tech-share');
-  assert.equal(page.element('share-dlg').open, true, 'R6\'s text share of the sheet');
   await fire(page, 'tech-back');
   assert.equal(page.location.hash, '#kitesurf');
   await settle();

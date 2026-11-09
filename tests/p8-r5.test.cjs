@@ -87,6 +87,9 @@ test('R5 single sheet: the player reads its dose, shows one cue, and « Done set
   assert.match(end(page), /id="end-done"[^>]*>Done<\/p><h1>Exercise 1<\/h1><p class="end-sum">1 set<\/p>/);
   assert.match(end(page), /Logged[\s\S]*id="end-undo"/);
   assert.doesNotMatch(end(page), /session this week|end-promo/, 'a single sheet is not a session');
+  // P8 R18: a sheet's Done has no Share (a sheet is not sent as text) and no story card; Done is the one filled action
+  assert.doesNotMatch(end(page), /end-share-s|>Share<|end-story/);
+  assert.match(end(page), /<p class="actions end-acts"><span class="end-cl" id="end-cl"><button type="button" class="btn" id="end-close">Done<\/button>/);
 });
 
 test('R5 opening a sheet or starting the player never logs; Finish with nothing checked logs nothing', async () => {
@@ -228,8 +231,8 @@ test('R5 empty week: no rhythm at all (no ordinal, no dots) when no session is l
 });
 
 // P8 R7: the story card's place now shows its card (the first Session done of the week); without card.js loaded (the
-// harness), « Share » falls back to R6's text share.
-test('R5 Session done: Share filled (R6 text share), Done outlined, the story card place, R9\'s card still there', async () => {
+// harness), « Share » opens the session's Share sheet (P8 R18: to a training partner).
+test('R5 Session done: Share filled (to a training partner), Done outlined, the story card place, R9\'s card still there', async () => {
   const page = await app({...signedIn, tables: tables([{slug: 'a', dose: '40 s'}]), hash: '#session/legs/play', dom: true, stored: {'rb.star.u1': '1'}});
   await settle();
   await fire(page, 'play-set-1', 'change');
@@ -239,7 +242,7 @@ test('R5 Session done: Share filled (R6 text share), Done outlined, the story ca
   assert.equal((h.match(/class="btn"(?! ghost)/g) || []).length, 1, 'one filled action');
   assert.match(h, /id="end-promo"><section class="end-promo"/);
   await fire(page, 'end-share-s');
-  assert.match(page.element('share-dlg').innerHTML, /Share “Legs”/);
+  assert.match(page.element('share-dlg').innerHTML, /Send “Legs” to a training partner/);
 });
 
 test('R5 player: follows the theme (no forced dark), and the ⋯ menu\'s High contrast is kept on this device', async () => {

@@ -650,6 +650,13 @@ dialog.ph-dlg::backdrop{background:#000}
 .acts2.stack>.pl-start{flex-basis:100%}
 .acts2.stack .practice>.actions{flex:0 0 auto}
 .acts2.stack .practice>.actions .btn{width:auto;min-height:44px;font-size:var(--fs-base);padding:0 22px}
+/* P8 R18: a session's row — Start (the one filled action), then « Log » and « Share », outlined, side by side */
+.acts2 .ses-share{flex:1 1 0;min-width:0;margin:0;order:1}
+.acts2.duo .practice>.actions{flex:1 1 0}
+.acts2.duo .practice>:not(.actions){order:2}
+.acts2.duo .practice>.actions .btn,.acts2 .ses-share .btn{width:100%;min-height:48px;font-size:var(--fs-base);padding:0 var(--s-3)}
+.ses-share .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s-2)}
+.ses-share .ic-share{flex:none;width:20px;height:20px}
 .player{position:fixed;inset:0;z-index:10;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
 .player .pl{max-width:560px;min-height:100%;margin:0 auto;display:flex;flex-direction:column}
 .pl-top{display:flex;align-items:flex-start;gap:var(--s-3);padding:10px var(--s-4) var(--s-3) var(--s-3)}
@@ -832,8 +839,8 @@ dialog.nav-menu h2{font:600 var(--fs-base) var(--body);text-transform:none;lette
 .nav-it.wake[aria-pressed="true"]::after{content:"On";font-weight:700;color:var(--ok)}
 .nav-it:not(:disabled):active{background:var(--tag)}
 dialog.nav-menu .actions{margin-top:var(--s-3)}
-/* ---- R6: share as text — « Share “<title>” »: the exact text in a grey block, the privacy note, Share… (filled) and
-   Copy text (quiet); without navigator.share, Copy text is the filled one. « Copied » shows as a pill at the top. */
+/* ---- R6, P8 R18: the Share sheet of a session — « Send “<title>” to a training partner »: one sentence (or why it
+   cannot be sent yet), the first name, « Send » (filled), the privacy note. « Message copied » shows as a pill at the top. */
 dialog.share-dlg{gap:var(--s-3)}
 .share-top{display:flex;align-items:flex-start;gap:var(--s-2)}
 @media (max-width:599.98px){dialog.share-dlg{padding-top:var(--s-4)}}
@@ -865,9 +872,11 @@ dialog.share-dlg .actions .btn{width:100%;min-height:50px}
    backend without session_shares), its one-field first-name step, and « <sender> sent you a session »: the session as a
    card in its notebook colour (title, notebook · n exercises, one line per exercise, « You have it »), the notebook it
    goes into, the privacy note, « Add to my Reelbook » (filled) and « Not now » (quiet). No photo before the copy. */
-.share-rows .nav-it{color:var(--ink)}
-.share-rows .nav-it:not(:disabled) small{color:var(--muted)}
-.share-or{margin:0;font-size:var(--fs-sm);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.share-form{display:grid;gap:var(--s-3)}
+.share-lead{margin:0;font-size:var(--fs-base);line-height:1.45;color:var(--ink)}
+.share-lead.why{color:var(--muted)}
+.share-form label{font-size:var(--fs-sm);color:var(--ink)}
+.share-form .err{margin:0}
 .recv-over{margin:0 0 2px;font-size:var(--fs-sm);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
 .recv-card{border:1px solid var(--line);border-top:4px solid var(--t,var(--accent));border-radius:var(--r-md);background:var(--paper);padding:14px var(--s-4) var(--s-1)}
 .recv-t{display:block;font:700 var(--fs-xl)/1.15 var(--display);overflow-wrap:anywhere}
@@ -2065,7 +2074,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=14"></script>
-<script src="sessions.js?v=16"></script>
+<script src="sessions.js?v=17"></script>
 <script src="sheet.js?v=6"></script>
 <script src="landing.js?v=15"></script>
 <script>
@@ -4649,10 +4658,11 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const items = RS.resolveItems(s, bySlug), img = v2Thumb(s), lang = RS.sessionLang(s), L = langAttr(lang), H = h => esc(RS.sessionHeading(h, lang));
     view.innerHTML = `<div class="wrap" id="sheet-top">${flash ? `<p class="flash" role="status">${esc(flash)}</p>` : ''}</div>
       <div class="wrap fiche"><header><div><p class="eyebrow">Session · ${esc(plural(items.length, 'exercise'))}</p><h1${L}>${esc(s.title)}</h1></div>${img ? `<img src="${esc(img)}" alt="" width="112" height="112">` : ''}</header>
-      ${actsRow(items.length ? startBtn() : '', true)}${s.format ? `<div class="kit"${L}><span><b class="kit-k">${H('Format')}</b> ${esc(s.format)}</span></div>` : ''}
+      ${actsRow(items.length ? startBtn() : '', true, sesShareBtn())}${s.format ? `<div class="kit"${L}><span><b class="kit-k">${H('Format')}</b> ${esc(s.format)}</span></div>` : ''}
       ${sessionInfo(s)}</div>
       <div class="wide">${inLang(lang, `<h2>${H('Exercises')} <span class="n">${items.length}</span></h2>`)}${items.length ? `<div class="grid">${items.map(it => itemCard(it, slug, lang)).join('')}</div>` : `<p class="empty">${(s.items || []).length ? 'No exercise left: its sheets were deleted.' : 'No exercise yet. Tap ⋯ then Edit, or « Add to session » on a sheet.'}</p>`}</div>` + notesHtml() + reportHtml(s);
     if (items.length) wireStart(RS.playHref(esc(slug)));
+    onClick('ses-share', () => openShare()); // P8 R18: the same sheet as ⋯ › Share
     wireNotes(RS.noteKey(slug));
     readPractice(RS.noteKey(slug));
     settleScroll();
@@ -5261,7 +5271,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // no log. Session done shows it scaled down at most once a week per account (rb.storyWeek.<user id>: the Monday of
   // the week it was last shown); the other times it folds into « Share your session ». While it shows, « Share »
   // shares the image (navigator.share with files) where the phone can, else opens it full screen (#story-dlg) with
-  // « Save the image » and « Share as text ». The session's Share sheet has a « Story image » row too.
+  // « Save the image ». P8 R18: no text share any more, and the session's Share sheet no longer has a « Story image »
+  // row (R19 brings the card to Session done and New move).
   let cardLoading = null;
   const loadCard = () => {
     if (window.RBCard) return Promise.resolve(window.RBCard);
@@ -5342,7 +5353,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (!st.open) return '<button type="button" class="btn ghost quiet end-story-l" id="end-story-open">Share your session</button>';
     return '<p class="end-story-k">Your story card</p>'
       + `<div class="end-card" id="end-card" role="img" aria-label="${esc(st.c ? st.c.label : 'Story card, being drawn')}"></div>`
-      + `<p class="end-story-n">${st.err ? 'The image could not be made. « Share » sends the text.' : 'Text and colour only. No photo, no notes.'}</p>`;
+      + `<p class="end-story-n">${st.err ? 'The image could not be made. « Share » sends the session to a training partner.' : 'Text and colour only. No photo, no notes.'}</p>`;
   };
   const storyPlace = e => region('end-story', 'end-story', storyInner(e));
   // Draws the preview (once per screen), then puts the canvas in its place.
@@ -5363,7 +5374,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const k = $('end-card'); if (k && k.focus) k.focus();
   };
   // « Share » while the card shows: the image to the phone's share menu (closed by the person: nothing), else full screen.
-  const shareCard = async (c, asText) => {
+  const shareCard = async c => {
     if (canShareFile(c.file)) {
       const gen = storyGen, uid = user ? user.id : null;
       try { await navigator.share({files: [c.file], title: c.card.title}); return 'shared'; }
@@ -5371,10 +5382,11 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       // Codex #116 pass 3: the account changed while the phone's share menu was open: its card is gone, nothing opens
       if (gen !== storyGen || (user ? user.id : null) !== uid) return 'gone';
     }
-    openStory(c, asText);
+    openStory(c);
     return 'shown';
   };
-  // The image full screen: « Share… » (where the phone shares files) or « Save the image » filled, and « Share as text ».
+  // The image full screen: « Share… » (where the phone shares files) or « Save the image » filled. P8 R18: no « Share as
+  // text » any more (nothing is sent as text).
   const storyDlg = $('story-dlg');
   // Closed: a Share sheet card is not shown again (the row draws a new one), so its URL goes; Session done's stays.
   let storyShown = null;
@@ -5386,16 +5398,15 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     storyDlg.innerHTML = '';
     dropCard('end'); dropCard('share');
   };
-  const openStory = (c, asText) => {
+  const openStory = c => {
     const share = canShareFile(c.file), save = !!c.url && saveOk();
     const saveBtn = cls => save ? `<a class="btn${cls}" id="story-save" href="${esc(c.url)}" download="${esc(c.name)}">Save the image</a>` : '';
     storyDlg.innerHTML = `<div class="story-top"><h2 id="story-h">Story image</h2><button type="button" class="share-x" id="story-close" aria-label="Close">✕</button></div>
       <div class="story-img">${c.url ? `<img id="story-img" src="${esc(c.url)}" alt="${esc(c.label)}">` : ''}</div>
       <p class="share-note">${LOCK}<span>Text and colour only. No photo, no notes.${save ? '' : ' Press and hold the image to save it.'}</span></p>
-      <div class="actions">${share ? '<button class="btn" type="button" id="story-go">Share…</button>' + saveBtn(' ghost') : saveBtn('')}<button class="btn${share || save ? ' ghost' : ''}" type="button" id="story-text">Share as text</button></div>`;
+      <div class="actions">${share ? '<button class="btn" type="button" id="story-go">Share…</button>' + saveBtn(' ghost') : saveBtn('')}</div>`;
     $('story-close').addEventListener('click', () => closeSheet(storyDlg));
     storyShown = c;
-    $('story-text').addEventListener('click', () => { closeSheet(storyDlg); asText(); });
     if (share) $('story-go').addEventListener('click', async () => {
       try { await navigator.share({files: [c.file], title: c.card.title}); } catch {}
     });
@@ -5403,6 +5414,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   // The Share sheet's « Story image » row (a session page), in R11's share-rows after « Send to a training partner »:
   // the card of its exercises, full screen. It needs no backend, so it shows whether sharing exists or not.
+  // P8 R18: no longer in the Share sheet (sending to a partner only); kept for R19, which puts it on Session done and New move.
   const storyRow = s => s ? '<button type="button" class="nav-it" id="share-story">Story image<small>A type-only card: exercises, doses, creators. No photos.</small></button><p class="err" id="share-story-err" role="alert" hidden></p>' : '';
   // Codex #116: the card is drawn after the module and the fonts load; by then the Share sheet may be closed (or
   // opened again, for another session or account). Only the same opening of the sheet, still open, on the same
@@ -5415,7 +5427,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     b.addEventListener('click', async () => {
       if (b.disabled) return;
       b.disabled = true;
-      try { const c = await makeCard(sessionCard(s), 'share', live); closeSheet(shareDlg); openStory(c, () => openShare()); }
+      try { const c = await makeCard(sessionCard(s), 'share', live); closeSheet(shareDlg); openStory(c); }
       catch (err) { const m = $('share-story-err'); if (m && live() && !(err && err.message === STALE)) { m.textContent = 'The image could not be made. Try again.'; m.hidden = false; } }
       finally { b.disabled = false; }
     });
@@ -5427,14 +5439,14 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     view.innerHTML = `<div class="wrap fiche pl-end"${band}><p class="end-k" id="end-done" tabindex="-1">${s ? 'Session done' : 'Done'}</p>`
       + `${s ? inLang(RS.sessionLang(s), `<h1>${esc(title)}</h1>`) : `<h1>${esc(title)}</h1>`}<p class="end-sum">${esc(e.summary)}</p>`
       + `<div class="end-log" id="end-logr" aria-live="polite">${logLine(e)}<!--/end-logr--></div>`
-      + region('end-rh', 'end-rh', rhythmBlock(e)) + storyPlace(e)
-      + `<p class="actions end-acts"><button type="button" class="btn" id="end-share-s">Share</button><span class="end-cl" id="end-cl">${closeBtn(e)}<!--/end-cl--></span></p>${s ? promoHtml(e) : ''}</div>`;
+      + region('end-rh', 'end-rh', rhythmBlock(e)) + (s ? storyPlace(e) : '') // P8 R18: a sheet's Done has no Share (nor its card)
+      + `<p class="actions end-acts">${s ? '<button type="button" class="btn" id="end-share-s">Share</button>' : ''}<span class="end-cl" id="end-cl">${closeBtn(e)}<!--/end-cl--></span></p>${s ? promoHtml(e) : ''}</div>`;
     wireEnd(e);
     onClick('end-share-s', shareEnd);
     onClick('end-close', closeEnd);
     onClick('end-story-open', () => openStoryFold(e));
     bindPromo(e);
-    drawEndCard(e);
+    if (s) drawEndCard(e);
     $('end-done').focus();
   };
   const wireEnd = e => { onClick('end-undo', () => undoPlay(e)); onClick('end-log', () => logPlay(e)); };
@@ -5443,7 +5455,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // Codex R5 pass 3: while Finish's write is on its way, « Done » is « Saving… » and disabled, so the screen that can
   // say « Not logged · Try again » stays until the answer.
   const endBusy = e => !!e && !!e.log && e.log.state === 'busy';
-  const closeBtn = e => `<button type="button" class="btn ghost" id="end-close"${endBusy(e) ? ' disabled' : ''}>${endBusy(e) ? 'Saving…' : 'Done'}</button>`;
+  // P8 R18: a sheet's Done has no Share, so Done is its one filled action; Session done keeps Share filled, Done outlined.
+  const closeBtn = e => `<button type="button" class="btn${e.kind === 'session' ? ' ghost' : ''}" id="end-close"${endBusy(e) ? ' disabled' : ''}>${endBusy(e) ? 'Saving…' : 'Done'}</button>`;
   const paintEnd = (e, focusId) => {
     if (!endShown(e)) return;
     repaint('end-logr', logLine(e)); repaint('end-rh', rhythmBlock(e)); repaint('end-cl', closeBtn(e)); wireEnd(e); onClick('end-close', closeEnd);
@@ -5453,24 +5466,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const e = ended; if (!e || endBusy(e)) return; ended = null; dropCard('end');
     if (shown === e.tok && !view.hidden) { if (e.kind === 'session') showSession(e.slug); else { shown = null; showSheet(e.slug); } }
   };
-  // P8 R7: while the story card shows, the image (shareCard); else, and when the image could not be made, R6's text
-  // share of the session (its page's « ⋯ › Share »), or of the sheet from what the player read of it.
+  // P8 R7: while the story card shows, the image (shareCard); else, and when the image could not be made, the session's
+  // Share sheet (P8 R18: to a training partner; its page's « Share »). Session done only: a sheet's Done has no Share.
   const shareEnd = async () => {
-    const e = ended; if (!e) return;
+    const e = ended; if (!e || e.kind !== 'session') return;
     const st = e.story;
     if (st && st.open && !st.err) {
-      // still being drawn (the fonts, at most 3 s): waited for a moment, else the text
+      // still being drawn (the fonts, at most 3 s): waited for a moment, else the Share sheet
       const c = st.c || (st.wait ? await Promise.race([st.wait, new Promise(ok => setTimeout(() => ok(null), 4000))]) : null);
       if (ended !== e || !endShown(e)) return; // left while the card was being drawn
-      if (c) { await shareCard(c, () => shareText(e)); return; }
+      if (c) { await shareCard(c); return; }
     }
-    shareText(e);
-  };
-  const shareText = e => {
-    if (e.kind === 'session') { openShare(); return; }
-    const sh = bySlug.get(e.slug); if (!sh) return;
-    const src = sh.source || {}, lang = frOr([sh.title, sh.summary, e.share.dose, ...e.share.keys]);
-    openShare({title: sh.title, lang, text: RS.shareSheetText({title: sh.title, dose: e.share.dose, keys: e.share.keys, author: src.author, url: httpUrl(src.url), lang})});
+    openShare();
   };
   // The rows of a play (P8 R5), in one insert: session/<slug> with the summary (a session only), then each exercise
   // with a checked set and what was done of it. Their ids are made here: Undo removes exactly them, and a retry of a
@@ -5631,7 +5638,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const startBtn = () => '<p class="pl-start"><button type="button" class="btn" id="play-start">Start</button></p>';
   // P8 R4b: one filled action. A sheet: Start (2/3) and the outlined Log (1/3, the L6 « Done today ») on one row; a
   // session: Start full width, Log under it. The practice region's own children join the row (display:contents).
-  const actsRow = (start, stack = false) => `<div class="acts2${stack ? ' stack' : ''}">${start}${practiceBox()}</div>`;
+  // P8 R18: `share` (a session page): « Share » next to « Log », outlined like it (Start stays the one filled action).
+  const actsRow = (start, stack = false, share = '') => `<div class="acts2${stack ? ' stack' : ''}${share ? ' duo' : ''}">${start}${practiceBox()}${share}</div>`;
+  const sesShareBtn = () => `<p class="ses-share"><button type="button" class="btn ghost" id="ses-share" aria-haspopup="dialog">${SHARE_GLYPH}Share</button></p>`;
   const wireStart = href => onClick('play-start', () => { location.hash = href; });
 
   // ---------- P8 R14: the technique family (decision 6: reward learning the move) ----------
@@ -5778,8 +5787,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     return `<div class="wrap pl-end tp-end tp-move"><h1 class="tp-star" id="tech-title" tabindex="-1">New move: ${esc(t.e.title)}</h1>`
       + '<p class="tp-said">Saved as <b>Got it</b>. It stays in your notebook, ready to come back to.</p>'
       + (nb && n ? `<section class="rhythm tp-nb" aria-label="${esc(nb.title)}"><p class="tp-nbn"><i aria-hidden="true"></i>${esc(nb.title)}</p><p class="tp-n">${k} of ${plural(n, 'move')} learned</p>${gaugeHtml(k, n, true)}</section>` : '')
-      + `<p class="actions end-acts"><button type="button" class="btn" id="tech-share">Share</button>`
-      + `<button type="button" class="btn ghost" id="tech-back">Back to ${esc(nb ? nb.title : 'Reelbook')}</button></p></div>`;
+      // P8 R18: no « Share » (a sheet is not sent as text; R19 brings the story card here): Back is the one filled action
+      + `<p class="actions end-acts"><button type="button" class="btn" id="tech-back">Back to ${esc(nb ? nb.title : 'Reelbook')}</button></p></div>`;
   };
   const renderTech = () => {
     const t = tech; if (!t || playerEl.hidden) return;
@@ -5807,7 +5816,6 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     onClick('tech-save', () => saveTech(t));
     onClick('tech-done', () => leaveTech());
     onClick('tech-back', () => leaveTech(t.e.theme));
-    onClick('tech-share', () => shareMove(t));
   };
   // Save: the level (notes, the sheet's row: upsert of slug and level only, the note's text untouched) and one
   // practice_log row. The row records only that the sheet was practised (text '', as R5's sheet finished with nothing
@@ -5848,11 +5856,6 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     t.phase = level === 'got' && t.was !== 'got' ? 'move' : 'saved';
     if (tech === t) renderTech();
     if (!$('home').hidden) renderHome();
-  };
-  // « Share » on New move: R6's text share of the sheet (title, key points, credit); R7's card is not there yet.
-  const shareMove = t => {
-    const sh = t.e, src = sh.source || {}, lang = frOr([sh.title, sh.summary, ...t.keys]);
-    openShare({title: sh.title, lang, text: RS.shareSheetText({title: sh.title, dose: '', keys: t.keys, author: src.author, url: httpUrl(src.url), lang})});
   };
 
   // ---------- move a sheet, or a v2 session (Notebook menu only) ----------
@@ -6512,25 +6515,25 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const t = themeById.get(nb) || (nb && (loading || loadError || !themes.length) ? libById.get(nb) || {id: nb, title: nb} : null);
     if (!t) return null;
     const one = currentTheme === t.id ? groupOf(t) : null;
-    // R6: a notebook page (not one group's grid) has a « ⋯ » menu once the notebook is known: Share
-    return one ? {title: one, up: [t.id, t.title], nb: t, upNb: t} : {title: t.title, up: ['', 'Reelbook'], nb: t, menu: themeById.has(t.id)};
+    // R6: a notebook page (not one group's grid) has a « ⋯ » menu once the notebook is known. P8 R18: Share left it, so
+    // the menu shows only where « Kind of practice » can be changed (its one row).
+    return one ? {title: one, up: [t.id, t.title], nb: t, upNb: t} : {title: t.title, up: ['', 'Reelbook'], nb: t, menu: themeById.has(t.id) && !!kindIt(t)};
   };
   // The « ⋯ » menu of a sheet or session page. An action this page cannot do stays listed, greyed, with the reason.
-  // R6: « Share » comes first, on a sheet, a session and a notebook page (whose menu holds only it).
+  // R6: « Share » comes first. P8 R18: on a session page only (it sends the session to a training partner); a sheet's
+  // and a notebook's menus have no Share (a sheet alone cannot be sent yet: session_shares knows only sessions).
   const shareIt = '<button type="button" class="nav-it" id="nav-share">Share</button>';
   const closeIt = '<div class="actions"><button class="btn ghost" type="button" id="nav-close">Close</button></div>';
   const menuNotebook = () => { const p = view.hidden ? navPage() : null; return p && p.nb && p.menu ? p.nb : null; };
   const menuHtml = () => {
     const nb = menuNotebook();
-    if (nb) return `<h2 id="nav-actions-h">${esc(nb.title)}</h2><div class="nav-list">${shareIt}${kindIt(nb)}</div>${closeIt}`;
+    if (nb) return `<h2 id="nav-actions-h">${esc(nb.title)}</h2><div class="nav-list">${kindIt(nb)}</div>${closeIt}`;
     if (view.hidden || !shown || edit) return '';
     const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown), x = s || e;
     if (!x) return '';
     const it = (id, label, cls = '', why = '') => `<button type="button" class="nav-it${cls}" id="${id}"${why ? ' disabled' : ''}>${label}${why ? `<small>${why}</small>` : ''}</button>`;
     const wake = wakeApi() ? `<button type="button" class="nav-it wake" id="wake" aria-pressed="${wakeWanted()}">Keep screen on</button>` : it('wake', 'Keep screen on', '', 'Not available in this browser');
-    const ready = sheetReady && sheetReady.slug === shown ? sheetReady.state : 'loading';
-    const shareWhy = !e || ready === 'ok' ? '' : ready === 'failed' ? 'The sheet could not be loaded' : 'Once the sheet has loaded';
-    return `<h2 id="nav-actions-h">${esc(x.title)}</h2><div class="nav-list">` + (shareWhy ? it('nav-share', 'Share', '', shareWhy) : shareIt)
+    return `<h2 id="nav-actions-h">${esc(x.title)}</h2><div class="nav-list">` + (s ? shareIt : '')
       + (s && sharedNow(s.slug) ? `<button type="button" class="nav-it" id="ses-unshare">Stop sharing<small>The link stops working. Copies already made stay with their owners.</small></button>` : '')
       + (s ? it('ed-open', 'Edit') : '') + it('mv-open', 'Move') + (e && sessionsOk ? it('as-open', 'Add to session') : '') + wake
       + it('nav-report', 'Something wrong?', '', httpUrl((x.source || {}).url) ? '' : 'No source video')
@@ -6639,82 +6642,50 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     else if (hit !== '#nav-close') pageAction(ev);
   });
 
-  // ---------- R6: share as text ----------
-  // « Share » (first in « ⋯ ») opens « Share “<title>” »: the exact text (RS.shareSheetText / shareSessionText /
-  // shareNotebookText), the note that notes and the log are never shared, « Share… » (the phone's share menu) and
-  // « Copy text ». Without navigator.share, « Copy text » is the one (filled) button. A share closed by the person
-  // does nothing; a share that fails copies instead. A clipboard that refuses leaves the text selected, and says so.
+  // ---------- R6, P8 R18: Share a session = send it to a training partner ----------
+  // « Share » (the outlined button next to « Log » on a session page, and first in its « ⋯ ») opens one sheet: « Send
+  // “<title>” to a training partner ». They get their own copy of the sheets and the session (R11's link), even without
+  // an account (R12). « Your first name »: empty and required the first time, then the one saved (user_metadata.share_name),
+  // always editable. « Send » makes or reuses the session's link and opens the phone's share menu with the message
+  // (RS.sharePartnerText, in the session's language), else copies it. Nothing is sent as text any more: no sheet,
+  // session or notebook text (Laurent's business tests, 9 Nov 2026). A session that cannot be sent yet says why, and
+  // « Send » stays disabled: a backend without session_shares, the shares still being read, a session with no exercise.
   const shareDlg = $('share-dlg');
   const LOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-  const folded = n => (n && n.textContent || '').replace(/\s+/g, ' ').trim();
-  // The sheet page shown: its first dose block (« 2–3 sets · 6–8 reps per set ») and its key points, as drawn.
-  const pageDose = () => {
-    const d = view.querySelector ? view.querySelector('div.dose') : null;
-    return d ? [...d.querySelectorAll('.d')].map(x => [x.querySelector('b'), x.querySelector('span')].map(folded).filter(Boolean).join(' ')).filter(Boolean).join(' · ') : '';
-  };
-  const pageKeys = () => window.RBSheet && view.querySelectorAll ? window.RBSheet.keyPoints(view, 50).map(k => [k.cue, k.text].filter(Boolean).join(' ')) : [];
   const frOr = texts => RS.isFrench(texts.filter(t => typeof t === 'string').join(' \n ')) ? 'fr' : 'en';
-  // {title, text, lang} of the notebook, session or sheet whose « ⋯ » is open; null on any other page.
-  const shareOf = () => {
-    const nb = menuNotebook();
-    if (nb) {
-      // the notebook's own sheets, as its page counts them (« 16 sheets »): not the exercise sheets of its sessions
-      const own = sheets.filter(e => e.theme === nb.id && !fromVideo(e.slug)), byGroup = new Map((nb.groups || []).map(g => [g, []]));
-      for (const e of own) { const g = e.group || ''; if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(e.title); }
-      const lang = frOr(own.flatMap(e => [e.title, e.summary]));
-      return {title: nb.title, lang, text: RS.shareNotebookText({title: nb.title, groups: [...byGroup], lang})};
-    }
-    if (view.hidden || !shown || edit) return null;
-    const s = shownSession(), e = s ? null : bySlug.get(shown);
-    if (s) {
-      const lang = RS.sessionLang(s);
-      return {title: s.title, lang, session: s, text: RS.shareSessionText({title: s.title, author: (s.source || {}).author, lang,
-        items: RS.resolveItems(s, bySlug).map(it => ({title: it.sheet.title, dose: it.dose, author: (it.sheet.source || {}).author}))})};
-    }
-    if (!e || !sheetReady || sheetReady.slug !== shown || sheetReady.state !== 'ok') return null; // loading or failed: nothing to share yet
-    const dose = pageDose() || ((seat && seat.items && seat.items[seat.n - 1]) || {}).dose || '', keys = pageKeys(), src = e.source || {};
-    // its declared or recognised language (sheetLang) first, then the heuristic on what is shared
-    const own = sheetReady.lang.toLowerCase().split('-')[0], lang = own === 'fr' || own === 'en' ? own : frOr([e.title, e.summary, dose, ...keys]);
-    return {title: e.title, lang, text: RS.shareSheetText({title: e.title, dose, keys, author: src.author, url: httpUrl(src.url), lang})};
-  };
-  let shareGen = 0, partnerFor = ''; // partnerFor (R11): the session whose « Send to a training partner » row is shown
+  let shareGen = 0, partnerFor = ''; // partnerFor (R11): the session whose Share sheet is open
   const shareSay = msg => {
     const t = $('share-toast'), g = ++shareGen; t.textContent = msg; t.hidden = false;
     setTimeout(() => { if (g === shareGen) { t.hidden = true; t.textContent = ''; } }, 2500);
   };
-  const copyShare = async text => {
-    try { await navigator.clipboard.writeText(text); return shareSay('Copied'); } catch {}
-    try { const r = document.createRange(), sel = window.getSelection(); r.selectNodeContents($('share-text')); sel.removeAllRanges(); sel.addRange(r); } catch {}
-    shareSay('Select the text and copy it');
-  };
-  const openShare = given => {
-    const x = given && given.text ? given : shareOf(); if (!x) return; // P8 R5: a sheet's Done screen gives its own
-    const storyFor = given && given.text || menuNotebook() || view.hidden || edit ? null : shownSession(); // P8 R7: « Story image »
-    const canShare = typeof navigator !== 'undefined' && !!navigator && typeof navigator.share === 'function';
-    partnerFor = x.session ? x.session.slug : ''; shareOpens++; shareStory = x.session ? storyFor : null;
-    shareDlg.innerHTML = `<div class="share-top"><h2 id="share-h">Share “${esc(x.title)}”</h2><button type="button" class="share-x" id="share-close" aria-label="Close">✕</button></div>
-      ${x.session ? `<div class="nav-list share-rows" id="share-rows">${partnerRow(x.session)}${storyRow(shareStory)}</div><p class="share-or">Or send as text</p>` : ''}
-      <pre class="share-prev" id="share-text" aria-label="Preview of the message"${langAttr(x.lang)}>${esc(x.text)}</pre>
+  const openShare = () => {
+    const s = view.hidden || edit ? null : shownSession(); if (!s) return;
+    partnerFor = s.slug; const opened = ++shareOpens;
+    const why = partnerWhy(s);
+    shareDlg.innerHTML = `<div class="share-top"><h2 id="share-h">Send “${esc(s.title)}” to a training partner</h2><button type="button" class="share-x" id="share-close" aria-label="Close">✕</button></div>
+      <form class="share-form" id="share-form" novalidate>
+      <p class="share-lead${why ? ' why' : ''}" id="share-why">${esc(why || partnerLine(s))}</p>
+      <label>Your first name <input id="share-name" type="text" maxlength="40" autocomplete="given-name" autocapitalize="words" enterkeyhint="send" required value="${esc(shareName())}"></label>
+      <p class="err" id="share-partner-err" role="alert" hidden></p>
+      <pre class="share-prev" id="share-link" aria-label="The message" hidden></pre>
+      <div class="actions"><button class="btn" type="submit" id="share-send"${why ? ' disabled' : ''}>Send</button></div></form>
       <p class="share-note">${LOCK}<span>Your notes and log are never shared.</span></p>
-      <div class="actions">${canShare ? '<button class="btn" type="button" id="share-go">Share…</button>' : ''}<button class="btn${canShare ? ' quiet' : ''}" type="button" id="share-copy">Copy text</button></div>
       <p class="share-toast" id="share-toast" role="status" hidden></p>`;
+    const inp = $('share-name'); inp.value = shareName(); // the first name saved, or empty (the first time)
+    paintPartner(s);
     $('share-close').addEventListener('click', () => closeSheet(shareDlg));
-    $('share-copy').addEventListener('click', () => { storyBump(); copyShare(x.text); });
-    wireStoryRow(shareStory);
-    if (x.session) { wirePartner(x.session); readShares().then(() => repaintPartner(x.session.slug)); }
-    if (canShare) $('share-go').addEventListener('click', async () => {
-      storyBump(); // P8 R7: another row started, a Story image being drawn is let go
-      try { await navigator.share({title: x.title, text: x.text}); }
-      catch (err) { if (!(err && err.name === 'AbortError')) await copyShare(x.text); }
-    });
+    $('share-form').addEventListener('submit', ev => { ev.preventDefault(); sendToPartner(s); });
+    // Codex #126 pass 3: the link known before this opening may have been revoked since (another tab, another device);
+    // only a read made for this opening lets « Send » reuse it without asking the database again
+    readShares().then(() => { if (shareOpens === opened) sharesReadAt = opened; repaintPartner(s.slug); });
     openSheet(shareDlg);
   };
 
   // ---------- R11: send a session to a training partner ----------
-  // Sender: the session's Share sheet has « Send to a training partner » (a backend without session_shares: disabled,
-  // « Coming soon »). It asks once for the first name partners see (user_metadata.share_name), takes the session's live
-  // token (or makes one: one per session, the database's), and shares « <name>: <title>, n exercises. Get your own
-  // copy: <app>#s-<token> ». « Stop sharing » (session ⋯) revokes it. Recipient: #s-<token> opens « <name> sent you a
+  // Sender (P8 R18: the session's Share sheet, above): the first name partners see (user_metadata.share_name), the
+  // session's live token (or a new one: one per session, the database's), and the message « Laurent is sharing the
+  // session “<title>” with you (n exercises). Open it in Reelbook: <app>#s-<token> » (or its French). « Stop sharing »
+  // (session ⋯) revokes it. Recipient: #s-<token> opens « <name> sent you a
   // session » (the Edge Function share, dry run: no photo), then « Add to my Reelbook » copies it into the notebook
   // chosen and opens the copy. Notes and the practice log are never part of it.
   const recvDlg = $('recv-dlg');
@@ -6722,10 +6693,6 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const r11Say = msg => {
     const t = $('r11-toast'), n = ++r11Seq; t.textContent = msg; t.hidden = !msg;
     setTimeout(() => { if (n === r11Seq) { t.hidden = true; t.textContent = ''; } }, 3000);
-  };
-  // The text part of the Share sheet steps aside while the partner row asks the name and shows the link.
-  const partnerOnly = () => {
-    for (const el of shareDlg.querySelectorAll ? shareDlg.querySelectorAll('.share-or, #share-text, #share-go, #share-copy, #share-story, #share-story-err') : []) el.hidden = true;
   };
   const INFO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
   const CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 12 5 5 9-10"/></svg>';
@@ -6745,19 +6712,24 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     shares = {uid, client, ok, bySlug: by};
   };
   const shareName = () => String((user && user.user_metadata && user.user_metadata.share_name) || '').trim();
-  const partnerRow = s => {
-    const n = RS.resolveItems(s, bySlug).length, known = user && shares.uid === user.id && shares.client === sb ? shares.ok : null;
-    const why = known === false ? 'Coming soon' : known === null ? 'Checking…' : !n ? 'This session has no exercise yet' : '';
-    return `<button type="button" class="nav-it" id="share-partner"${why ? ' disabled' : ''}>Send to a training partner<small>${why || `They get their own copy of the ${plural(n, 'sheet')} and the session`}</small></button>`
-      + '<p class="err" id="share-partner-err" role="alert" hidden></p>';
+  // Why this session cannot be sent yet ('' when it can): the backend has no session_shares, the shares are still being
+  // read, or the session has no exercise.
+  const partnerWhy = s => {
+    const known = user && shares.uid === user.id && shares.client === sb ? shares.ok : null;
+    return known === false ? 'Sending a session to a training partner is coming soon on this Reelbook.'
+      : known === null ? 'Checking…' : !RS.resolveItems(s, bySlug).length ? 'This session has no exercise yet. Add one, then send it.' : '';
+  };
+  const partnerLine = s => `They get their own copy of the ${plural(RS.resolveItems(s, bySlug).length, 'sheet')} and the session, even without an account.`;
+  const paintPartner = s => {
+    const why = partnerWhy(s), lead = $('share-why'), go = $('share-send');
+    if (lead) { lead.textContent = why || partnerLine(s); lead.className = 'share-lead' + (why ? ' why' : ''); }
+    if (go) go.disabled = !!why;
   };
   const repaintPartner = slug => {
     if (!shareDlg.open || partnerFor !== slug || shareBusy) return;
-    const s = v2BySlug.get(slug), rows = $('share-rows'); if (!s || !rows) return;
-    rows.innerHTML = partnerRow(s) + storyRow(shareStory); wirePartner(s); wireStoryRow(shareStory); // P8 R7: the row stays
+    const s = v2BySlug.get(slug); if (s) paintPartner(s);
   };
-  let shareBusy = false, shareStory = null; // shareStory: the session of the open sheet's « Story image » row (P8 R7)
-  const wirePartner = s => { const b = $('share-partner'); if (b) b.addEventListener('click', () => sendToPartner(s)); };
+  let shareBusy = false, sharesReadAt = -1; // shareBusy: the send under way (its lock); sharesReadAt: see openShare
   const partnerSay = msg => { const e = $('share-partner-err'); if (e) { e.textContent = msg || ''; e.hidden = !msg; } };
   // Codex #114 pass 2: a share runs for the account it started with. The client and the user id are taken at the start
   // and checked after every await; another account signed in meanwhile (or signed out) and the share stops there, so
@@ -6765,32 +6737,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const shareWho = () => ({client: sb, uid: user && user.id});
   const shareGone = who => !who || !who.client || !who.uid || who.client !== sb || !user || user.id !== who.uid;
   const ACCOUNT = 'account changed';
-  // The first name, once: a one-field step in the Share sheet. Resolves to the name saved, or '' (closed).
-  const askShareName = who => new Promise(done => {
-    const rows = $('share-rows'); if (!rows) return done('');
-    partnerOnly();
-    rows.outerHTML = `<form class="nav-list share-rows" id="share-rows" style="padding:var(--s-3) var(--s-4);gap:var(--s-2)">
-      <label>Your first name, as your training partners will see it <input id="share-name" type="text" maxlength="40" autocomplete="given-name" required></label>
-      <p class="err" id="share-partner-err" role="alert" hidden></p>
-      <div class="actions"><button class="btn" type="submit" id="share-name-ok">Continue</button></div></form>`;
-    const f = $('share-rows'), inp = $('share-name');
-    try { inp.focus(); } catch {}
-    shareDlg.addEventListener('close', () => done(''), {once: true});
-    f.addEventListener('submit', async ev => {
-      ev.preventDefault();
-      const name = inp.value.replace(/\s+/g, ' ').trim().slice(0, 40);
-      if (!name) { partnerSay('Type your first name.'); return; }
-      if (shareGone(who)) return done('');
-      $('share-name-ok').disabled = true; partnerSay('');
-      try {
-        const {data, error} = await who.client.auth.updateUser({data: {share_name: name}});
-        if (shareGone(who)) return done('');
-        if (error) throw error;
-        if (data && data.user) user = data.user; else user.user_metadata = {...(user.user_metadata || {}), share_name: name};
-        done(name);
-      } catch { $('share-name-ok').disabled = false; partnerSay('Reelbook could not save it. Check the connection and try again.'); }
-    });
-  });
+  // P8 R18: the first name, saved once a link is made (the first send) and each time it changes. true when saved.
+  const saveShareName = async (name, who) => {
+    try {
+      const {data, error} = await who.client.auth.updateUser({data: {share_name: name}});
+      if (shareGone(who)) return true; // another account now: nothing to say to it
+      if (error) return false;
+      if (data && data.user) user = data.user; else user.user_metadata = {...(user.user_metadata || {}), share_name: name};
+      return true;
+    } catch { return false; }
+  };
   // The session's live token: the one already made, or a new one (two at once: the unique index keeps one).
   const shareToken = async (slug, name, who) => {
     const still = () => { if (shareGone(who)) throw new Error(ACCOUNT); };
@@ -6810,40 +6766,58 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     throw error || new Error('no token');
   };
   const appUrl = () => location.origin + location.pathname;
+  // « Send »: the first name typed (RS.shareFirstName: « laurent » → « Laurent »), the session's live link (the one known
+  // when the sheet opened, else read or made: no wait before the phone's share menu when it is known), then the share.
   const sendToPartner = async s => {
-    if (shareBusy) return;
-    storyBump(); // P8 R7 (Codex #116 pass 2): a Story image still being drawn never interrupts the partner step
+    if (shareBusy || partnerWhy(s)) return;
     const who = shareWho(); if (shareGone(who)) return;
-    shareBusy = true; sheetBusy.add(shareDlg); partnerSay('');
+    const inp = $('share-name'), name = RS.shareFirstName(inp ? inp.value : '');
+    if (!name) { partnerSay('Type your first name.'); if (inp && inp.focus) inp.focus(); return; }
+    if (inp) inp.value = name;
+    // Codex #126: this opening of the sheet only — closed then opened again (another session, or the same one), a late
+    // answer never closes the new one, says something in it or switches its « Send »
+    const opened = shareOpens, here = () => shareDlg.open === true && shareOpens === opened;
+    // Codex #126 pass 3: the lock is this send's; it goes once the message is handed over, before the name's save is
+    // waited for, so a sheet opened meanwhile can send at once
+    const lock = {}, free = () => { if (shareBusy === lock) { shareBusy = false; sheetBusy.delete(shareDlg); } };
+    shareBusy = lock; sheetBusy.add(shareDlg); partnerSay('');
+    const go = $('share-send'); if (go) go.disabled = true;
+    const ready = () => { if (here()) { const g = $('share-send'); if (g) g.disabled = !!partnerWhy(s); } else if (shareDlg.open && !shareBusy) repaintPartner(partnerFor); };
     try {
-      let name = shareName();
-      if (!name) { sheetBusy.delete(shareDlg); name = await askShareName(who); sheetBusy.add(shareDlg); if (!name || !shareDlg.open || shareGone(who)) return; }
-      let token;
-      try { token = await shareToken(s.slug, name, who); }
-      catch (e) { if (!shareGone(who) && !(e && e.message === ACCOUNT)) partnerSay('Reelbook could not make the link. Check the connection and try again.'); return; }
-      if (shareGone(who)) return;
-      if (shares.uid === who.uid) shares.bySlug.set(s.slug, token);
-      const text = RS.sharePartnerText({sender: name, title: s.title, count: RS.resolveItems(s, bySlug).length, url: `${appUrl()}#s-${token}`});
-      partnerFor = ''; // the sheet now shows the link
-      const rows = $('share-rows'), canShare = typeof navigator !== 'undefined' && !!navigator && typeof navigator.share === 'function';
-      partnerOnly();
-      if (rows) rows.outerHTML = `<pre class="share-prev" id="share-link" aria-label="Preview of the message">${esc(text)}</pre>`;
-      const acts = shareDlg.querySelector ? shareDlg.querySelector('.actions') : null;
-      if (acts) {
-        acts.insertAdjacentHTML('afterbegin', `<button class="btn" type="button" id="share-link-go">${canShare ? 'Share…' : 'Copy link'}</button>`);
-        $('share-link-go').addEventListener('click', () => sendLink(s.title, text, canShare));
+      let token = sharesReadAt === opened && shares.uid === who.uid && shares.client === who.client ? shares.bySlug.get(s.slug) : null;
+      if (!token) {
+        try { token = await shareToken(s.slug, name, who); }
+        catch (e) { if (here() && !shareGone(who) && !(e && e.message === ACCOUNT)) partnerSay('Reelbook could not make the link. Check the connection and try again.'); return; }
       }
-      await sendLink(s.title, text, canShare);
-    } finally { shareBusy = false; sheetBusy.delete(shareDlg); }
+      if (shareGone(who) || !here()) return;
+      if (shares.uid === who.uid) shares.bySlug.set(s.slug, token);
+      const saving = name === shareName() ? null : saveShareName(name, who);
+      const text = RS.sharePartnerText({sender: name, title: s.title, count: RS.resolveItems(s, bySlug).length, url: `${appUrl()}#s-${token}`, lang: RS.sessionLang(s)});
+      const how = await sendLink(s.title, text, () => here() && !shareGone(who));
+      free(); ready();
+      const saved = saving ? await saving : true;
+      if (shareGone(who) || !here()) return;
+      if (!saved) partnerSay('Reelbook could not save your first name. It will be asked again next time.');
+      else if (how === 'shared') { closeSheet(shareDlg); r11Say('Sent'); }
+    } finally { free(); ready(); } // the sheet opened meanwhile: its own state
   };
-  // The phone's share menu (closed by the person: nothing), else the clipboard, else the text selected.
-  const sendLink = async (title, text, canShare) => {
-    if (canShare) {
-      try { await navigator.share({title, text}); return; }
-      catch (err) { if (err && err.name === 'AbortError') return; }
+  // The phone's share menu ('shared'; closed by the person: 'closed'), else the clipboard ('copied'), else the message
+  // shown and selected, to copy by hand ('shown'). Codex #126 pass 2: live() (this opening of the sheet, this account)
+  // is checked after each wait; once it is gone ('gone'), nothing is copied or shown, so another session's sheet never
+  // gets this message.
+  const sendLink = async (title, text, live) => {
+    if (typeof navigator !== 'undefined' && !!navigator && typeof navigator.share === 'function') {
+      try { await navigator.share({title, text}); return 'shared'; }
+      catch (err) { if (err && err.name === 'AbortError') return 'closed'; }
+      if (!live()) return 'gone';
     }
-    try { await navigator.clipboard.writeText(text); shareSay('Link copied'); }
-    catch { try { const r = document.createRange(), sel = window.getSelection(); r.selectNodeContents($('share-link')); sel.removeAllRanges(); sel.addRange(r); } catch {} shareSay('Select the text and copy it'); }
+    try { await navigator.clipboard.writeText(text); if (!live()) return 'gone'; shareSay('Message copied'); return 'copied'; }
+    catch {
+      if (!live()) return 'gone';
+      const m = $('share-link'); if (m) { m.textContent = text; m.hidden = false; }
+      try { const r = document.createRange(), sel = window.getSelection(); r.selectNodeContents(m); sel.removeAllRanges(); sel.addRange(r); } catch {}
+      shareSay('Select the message and copy it'); return 'shown';
+    }
   };
   const stopSharing = async slug => {
     if (!slug || !sb) return;

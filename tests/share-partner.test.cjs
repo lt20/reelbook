@@ -1,4 +1,4 @@
-// P8 R11: « Send to a training partner » (a session's Share sheet, « Stop sharing » in its ⋯) and « <sender> sent you a
+// P8 R11: « Send to a training partner » (a session's Share sheet, P8 R18, « Stop sharing » in its ⋯) and « <sender> sent you a
 // session » (#s-<token>, the Edge Function share). The function itself: tests/share-function.test.cjs (Deno).
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
@@ -10,12 +10,6 @@ const TOKEN = 'AbCdEfGhIjKlMnOpQrStUv';
 test('R11: #s-<token> is read only with a 22-character URL-safe token', () => {
   assert.equal(RS.shareTokenOf('s-' + TOKEN), TOKEN);
   for (const bad of ['s-short', 's-' + TOKEN + 'x', 'S-' + TOKEN, TOKEN, 's-' + TOKEN.slice(0, 21) + '!', '', null, 'session/s-' + TOKEN]) assert.equal(RS.shareTokenOf(bad), null, String(bad));
-});
-
-test('R11: the message — « <sender>: <title>, n exercises. Get your own copy: <link> », one line, no photo or note', () => {
-  assert.equal(RS.sharePartnerText({sender: 'Laurent', title: 'Kicks du mardi', count: 4, url: 'https://lt20.github.io/reelbook/#s-' + TOKEN}),
-    'Laurent: Kicks du mardi, 4 exercises. Get your own copy: https://lt20.github.io/reelbook/#s-' + TOKEN);
-  assert.equal(RS.sharePartnerText({sender: ' Léa\n', title: 'Row\n day', count: 1, url: 'u'}), 'Léa: Row day, 1 exercise. Get your own copy: u');
 });
 
 // ---------- in the app ----------
@@ -37,50 +31,27 @@ const open = async (hash, {meta, extra, failing = {}, writes = {}, nav = {}} = {
 };
 const clickIn = (page, id, selector) => page.element(id).listeners.click({target: {closest: s => s === selector ? {dataset: {}} : null}});
 const share = async page => { await page.fire('nav-more'); clickIn(page, 'nav-actions', '#nav-share'); await settle(); };
+const submit = async page => { await page.element('share-form').listeners.submit({preventDefault() {}}); await settle(); };
 const writesOf = (page, table) => page.clients[0].calls.filter(c => c[1] === table);
 
-test('R11: a backend without session_shares — the row stays, disabled, « Coming soon »; nothing is written', async () => {
-  const page = await open('#session/routine', {failing: {session_shares: {error: {code: 'PGRST205', message: 'no table'}, status: 404}}});
-  await share(page);
-  // drawn « Checking… » with the sheet, then repainted once the table is read (the ⋯ opened first already read it)
-  assert.match(page.element('share-dlg').innerHTML + page.element('share-rows').innerHTML, /<button type="button" class="nav-it" id="share-partner" disabled>Send to a training partner<small>Coming soon<\/small><\/button>/);
-  assert.match(page.element('share-dlg').innerHTML, /id="share-text"/, 'the text share is still there');
-  assert.deepEqual(writesOf(page, 'session_shares'), []);
-  await page.fire('nav-more');
-  assert.doesNotMatch(page.element('nav-actions').innerHTML, /Stop sharing/);
+// P8 R18: the message (English and French), the first name, the states of the sheet: tests/p8-r18.test.cjs.
+test('R11: a sheet or a notebook has no Share at all (sessions only, P8 R18)', async () => {
+  for (const hash of ['#strength', '#curl']) {
+    const page = await open(hash, {extra: {session_shares: []}});
+    await page.fire('nav-more');
+    assert.doesNotMatch(page.element('nav-actions').innerHTML, /nav-share/, hash);
+  }
 });
 
-test('R11: a sheet or a notebook has no partner row (sessions only)', async () => {
-  const page = await open('#strength', {extra: {session_shares: []}});
-  await share(page);
-  assert.doesNotMatch(page.element('share-dlg').innerHTML, /training partner/);
-});
-
-test('R11: first share — asks the first name once (user_metadata.share_name), makes the token, shares the message', async () => {
-  const shared = [];
-  const page = await open('#session/routine', {extra: {session_shares: []}, writes: {session_shares: {data: {token: TOKEN}, error: null}},
-    nav: {share: async d => { shared.push(d); }}});
-  await share(page);
-  assert.match(page.element('share-dlg').innerHTML + page.element('share-rows').innerHTML, /id="share-partner">Send to a training partner<small>They get their own copy of the 2 sheets and the session<\/small>/);
-  page.fire('share-partner'); await settle();
-  assert.match(page.element('share-rows').outerHTML, /Your first name, as your training partners will see it <input id="share-name" type="text" maxlength="40"/);
-  page.element('share-name').value = '  Laurent  ';
-  await page.element('share-rows').listeners.submit({preventDefault() {}}); await settle();
-  assert.deepEqual(JSON.parse(JSON.stringify(page.updated)), {data: {share_name: 'Laurent'}});
-  assert.deepEqual(JSON.parse(JSON.stringify(writesOf(page, 'session_shares').map(c => c.slice(0, 3)))), [['insert', 'session_shares', {session_slug: 'routine', sender_name: 'Laurent'}]]);
-  assert.deepEqual(JSON.parse(JSON.stringify(shared)), [{title: 'Routine', text: `Laurent: Routine, 2 exercises. Get your own copy: https://lt20.github.io/reelbook/#s-${TOKEN}`}]);
-  assert.doesNotMatch(JSON.stringify(shared), /SECRET|img|thumb/);
-});
-
-test('R11: sharing again reuses the live token (no insert), with the name already known; ⋯ then offers « Stop sharing », which revokes it', async () => {
+test('R11: sharing again reuses the live token (no insert), with the name filled in; ⋯ then offers « Stop sharing », which revokes it', async () => {
   const shared = [];
   const page = await open('#session/routine', {meta: {share_name: 'Léa'}, extra: {session_shares: [{token: TOKEN, session_slug: 'routine'}]}, nav: {share: async d => { shared.push(d); }}});
   await page.fire('nav-more'); await settle();
   assert.match(page.element('nav-actions').innerHTML, /id="nav-share">Share<\/button><button type="button" class="nav-it" id="ses-unshare">Stop sharing<small>The link stops working\./);
   clickIn(page, 'nav-actions', '#nav-share'); await settle();
-  await page.fire('share-partner'); await settle();
+  await submit(page);
   assert.deepEqual(writesOf(page, 'session_shares'), [], 'the same link: nothing written');
-  assert.match(shared[0].text, new RegExp(`^Léa: Routine, 2 exercises\\. Get your own copy: https://lt20\\.github\\.io/reelbook/#s-${TOKEN}$`));
+  assert.equal(shared[0].text, `Léa is sharing the session “Routine” with you (2 exercises). Open it in Reelbook: https://lt20.github.io/reelbook/#s-${TOKEN}`);
   await page.fire('nav-more');
   clickIn(page, 'nav-actions', '#ses-unshare'); await settle();
   const w = writesOf(page, 'session_shares');
@@ -174,7 +145,7 @@ test('R11 (Codex #114 pass 2): another account signs in while the link is being 
   await settle();
   await share(page);
   held = true;
-  page.fire('share-partner'); await settle(); // A's share waits for its live-token read
+  page.element('share-form').listeners.submit({preventDefault() {}}); await settle(); // A's share waits for its live-token read
   page.clients[0].authListener('SIGNED_IN', {user: {id: 'u2', email: 'b@example.test', user_metadata: {share_name: 'Bea'}}, access_token: 't2'});
   await settle();
   held = false; release(); await settle();

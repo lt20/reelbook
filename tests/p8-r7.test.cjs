@@ -188,10 +188,11 @@ test('R7 share path with canShare({files}): « Share » sends the PNG to the pho
   nav.share = async () => { throw new Error('NotAllowedError'); };
   await fire(page, 'end-share-s');
   assert.equal(page.element('story-dlg').open, true);
-  assert.match(page.element('story-dlg').innerHTML, /<button class="btn" type="button" id="story-go">Share…<\/button><a class="btn ghost" id="story-save" href="blob:[^"]+" download="reelbook-legs\.png">Save the image<\/a><button class="btn ghost" type="button" id="story-text">Share as text<\/button>/);
+  assert.match(page.element('story-dlg').innerHTML, /<button class="btn" type="button" id="story-go">Share…<\/button><a class="btn ghost" id="story-save" href="blob:[^"]+" download="reelbook-legs\.png">Save the image<\/a><\/div>/);
+  assert.doesNotMatch(page.element('story-dlg').innerHTML, /story-text|Share as text/, 'P8 R18: no text share');
 });
 
-test('R7 share path without canShare: full screen with « Save the image » (object URL download) and « Share as text » (R6)', async () => {
+test('R7 share path without canShare: full screen with « Save the image » (object URL download); no « Share as text » since P8 R18', async () => {
   const page = await open({nav: {share: async () => { throw new Error('text only'); }}}); // navigator.share for text, no canShare
   await finish(page);
   await fire(page, 'end-share-s');
@@ -199,29 +200,25 @@ test('R7 share path without canShare: full screen with « Save the image » (obj
   assert.equal(page.element('story-dlg').open, true);
   assert.match(d, /<h2 id="story-h">Story image<\/h2>/);
   assert.match(d, /<img id="story-img" src="blob:[^"]+" alt="Story card: Legs">/);
-  assert.match(d, /<a class="btn" id="story-save" href="blob:[^"]+" download="reelbook-legs\.png">Save the image<\/a><button class="btn ghost" type="button" id="story-text">Share as text<\/button>/);
-  assert.doesNotMatch(d, /story-go/);
-  await fire(page, 'story-text');
-  assert.notEqual(page.element('story-dlg').open, true);
-  assert.equal(page.element('share-dlg').open, true);
-  assert.match(page.element('share-dlg').innerHTML, /Share “Legs”[\s\S]*Legs — 3 exercises/);
-  // a browser whose links cannot download: « Press and hold the image », « Share as text » the one filled button
+  assert.match(d, /<div class="actions"><a class="btn" id="story-save" href="blob:[^"]+" download="reelbook-legs\.png">Save the image<\/a><\/div>/);
+  assert.doesNotMatch(d, /story-go|story-text|Share as text/);
+  // a browser whose links cannot download: « Press and hold the image », no button
   const ios = await open({save: false});
   await finish(ios);
   await fire(ios, 'end-share-s');
   const i = ios.element('story-dlg').innerHTML;
   assert.match(i, /Press and hold the image to save it\./);
-  assert.doesNotMatch(i, /story-save/);
-  assert.match(i, /<button class="btn" type="button" id="story-text">Share as text<\/button>/);
+  assert.doesNotMatch(i, /story-save|story-text/);
 });
 
-test('R7 the image could not be made: the place says so and « Share » sends the text', async () => {
+test('R7 the image could not be made: the place says so and « Share » sends the session to a training partner (P8 R18)', async () => {
   const page = await open({fail: true});
   await finish(page);
-  assert.match(end(page), /The image could not be made\. « Share » sends the text\./);
+  assert.match(end(page), /The image could not be made\. « Share » sends the session to a training partner\./);
   await fire(page, 'end-share-s');
   assert.notEqual(page.element('story-dlg').open, true);
   assert.equal(page.element('share-dlg').open, true);
+  assert.match(page.element('share-dlg').innerHTML, /Send “Legs” to a training partner/);
 });
 
 test('R7 weekly fold: the card shows once a week per account (rb.storyWeek.<user id>), else « Share your session »', async () => {
@@ -259,35 +256,6 @@ test('R7 weekly fold: the card shows once a week per account (rb.storyWeek.<user
   assert.match(end(other), /id="end-card"/);
 });
 
-// ---------- the session's Share sheet ----------
-const clickIn = (page, id, selector) => page.element(id).listeners.click({target: {closest: s => s === selector ? {dataset: {}} : null}});
-const shareSheet = async page => { await page.fire('nav-more'); clickIn(page, 'nav-actions', '#nav-share'); await settle(); };
-
-test('R7 Share sheet: a session has « Story image », its card is the session\'s exercises and doses (no « today »), full screen', async () => {
-  const log = [];
-  const nav = {canShare: d => !!(d && d.files), share: async () => {}};
-  const page = await open({log, nav, hash: '#session/legs'});
-  await shareSheet(page);
-  const s = page.element('share-dlg').innerHTML;
-  // in R11's share-rows, after « Send to a training partner » (here a backend without session_shares: « Coming soon »)
-  assert.match(s, /<div class="nav-list share-rows" id="share-rows"><button type="button" class="nav-it" id="share-partner"[^>]*>Send to a training partner<small>[^<]*<\/small><\/button><p class="err" id="share-partner-err" role="alert" hidden><\/p><button type="button" class="nav-it" id="share-story">Story image<small>A type-only card: exercises, doses, creators\. No photos\.<\/small><\/button><p class="err" id="share-story-err" role="alert" hidden><\/p><\/div>/);
-  assert.match(s, /id="share-copy">Copy text<\/button><\/div>/, 'the text share as before');
-  await fire(page, 'share-story');
-  assert.equal(log.length, 1);
-  const c = log[0];
-  assert.deepEqual([c.title, c.exercises, c.today], ['Legs', 3, undefined]);
-  assert.deepEqual(c.items, [{title: 'Exercise 1', dose: '3 × 10'}, {title: 'Exercise 2', dose: '40 s'}, {title: 'Exercise 3', dose: 'Light band'}]);
-  assert.deepEqual(c.authors.filter(Boolean), ['coach.a', '@coach.b']);
-  assert.notEqual(page.element('share-dlg').open, true);
-  assert.equal(page.element('story-dlg').open, true);
-  assert.match(page.element('story-dlg').innerHTML, /<button class="btn" type="button" id="story-go">Share…<\/button>/);
-  // a sheet's Share sheet has no « Story image » row (R7 is the session's card)
-  const sheet = await open({hash: '#a'});
-  await settle();
-  await shareSheet(sheet);
-  assert.doesNotMatch(sheet.element('share-dlg').innerHTML, /share-story/);
-});
-
 test('R7 versions: card.js?v=2 asked by the app and precached by the worker, the cache VERSION moved', () => {
   const ver = (s, f) => Number((s.match(new RegExp(f.replace('.', '\\.') + '\\?v=(\\d+)')) || [])[1]);
   assert.equal(ver(html, 'card.js'), 2); // P8 R13: the card's address carries ?r=story
@@ -295,7 +263,7 @@ test('R7 versions: card.js?v=2 asked by the app and precached by the worker, the
   assert.ok(Number(sw.match(/const VERSION = 'rb-shell-(\d+)'/)[1]) >= 61);
 });
 
-test('R7 Finish with nothing checked: no card and the week stays free; « Share » is the text share', async () => {
+test('R7 Finish with nothing checked: no card and the week stays free; « Share » opens the session\'s Share sheet (P8 R18: to a partner)', async () => {
   const log = [];
   const page = await open({log});
   await fire(page, 'play-finish');
@@ -309,58 +277,6 @@ test('R7 Finish with nothing checked: no card and the week stays free; « Share 
 // ---------- Codex #116, pass 1 ----------
 const {resolveObjectURL} = require('node:buffer');
 const srcOf = page => (page.element('story-dlg').innerHTML.match(/<img id="story-img" src="(blob:[^"]+)"/) || [])[1];
-
-test('R7 Codex #116: the Share sheet\'s card does not revoke the URL Session done\'s card still uses; each goes when its card is dropped', async () => {
-  const page = await open({nav: {share: async () => { throw new Error('text only'); }}}); // no canShare: full screen
-  await finish(page);
-  await fire(page, 'end-share-s');
-  const endUrl = srcOf(page);
-  assert.ok(endUrl && resolveObjectURL(endUrl), 'the end card, full screen');
-  // « Share as text » → the session's Share sheet → « Story image »: a second card, full screen
-  await fire(page, 'story-text');
-  assert.equal(page.element('share-dlg').open, true);
-  await fire(page, 'share-story');
-  const shareUrl = srcOf(page);
-  assert.ok(shareUrl && shareUrl !== endUrl && resolveObjectURL(shareUrl));
-  assert.ok(resolveObjectURL(endUrl), 'Session done\'s card still alive');
-  // closed: the Share sheet's card goes, Session done's stays and « Share » shows it again, whole
-  await fire(page, 'story-close'); page.element('story-dlg').listeners.close(); await settle();
-  assert.equal(resolveObjectURL(shareUrl), undefined, 'dropped with its card');
-  await fire(page, 'end-share-s');
-  assert.equal(srcOf(page), endUrl);
-  assert.ok(resolveObjectURL(endUrl), 'the image is not broken');
-  assert.match(page.element('story-dlg').innerHTML, new RegExp(`id="story-save" href="${endUrl}"`));
-  // Session done left: its card goes too
-  await fire(page, 'story-close'); page.element('story-dlg').listeners.close();
-  await fire(page, 'end-close');
-  assert.equal(resolveObjectURL(endUrl), undefined);
-});
-
-test('R7 Codex #116: « Story image », then the Share sheet closed (or opened again) while the card is drawn: no Story image opens', async () => {
-  const pending = [];
-  const rb = {label: c => `Story card: ${c.title}`, render: () => new Promise(ok => pending.push(() => ok({canvas: {tagName: 'CANVAS'}, blob: new Blob(['png'], {type: 'image/png'})})))};
-  const page = await open({hash: '#session/legs', rb});
-  await shareSheet(page);
-  page.element('share-story').listeners.click({}); await settle();
-  assert.equal(pending.length, 1, 'being drawn');
-  await fire(page, 'share-close');
-  assert.notEqual(page.element('share-dlg').open, true);
-  pending.shift()(); await settle(); await settle();
-  assert.notEqual(page.element('story-dlg').open, true, 'the sheet was closed: nothing opens');
-  assert.doesNotMatch(page.element('share-story-err').textContent || '', /could not/, 'and no error said');
-  // closed and opened again before the card came: the first tap's card is dropped too
-  await shareSheet(page);
-  page.element('share-story').listeners.click({}); await settle();
-  await fire(page, 'share-close');
-  await shareSheet(page);
-  pending.shift()(); await settle(); await settle();
-  assert.notEqual(page.element('story-dlg').open, true, 'another opening of the sheet');
-  assert.equal(page.element('share-dlg').open, true, 'the sheet opened again stays');
-  // the same opening, still open: it opens
-  page.element('share-story').listeners.click({}); await settle();
-  pending.shift()(); await settle(); await settle();
-  assert.equal(page.element('story-dlg').open, true);
-});
 
 test('R7 Codex #116: a 1 000-character title and 12 exercises keep a vertical budget: title 3 lines ellipsised, « + n more », credits fit, nothing overlaps', () => {
   const items = Array.from({length: 12}, (_, i) => ({title: 'Bulgarian split squat with a pause ' + (i + 1), dose: '3 × 8–10 / side'}));
@@ -404,58 +320,21 @@ test('R7 a French card writes « / côté » (the app\'s doses say « / side »)
 });
 
 // ---------- Codex #116, pass 2 ----------
-const deferredCard = pending => ({label: c => `Story card: ${c.title}`,
-  render: () => new Promise(ok => pending.push(() => ok({canvas: {tagName: 'CANVAS'}, blob: new Blob(['png'], {type: 'image/png'})})))});
-
-test('R7 Codex #116 pass 2: signed out, or another account — the Story image closes, both cards\' URLs go, a card being drawn is dropped', async () => {
+// P8 R18: the Share sheet's « Story image » row is gone (R19 brings the card to Session done and New move); its tests
+// went with it, Session done's card keeps its own.
+test('R7 Codex #116 pass 2: signed out — the Story image closes and Session done\'s card URL goes', async () => {
   const page = await open({nav: {share: async () => { throw new Error('text only'); }}});
   await finish(page);
   await fire(page, 'end-share-s');
   const endUrl = srcOf(page);
-  await fire(page, 'story-text');
-  await fire(page, 'share-story');
-  const shareUrl = srcOf(page);
   assert.equal(page.element('story-dlg').open, true);
-  assert.ok(resolveObjectURL(endUrl) && resolveObjectURL(shareUrl));
+  assert.ok(resolveObjectURL(endUrl));
   page.clients[0].authListener('SIGNED_OUT', null); await settle();
   assert.notEqual(page.element('story-dlg').open, true, 'closed over the sign-in screen');
   assert.doesNotMatch(page.element('story-dlg').innerHTML, /blob:/, 'nothing of it left');
-  assert.equal(resolveObjectURL(shareUrl), undefined, 'the Share sheet card goes');
   assert.equal(resolveObjectURL(endUrl), undefined, 'Session done\'s card goes');
-  // a card being drawn when another account signs in: dropped when it comes
-  const pending = [];
-  const other = await open({hash: '#session/legs', rb: deferredCard(pending)});
-  await shareSheet(other);
-  other.element('share-story').listeners.click({}); await settle();
-  other.clients[0].authListener('SIGNED_IN', {user: {id: 'u2', email: 'b@example.test', user_metadata: {}}, access_token: 't2'}); await settle();
-  pending.shift()(); await settle(); await settle();
-  assert.notEqual(other.element('story-dlg').open, true, 'the account before\'s card never opens');
-  assert.doesNotMatch(other.element('story-dlg').innerHTML, /blob:/);
 });
 
-test('R7 Codex #116 pass 2: « Story image » being drawn, then « Send to a training partner » — the late card does not interrupt the name step', async () => {
-  const pending = [];
-  const page = await open({hash: '#session/legs', rb: deferredCard(pending)});
-  await shareSheet(page);
-  page.element('share-story').listeners.click({}); await settle();
-  assert.equal(pending.length, 1, 'being drawn');
-  page.element('share-partner').listeners.click({}); await settle();
-  assert.match(page.element('share-rows').outerHTML || '', /id="share-name"/, 'the name step');
-  page.element('share-name').value = 'Lau';
-  pending.shift()(); await settle(); await settle();
-  assert.notEqual(page.element('story-dlg').open, true, 'no Story image over the partner step');
-  assert.equal(page.element('share-dlg').open, true, 'the Share sheet stays');
-  assert.equal(page.element('share-name').value, 'Lau', 'what was typed is kept');
-  // the text rows too: « Copy text » lets a card being drawn go
-  const again = await open({hash: '#session/legs', rb: deferredCard(pending)});
-  await shareSheet(again);
-  again.element('share-story').listeners.click({}); await settle();
-  await fire(again, 'share-copy');
-  pending.shift()(); await settle(); await settle();
-  assert.notEqual(again.element('story-dlg').open, true);
-});
-
-// ---------- Codex #116, pass 3 ----------
 test('R7 Codex #116 pass 3: the phone\'s share menu open, signed out, then the share fails — the old account\'s card is not shown', async () => {
   let fail;
   const nav = {canShare: d => !!(d && d.files), share: () => new Promise((ok, ko) => { fail = () => ko(new Error('NotAllowedError')); })};
