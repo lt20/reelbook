@@ -94,13 +94,20 @@ test('R3: quota and needs_computer open their fix with their own action', async 
 });
 
 test('R3: « other », no reason or an unknown one: the error\'s first line, « Try again » and « Report this »', async () => {
-  const page = await open({tables: tables([fail('o', 'other', {note: 'Video unavailable\nsecond line'}), fail('n', null, {note: 'Redo: hands\nffmpeg crashed'}), fail('x', 'something_new', {note: ''})])});
+  const page = await open({cfg: {contact: 'contact@reelbook.si'}, tables: tables([fail('o', 'other', {note: 'Video unavailable\nsecond line'}), fail('n', null, {note: 'Redo: hands\nffmpeg crashed'}), fail('x', 'something_new', {note: ''})])});
   let fix = await openRowOf(page, 'o');
   assert.match(fix, /<h2 id="otw-rh">This video could not be made<\/h2>/);
   assert.match(fix, /<p class="fx-why">Video unavailable<\/p>/, 'the first line only');
   assert.doesNotMatch(fix, /<ol/, 'no steps known for it');
-  assert.match(fix, /data-fixdone>Try again<\/button><a class="btn ghost fx-report" href="https:\/\/github\.com\/lt20\/reelbook\/issues\/new\?body=[^"]+" target="_blank" rel="noopener">Report this<\/a>/);
-  assert.doesNotMatch(decodeURIComponent(/href="(https:\/\/github[^"]+)"/.exec(fix)[1]), /instagram|reel\/o|Video unavailable/, 'the issue is public: nothing of the video');
+  // R17: « Report this » opens the same choice as Settings › Report a problem (email or GitHub issue)
+  assert.match(fix, /data-fixdone>Try again<\/button><button type="button" class="btn ghost fx-report" data-freport aria-haspopup="dialog">Report this<\/button>/);
+  assert.doesNotMatch(fix, /github\.com/, 'no issue link written in the row');
+  await tap(page, 'otw-row', '[data-freport]');
+  assert.equal(page.element('prob-dlg').open, true, 'the report choice opens');
+  for (const id of ['prob-mail', 'prob-issue']) assert.doesNotMatch(decodeURIComponent(page.element(id).href), /instagram|reel\/o|Video unavailable|example\.test/, 'nothing of the video nor the account');
+  assert.match(page.element('prob-issue').href, /^https:\/\/github\.com\/lt20\/reelbook\/issues\/new\?body=/);
+  page.element('prob-dlg').open = false;
+  fix = page.element('otw-row').innerHTML;
   assert.match(fix, /data-rdel>Remove it from your list</);
   await tap(page, 'otw-row', '[data-rback]');
   await tap(page, 'queue', '[data-row]', {row: 'n'});

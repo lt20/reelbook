@@ -116,6 +116,7 @@ pre{font:var(--fs-xs)/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;backgroun
 .rb-row .rb-t{flex:1;min-width:0}
 .rb-row small{display:block;font-size:var(--fs-meta);font-weight:400;color:var(--muted)}
 .rb-row .rb-chev{flex:none;color:var(--muted)}
+.prob-dlg .rb-rows{margin:var(--s-3) 0 var(--s-4)}
 /* P8 R9: the one-time card under Session done, outlined actions only (the screen keeps one filled action) */
 .end-promo{margin-top:28px;border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--paper)}
 .end-promo p{margin:0 0 12px;font-weight:600;line-height:1.3}
@@ -1932,14 +1933,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   <!-- P8 R4: « Install the app » in Settings too (the home card waits for a first sheet opened); filled by paintAppInstall -->
   <section class="panel" id="s-app" aria-labelledby="s-app-h" hidden><h2 id="s-app-h">Install the app</h2><div id="s-app-body"></div></section>
   <!-- P8 R9: Settings › Reelbook. Links to the public repo (window.REELBOOK.repo); « Report a problem » opens a new
-       issue that carries the app version and the platform only (never a video URL, an address or the backend). -->
+       issue that carries the app version and the platform only (never a video URL, an address or the backend).
+       R17: « Contact us », « Ask for a feature » and the email choice of « Report a problem » write to the project's
+       address (window.REELBOOK.hosted.contact), whatever the backend; without one they are hidden (paintReelbook). -->
   <section class="panel" id="s-reelbook" aria-labelledby="s-rb-h">
     <h2 id="s-rb-h">Reelbook</h2>
     <div class="rb-rows">
+    <a class="rb-row" id="s-contact" href="mailto:contact@reelbook.si?subject=Reelbook"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg></span><span class="rb-t">Contact us<small id="s-contact-at">contact@reelbook.si</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
+    <a class="rb-row" id="s-idea" href="mailto:contact@reelbook.si"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg></span><span class="rb-t">Ask for a feature<small>Tell us what’s missing</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
+    <button class="rb-row" id="s-report" type="button" aria-haspopup="dialog"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5.5 21V4M5.5 4h11l-2 4 2 4h-11"/></svg></span><span class="rb-t">Report a problem<small id="s-report-sub">By email or as a GitHub issue</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
     <a class="rb-row" id="s-news" href="https://github.com/lt20/reelbook" target="_blank" rel="noopener"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg></span><span class="rb-t">What’s new<small>Latest changes to the app</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
     <button class="rb-row" id="s-share" type="button"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M6 11v7.5A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5V11"/></svg></span><span class="rb-t">Share Reelbook<small>Sends a link to Reelbook, not your notebooks</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></button>
     <a class="rb-row" id="s-star" href="https://github.com/lt20/reelbook" target="_blank" rel="noopener"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></span><span class="rb-t">Star on GitHub<small>Reelbook is open source</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
-    <a class="rb-row" id="s-report" href="https://github.com/lt20/reelbook/issues/new" target="_blank" rel="noopener"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5.5 21V4M5.5 4h11l-2 4 2 4h-11"/></svg></span><span class="rb-t">Report a problem<small>Opens a GitHub issue, filled in for you</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
     <!-- P8 R12: read-only; my_invites() (hidden on a backend without it, or with the beta locks off) -->
     <div class="rb-row" id="s-invites" hidden><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M18 8v6M15 11h6"/></svg></span><span class="rb-t" id="s-invites-n"></span></div>
     </div>
@@ -2042,6 +2047,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <!-- L7: « Something wrong? » queues the video again with a « Redo: » note for the next run -->
 <!-- (its content is written by openReport, fresh for each sheet or session) -->
 <dialog class="dlg" id="report-dlg" aria-labelledby="report-h"></dialog>
+<!-- R17: « Report a problem » (Settings › Reelbook, « Report this » of a video not made): an email to the project or a
+     public GitHub issue; both carry the app version and the platform only (hrefs set by openProblem) -->
+<dialog class="dlg act prob-dlg" id="prob-dlg" aria-labelledby="prob-h">
+  <h2 id="prob-h">Report a problem</h2>
+  <div class="rb-rows">
+  <a class="rb-row" id="prob-mail" href="mailto:contact@reelbook.si"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></svg></span><span class="rb-t">Send an email<small>Only the Reelbook team reads it</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
+  <a class="rb-row" id="prob-issue" href="https://github.com/lt20/reelbook/issues/new" target="_blank" rel="noopener"><span class="rb-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></span><span class="rb-t">Open a GitHub issue<small>Public, filled in for you</small></span><svg class="rb-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg></a>
+  </div>
+  <div class="actions"><button class="btn ghost" type="button" id="prob-close">Cancel</button></div>
+</dialog>
 <!-- L3: full-screen viewer of a sheet's step photos -->
 <dialog class="ph-dlg" id="ph-dlg" aria-label="Photos">
   <button type="button" class="ph-x" id="ph-close" aria-label="Close the photos">✕</button>
@@ -3894,7 +3909,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       <p class="fx-why">${esc(f.why)}</p>`
       + (f.steps.length ? `<ol class="fx-steps">${f.steps.map((t, i) => `<li><span class="k" aria-hidden="true">${i + 1}</span><span>${esc(t)}</span></li>`).join('')}</ol>` : '')
       + `<button type="button" class="btn fx-go" data-fixdone${busy ? ' disabled aria-disabled="true"' : ''}>${busy ? 'Sending…' : esc(f.act)}</button>`
-      + (f.report ? `<a class="btn ghost fx-report" href="${esc(reportUrl())}" target="_blank" rel="noopener">Report this</a>` : '')
+      + (f.report ? `<button type="button" class="btn ghost fx-report" data-freport aria-haspopup="dialog">Report this</button>` : '')
       + rowMsg()
       + `<div class="fx-sep"><p>${esc(f.ask || "Don't need this video any more?")}</p><button type="button" class="btn ghost fx-rm" data-rdel${busy ? ' disabled aria-disabled="true"' : ''}>Remove it from your list</button></div>`;
   };
@@ -3965,6 +3980,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (at('[data-move]')) { if (!moveBusy(rowView.id)) { rowView.pick = true; rowView.msg = ''; paintRow(); } return; }
     const p = at('[data-pick]'); if (p) { moveRow(rowView.id, p.dataset.pick); return; }
     if (at('[data-fixdone]')) { retryRow(rowView.id, rowView); return; }
+    if (at('[data-freport]')) { openProblem(); return; } // R17: the same choice as Settings › Report a problem
     if (at('[data-rdel]') && !moveBusy(rowView.id) && !retrying.has(rowView.id)) { const id = rowView.id; rowView = null; removeRow(id); }
   });
   // Ghost cards: a notebook page's videos on the way, before its sheets (Needs you first). A link sent with
@@ -4872,12 +4888,40 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       'This issue is public: please leave out video links and your email address.'].join('\n');
     return `${REPO}/issues/new?body=${encodeURIComponent(body)}`;
   };
-  const paintReelbook = () => {
-    $('s-news').href = REPO; $('s-star').href = REPO; $('s-report').href = reportUrl();
-    $('s-share-out').hidden = true; $('s-share-out').textContent = '';
-    readVersion().then(() => { $('s-report').href = reportUrl(); });
+  // R17: the project's address (CFG.hosted.contact), for every backend: the maintainers read it, not the backend's
+  // owner. Only a plain address (or mailto:address) counts; anything else, or nothing, hides the email rows.
+  const projectMail = () => {
+    const c = String((CFG.hosted && CFG.hosted.contact) || '').trim().replace(/^mailto:/i, '').split('?')[0];
+    return /^[^@\s:/?&#]+@[^@\s:/?&#]+\.[^@\s:/?&#]+$/.test(c) ? c : '';
   };
-  $('s-report').addEventListener('click', () => { $('s-report').href = reportUrl(); });
+  const mailHref = (subject, body) => {
+    const to = projectMail();
+    return to ? `mailto:${to}?subject=${encodeURIComponent(subject)}` + (body ? `&body=${encodeURIComponent(body)}` : '') : '';
+  };
+  // The email of « Report a problem »: what the issue carries (version, platform), a blank line to write on. Never
+  // the account's address nor a video link: the person adds what they choose.
+  const problemMail = () => mailHref('Reelbook: a problem', ['What happened:', '', '', '---', `App version: ${appVersion || 'unknown'}`, `Platform: ${platformOf()}`].join('\n'));
+  const probDlg = $('prob-dlg');
+  const paintProblem = () => { $('prob-mail').href = problemMail(); $('prob-issue').href = reportUrl(); };
+  // Without an address there is nothing to choose: straight to the issue, as before R17.
+  const openProblem = () => {
+    if (!projectMail()) { window.open(reportUrl(), '_blank', 'noopener'); return; }
+    paintProblem(); openSheet(probDlg);
+    readVersion().then(paintProblem);
+  };
+  for (const id of ['prob-mail', 'prob-issue']) onClick(id, () => { paintProblem(); closeSheet(probDlg); });
+  onClick('prob-close', () => closeSheet(probDlg));
+  const paintReelbook = () => {
+    const to = projectMail();
+    $('s-news').href = REPO; $('s-star').href = REPO;
+    $('s-contact').hidden = $('s-idea').hidden = !to;
+    $('s-contact').href = mailHref('Reelbook'); $('s-contact-at').textContent = to;
+    $('s-idea').href = mailHref('Reelbook: a feature idea', 'What I’d like Reelbook to do: ');
+    $('s-report-sub').textContent = to ? 'By email or as a GitHub issue' : 'Opens a GitHub issue, filled in for you';
+    $('s-share-out').hidden = true; $('s-share-out').textContent = '';
+    readVersion();
+  };
+  $('s-report').addEventListener('click', openProblem);
   $('s-share').addEventListener('click', async () => {
     const said = shareSaid(await shareReelbook()), out = $('s-share-out');
     out.textContent = said; out.hidden = !said;
