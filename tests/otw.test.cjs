@@ -104,7 +104,7 @@ test('R1: the add sheet: Paste link first, the notebook chip, the filled Add; er
   assert.equal((await tryUrl('https://vimeo.com/1')).textContent, "This link isn't from Instagram, TikTok, YouTube or Facebook.");
   assert.equal((await tryUrl('not a link')).textContent, "This link isn't from Instagram, TikTok, YouTube or Facebook.");
   assert.equal((await tryUrl('https://www.instagram.com/reel/a/')).textContent, 'This video is already in your list. Find it under On the way.');
-  assert.equal((await tryUrl('https://www.instagram.com/reel/made/')).textContent, 'This video is already in your list. Find it under On the way.');
+  assert.equal((await tryUrl('https://www.instagram.com/reel/made/')).textContent, 'You already have this video: “Title curl”.', 'P8 R20: already a sheet, by its title');
   assert.equal(page.element('f-err').hidden, false);
   assert.equal(page.element('add-dlg').open, true, 'the sheet stays open on an error');
   assert.equal(page.clients.at(-1).calls.filter(c => c[0] === 'insert').length, 0);

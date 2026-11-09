@@ -15,7 +15,7 @@ test('a failed correction shows the error, and Retry queues it again with its «
   const page = await app({...signedIn, tables: {user_themes: themes, sheets: [], sessions: [], requests}}); await settle();
   await page.fire('otw-band');
   const row = page.element('queue').innerHTML;
-  assert.match(row, /class="redo">Redo</);
+  assert.match(row, /<span class="t1">Fix requested · Instagram reel<\/span><small class="fixnote">the hands are reversed<\/small>/); // P8 R20
   assert.match(row, /class="why">Video unavailable</);
   // P8 R3: Retry is the failed row's fix, « Try again »
   await page.element('queue').listeners.click({target: {closest: s => s === '[data-row]' ? {dataset: {row: 'r1'}, disabled: false} : null}});

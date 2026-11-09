@@ -453,10 +453,10 @@ test('R19 a French sheet gives a French New move card', async () => {
   assert.deepEqual([nb(C.lines(log[0]).kicker), C.lines(log[0]).hero], ['Nouveau mouvement :', '2 sur 4']);
 });
 
-test('R19 versions: card.js?v=3 asked by the app and precached by the worker; the cache VERSION is rb-shell-72', () => {
+test('R19 versions: card.js?v=3 asked by the app and precached by the worker; the cache VERSION moved past R18', () => {
   const ver = (s, f) => Number((s.match(new RegExp(f.replace('.', '\\.') + '\\?v=(\\d+)')) || [])[1]);
   assert.equal(ver(html, 'card.js'), 3);
   assert.equal(ver(sw, 'card.js'), 3);
   assert.doesNotMatch(html, /<script src="card\.js/, 'loaded on first use, not with the app');
-  assert.equal(sw.match(/const VERSION = '(rb-shell-\d+)'/)[1], 'rb-shell-72');
+  assert.ok(Number(sw.match(/const VERSION = 'rb-shell-(\d+)'/)[1]) >= 72, 'the cache VERSION moved past R18 (R20: rb-shell-73)');
 });

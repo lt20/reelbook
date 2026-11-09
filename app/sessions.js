@@ -513,12 +513,41 @@
       : `${who} is sharing the session “${t}” with you (${count(k, ['exercise', 'exercises'])}). Open it in Reelbook: ${u}`;
   };
 
+  // P8 R20: one video, one key, whatever the share sheet appended. An app's « Copy link » adds tracking parameters
+  // (Instagram ?igsh= / ?utm_source=, ?dlrf= ; YouTube ?si= / ?feature= / ?pp= ; TikTok ?_r= / ?is_from_webapp= ;
+  // Facebook ?mibextid= / ?fbclid=). cleanLink drops them and nothing else: the host, the path, a parameter that names
+  // the video (YouTube's v=, Facebook's v= or story_fbid=) and the hash stay as written; it is the address written in
+  // requests.url, so the skill gets a clean link. linkKey is the address the duplicate check compares: no protocol,
+  // no www. nor m., no « / » at the end, no hash; Instagram's /reels/ is /reel/; youtu.be/<id> and
+  // youtube.com/shorts/<id> are youtube.com/watch?v=<id> (only v= kept); the query of an Instagram or TikTok address
+  // whose path names the video (/reel/<id>, /@user/video/<id>) is dropped; any other query is cleaned and sorted. '' for anything not an http(s) address.
+  // A short link that only its site resolves (vm.tiktok.com/…, fb.watch/…) keeps its own key.
+  const TRACKING = /^(utm_.+|igsh|igshid|dlrf|si|fbclid|gclid|ref|ref_src|ref_url|feature|pp|is_from_webapp|is_copy_url|sender_device|share_app_id|share_link_id|mibextid|rdid|sfnsn|_r|_t)$/i;
+  const httpLink = raw => { try { const u = new URL(String(raw == null ? '' : raw).trim()); return /^https?:$/.test(u.protocol) ? u : null; } catch { return null; } };
+  const untrack = u => { const drop = [...u.searchParams.keys()].filter(k => TRACKING.test(k)); for (const k of new Set(drop)) u.searchParams.delete(k); return u; };
+  const cleanLink = raw => { const u = httpLink(raw); return u ? untrack(u).toString() : String(raw == null ? '' : raw).trim(); };
+  const linkKey = raw => {
+    const u = httpLink(raw); if (!u) return '';
+    const host = u.hostname.toLowerCase().replace(/^(www|m)\./, ''), path = u.pathname.replace(/\/+$/, ''), q = untrack(u).searchParams;
+    const yt = id => id ? `youtube.com/watch?v=${id}` : '';
+    if (host === 'youtu.be') { const id = path.split('/')[1]; if (id) return yt(id); }
+    if (host === 'youtube.com') {
+      const m = /^\/shorts\/([^/]+)$/.exec(path); if (m) return yt(m[1]);
+      if (path === '/watch' && q.get('v')) return yt(q.get('v'));
+    }
+    // Codex pass 1: only when the path names the video (tiktok.com/foryou?item_id=<id> does not)
+    if (host === 'instagram.com' && /\/(reels?|p|tv)\/[^/]+$/.test(path)) return host + path.replace(/(^|\/)reels\//, '$1reel/');
+    if (host === 'tiktok.com' && /\/(video|photo)\/\d+$|^\/(v|t)\/[^/]+$/.test(path)) return host + path;
+    q.sort(); const s = q.toString();
+    return host + path + (s ? `?${s}` : '');
+  };
+
   const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
     catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel,
     setCount, restRemaining, restClock, cleanChecks, checksOf, fitChecks, playTally, sheetItem, doneDose, weekStart, weekRhythm,
     ordinal, doseUp,
     isFrench, sessionLang, sessionHeading, setHeading, REELBOOK_URL, REF_CODE, refCodeOf, refUrl,
-    shareTokenOf, shareFirstName, sharePartnerText};
+    shareTokenOf, shareFirstName, sharePartnerText, cleanLink, linkKey};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

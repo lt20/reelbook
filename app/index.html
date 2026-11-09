@@ -505,7 +505,12 @@ dialog.add-dlg .actions .btn{width:100%;min-height:50px}
 .see-all:active{opacity:.6}
 #report-status:empty{display:none}
 #report-status.err{color:var(--danger)}
-.q .redo{display:inline-block;font-size:var(--fs-xs);font-weight:600;border-radius:var(--r-pill);padding:1px var(--s-2);margin-bottom:2px;background:var(--accent);color:var(--accent-ink)}
+/* P8 R20: a fix's row says « Fix requested · <title> » and its instruction (one line); the sheet's card says « Fix requested » */
+.q .t small.fixnote{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .m .fixq{color:var(--accent);font-weight:700}
+.fx-fix{margin:var(--s-2) 0 0;font-size:var(--fs-base)}
+.fx-fix b{display:block;font-weight:600}
+.fx-fix span{display:block;color:var(--muted);overflow-wrap:anywhere}
 /* ---- L3: sheet in use (keep screen on, gesture first, full-screen photos) ---- */
 .top{flex-wrap:wrap;gap:var(--s-2) 10px}
 .top>a{white-space:nowrap}
@@ -2070,7 +2075,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=14"></script>
-<script src="sessions.js?v=17"></script>
+<script src="sessions.js?v=18"></script>
 <script src="sheet.js?v=6"></script>
 <script src="landing.js?v=15"></script>
 <script>
@@ -3154,7 +3159,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const inTag = slug => { const n = (inSessions.get(slug) || []).length; return n ? [{txt: `in ${plural(n, 'session')}`, cls: 'session'}] : []; };
   // L6: « done 28 Oct », the latest practice of a sheet or a session (key as for notes).
   const doneTag = key => practiceOk && lastDone.has(key) ? [{txt: 'done ' + fmtDay(lastDone.get(key)), cls: 'done'}] : [];
-  const sheetCard = (e, pre = [], where = [], nb = '') => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {where, nb, lv: cardLevel(e), t: themeById.has(e.theme) ? colorOf(themeById.get(e.theme)) : '', meta: [...pre, ...doneTag(e.slug), ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : []), {txt: e.duration}, {txt: (e.source || {}).author || ''}].filter(m => m.txt)});
+  // P8 R20: the slugs of the sheets a « Something wrong? » fix waits for (renderQueue): their card says « Fix requested »
+  let fixSlugs = new Set();
+  const sheetCard = (e, pre = [], where = [], nb = '') => card(e, `#${esc(e.slug)}`, thumb(e.slug, e.thumbnail), {where, nb, lv: cardLevel(e), t: themeById.has(e.theme) ? colorOf(themeById.get(e.theme)) : '', meta: [...(fixSlugs.has(e.slug) ? [{txt: 'Fix requested', cls: 'fixq'}] : []), ...pre, ...doneTag(e.slug), ...inTag(e.slug), ...(notesIndex.has(e.slug) ? [{txt: 'note', cls: 'note'}] : []), {txt: e.duration}, {txt: (e.source || {}).author || ''}].filter(m => m.txt)});
   // A v2 session card opens #session/<slug>; its picture is the session's own, else its first exercise's.
   const v2Thumb = s => { if (s.thumbnail) return purl(s.thumbnail); const f = RS.resolveItems(s, bySlug)[0]; return f ? thumb(f.sheet.slug, f.sheet.thumbnail) : ''; };
   const v2Card = (s, pre = [], big = true, where = [], nb = '') => card({title: s.title, summary: s.why}, RS.sessionHref(esc(s.slug)), v2Thumb(s), {big, where, nb, t: themeById.has(s.theme) ? colorOf(themeById.get(s.theme)) : '', fmt: s.format, meta: [...pre, {txt: plural(RS.resolveItems(s, bySlug).length, 'exercise')}, ...doneTag(RS.noteKey(s.slug)), ...(notesIndex.has(RS.noteKey(s.slug)) ? [{txt: 'note', cls: 'note'}] : []), {txt: (s.source || {}).author || ''}].filter(m => m.txt)});
@@ -3692,7 +3699,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // P8 R3: the columns read. QUEUE_COLS has requests.reason; a backend without it (not pushed yet) answers 42703, the
   // list is read again without it (QUEUE_COLS_OLD) and every failure reads « other ». Back to QUEUE_COLS on another
   // backend (resetQueue).
-  const QUEUE_COLS = 'id,url,status,theme,note,reason,created_at,processed_at', QUEUE_COLS_OLD = 'id,url,status,theme,note,created_at,processed_at';
+  const QUEUE_COLS = 'id,url,status,theme,slug,note,reason,created_at,processed_at', QUEUE_COLS_OLD = 'id,url,status,theme,slug,note,created_at,processed_at';
   let queueCols = QUEUE_COLS;
   // Codex pass 2: decided from the columns that request sent, not from queueCols when it answers (a list read and an
   // Add sent together each answer 42703; the first answer switches queueCols, the second still needs its fallback).
@@ -3710,7 +3717,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const resetQueue = () => {
     commitDel(); // a removal waiting on its toast is sent with the previous client, not dropped
     queueGen++; queueEpoch++; queueRows = []; lastRun = null; pendingDel = null; rowErr.clear(); deleting.clear(); removed.clear(); moving.clear();
-    needCatalogue = 0; makeBusy = false; makeAfter = 0; queueCols = QUEUE_COLS; retrying.clear(); otwSaid('');
+    needCatalogue = 0; makeBusy = false; makeAfter = 0; queueCols = QUEUE_COLS; retrying.clear(); otwSaid(''); fixSlugs = new Set();
     $('queue-undo').hidden = true; queueCount = 0; readyRows = []; queueFailed = false; queueBump = false; $('queue').innerHTML = '';
     closeSheet($('otw-dlg')); renderBand(); $('first-steps').hidden = true;
   };
@@ -3720,6 +3727,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const redoLine = note => /^Redo:/.test(note || '') ? String(note).split('\n')[0] : '';
   // The error of a failed request, without its « Redo: » line (L7).
   const errText = d => redoLine(d.note) ? String(d.note).split('\n').slice(1).join(' ').trim() : String(d.note || '');
+  // P8 R20: a « Something wrong? » request (its note starts with « Redo: », its slug is the page reported: a sheet's
+  // slug, or session/<slug>) is a fix of a sheet the account has, never a video on the way: its row says « Fix
+  // requested · <the sheet's title> » and the instruction under it, it sits in « Fixes requested » (in « Needs you »
+  // when it failed), the band counts it apart, and a notebook page shows no ghost card for it: the sheet's own card
+  // says « Fix requested » (fixSlugs).
+  const isFix = d => !!redoLine(d && d.note);
+  const fixText = d => redoLine(d.note).replace(/^Redo:\s*/, '');
+  const fixTitle = d => {
+    const k = String(d.slug || ''), x = k.startsWith(RS.ROUTE) ? v2BySlug.get(k.slice(RS.ROUTE.length)) : bySlug.get(k);
+    return x && x.title ? x.title : videoOf(d.url).name;
+  };
+  const fixWords = n => `${n} ${n === 1 ? 'fix' : 'fixes'}`;
   // P8 R3: requests.reason (supabase/schema.sql, the same list as its check and as tools/rb.py REASONS), who can act on
   // a video that failed. A backend without the column, or a row without the key, or a value not in the list: « other ».
   const REASONS = ['signin_required', 'quota', 'needs_computer', 'private', 'removed', 'restricted', 'not_video', 'fetch_blocked', 'processing_failed', 'daily_cap', 'other'];
@@ -3776,11 +3795,11 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // opens its fix, or its reason (P8 R3). A failure says what happened on one more line.
   const queueRow = d => {
     const v = videoOf(d.url), s = qst(d), pill = stPill(s);
-    const id = esc(d.id), err = rowErr.get(String(d.id)), redo = redoLine(d.note), where = whereLine(d);
+    const id = esc(d.id), err = rowErr.get(String(d.id)), fix = isFix(d), where = fix ? esc(fixText(d)) : whereLine(d);
     const why = s === 'error' || s === 'retry' ? reasonLine(d) : '';
-    const lead = redo ? '<span class="redo">Redo</span>' : '', w = where ? `<small>${where}</small>` : '';
+    const w = where ? `<small${fix ? ' class="fixnote"' : ''}>${where}</small>` : '';
     const e = err ? `<small class="qerr" role="alert">${esc(err)}</small>` : '';
-    return `<button type="button" class="q qrow" data-row="${id}" aria-haspopup="dialog">${tile(d)}<span class="t"><span class="t1">${lead}${esc(v.name)}</span>${w}${why ? `<small class="why">${esc(why)}</small>` : ''}${e}</span><span class="side">${pill}</span></button>`;
+    return `<button type="button" class="q qrow" data-row="${id}" aria-haspopup="dialog">${tile(d)}<span class="t"><span class="t1">${esc(fix ? `Fix requested · ${fixTitle(d)}` : v.name)}</span>${w}${why ? `<small class="why">${esc(why)}</small>` : ''}${e}</span><span class="side">${pill}</span></button>`;
   };
   // P8 R1: each state is an icon and its words, never colour alone; red is for « Needs you » only. Paths from the
   // prototype (docs/audit-design/mockups/p8-prototype.html).
@@ -3817,12 +3836,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const renderQueue = () => {
     const rows = queueRows, ready = readyNow();
     queueCount = rows.length;
+    // P8 R20: a fix that failed needs you like a video; the others wait in « Fixes requested », after the videos
+    const fixes = rows.filter(d => isFix(d) && qst(d) !== 'error');
     $('queue').innerHTML = OTW_SECTIONS.map(([st, label]) => {
-      const g = rows.filter(d => qst(d) === st); return g.length ? secHead(label, g.length, st === 'error') + g.map(queueRow).join('') : '';
-    }).join('') + (ready.length ? secHead('Ready', ready.length) + ready.map(readyRow).join('') : '')
+      const g = rows.filter(d => qst(d) === st && (st === 'error' || !isFix(d))); return g.length ? secHead(label, g.length, st === 'error') + g.map(queueRow).join('') : '';
+    }).join('') + (fixes.length ? secHead('Fixes requested', fixes.length) + fixes.map(queueRow).join('') : '') + (ready.length ? secHead('Ready', ready.length) + ready.map(readyRow).join('') : '')
       + (rows.length || ready.length ? '' : '<p class="otw-none">Nothing on the way. Tap + to add a video.</p>');
     $('otw-mode').textContent = OTW_MODE_LINE[OTW_MODE];
     paintRow(); renderGhosts(); renderBand(); renderFirstSteps();
+    const fx = new Set(rows.filter(isFix).map(d => String(d.slug || ''))), fxSig = [...fx].sort().join('|');
+    // R20: the sheet cards shown (a notebook's, the home page's New and To try, a search) say « Fix requested » while
+    // a fix waits, and stop when it leaves: redrawn in place, as after a catalogue read (Codex pass 1)
+    if (fxSig !== [...fixSlugs].sort().join('|')) { fixSlugs = fx; if (!$('home').hidden) renderHome(); }
     if (!currentTheme && chipsNow() !== chipSig) renderPortal(); // a home notebook card's « 1 on the way »
     if (!$('welcome').hidden) paintWelcome(); // L43: a processed request means a computer is linked
   };
@@ -3832,6 +3857,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   let bandHtml = null;
   const renderBand = () => {
     const b = $('otw-band'), rows = queueRows, needs = rows.filter(needsYou).length, bump = queueBump; // P8 R3: not the retries
+    const vids = rows.filter(d => !isFix(d)).length, fixes = rows.length - vids; // P8 R20: a fix is never a video on the way
     const paint = h => { if (h !== bandHtml) { b.innerHTML = h; bandHtml = h; } }; // the same band is not redrawn: a +1 playing goes on
     b.hidden = !!currentTheme || !user || (!queueFailed && !rows.length);
     b.classList.toggle('needs', !queueFailed && needs > 0); b.classList.toggle('fail', queueFailed);
@@ -3845,9 +3871,15 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       const t = d.theme && themeById.get(d.theme);
       return `<span class="pf"${t ? ` style="--t:${colorOf(t)}"` : ''}>${platformTag(host)}</span>`;
     }).join('');
-    b.setAttribute('aria-label', `${rows.length} on the way${needs ? `, ${needs} needs you` : ''}. Open the list.`);
+    // One line of about 206 px on an iPhone 14 (24 characters): « 2 on the way », « 1 fix requested » when alone,
+    // « 2 on the way · 1 fix »; « · 1 needs you » is never cut, so with it a count of fixes shows only when there is
+    // no video (« 1 fix · 1 needs you »). The screen reader hears every count in full.
+    const sep = '<span class="sep" aria-hidden="true">·</span>';
+    const first = vids ? `${vids} on the way` : needs ? fixWords(fixes) : `${fixWords(fixes)} requested`;
+    b.setAttribute('aria-label', [vids && `${vids} on the way`, fixes && `${fixWords(fixes)} requested`, needs && `${needs} needs you`].filter(Boolean).join(', ') + '. Open the list.');
     paint(`<span class="lead" aria-hidden="true">${qic(needs ? 'alert' : 'clock')}</span><span class="tiles" aria-hidden="true">${tiles}</span>`
-      + `<span class="bt"><span class="cnt${bump ? ' bump' : ''}">${rows.length} on the way</span>${needs ? `<span class="sep" aria-hidden="true">·</span><span class="red">${needs} needs you</span>` : ''}</span>${qic('chevR', 20)}`);
+      + `<span class="bt"><span class="cnt${bump ? ' bump' : ''}">${first}</span>${vids && fixes && !needs ? `${sep}<span class="fixn">${fixWords(fixes)}</span>` : ''}`
+      + `${needs ? `${sep}<span class="red">${needs} needs you</span>` : ''}</span>${qic('chevR', 20)}`);
   };
   // P8 R1: an account with links sent and no sheet yet sees its steps on the home page, not #welcome: the account,
   // the videos sent, then « Set up my computer » (the computer step of #welcome).
@@ -3880,14 +3912,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // (done, removed) or failed: the list.
   let rowView = null;
   const ROW_WHY = {queued: 'Nobody has started on it yet.', processing: 'Being made into a sheet.'};
-  const rowHead = d => { const where = whereLine(d); return `<div class="rd-h">${tile(d)}<div class="rd-t"><h2 id="otw-rh">${esc(videoOf(d.url).name)}</h2>${where ? `<p>${where}</p>` : ''}</div>${stPill(qst(d))}</div>`; };
+  const FIX_WHY = {queued: 'Nobody has started on this fix yet.', processing: 'The sheet is being made again.'}; // P8 R20
+  const rowHead = d => {
+    const fix = isFix(d), where = fix ? esc(fixText(d)) : whereLine(d), name = fix ? `Fix requested · ${fixTitle(d)}` : videoOf(d.url).name;
+    return `<div class="rd-h">${tile(d)}<div class="rd-t"><h2 id="otw-rh">${esc(name)}</h2>${where ? `<p>${where}</p>` : ''}</div>${stPill(qst(d))}</div>`;
+  };
   const rowMsg = () => rowView.msg ? `<p class="rd-msg${rowView.bad ? ' bad' : ''}" role="status">${esc(rowView.msg)}</p>` : '';
   const rowHtml = d => {
     const t = d.theme && themeById.get(d.theme), href = webHref(d.url);
     return `${rowHead(d)}
-      <p class="rd-why">${ROW_WHY[qst(d)] || ROW_WHY.queued}</p>
+      <p class="rd-why">${(isFix(d) ? FIX_WHY : ROW_WHY)[qst(d)] || (isFix(d) ? FIX_WHY : ROW_WHY).queued}</p>
       <div class="mlist">${href ? `<a class="mi" href="${esc(href)}" target="_blank" rel="noopener">${qic('open', 22, 2)}<span>Open the video</span></a>` : ''}`
-      + (d.status === 'queued' ? `<button type="button" class="mi" data-move${moveBusy(d.id) ? ' disabled aria-disabled="true"' : ''}>${qic('move', 22, 2)}<span>${moveBusy(d.id) ? 'Moving…' : 'Move to notebook'}</span><span class="v">${t ? esc(t.title) : 'Auto'}</span></button>` : '')
+      + (d.status === 'queued' && !isFix(d) ? `<button type="button" class="mi" data-move${moveBusy(d.id) ? ' disabled aria-disabled="true"' : ''}>${qic('move', 22, 2)}<span>${moveBusy(d.id) ? 'Moving…' : 'Move to notebook'}</span><span class="v">${t ? esc(t.title) : 'Auto'}</span></button>` : '')
       + `<button type="button" class="mi red" data-rdel${moveBusy(d.id) ? ' disabled aria-disabled="true"' : ''}>${qic('trash', 22, 2)}<span>Remove</span></button></div>` // Codex pass 3: not while a Move is on its way
       + rowMsg() + '<button type="button" class="btn ghost rd-back" data-rback>Cancel</button>';
   };
@@ -3910,8 +3946,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   const fixHtml = d => {
     const f = fixOf(d), busy = retrying.has(String(d.id));
-    return `<div class="rd-h fx-h"><h2 id="otw-rh">${esc(f.title)}</h2><button type="button" class="otw-x" data-rback aria-label="Close">×</button></div>
-      <p class="fx-why">${esc(f.why)}</p>`
+    return `<div class="rd-h fx-h"><h2 id="otw-rh">${esc(f.title)}</h2><button type="button" class="otw-x" data-rback aria-label="Close">×</button></div>`
+      + (isFix(d) ? `<p class="fx-fix"><b>${esc(`Fix requested · ${fixTitle(d)}`)}</b>${fixText(d) ? `<span>${esc(fixText(d))}</span>` : ''}</p>` : '') // R20
+      + `<p class="fx-why">${esc(f.why)}</p>`
       + (f.steps.length ? `<ol class="fx-steps">${f.steps.map((t, i) => `<li><span class="k" aria-hidden="true">${i + 1}</span><span>${esc(t)}</span></li>`).join('')}</ol>` : '')
       + `<button type="button" class="btn fx-go" data-fixdone${busy ? ' disabled aria-disabled="true"' : ''}>${busy ? 'Sending…' : esc(f.act)}</button>`
       + (f.report ? `<button type="button" class="btn ghost fx-report" data-freport aria-haspopup="dialog">Report this</button>` : '')
@@ -3991,7 +4028,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // Ghost cards: a notebook page's videos on the way, before its sheets (Needs you first). A link sent with
   // « Notebook: Auto » has no notebook: it shows only in « On the way ». Not on a group page, nor while searching.
   const QORDER = {error: 0, retry: 1, processing: 2, queued: 3};
-  const pendingIn = id => queueRows.filter(d => d.theme === id).sort((a, c) => (QORDER[qst(a)] ?? 4) - (QORDER[qst(c)] ?? 4));
+  const pendingIn = id => queueRows.filter(d => d.theme === id && !isFix(d)).sort((a, c) => (QORDER[qst(a)] ?? 4) - (QORDER[qst(c)] ?? 4));
   const ghostCard = d => {
     const v = videoOf(d.url), a = addedOn(d.created_at), s = qst(d), st = (ST[s] || ST.queued)[1];
     return `<button type="button" class="gcard" data-ghost="${esc(d.id)}" aria-haspopup="dialog" aria-label="${esc(`${v.name}, ${st}`)}">${tile(d)}<span class="gh-t">${esc(v.name)}</span>${a ? `<span class="gh-m">Added ${a}</span>` : ''}<span class="sp"></span>${stPill(s)}</button>`;
@@ -4005,8 +4042,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   $('otw-ghosts').addEventListener('click', ev => { const g = ev.target.closest && ev.target.closest('[data-ghost]'); if (g) openRow(g.dataset.ghost, 'ghost'); });
   // A home notebook card with videos on the way: « 1 on the way », or « 1 needs you » when one of them failed.
   const nbChip = id => {
-    const p = queueRows.filter(d => d.theme === id), needs = p.filter(needsYou).length;
-    return needs ? `<span class="nbq bad">${qic('alert', 15)}${needs} needs you</span>` : p.length ? `<span class="nbq">${qic('clock', 15)}${p.length} on the way</span>` : '';
+    const p = queueRows.filter(d => d.theme === id), needs = p.filter(needsYou).length, vids = p.filter(d => !isFix(d)).length; // R20
+    return needs ? `<span class="nbq bad">${qic('alert', 15)}${needs} needs you</span>` : vids ? `<span class="nbq">${qic('clock', 15)}${vids} on the way</span>` : '';
   };
   const chipsNow = () => themes.map(t => nbChip(t.id)).join('|');
   $('otw-band').addEventListener('click', () => { if (queueFailed) refreshQueue(); else openOtw(); });
@@ -4161,15 +4198,21 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (!typed) return fail('Paste a video link first.');
     let u; try { u = new URL(typed); } catch { return fail(bad); }
     if (!okHost(u.hostname)) return fail(bad);
-    // P8 R1: a link already on the way, or already a sheet, is not sent twice
-    const same = v => { try { return new URL(v).toString() === u.toString(); } catch { return false; } };
-    if (queueRows.some(d => same(d.url)) || sheets.some(e => same((e.source || {}).url))) return fail('This video is already in your list. Find it under On the way.');
+    // P8 R1: a link already on the way, or already a sheet, is not sent twice. P8 R20: compared by RS.linkKey (the
+    // same reel with ?igsh=, /reels/, www., a « / » at the end, youtu.be… is one video); a sessions.js older than R20
+    // left by the shell compares the addresses as before. The address written is RS.cleanLink: its tracking
+    // parameters dropped, its host and path as typed.
+    const keyOf = v => { if (typeof RS.linkKey === 'function') return RS.linkKey(v); try { return new URL(v).toString(); } catch { return ''; } };
+    const key = keyOf(u.toString()), same = v => !!key && keyOf(v) === key;
+    const had = sheets.find(e => same((e.source || {}).url)) || v2Sessions.find(x => same((x.source || {}).url));
+    if (had) return fail(`You already have this video: “${had.title}”.`);
+    if (queueRows.some(d => same(d.url))) return fail('This video is already in your list. Find it under On the way.');
     $('f-submit').disabled = true;
     // P8 R3 (Codex): the client and the account of the tap. An answer after a switch of account or backend (queueEpoch)
     // sends nothing again (the fallback without reason would land on the new one) and touches nothing.
     const client = sb, epoch = queueEpoch, moved = () => epoch !== queueEpoch || client !== sb;
     try {
-      const row = {url: u.toString()}, nb = $('f-nb').value; if (nb && themeById.has(nb)) row.theme = nb;
+      const row = {url: typeof RS.cleanLink === 'function' ? RS.cleanLink(u.toString()) : u.toString()}, nb = $('f-nb').value; if (nb && themeById.has(nb)) row.theme = nb;
       // P8 R1: the row written is read back (select) and put in the list at once: the band's +1 and the duplicate
       // check do not wait for the read that follows, which replaces the list when it succeeds and keeps it when it
       // fails (quiet). The harness client without tables answers the insert itself, without select: the row sent stands in.

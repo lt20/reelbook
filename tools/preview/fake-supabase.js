@@ -9,6 +9,7 @@
 //                                   42703 « column … does not exist » (HTTP 400), and the rows lose it
 //   ?empty=sheets,sessions,...      those tables start with no row (an empty account: ?empty=all)
 //   ?links=2                        requests: only the first 2 not done, queued (P8 R1: a new account with 2 links sent)
+//   ?fixes=2                        requests: adds that many « Something wrong? » fixes (P8 R20: note « Redo: … », slug the sheet)
 //   ?quota                          my_quota() answers (L29: the usage line of Settings); without it, PGRST202
 //   ?quota=full                     and a new link is refused: « quota: 10 links per day » (P0001, HTTP 400)
 //   ?confirm=off                    signUp gives a session at once (email confirmation off, today's hosted project)
@@ -87,6 +88,14 @@
     return {data: {sender_name: sent.sender, title: sent.title, notebook_title: sent.notebook.title, count: sent.items.length}, error: null};
   };
   if (params.has('links')) D.requests = (D.requests || []).filter(r => r.status !== 'done').slice(0, Number(params.get('links')) || 0).map(r => ({...r, status: 'queued', note: null, processed_at: null}));
+  // P8 R20: fixes of two sheets of the fixtures (pompes-inclinees, jab-cross), queued an hour ago
+  if (params.has('fixes')) {
+    const FIX = [['pompes-inclinees', 'The hands should be under the shoulders, not wider'], ['jab-cross', 'The cross turns the back foot: add it to the key points']];
+    for (const [slug, text] of FIX.slice(0, Number(params.get('fixes')) || 1)) {
+      const s = (D.sheets || []).find(x => x.slug === slug); if (!s) continue;
+      (D.requests = D.requests || []).push({id: 'fix-' + slug, url: (s.source || {}).url, status: 'queued', theme: s.theme, slug, note: 'Redo: ' + text, created_at: new Date(Date.now() - 3600e3).toISOString(), processed_at: null});
+    }
+  }
   const local = p => 'files/' + String(p).replace(/^u1\//, '');
   const uid = () => 'fake-' + Math.random().toString(36).slice(2, 10);
   const now = () => new Date().toISOString();

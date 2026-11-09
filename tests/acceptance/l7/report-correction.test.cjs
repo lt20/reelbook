@@ -54,7 +54,8 @@ test('B4 — A failed correction insert keeps the dialog open and does not claim
 });
 
 // P8 R2: a row shows a readable name, not the URL: « Redo » comes before the name
-test('B4 — Queue rows whose note starts with « Redo: » show « Redo » before the URL', async () => {
+// P8 R20: a « Redo: » row is a fix of the sheet, « Fix requested · <title> » with its instruction, in « Fixes requested »
+test('B4 — Queue rows whose note starts with « Redo: » say « Fix requested » and their instruction (P8 R20)', async () => {
   const t = tables();
   t.requests = [
     {id: 1, url, status: 'queued', theme: 'strength', note: 'Redo: correct the angle', created_at: '2026-11-01T12:00:00Z'},
@@ -62,7 +63,8 @@ test('B4 — Queue rows whose note starts with « Redo: » show « Redo » befor
   ];
   const page = await app({...signedIn, tables: t}); await settle();
   const rows = page.element('queue').innerHTML.split('<button type="button" class="q qrow"').slice(1);
-  assert.match(rows[0], /<span class="t1"><span class="redo">Redo<\/span>Instagram reel<\/span>/);
-  assert.match(rows[1], /<span class="t1">YouTube video<\/span>/);
-  assert.doesNotMatch(rows[1], /Redo/);
+  const fix = rows.find(r => r.startsWith(' data-row="1"')), other = rows.find(r => r.startsWith(' data-row="2"'));
+  assert.match(fix, /<span class="t1">Fix requested · Instagram reel<\/span><small class="fixnote">correct the angle<\/small>/, 'no sheet with that slug here: the kind of video');
+  assert.match(other, /<span class="t1">YouTube video<\/span>/);
+  assert.doesNotMatch(other, /Redo|Fix requested/);
 });

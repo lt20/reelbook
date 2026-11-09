@@ -53,7 +53,7 @@ test('R3: « I signed in, try again » puts it back in Not started: reason clear
   assert.deepEqual(updates(page), [['update', 'requests', {status: 'queued', note: 'Redo: the hands are reversed', processed_at: null, reason: null}, [['id', 'a']]]]);
   assert.deepEqual(JSON.parse(JSON.stringify(page.clients.at(-1).ins.filter(i => i[0] === 'requests'))), [['requests', 'status', ['error']]], 'only a request still in error');
   assert.equal(page.element('otw-row').hidden, true, 'back to the list');
-  assert.equal(sectionOf(page, 'a'), 'Not started');
+  assert.equal(sectionOf(page, 'a'), 'Fixes requested', 'R20: a fix back in line waits with the fixes, not with the videos');
   assert.doesNotMatch(page.element('otw-band').innerHTML, /needs you/);
   assert.equal(page.element('otw-said').hidden, false);
   assert.equal(page.element('otw-said').textContent, 'Back in line · your computer tries it on its next run');
@@ -144,7 +144,7 @@ test('R3 (Codex): computer mode: a retry reason put back in the queue is Not sta
   assert.match(page.element('otw-ghosts').innerHTML, /data-ghost="q"[^]*?Not started/);
   assert.match(page.element('otw-ghosts').innerHTML, /data-ghost="f"[^]*?Needs you/);
   page.go(''); await settle();
-  assert.match(page.element('otw-band').innerHTML, /5 on the way<\/span><span class="sep" aria-hidden="true">·<\/span><span class="red">4 needs you/);
+  assert.match(page.element('otw-band').innerHTML, /4 on the way<\/span><span class="sep" aria-hidden="true">·<\/span><span class="red">4 needs you/, 'R20: the fix is not a video on the way');
   await page.fire('otw-band');
   assert.equal(sectionOf(page, 'q'), 'Not started');
   assert.doesNotMatch(rowOf(page, 'q'), /class="why"|Needs you/);
@@ -163,7 +163,7 @@ test('R3 (Codex): computer mode: a retry reason put back in the queue is Not sta
   await tap(page, 'otw-row', '[data-fixdone]');
   assert.deepEqual(updates(page), [['update', 'requests', {status: 'queued', note: 'Redo: hands reversed', processed_at: null, reason: null}, [['id', 'p']]]]);
   assert.deepEqual(JSON.parse(JSON.stringify(page.clients.at(-1).ins.filter(i => i[0] === 'requests'))), [['requests', 'status', ['error']]]);
-  assert.equal(sectionOf(page, 'p'), 'Not started');
+  assert.equal(sectionOf(page, 'p'), 'Fixes requested');
   assert.equal(page.element('otw-said').textContent, 'Back in line · your computer tries it on its next run');
 });
 
@@ -189,7 +189,7 @@ test('R3: a backend without requests.reason: the list is read again without it, 
   const requests = [{id: 'a', status: 'error', url: 'https://www.instagram.com/reel/a/', theme: null, note: 'Login wall', created_at: now(), processed_at: now()}];
   const page = await open({tables: tables(requests), missing: ['requests.reason']});
   const lists = page.clients.at(-1).selects.filter(([t, c]) => t === 'requests' && /created_at/.test(c)).map(([, c]) => c);
-  assert.deepEqual(lists.slice(0, 2), ['id,url,status,theme,note,reason,created_at,processed_at', 'id,url,status,theme,note,created_at,processed_at']);
+  assert.deepEqual(lists.slice(0, 2), ['id,url,status,theme,slug,note,reason,created_at,processed_at', 'id,url,status,theme,slug,note,created_at,processed_at']);
   assert.ok(lists.slice(2).every(c => !/reason/.test(c)), 'not asked again on this backend');
   assert.doesNotMatch(page.element('otw-band').innerHTML, /Couldn't load/);
   assert.match(page.element('otw-band').innerHTML, /1 needs you/);
@@ -209,7 +209,7 @@ test('R3: an Add on a backend without the column, before the list knows it, is s
   t.requests.unshift({id: 'b', status: 'queued', url: 'https://www.tiktok.com/@coach/video/1', theme: null, note: null, created_at: now(), processed_at: null}); // what the insert writes
   await page.fire('sheet-new', 'submit'); await settle();
   const sel = page.clients.at(-1).selects.filter(([t]) => t === 'requests').map(([, c]) => c);
-  assert.ok(sel.includes('id,url,status,theme,note,reason,created_at,processed_at') && sel.includes('id,url,status,theme,note,created_at,processed_at'));
+  assert.ok(sel.includes('id,url,status,theme,slug,note,reason,created_at,processed_at') && sel.includes('id,url,status,theme,slug,note,created_at,processed_at'));
   assert.equal(page.clients.at(-1).calls.filter(c => c[0] === 'insert').length, 1, 'one row written (the refused statement wrote nothing)');
   assert.equal(page.element('f-err').hidden, true);
   assert.match(page.element('otw-band').innerHTML, /1 on the way/);
@@ -237,7 +237,7 @@ for (const listFirst of [true, false]) test(`R3 (Codex pass 2): a backend withou
   const c = page.clients.at(-1), sel = c.selects.filter(([tb]) => tb === 'requests').map(([, cols]) => cols);
   assert.equal(inserts, 2, 'the insert sent again without the column');
   assert.equal(c.calls.filter(x => x[0] === 'insert').length, 1, 'one row written');
-  assert.ok(sel.includes('id,url,status,theme,note,created_at,processed_at'));
+  assert.ok(sel.includes('id,url,status,theme,slug,note,created_at,processed_at'));
   assert.equal(page.element('f-err').hidden, true, 'no « Could not save it »');
   assert.doesNotMatch(page.element('otw-band').innerHTML, /Couldn't load/);
   assert.match(page.element('otw-band').innerHTML, /1 on the way/);
