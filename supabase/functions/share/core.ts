@@ -15,7 +15,10 @@
 // folder (<caller>/<slug>/…). The copy is reserved (one at a time per caller), then planned (dedup by video URL and
 // title or anchor, free slugs, the photos' size against the caller's quotas) before any sheet or photo is written:
 // a copy over quota leaves nothing.
+// Once the copy is done, the glossary words of the copied sheets follow (P11 G5, words.ts): that step never fails
+// the copy, and a backend without the glossary tables shares without it.
 import { cleanHtml } from './clean.ts';
+import { type Copied, copyWords } from './words.ts';
 export { cleanHtml };
 
 export const TOKEN = /^[A-Za-z0-9_-]{22}$/;
@@ -63,6 +66,12 @@ export interface Store {
   deleteSheets(uid: string, slugs: string[]): Promise<void>;
   copyFile(from: string, to: string): Promise<void>; // within the sheets bucket
   removeFiles(paths: string[]): Promise<void>;
+  // The glossary (P11 G5, words.ts), after the copy is done: the entries only, never the marks of the glossary pass.
+  // Any of these may throw on a backend without the table.
+  words(uid: string, themes: string[]): Promise<Row[]>; // every entry (select *) of these notebooks of an account, every page
+  insertWord(row: Row): Promise<void>; // with its user_id; 23505 when the notebook already has the term and sense
+  // forms and sheets of one entry, by id, only while its updated_at is still the one read. False when no row changed.
+  updateWord(uid: string, id: string, seen: string, patch: Row): Promise<boolean>;
 }
 
 export const CORS = {
@@ -270,6 +279,7 @@ async function route(req: Request, store: Store): Promise<Response> {
   // From here, anything that fails or refuses undoes what this copy wrote, the reservation included.
   const madeSheets: string[] = [], madeFiles: string[] = [];
   let keptCount = 0;
+  let wordsOf: Copied[] = [];
   try {
     // The plan: which sheets the caller keeps (the same exercise), the new slugs of the others, their files.
     const stems = [...new Set(sheets.map(s => slugStem(str(s.slug))))];
@@ -337,6 +347,7 @@ async function route(req: Request, store: Store): Promise<Response> {
     });
     if (!finished) throw { code: 'reservation_gone', message: 'the reservation was deleted meanwhile' };
     keptCount = sheets.length - toCopy.length;
+    wordsOf = toCopy;
   } catch (e) {
     await undo(store, caller, resId, madeSheets, madeFiles);
     const q = quotaMessage(e);
@@ -344,7 +355,8 @@ async function route(req: Request, store: Store): Promise<Response> {
     throw e;
   }
   // The copy is done (share_state 'done'): nothing below may undo it. The answer's reads (the notebook title) fall back
-  // to what is known when they fail.
+  // to what is known when they fail. The glossary words of the copied sheets (P11 G5): copyWords never throws.
+  await copyWords(store, share.owner, caller, nbId, wordsOf);
   return json(201, { slug: sesSlug, notebook: await titled(store, caller, nbId), existing: false, kept: keptCount, copied: sheets.length - keptCount });
 }
 

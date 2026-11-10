@@ -7,6 +7,7 @@
 //                                   (PostgREST PGRST205, HTTP 404); a table.column entry
 //                                   (?missing=sheets.search_text): a read selecting that column answers
 //                                   42703 « column … does not exist » (HTTP 400), and the rows lose it
+//                                   ?missing=glossary_words: a backend before P11 (no underline, no word list)
 //   ?empty=sheets,sessions,...      those tables start with no row (an empty account: ?empty=all)
 //   ?links=2                        requests: only the first 2 not done, queued (P8 R1: a new account with 2 links sent)
 //   ?fixes=2                        requests: adds that many « Something wrong? » fixes (P8 R20: note « Redo: … », slug the sheet)

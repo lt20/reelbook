@@ -55,8 +55,8 @@ test('loadSheet cleans every sheet first: the parsed document, and a sheet kept 
   assert.match(load, /if \(typeof kept === 'string'\) \{ const out = cleanKept\(kept\);/);
   assert.match(app, /const cleanSheet = \(doc, opts\) => \{ if \(!doc\.querySelectorAll\) return doc; if \(!SH \|\| !SH\.clean\) throw new Error\('no sanitizer'\); return SH\.clean\(doc, opts\); \};/);
   assert.match(app, /cleanSheet\(doc, \{signed: true\}\)/);
-  assert.match(app, /<script src="sheet\.js\?v=6"><\/script>/);
-  assert.match(fs.readFileSync(path.join(__dirname, '../app/sw.js'), 'utf8'), /'\.\/sheet\.js\?v=6'/);
+  assert.match(app, /<script src="sheet\.js\?v=10"><\/script>/);
+  assert.match(fs.readFileSync(path.join(__dirname, '../app/sw.js'), 'utf8'), /'\.\/sheet\.js\?v=10'/);
 });
 
 test('Codex #114 pass 2: a sheet kept on the device keeps its 5 photo targets after cleaning (markPhotos again), as the online path does', () => {

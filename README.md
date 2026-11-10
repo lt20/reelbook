@@ -78,13 +78,18 @@ extension and the way Instagram renders videos today. Read *What can break* befo
    plus a session that links them in video order, with a dose for each exercise (« 30 s »,
    « 3×10 ») and the video's format, why and key points. The session shows in the notebook's
    Sessions section; each of its sheets carries « in 1 session » and links back to it.
+   In a notebook where you learn techniques (kitesurf, fight…), the run then reads the new sheet's text
+   and adds the discipline's words to the notebook's glossary; `/reelbook glossary` does the same for
+   the sheets not read yet.
 
 **Overnight (macOS).** `tools/nightly.sh install` processes the queue every night at 02:00 (or
 `install 23:30`) through a LaunchAgent, at most 5 videos per run. Leave Chrome open with the
 extension. Claude only starts when the queue holds something and the Mac is **plugged in**: on
 battery, macOS sleeps anyway and the run dies mid-way. A locked screen is fine, the video still
 plays. A video left « in progress » by a run that died goes back to the queue after 6 hours
-(`rb.py requeue-stuck`).
+(`rb.py requeue-stuck`). After the queue, and on a night when it is empty too, a second run without
+Chrome lets the glossary pass read the technique sheets it has not read yet, at most 10 a night
+(`run --glossary-max N`).
 
 - `tools/nightly.sh check` shows what a run would do, `run --max 1` tries one video now,
   `uninstall` removes it.

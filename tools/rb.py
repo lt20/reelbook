@@ -52,6 +52,69 @@
                                 has none yet, without Claude: zone from the group (else the title), gear and type from
                                 keywords of the title and search text, minutes from duration; once, after
                                 supabase/schema.sql added the column. `publish` sends the tags of meta.json
+    rb.py glossary get <theme>  print the glossary of a notebook (P11) as JSON, {"notebook", "terms": [...]}: the shape
+                                of a glossary pass's output. A backend without the table: an empty glossary
+    rb.py glossary sheets <theme> [--pending]
+                                print what the glossary pass reads, as JSON: the notebook (id, title, description,
+                                family) and each of its sheets (slug, title, html, photos: the file names under img/).
+                                Sessions are not sheets: left out. A backend without the table: says so in
+                                one line (re-run supabase/schema.sql) and exits 1, so that no pass is run.
+                                --pending: only the sheets that need the pass (never read by it, or published again
+                                since: table glossary_passes), each with its updated_at (what "passed" gives back
+                                to `put`), and with them "glossary", the notebook's current
+                                entries in short (term, sense, forms, definition). A backend that does not record
+                                the passes yet: every sheet needs it
+    rb.py glossary pending      one line per notebook of the technique family that has sheets needing the pass,
+                                `<theme> <count>`; nothing when there is none. The family is the account's choice
+                                (user_themes.family), else the built-in default of app/config.js, else repetition.
+                                A backend that does not record the passes yet: every sheet counts; one without
+                                the glossary table: says so in one line and exits 1
+    rb.py glossary put <theme> <file.json> [--replace]
+                                write the entries of a glossary pass's output. Checked before any write, all problems
+                                reported at once and nothing written when there is one: the notebook is the account's;
+                                each entry has term, definition, non-empty forms, confidence (sure | unsure), doubt only
+                                with unsure; no two entries with the same term and sense; each item of sheets names a
+                                sheet of this notebook, its quote is found in that sheet's text (tags removed,
+                                whitespace collapsed, case ignored; alt texts count) and holds one of the forms, its
+                                where is text | title | caption | chip; photo names a sheet of this notebook.
+                                An entry that exists (same term and sense, case ignored) keeps its definition, doubt
+                                and photo, gets the file's forms it did not have (case ignored, its own first) and
+                                the new items of sheets (an item for a slug already listed replaces it); every quote
+                                of the result, kept or new, must hold one of these forms, else nothing is written.
+                                --replace overwrites the whole entry. A new entry is inserted; no entry is ever
+                                deleted (an entry can lose a sheet the pass read again: see "passed" below). An
+                                entry another command wrote meanwhile is read and merged again (3 times
+                                at most, then an error that says what was written). Prints one line: inserted,
+                                updated, unchanged. A backend without the table: says so in one line, exits 1.
+                                The file may carry "passed": [{"slug": "…", "updated_at": "…"}, ...], the sheets the
+                                pass read, those where it found no word included, each with the updated_at that
+                                `sheets --pending` printed with its text. Checked with the rest, before any write:
+                                the slug is a sheet of this notebook, the date is a full date-time with its time
+                                zone (2026-02-01T23:30:00+00:00 or …Z; not a date alone, not a time without a zone)
+                                and is not a later instant than the sheet's. Once the entries are written, the
+                                sheets read are reconciled: the file is taken as ALL the entries that still apply to
+                                each sheet of "passed", so every entry of the notebook, in the file or not, that
+                                listed such a sheet and that the file does not give again for it loses that item of
+                                sheets. Its items for the other sheets never move, and an entry left without any
+                                sheet stays, with sheets empty. A sheet published again since the date given is not
+                                reconciled: it still needs the pass, which will do it on the new text. The sheets'
+                                dates are read again just before each try of the reconciliation and just before the
+                                sheets are recorded: a sheet published again while this command ran is neither
+                                reconciled nor recorded as read, and the first line then ends with how many. That
+                                check and the write after it are two calls, not one operation: a sheet published
+                                again exactly between them can still lose an association, which the next pass of
+                                that sheet, then waiting, gives back (it is not waiting only if another pass also
+                                read and recorded the new text within that same gap). Same
+                                conditional write and same tries as the entries, so two commands at once do not undo
+                                each other; the first line then ends with how many associations were removed (when
+                                there are some). If it fails: exit 1, what was written is said, no sheet is
+                                recorded. Then each sheet gets its row in glossary_passes with
+                                that date (a row never moves back to an earlier one), and a second line says how
+                                many: a sheet published again while the pass ran still needs it afterwards. A plain
+                                "<slug>" (a manual call) records the sheet's current updated_at. A backend that
+                                does not record the passes yet: the entries are written, one
+                                line says the passes are not recorded, exit 0. Without "passed": nothing is
+                                recorded and no association is removed (the file only adds)
 
 Session file: ~/.config/reelbook/config.json (chmod 600). Override with REELBOOK_CONFIG.
 
@@ -1110,10 +1173,551 @@ def cmd_backfill_tags(args):
         last = rows[-1]["slug"]
     print(f"{seen} sheet(s) without tags, {n} {'to tag (dry run, nothing written)' if dry else 'tagged'}")
 
+# ---------------------------------------------------------------------------
+# glossary (P11 G1): the words of a notebook (table glossary_words, docs/audit-design/P11-glossary.md › Data contract).
+# The pass that finds the words reads `glossary sheets` and writes with `glossary put`; the app only reads the table.
+# ---------------------------------------------------------------------------
+
+NO_GLOSSARY = "this backend has no glossary yet: re-run supabase/schema.sql (see docs/own-supabase.md)"
+GLOSSARY_FIELDS = ("term", "sense", "forms", "kind", "definition", "confidence", "doubt", "spelling", "photo", "related", "sheets")
+GLOSSARY_CONFIDENCE = ("sure", "unsure")
+GLOSSARY_WHERE = ("text", "title", "caption", "chip")
+GLOSSARY_RETRIES = 3   # how many times `put` starts an entry again when another command wrote it meanwhile
+GLOSSARY_USAGE = ("usage: rb.py glossary get <theme>\n       rb.py glossary sheets <theme> [--pending]\n"
+                  "       rb.py glossary put <theme> <file.json> [--replace]\n       rb.py glossary pending")
+# P11 G2a: which sheets the pass has read (table glossary_passes; a backend may have glossary_words and not this one yet)
+NO_PASSES = "this backend does not record which sheets the glossary pass has read: passes not recorded (re-run supabase/schema.sql, see docs/own-supabase.md)"
+GLOSSARY_SHORT = ("term", "sense", "forms", "definition")   # an entry as the pass reads the glossary it adds to
+
+class _SheetText(HTMLParser):
+    """A sheet's text as a quote of the glossary is looked for: tags removed, in the order of the page, a block
+    boundary is a space, the alt text of each photo included (a quote may be a caption). Also the photos' file names."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts, self.photos, self.stack = [], [], []   # stack: (tag, skipped)
+    def _skipped(self):
+        return bool(self.stack) and self.stack[-1][1]
+    def handle_starttag(self, tag, attrs):
+        if tag not in _INLINE_TAGS: self.parts.append(" ")
+        if tag == "img" and not self._skipped():
+            a = dict(attrs)
+            if a.get("alt"): self.parts.append(a["alt"] + " ")
+            name = (a.get("src") or "")[4:] if (a.get("src") or "").startswith("img/") else ""
+            if name and name not in self.photos: self.photos.append(name)
+        if tag in _VOID_TAGS: return
+        self.stack.append((tag, tag in _SKIP_TAGS or self._skipped()))
+    def handle_endtag(self, tag):
+        for i in range(len(self.stack) - 1, -1, -1):   # tolerant of unclosed tags
+            if self.stack[i][0] == tag: del self.stack[i:]; break
+        if tag not in _INLINE_TAGS: self.parts.append(" ")
+    def handle_data(self, data):
+        if not self._skipped(): self.parts.append(data)
+
+def _squash(s):
+    """Whitespace collapsed, case ignored: how a quote, a form and a sheet's text are compared."""
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+def _sheet_text(html):
+    """(text, photo file names) of a sheet's HTML; the text is ready to compare (_squash)."""
+    p = _SheetText()
+    p.feed(html or ""); p.close()
+    return _squash("".join(p.parts)), p.photos
+
+def library_families(path=None):
+    """{notebook id: family} of the built-in notebooks of app/config.js (the default of user_themes.family, P8 R14)."""
+    try:
+        src = pathlib.Path(path or LIBRARY_JS).read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    return {m.group(1): m.group(2) for m in re.finditer(r"\{\s*id:\s*'([^']+)'[^{}]*?\bfamily:\s*'(repetition|technique)'", src)}
+
+def _glossary_rows(cfg, theme):
+    """The entries of a notebook, as stored (with their id and updated_at: what a conditional update of `put` names);
+    None on a backend without the table."""
+    out, last = [], None
+    while True:
+        params = {"select": "id,updated_at," + ",".join(GLOSSARY_FIELDS), "user_id": f"eq.{cfg['user_id']}", "theme": f"eq.{theme}",
+                  "order": "id", "limit": str(LIST_PAGE)}
+        if last is not None: params["id"] = f"gt.{last}"
+        try:
+            rows = rest(cfg, "GET", "glossary_words", params=params, tolerate=(404,)) or []
+        except RbHTTPError:
+            return None
+        out += rows
+        if len(rows) < LIST_PAGE: return out
+        last = rows[-1]["id"]
+
+def _glossary_notebook(cfg, theme):
+    """{id, title, description, family} of a notebook of the account, None when it is not one. A built-in notebook
+    takes what its row leaves empty from the library of app/config.js; no family chosen: the library's, else repetition."""
+    params = {"select": "id,title,description,family", "id": f"eq.{theme}"}
+    try:
+        rows = rest(cfg, "GET", "user_themes", params=params, tolerate=(400,)) or []
+    except RbHTTPError as e:
+        if not _no_column(e, "family"): die(f"GET user_themes → {e}")
+        rows = rest(cfg, "GET", "user_themes", params=dict(params, select="id,title,description")) or []   # before P8 R14
+    row = next((r for r in rows if r.get("id") == theme), None)
+    if row is None: return None
+    lib = library_notebooks().get(theme, {})
+    return {"id": theme, "title": row.get("title") or lib.get("title", ""), "description": row.get("description") or lib.get("sub", ""),
+            "family": row.get("family") or library_families().get(theme, "repetition")}
+
+def _glossary_sheets(cfg, theme):
+    """The sheets of a notebook (slug, title, html, updated_at), by slug. Sessions are not sheets: left out."""
+    PAGE, out, last = 50, [], None   # html is heavy: 50 rows a read, keyset on slug
+    while True:
+        params = {"select": "slug,title,html,updated_at", "user_id": f"eq.{cfg['user_id']}", "theme": f"eq.{theme}", "kind": "eq.sheet",
+                  "order": "slug", "limit": str(PAGE)}
+        if last is not None: params["slug"] = f"gt.{last}"
+        rows = rest(cfg, "GET", "sheets", params=params) or []
+        out += rows
+        if len(rows) < PAGE: return out
+        last = rows[-1]["slug"]
+
+def _glossary_key(e):
+    return (e["term"].strip().lower(), (e.get("sense") or "").strip().lower())
+
+def _glossary_get(theme):
+    cfg = session()
+    rows = _glossary_rows(cfg, theme) or []   # no table: an empty glossary, no error
+    # the order of the pass's output: by how many sheets use the entry, then alphabetically
+    rows.sort(key=lambda r: (-len(r.get("sheets") or []), _glossary_key(r)))
+    print(json.dumps({"notebook": theme, "terms": [{k: r.get(k) for k in GLOSSARY_FIELDS} for r in rows]}, ensure_ascii=False, indent=2))
+
+def _glossary_sheet_out(r):
+    """A sheet as `glossary sheets` prints it."""
+    return {"slug": r["slug"], "title": r.get("title") or "", "html": r.get("html") or "", "photos": _sheet_text(r.get("html"))[1]}
+
+def _glossary_dump(theme):
+    cfg = session()
+    if _glossary_rows(cfg, theme) is None: die(NO_GLOSSARY)   # exit 1: the caller stops before running a pass
+    nb = _glossary_notebook(cfg, theme)
+    if nb is None: die(f"'{theme}' is not one of this account's notebooks (see `rb.py themes`)")
+    sheets = [_glossary_sheet_out(r) for r in _glossary_sheets(cfg, theme)]
+    print(json.dumps({"notebook": nb, "sheets": sheets}, ensure_ascii=False, indent=2))
+
+# P11 G2a: which sheets still need the pass. glossary_passes has one row per sheet the pass has read, with the sheet's
+# updated_at at that time (docs/audit-design/P11-glossary.md › Data contract › Which sheets had the pass).
+
+def _glossary_passes(cfg, theme):
+    """{sheet slug: sheet_updated_at} of the sheets of a notebook the pass has read; None on a backend without the table."""
+    out, last = {}, None
+    while True:
+        params = {"select": "slug,sheet_updated_at", "user_id": f"eq.{cfg['user_id']}", "theme": f"eq.{theme}", "order": "slug", "limit": str(LIST_PAGE)}
+        if last is not None: params["slug"] = f"gt.{last}"
+        try:
+            rows = rest(cfg, "GET", "glossary_passes", params=params, tolerate=(404,)) or []
+        except RbHTTPError:
+            return None
+        out.update((r["slug"], r.get("sheet_updated_at")) for r in rows)
+        if len(rows) < LIST_PAGE: return out
+        last = rows[-1]["slug"]
+
+def _needs_pass(updated_at, read_at):
+    """A sheet needs the pass when it has no row (read_at None), or when it was published again since: its updated_at is
+    later than the one the pass read. A date that cannot be read counts as later: read once more rather than never."""
+    if read_at is None: return True
+    now_, then = _ts(updated_at), _ts(read_at)
+    return now_ is None or then is None or now_ > then
+
+def _glossary_sheet_dates(cfg, theme):
+    """{slug: updated_at} of the sheets of a notebook, without their html. Sessions are not sheets: left out."""
+    out, last = {}, None
+    while True:
+        params = {"select": "slug,updated_at", "user_id": f"eq.{cfg['user_id']}", "theme": f"eq.{theme}", "kind": "eq.sheet",
+                  "order": "slug", "limit": str(LIST_PAGE)}
+        if last is not None: params["slug"] = f"gt.{last}"
+        rows = rest(cfg, "GET", "sheets", params=params) or []
+        out.update((r["slug"], r.get("updated_at")) for r in rows)
+        if len(rows) < LIST_PAGE: return out
+        last = rows[-1]["slug"]
+
+def _glossary_pending_slugs(cfg, theme, passes):
+    """The slugs of the sheets of a notebook that need the pass, by slug. passes: what _glossary_passes gave (None on a
+    backend without the table: every sheet needs it)."""
+    passes = passes or {}
+    return sorted(s for s, d in _glossary_sheet_dates(cfg, theme).items() if _needs_pass(d, passes.get(s)))
+
+def _glossary_sheets_named(cfg, theme, slugs, select="slug,title,html,updated_at"):
+    """Those sheets of a notebook (slug, title, html, updated_at), by slug: the html of the others is not read."""
+    PAGE, out, slugs = 50, [], sorted(slugs)
+    for i in range(0, len(slugs), PAGE):
+        # quoted as PostgREST reads a list: a slug is free text (a comma or a parenthesis would cut the list)
+        names = ",".join('"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"' for s in slugs[i:i + PAGE])
+        out += rest(cfg, "GET", "sheets", params={"select": select, "user_id": f"eq.{cfg['user_id']}", "theme": f"eq.{theme}",
+                                                  "kind": "eq.sheet", "slug": f"in.({names})", "order": "slug"}) or []
+    return out
+
+def _glossary_dump_pending(theme):
+    cfg = session()
+    have = _glossary_rows(cfg, theme)
+    if have is None: die(NO_GLOSSARY)   # exit 1, as `glossary sheets`: no pass is run
+    nb = _glossary_notebook(cfg, theme)
+    if nb is None: die(f"'{theme}' is not one of this account's notebooks (see `rb.py themes`)")
+    slugs = _glossary_pending_slugs(cfg, theme, _glossary_passes(cfg, theme))
+    # updated_at: of the html printed with it (one row, one read); the pass gives it back in "passed", so that `put`
+    # records the version that was read and not the one it finds
+    sheets = [dict(_glossary_sheet_out(r), updated_at=r.get("updated_at")) for r in _glossary_sheets_named(cfg, theme, slugs)]
+    have.sort(key=lambda r: (-len(r.get("sheets") or []), _glossary_key(r)))   # the order of `glossary get`
+    print(json.dumps({"notebook": nb, "sheets": sheets, "glossary": [{k: r.get(k) for k in GLOSSARY_SHORT} for r in have]}, ensure_ascii=False, indent=2))
+
+def _glossary_technique(cfg):
+    """The ids of the account's notebooks of the technique family, in the order of `rb.py themes`. As the app
+    (familyOf): the account's choice (user_themes.family), else the default app/config.js gives a built-in notebook,
+    else repetition. A backend without the family column: the default, as `glossary sheets` answers."""
+    params = {"select": "id,builtin,family", "order": "position.asc,title.asc"}
+    try:
+        rows = rest(cfg, "GET", "user_themes", params=params, tolerate=(400,)) or []
+    except RbHTTPError as e:
+        if not _no_column(e, "family"): die(f"GET user_themes → {e}")
+        rows = rest(cfg, "GET", "user_themes", params=dict(params, select="id,builtin")) or []   # before P8 R14
+    lib = library_families()
+    family = lambda r: r.get("family") or (lib.get(r.get("id")) if r.get("builtin") is not False else None) or "repetition"
+    return [r["id"] for r in rows if family(r) == "technique"]
+
+def _glossary_pending():
+    cfg = session()
+    params = {"select": "id", "user_id": f"eq.{cfg['user_id']}", "order": "id", "limit": "1"}
+    try:
+        rest(cfg, "GET", "glossary_words", params=params, tolerate=(404,))
+    except RbHTTPError:
+        die(NO_GLOSSARY)   # exit 1, as `glossary sheets`: a pass would have nowhere to write
+    recorded = True
+    for theme in _glossary_technique(cfg):
+        passes = _glossary_passes(cfg, theme) if recorded else None
+        if passes is None: recorded = False   # no table: asked once, then every sheet of every notebook needs the pass
+        n = len(_glossary_pending_slugs(cfg, theme, passes))
+        if n: print(f"{theme} {n}")
+
+def _glossary_record(cfg, theme, dates):
+    """Record that the pass read these sheets, {slug: the updated_at of the text it read}. A row never moves back to an
+    earlier date: a sheet without a row gets one (an insert that leaves the existing rows alone, one statement); a
+    sheet that has one is updated only where the stored date is not later than this one (one conditional update per
+    sheet). Two commands at once on a sheet published again between their readings: whichever lands last, the row
+    keeps the later date, the one of the latest version a pass read. A backend without the table: one line, nothing
+    recorded."""
+    # no user_id, as the entries: the column's default (auth.uid()) and RLS own it
+    rows = [{"theme": theme, "slug": s, "sheet_updated_at": d, "passed_at": now()} for s, d in dates.items()]
+    try:
+        new = rest(cfg, "POST", "glossary_passes", rows, prefer="resolution=ignore-duplicates,return=representation",
+                   params={"on_conflict": "user_id,theme,slug", "select": "slug"}, tolerate=(404,)) or []
+    except RbHTTPError:
+        print(f"rb: {NO_PASSES}", file=sys.stderr); return
+    inserted = {r.get("slug") for r in new}   # an answer that names none: every sheet goes through the update, same result
+    done, kept = 0, 0
+    for row in rows:
+        if row["slug"] in inserted: done += 1; continue
+        # passed_at with it: a sheet read again gets the new time
+        params = {"user_id": f"eq.{cfg['user_id']}", "theme": f"eq.{theme}", "slug": f"eq.{row['slug']}",
+                  "sheet_updated_at": f"lte.{row['sheet_updated_at']}", "select": "slug"}
+        patch = {"sheet_updated_at": row["sheet_updated_at"], "passed_at": row["passed_at"]}
+        if rest(cfg, "PATCH", "glossary_passes", patch, prefer="return=representation", params=params): done += 1
+        else: kept += 1
+    print(f"glossary {theme}: {done} sheet{'' if done == 1 else 's'} recorded as read"
+          + (f", {kept} left as recorded (a later version was read meanwhile)" if kept else ""))
+
+PASSED_SHAPE = 'passed must be a list of {"slug": "…", "updated_at": "…"} (or of sheet slugs)'
+PASSED_DATE = "a full date-time with its time zone, as `sheets --pending` prints it (2026-02-01T23:30:00+00:00, or …Z)"
+# date, T or a space, hh:mm:ss, up to 6 decimals (what a timestamptz keeps), then Z or ±hh:mm / ±hhmm. Matched on the
+# whole value: the "-02" that ends a bare date is a day, not an offset
+_INSTANT = re.compile(r"(\d{4})-(\d\d)-(\d\d)[T ](\d\d):(\d\d):(\d\d)(?:\.(\d{1,6}))?(?:Z|([+-])(\d\d):?(\d\d))", re.ASCII)
+
+def _instant(v):
+    """The instant a date-time names, as an aware UTC datetime; None unless it is written in full with its own time
+    zone (PASSED_DATE). A date alone, a time without seconds or a time without a zone name no instant by themselves:
+    Postgres would read them in the database's zone, Python in this machine's. Nothing here reads the machine's zone."""
+    import datetime
+    m = _INSTANT.fullmatch(v) if isinstance(v, str) else None
+    if not m: return None
+    y, mo, d, h, mi, sec, frac, sign, oh, om = m.groups()
+    off = (int(oh) * 60 + int(om)) * (-1 if sign == "-" else 1) if sign else 0
+    if sign and (int(om) > 59 or abs(off) > 15 * 60 + 59): return None   # the offsets Postgres takes
+    try:
+        at = datetime.datetime(int(y), int(mo), int(d), int(h), int(mi), int(sec), int(((frac or "") + "000000")[:6]),
+                               tzinfo=datetime.timezone(datetime.timedelta(minutes=off)))
+        return at.astimezone(datetime.timezone.utc)
+    except (ValueError, OverflowError):
+        return None
+
+def _glossary_passed(passed, dates):
+    """The file's "passed" as ({slug: the updated_at to record}, problems). An item is {"slug", "updated_at"}: the date
+    `sheets --pending` printed with the text the pass read, recorded as given; or a plain slug (a manual call): the
+    sheet's current date. dates: {slug: current updated_at} of the notebook's sheets, None when the notebook is not
+    the account's (the slugs are then not checked). A sheet listed twice counts once, with its earliest date. Dates
+    are compared as instants (UTC), never as strings nor in this machine's zone."""
+    if passed is None: return {}, []
+    if not isinstance(passed, list): return {}, [PASSED_SHAPE]
+    out, problems = {}, []
+    for i, p in enumerate(passed):
+        slug, given = (p.get("slug"), True) if isinstance(p, dict) else (p, False)
+        if not (isinstance(slug, str) and slug): return {}, [PASSED_SHAPE]
+        if dates is not None and slug not in dates:
+            problems.append(f"passed[{i}]: '{slug}' is not a sheet of this notebook"); continue
+        at = p.get("updated_at") if given else (dates or {}).get(slug)
+        if given:
+            # in full and with its zone: anything less is not the same instant here and in the database
+            if _instant(at) is None:
+                problems.append(f"passed[{i}]: '{slug}': updated_at {json.dumps(at, ensure_ascii=False)} is not {PASSED_DATE}"); continue
+            current = _instant((dates or {}).get(slug))
+            if current is not None and _instant(at) > current:
+                problems.append(f"passed[{i}]: '{slug}': updated_at {at} is later than the sheet's ({dates[slug]})"); continue
+        if slug not in out or _earlier(at, out[slug]): out[slug] = at
+    return out, problems
+
+def _earlier(a, b):
+    """Is date a an earlier instant than date b? One that names no instant (a plain slug has no date when the notebook
+    is not the account's) counts as the earliest."""
+    a, b = _instant(a), _instant(b)
+    return b is not None and (a is None or a < b)
+
+def _glossary_problems(terms, texts):
+    """Every reason not to write `terms`, in plain words. texts: {sheet slug: its text} of the notebook, None when the
+    notebook itself is missing (then what names a sheet is not checked)."""
+    out, seen = [], {}
+    text_or_null = lambda v: v is None or isinstance(v, str)
+    for i, e in enumerate(terms):
+        if not isinstance(e, dict):
+            out.append(f"terms[{i}]: not an object"); continue
+        term = e.get("term")
+        named = isinstance(term, str) and bool(term.strip())
+        bad = lambda msg, at=f"terms[{i}]" + (f" « {term.strip()} »" if named else ""): out.append(f"{at}: {msg}")
+        if not named: bad("term is missing")
+        if not (isinstance(e.get("definition"), str) and e["definition"].strip()): bad("definition is missing")
+        forms = e.get("forms")
+        if not (isinstance(forms, list) and forms and all(isinstance(f, str) and f.strip() for f in forms)):
+            bad("forms must be a list of at least one string"); forms = []
+        if e.get("confidence") not in GLOSSARY_CONFIDENCE: bad(f"confidence must be one of {', '.join(GLOSSARY_CONFIDENCE)}")
+        for k in ("sense", "kind", "doubt", "spelling"):
+            if not text_or_null(e.get(k)): bad(f"{k} must be a string or null")
+        if isinstance(e.get("doubt"), str) and e["doubt"].strip() and e.get("confidence") != "unsure":
+            bad("doubt goes only with confidence « unsure »")
+        related = e.get("related")
+        if related is not None and not (isinstance(related, list) and all(isinstance(r, str) for r in related)):
+            bad("related must be a list of strings")
+        if named and text_or_null(e.get("sense")):
+            key = _glossary_key(e)
+            if key in seen: bad(f"same term and sense as terms[{seen[key]}]")
+            else: seen[key] = i
+        items = e.get("sheets")
+        if items is not None and not isinstance(items, list):
+            bad("sheets must be a list"); items = []
+        for j, it in enumerate(items or []):
+            at = f"sheets[{j}]"
+            if not isinstance(it, dict):
+                bad(f"{at}: not an object"); continue
+            slug, quote = it.get("slug"), it.get("quote")
+            if it.get("where") not in GLOSSARY_WHERE: bad(f"{at}: where must be one of {', '.join(GLOSSARY_WHERE)}")
+            if not (isinstance(quote, str) and _squash(quote)):
+                bad(f"{at}: quote is missing"); quote = None
+            elif forms and not any(_squash(f) in _squash(quote) for f in forms):
+                bad(f"{at}: the quote holds none of the entry's forms")
+            if texts is None: continue
+            if not isinstance(slug, str) or slug not in texts: bad(f"{at}: '{slug}' is not a sheet of this notebook")
+            elif quote and _squash(quote) not in texts[slug]: bad(f"{at}: the quote is not found in the text of sheet '{slug}'")
+        photo = e.get("photo")
+        if photo is None: continue
+        if not (isinstance(photo, dict) and isinstance(photo.get("file"), str) and photo["file"].strip()):
+            bad("photo must be null or {slug, file}")
+        elif texts is not None and (not isinstance(photo.get("slug"), str) or photo["slug"] not in texts):
+            bad(f"photo: '{photo.get('slug')}' is not a sheet of this notebook")
+    return out
+
+def _glossary_row(e):
+    """One entry of a pass's output as the table stores it (checked before by _glossary_problems)."""
+    items = {}
+    for it in e.get("sheets") or []:   # one item per sheet: a later one for the same slug replaces it
+        items[it["slug"]] = {"slug": it["slug"], "quote": it["quote"], "where": it["where"]}
+    photo = e.get("photo")
+    if photo:   # the file name under img/, as the app builds the photo's path; `why` is the pass's own note
+        file = photo["file"].strip()
+        photo = {"slug": photo["slug"], "file": file[4:] if file.startswith("img/") else file}
+    clean = lambda v: (v or "").strip() or None
+    return {"term": e["term"].strip(), "sense": clean(e.get("sense")), "forms": [f.strip() for f in e["forms"]], "kind": clean(e.get("kind")),
+            "definition": e["definition"].strip(), "confidence": e["confidence"], "doubt": clean(e.get("doubt")),
+            "spelling": clean(e.get("spelling")), "photo": photo or None, "related": list(e.get("related") or []), "sheets": list(items.values())}
+
+def _glossary_merge(old, row):
+    """What `put` without --replace changes in the stored entry `old`, and why it may not: (patch, problems). The forms
+    become the stored ones then the file's that are not among them (case ignored); the items of `sheets` are the
+    stored ones with the file's (an item for a slug already listed replaces it in place); the rest of the stored
+    entry is kept. Every quote of the result, kept or new, must hold one of these forms: checked here, on what
+    would be stored."""
+    forms, seen = [], set()
+    for f in list(old.get("forms") or []) + row["forms"]:
+        key = _squash(f) if isinstance(f, str) else ""
+        if key and key not in seen:
+            seen.add(key); forms.append(f)
+    items = {it.get("slug"): it for it in (old.get("sheets") or []) if isinstance(it, dict)}
+    mine = {it["slug"]: it for it in row["sheets"]}
+    items.update(mine)
+    sheets = list(items.values())
+    holds = lambda it: isinstance(it.get("quote"), str) and any(k in _squash(it["quote"]) for k in seen)
+    problems = [f"« {row['term']} »: the quote {'of' if it.get('slug') in mine else 'already stored for'} sheet '{it.get('slug')}' "
+                f"holds none of the forms of the merged entry ({', '.join(forms)})" for it in sheets if not holds(it)]
+    patch = {}
+    if forms != (old.get("forms") or []): patch["forms"] = forms
+    if sheets != (old.get("sheets") or []): patch["sheets"] = sheets
+    return patch, problems
+
+def _glossary_plan(rows, have, replace):
+    """What writing `rows` (entries as _glossary_row gives them) asks of a glossary that stores `have`:
+    (new, changed, same, problems). new: the rows to insert; changed: [(row, stored entry, patch)]; same: how many
+    need no write; problems: the merges that would store a quote without any of the entry's forms."""
+    known = {_glossary_key(r): r for r in have}
+    new, changed, same, problems = [], [], 0, []
+    for row in rows:
+        old = known.get(_glossary_key(row))
+        if old is None:
+            new.append(row); continue
+        if replace:
+            patch = {k: v for k, v in row.items() if old.get(k) != v}
+        else:
+            patch, bad = _glossary_merge(old, row)
+            problems += bad
+        if patch: changed.append((row, old, patch))
+        else: same += 1
+    return new, changed, same, problems
+
+def _glossary_stale(have, given, slugs):
+    """What reconciling the sheets read again (`slugs`) asks of a glossary that stores `have`: [(stored entry, its
+    `sheets` without the items to drop, how many are dropped)], the entries that lose nothing left out. given:
+    {entry key: the slugs the file lists for it}. An item goes when its sheet was read again and the file does not
+    give the entry for that sheet; the items for any other sheet stay as they are, in their order."""
+    out = []
+    for old in have:
+        mine = given.get(_glossary_key(old), ())
+        items = old.get("sheets") or []
+        keep = [it for it in items if not (isinstance(it, dict) and it.get("slug") in slugs and it.get("slug") not in mine)]
+        if len(keep) < len(items): out.append((old, keep, len(items) - len(keep)))
+    return out
+
+def _glossary_moved(cfg, theme, passed, slugs):
+    """Those of `slugs` whose sheet is no longer the text the pass read: its updated_at, read now, is a later instant
+    than the date of `passed` ({slug: the date read}), or the sheet is gone. One reading of the dates alone, made just
+    before a write that relies on them (Codex pass 2 on #143). The check and the write are two calls, not one
+    operation: this narrows the time in which a sheet published again goes unseen, it does not close it."""
+    if not slugs: return set()
+    now = {r["slug"]: r.get("updated_at") for r in _glossary_sheets_named(cfg, theme, slugs, select="slug,updated_at")}
+    return {s for s in slugs if s not in now or _earlier(passed.get(s), now[s])}
+
+def _glossary_reconcile(cfg, theme, given, passed, slugs):
+    """Take the sheets read again (`slugs`) off the entries the file does not give for them: (associations removed,
+    entries still to change). Each update names the updated_at it read, as the merge of `put` does: one that matches
+    no row was overtaken by another command, so the glossary is read again and what is left to drop is worked out on
+    that reading (what the other command added for another sheet is kept), GLOSSARY_RETRIES more times at most. No
+    entry is deleted: one that loses its last sheet keeps `sheets` empty. At each try, once the glossary is read and
+    before the updates, the sheets published again since the date of `passed` are taken out of `slugs` for good
+    (_glossary_moved): what another pass listed for their new text is not this command's to remove."""
+    slugs, removed, left = set(slugs), 0, 0
+    for attempt in range(1 + GLOSSARY_RETRIES):
+        have = _glossary_rows(cfg, theme) or []
+        slugs -= _glossary_moved(cfg, theme, passed, slugs)
+        left = 0
+        for old, sheets, n in _glossary_stale(have, given, slugs):
+            params = {"id": f"eq.{old['id']}", "user_id": f"eq.{cfg['user_id']}", "updated_at": f"eq.{old.get('updated_at')}", "select": "id"}
+            if rest(cfg, "PATCH", "glossary_words", {"sheets": sheets}, prefer="return=representation", params=params): removed += n
+            else: left += 1
+        if not left: break
+    return removed, left
+
+def _glossary_put(theme, file, replace):
+    try:
+        doc = json.loads(pathlib.Path(file).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        die(f"{file}: cannot be read as JSON ({e})")
+    terms = doc.get("terms") if isinstance(doc, dict) else None
+    if not isinstance(terms, list): die(f"{file}: expected the output of a glossary pass: {{\"notebook\", \"terms\": [...]}}")
+    cfg = session()
+    have = _glossary_rows(cfg, theme)
+    if have is None: die(NO_GLOSSARY + ", then run this again")
+    # Checks before any write, all reported at once.
+    problems, texts, dates = [], None, {}
+    if theme not in _known_themes(cfg):
+        problems.append(f"'{theme}' is not one of this account's notebooks (see `rb.py themes`)")
+    else:
+        sheets = _glossary_sheets(cfg, theme)
+        texts = {r["slug"]: _sheet_text(r.get("html"))[0] for r in sheets}
+        dates = {r["slug"]: r.get("updated_at") for r in sheets}   # of the text the quotes are checked against
+    if doc.get("notebook") not in (None, theme):
+        problems.append(f"the file is the glossary of notebook '{doc.get('notebook')}', not of '{theme}'")
+    problems += _glossary_problems(terms, texts)
+    # "passed": the sheets the pass read (P11 G2a), those where it found no word included
+    passed, bad = _glossary_passed(doc.get("passed"), None if texts is None else dates)
+    problems += bad
+    if problems:
+        for p in problems: print(f"rb: {p}", file=sys.stderr)
+        die(f"{file}: {len(problems)} problem(s), nothing written")
+    # A new entry is inserted; one that exists is merged (or, with --replace, overwritten). No entry is ever deleted.
+    # Two commands at once: an update names the updated_at it read (the table's trigger changes it at each write), so
+    # one that matches no row was overtaken; an insert the unique index refuses (409, 23505) met an entry inserted
+    # meanwhile. Both read the glossary again, merge and check again on that reading, and try again.
+    rows, inserted, updated, same = [_glossary_row(e) for e in terms], 0, 0, 0
+    given = {_glossary_key(r): {it["slug"] for it in r["sheets"]} for r in rows}   # what the file lists, entry by entry
+    for attempt in range(1 + GLOSSARY_RETRIES):
+        if attempt: have = _glossary_rows(cfg, theme) or []
+        new, changed, unchanged, problems = _glossary_plan(rows, have, replace)
+        if problems:   # before any write on the first reading; a later reading may find what another command stored
+            for p in problems: print(f"rb: {p}", file=sys.stderr)
+            die(f"{file}: {len(problems)} problem(s), " + (f"after another command changed the glossary; already written: {inserted} inserted, {updated} updated"
+                                                          if attempt else "nothing written"))
+        same += unchanged; rows = []
+        if new:
+            try:   # one statement: all of them or none
+                rest(cfg, "POST", "glossary_words", [dict(r, theme=theme) for r in new], prefer="return=minimal", tolerate=(409,))
+                inserted += len(new)
+            except RbHTTPError as e:
+                if "23505" not in e.body: die(f"POST glossary_words → {e}")
+                rows += new
+        for row, old, patch in changed:
+            params = {"id": f"eq.{old['id']}", "user_id": f"eq.{cfg['user_id']}", "updated_at": f"eq.{old.get('updated_at')}", "select": "id"}
+            if rest(cfg, "PATCH", "glossary_words", patch, prefer="return=representation", params=params): updated += 1
+            else: rows.append(row)
+        if not rows: break
+    else:
+        names = ", ".join(r["term"] for r in rows[:5]) + (", …" if len(rows) > 5 else "")
+        die(f"glossary {theme}: {len(rows)} entr{'y' if len(rows) == 1 else 'ies'} not written ({names}): another command kept writing "
+            f"the same words ({1 + GLOSSARY_RETRIES} tries); already written: {inserted} inserted, {updated} updated; run this again")
+    # The sheets read again are reconciled (Codex pass 1 on #143): the file is all that still applies to them, so an
+    # entry it does not give for one of them loses that sheet. Only the sheets whose text is still the one the pass
+    # read: one published again since still needs the pass, and a later reading of it by another command is not undone.
+    # The dates above were read before the entries were written, so the sheets' current dates are read again just
+    # before each try of the reconciliation, and once more just before the sheets are recorded (Codex pass 2): a
+    # sheet published again while this command ran is neither reconciled nor recorded as read by it.
+    removed = 0
+    read_again = {s for s, at in passed.items() if not _earlier(at, dates.get(s))}
+    if read_again:
+        removed, left = _glossary_reconcile(cfg, theme, given, passed, read_again)
+        if left:
+            die(f"glossary {theme}: {left} entr{'y still lists' if left == 1 else 'ies still list'} a sheet read again: another command kept "
+                f"writing the same words ({1 + GLOSSARY_RETRIES} tries); already written: {inserted} inserted, {updated} updated, "
+                f"{removed} association{'' if removed == 1 else 's'} removed; no sheet recorded as read; run this again")
+    moved = _glossary_moved(cfg, theme, passed, read_again)
+    print(f"glossary {theme}: {inserted} inserted, {updated} updated, {same} unchanged"
+          + (f", {removed} association{'' if removed == 1 else 's'} removed (sheets read again)" if removed else "")
+          + (f", {len(moved)} sheet{'' if len(moved) == 1 else 's'} published again meanwhile (not reconciled, not recorded as read)" if moved else ""))
+    # after the entries and the reconciliation, never before: a `put` that stopped above leaves its sheets to be read again
+    passed = {s: at for s, at in passed.items() if s not in moved}
+    if passed: _glossary_record(cfg, theme, passed)
+
+def cmd_glossary(args):
+    verb, rest_args = (args[0] if args else None), args[1:]
+    replace = verb == "put" and "--replace" in rest_args
+    if replace: rest_args = [a for a in rest_args if a != "--replace"]
+    pending = verb == "sheets" and "--pending" in rest_args
+    if pending: rest_args = [a for a in rest_args if a != "--pending"]
+    if verb == "pending" and not rest_args:
+        _glossary_pending()
+    elif verb in ("get", "sheets") and len(rest_args) == 1 and rest_args[0]:
+        (_glossary_get if verb == "get" else _glossary_dump_pending if pending else _glossary_dump)(rest_args[0])
+    elif verb == "put" and len(rest_args) == 2 and rest_args[0]:
+        _glossary_put(rest_args[0], rest_args[1], replace)
+    else:
+        die(GLOSSARY_USAGE)
+
 COMMANDS = {"login": cmd_login, "whoami": cmd_whoami, "themes": cmd_themes, "library": cmd_library, "add-theme": cmd_add_theme, "queue": cmd_queue, "claim": cmd_claim, "publish": cmd_publish,
             "done": cmd_done, "error": cmd_error, "list": cmd_list, "delete": cmd_delete,
             "requeue-sessions": cmd_requeue_sessions, "requeue-stuck": cmd_requeue_stuck,
-            "backfill-search": cmd_backfill_search, "backfill-tags": cmd_backfill_tags}
+            "backfill-search": cmd_backfill_search, "backfill-tags": cmd_backfill_tags, "glossary": cmd_glossary}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:

@@ -7,7 +7,7 @@ The preview (tools/preview/build.sh) shows the app on a fake backend. Its defaul
 synthetic set, committed: 4 notebooks, 30 sheets (25 in Strength, for the notebook page) built like templates/sheet.html and
 templates/exercise.html, one Kitesurf sheet built like templates/technique.html (L16; French content written for the
 preview), 4 video sessions with doses,
-one note and 4 requests (queued, processing, error, done). Images are plain colour + label JPEGs made
+one note, 4 requests (queued, processing, error, done) and the glossary words of two notebooks (P11 G3a). Images are plain colour + label JPEGs made
 here: never a frame from a real video (the repository is public).
 
 Storage layout, as in the real bucket: files/<sheet slug>/img/<file>.jpg (the fake client maps
@@ -15,6 +15,7 @@ the signed path <user id>/<slug>/img/<file> to it).
 """
 import json
 import os
+import re
 import sys
 import textwrap
 import unicodedata
@@ -97,9 +98,14 @@ def sheet_html(s):
 '''
 
 
+def bold(text):
+    """esc(), then **…** as <b>…</b>: a sheet's text carries inline tags (P11 G3a: a word that runs over one)."""
+    return re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', esc(text))
+
+
 def technique_html(s):
     """A trick worked by tries (L16), structure of templates/technique.html, profile « technique » (no roles, no tap)."""
-    li = lambda xs: ''.join(f'<li>{esc(x)}</li>' for x in xs)  # noqa: E731
+    li = lambda xs: ''.join(f'<li>{bold(x)}</li>' for x in xs)  # noqa: E731
     kit = ''.join(f'<span>{esc(k)}</span>' for k in s['kit'])
     cond = ''.join(f'  <div class="c"><b>{esc(b)}</b><span>{esc(t)}</span></div>\n' for b, t in s['cond'])
     tries = ''.join(f'  <div class="d"><b>{esc(b)}</b><span>{esc(t)}</span></div>\n' for b, t in s['tries'])
@@ -374,7 +380,7 @@ SHEETS.append(dict(
     kit=['twin-tip', 'aile 9–12 m', 'harnais et leash', 'casque'],
     prereq=['Sauts simples posés des deux côtés, sans perdre la voile.', 'Remontée au vent sur les deux bords.'],
     cond=[('15–25 nds', 'vent établi'), ('9–12 m', 'aile'), ('Plat', 'eau à la taille ou plus')],
-    go=['Vent régulier, rafales de moins de 8 nds d\'écart.', 'Au moins 50 m libres sous le vent.',
+    go=['Vent régulier, rafales de moins de 8 nds d\'écart.', 'Au moins **50 m libres sous** le vent.',
         'Tu poses tes sauts simples à chaque essai.'],
     nogo=['Vent de terre ou rafaleux.', 'Eau trop peu profonde ou du monde sous le vent.',
           'Fatigue : tes réceptions deviennent approximatives.'],
@@ -432,6 +438,88 @@ SESSIONS += [
                   'Mains sous les épaules, coudes le long du corps : la pompe des triceps.',
                   ('Planche haute', 'Mains sous les épaules.'), ('Descente', 'Coudes qui frôlent les côtes.')),
          ]),
+]
+
+
+# P11 G3a: the glossary of a notebook (table glossary_words, docs/audit-design/P11-glossary.md › Data contract).
+# Words written by hand for the synthetic sheets above, in French like them; never a word list of a real notebook.
+# Kitesurf (the « backroll » sheet) holds every case the app handles:
+#   a photo (carre, from the sheet itself: « This sheet »), no photo (pop), unsure with its doubt (vent de terre),
+#   one word in two senses (bord · la direction / bord · le rivage), where ≠ text (twin-tip and leash are kit chips),
+#   a quote that is not in the sheet (gilet d'impact), two words separated by one space (« voile » then « à 11 h »:
+#   only the first is underlined), a faulty spelling (leash), a related word without entry (carre → planche), a
+#   word that is in no sheet, reached by « See also » only (cranter), and a word that runs over an inline tag
+#   (« sous le vent » in « Au moins <b>50 m libres sous</b> le vent. »: two pieces, one word).
+# Fight: « garde » has its photo in another sheet than « Esquives rotatives », whose page shows that sheet's title,
+#   and sits in the loop line of « Jab-cross »; « distance » sits in a plain paragraph (the « Why » of « Jab-cross »).
+def word(n, theme, term, definition, sheets, forms=None, sense=None, photo=None, related=(), unsure=None, spelling=None):
+    return {'id': f'00000000-0000-4000-8000-{n:012d}', 'user_id': 'u1', 'theme': theme, 'term': term, 'sense': sense,
+            'forms': forms if forms is not None else [term], 'kind': None, 'definition': definition,
+            'confidence': 'unsure' if unsure else 'sure', 'doubt': unsure, 'spelling': spelling,
+            'photo': {'slug': photo[0], 'file': photo[1]} if photo else None, 'related': list(related),
+            'sheets': [{'slug': s, 'quote': q, 'where': w} for s, q, w in sheets],
+            'created_at': '2026-11-10T09:00:00Z', 'updated_at': '2026-11-10T09:00:00Z'}
+
+
+GLOSSARY = [
+    word(1, 'kitesurf', 'carre',
+         'L\'arête de la planche. Être en carre, c\'est incliner la planche pour qu\'elle morde l\'eau et résiste à la traction de l\'aile.',
+         [('backroll', 'en sautant depuis la carre', 'text')], photo=('backroll', '01.jpg'),
+         related=['cranter', 'pop', 'planche']),
+    word(2, 'kitesurf', 'pop',
+         'L\'impulsion donnée sur la carre, jambe arrière poussée d\'un coup, pour décoller la planche de l\'eau sans attendre l\'aile.',
+         [('backroll', 'Pop sur la carre, la tête', 'text')], forms=['pop', 'pops'], related=['carre']),
+    word(3, 'kitesurf', 'sous le vent',
+         'Du côté vers lequel le vent souffle. Ce qui est sous le vent de toi reçoit le vent après toi : c\'est là que tu dérives et que tu retombes.',
+         [('backroll', 'Au moins 50 m libres sous le vent.', 'text')], related=['remontée au vent', 'bord (le rivage)']),
+    word(4, 'kitesurf', 'remontée au vent',
+         'Naviguer en gagnant du terrain vers d\'où vient le vent, la planche sur la carre : c\'est ce qui permet de revenir à son point de départ.',
+         [('backroll', 'Remontée au vent sur les deux bords.', 'text')],
+         forms=['remontée au vent', 'remonter au vent'], related=['carre', 'bord (la direction)', 'sous le vent']),
+    word(5, 'kitesurf', 'bord',
+         'Un trajet sans changer de direction, le vent toujours du même côté : on tire un bord vers la droite, puis un bord vers la gauche.',
+         [('backroll', 'sur les deux bords', 'text')], forms=['bords', 'bord'], sense='la direction',
+         related=['remontée au vent']),
+    word(6, 'kitesurf', 'bord',
+         'La limite entre l\'eau et la plage. Près du bord, l\'eau est peu profonde et les obstacles sont proches.',
+         [('backroll', 'jamais près du bord', 'text')], sense='le rivage', related=['sous le vent', 'vent de terre']),
+    word(7, 'kitesurf', 'vent de terre',
+         'Un vent qui souffle de la plage vers le large : il éloigne du bord et arrive irrégulier, perturbé par le relief.',
+         [('backroll', 'Vent de terre ou rafaleux.', 'text')],
+         unsure='Le mot peut aussi désigner un vent qui ne vient qu\'en partie de la plage ; certains coachs disent « offshore ».',
+         related=['bord (le rivage)']),
+    word(8, 'kitesurf', 'aile',
+         'Le cerf-volant qui tracte le rider, aussi appelé voile ou kite. Sa taille se donne en mètres carrés.',
+         [('backroll', 'voile à 11 h', 'text')], forms=['aile', 'voile'], related=['11 h']),
+    word(9, 'kitesurf', '11 h',
+         'Une position de l\'aile dans le ciel, lue comme sur un cadran : midi au-dessus de la tête, 11 h juste à côté, encore haute.',
+         [('backroll', 'voile à 11 h.', 'text')], forms=['à 11 h', '11 h'], related=['aile']),
+    word(10, 'kitesurf', 'gilet d\'impact',
+         'Un gilet rembourré qui amortit les chutes à plat sur l\'eau ; il aide à flotter mais ne remplace pas un gilet de sauvetage.',
+         [('backroll', 'Casque et gilet d\'impact pour apprendre', 'text')]),
+    word(11, 'kitesurf', 'twin-tip',
+         'La planche symétrique du kitesurf, qui navigue dans les deux sens sans changer les pieds de place.',
+         [('backroll', 'twin-tip', 'chip')], related=['carre']),
+    word(12, 'kitesurf', 'leash',
+         'La sangle qui relie le rider à son aile : après un largage, elle retient l\'aile sans sa puissance.',
+         [('backroll', 'harnais et leash', 'chip')], spelling='lish'),
+    word(13, 'kitesurf', 'cranter',
+         'Appuyer fort sur la carre pour résister à la traction de l\'aile : la planche ralentit, remonte au vent et la tension monte dans les lignes.',
+         [], forms=['cranter', 'crante', 'crantage'], related=['carre', 'bord (la direction)']),
+    word(20, 'fight', 'garde',
+         'La position de base du boxeur : un pied devant, les poings aux joues, les coudes près des côtes, prêt à frapper ou à se protéger.',
+         [('session-shadow-garde', 'En garde, petits pas avant', 'text'), ('session-shadow-esquives', 'En garde', 'title'),
+          ('jab-cross', 'Ramène chaque poing à la garde', 'text')],
+         photo=('session-shadow-garde', '01.jpg'), related=['jab']),
+    word(21, 'fight', 'jab',
+         'Le direct du bras avant, rapide et peu appuyé : il mesure la distance et prépare le coup suivant.',
+         [('jab-cross', 'un jab rapide', 'text')], photo=('jab-cross', '01.jpg'), related=['cross', 'garde']),
+    word(22, 'fight', 'cross',
+         'Le direct du bras arrière, lancé par la rotation de la hanche et du pied arrière : le coup qui porte.',
+         [('jab-cross', 'puis un cross qui part de la hanche', 'text')], related=['jab']),
+    word(23, 'fight', 'distance',
+         'L\'écart entre toi et l\'adversaire : à la bonne distance, ton jab touche bras tendu et son coup ne t\'atteint pas.',
+         [('jab-cross', 'Le jab mesure la distance', 'text')], related=['jab', 'garde']),
 ]
 
 
@@ -556,6 +644,8 @@ def main():
             {'id': 'req-4', 'url': 'https://www.instagram.com/reel/PREVIEW0104/', 'status': 'done', 'theme': 'strength',
              'note': None, 'created_at': '2026-10-31T18:00:00Z', 'processed_at': '2026-11-01T22:10:00Z'},
         ],
+        # P11 G3a: the glossary of the Kitesurf and Fight notebooks
+        'glossary_words': GLOSSARY,
     }
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, 'data.json'), 'w', encoding='utf-8') as f:

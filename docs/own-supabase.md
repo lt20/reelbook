@@ -16,7 +16,8 @@ Ten minutes, free tier, no card. You get a private backend that only you can rea
    level security policies and a private storage bucket `sheets`. It is safe to run again later.
    If the app later says `permission denied for table …`, the file did not run to its end: run the latest one again.
 3. **After each Reelbook update**, run the latest `supabase/schema.sql` again the same way: it only
-   adds what is missing (sessions, for instance, need the `sessions` table) and keeps your data.
+   adds what is missing (sessions, for instance, need the `sessions` table; the glossary of a notebook, the
+   `glossary_words` and `glossary_passes` tables) and keeps your data.
    The update that added search in the text of the sheets (`sheets.search_text`) also needs, once,
    `python3 tools/rb.py backfill-search` (try `--dry-run` first) so that sheets published before it
    are found by their content too. The one that added the facet chips (`sheets.tags`) needs, once,

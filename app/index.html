@@ -591,6 +591,76 @@ details.rb-more>summary::-webkit-details-marker,details.rb-why>summary::-webkit-
 details.rb-more>summary::before,details.rb-why>summary::before{content:"▸";flex:none;width:1em;color:var(--accent)}
 details.rb-more[open]>summary::before,details.rb-why[open]>summary::before{content:"▾"}
 details.rb-more>ol.keys{margin-top:var(--s-2)}
+/* ---- P11 G3a: the glossary in a sheet ----
+   A word of the notebook's glossary, underlined once per sheet (RBSheet.glossary.underline): a dotted line in --muted
+   under the text, colour and weight unchanged. The target is the outer span, the text and its line the inner one: the
+   outer span's font is scaled by --gk so that its box (1.424 em for Source Sans 3) fits in the line pitch of its
+   paragraph (1.35 in a step, a role, a go / no-go or a safety item; 1.5 elsewhere), and the inner span scales the text
+   back: two targets on neighbouring lines never overlap, at any text size. Tapped, while its definition is open and
+   800 ms after: a --tag band with a 1 px --line-strong outline (--gs).
+   A word that runs over an inline tag (« sous <b>le</b> vent ») is several .gw side by side, one per text node:
+   .gw-a (the button), .gw-m, .gw-z. They touch without overlapping (no padding where two of them meet), and the
+   band, its outline and the focus ring (.fo, set from the first one's focus) run over them as over one word. */
+.gw{--gk:1;--gs:inset 0 0 0 1px var(--line-strong);font-size:calc(1em*var(--gk));cursor:pointer;padding:0 2px;margin:0 -2px;border-radius:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone;-webkit-tap-highlight-color:transparent}
+.step p .gw,.roles p .gw,.gonogo li .gw,.safety li .gw{--gk:.94}
+.gw>span{font-size:calc(1em/var(--gk));text-decoration-line:underline;text-decoration-style:dotted;text-decoration-color:var(--muted);text-decoration-thickness:max(1.5px,.09em);text-underline-offset:.22em}
+.gw-a{padding-right:0;margin-right:0;border-radius:4px 0 0 4px;--gs:inset 0 1px 0 var(--line-strong),inset 0 -1px 0 var(--line-strong),inset 1px 0 0 var(--line-strong)}
+.gw-m{padding:0;margin:0;border-radius:0;--gs:inset 0 1px 0 var(--line-strong),inset 0 -1px 0 var(--line-strong)}
+.gw-z{padding-left:0;margin-left:0;border-radius:0 4px 4px 0;--gs:inset 0 1px 0 var(--line-strong),inset 0 -1px 0 var(--line-strong),inset -1px 0 0 var(--line-strong)}
+.gw:active,.gw.on{background-color:var(--tag);box-shadow:var(--gs)}
+.gw:focus-visible,.gw.fo{outline:3px solid var(--ink);outline-offset:0}
+/* « Words in this sheet · n »: details.rb-more, folded, before the sheet's source; chips as .group-chips a */
+details.gl-end{margin:22px 0 0}
+.gl-chips{display:flex;flex-wrap:wrap;gap:var(--s-2)}
+details.gl-end>.gl-chips{margin:var(--s-1) 0 var(--s-2)}
+.gl-chip{appearance:none;display:inline-flex;align-items:center;min-height:40px;max-width:100%;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--r-pill);background:var(--paper);color:var(--ink);font:600 var(--fs-meta) var(--body);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gl-chip:active{background:var(--tag)}
+.gl-sense{font-weight:400;color:var(--muted);white-space:pre-wrap}
+/* P11 G3b: « Glossary 52 › » after the chips of « Words in this sheet » (the same link as on the notebook page) */
+.gl-all{margin:var(--s-1) 0 var(--s-2);font-size:var(--fs-meta);line-height:1.5}
+.gl-all a.gl-go{margin-block:0}
+/* ---- P11 G3b: the « Glossary » page of a notebook ----
+   Title, « 52 words », where the definitions come from, the search field from 10 entries (.search, as the
+   notebook's), then one row per entry: the word (600), its sense in --muted when the notebook has two entries for it,
+   a « Not sure » pill, and one line of the definition, two when the page is narrow for its text size (a container
+   query in rem: 19.5rem is an iPhone 14 at the first large text size). No thumbnail, no chevron: a row is a button. */
+#glossary{container-type:inline-size}
+#glossary h1{margin:var(--s-4) 0 var(--s-1)}
+.glp-n,.glp-by{margin:0;font-size:var(--fs-meta);color:var(--muted)}
+#glp-search{margin:var(--s-4) 0 0}
+.glp-list{list-style:none;margin:var(--s-3) 0 0;padding:0}
+.glp-list li{border-bottom:1px solid color-mix(in srgb,var(--line) 55%,transparent)}
+.glp-row{appearance:none;display:block;width:100%;min-height:44px;margin:0;padding:var(--s-3) 0;border:0;border-radius:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.glp-row:active{background:var(--tag)}
+.glp-w{display:block;line-height:1.35}
+.glp-w b{font-weight:600}
+.glp-pill{display:inline-block;margin-left:var(--s-2);padding:0 10px;border-radius:var(--r-pill);background:var(--warn-bg);color:var(--warn);font:600 var(--fs-sm)/1.6 var(--body);white-space:nowrap}
+.glp-def{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;line-clamp:1;overflow:hidden;margin-top:2px;font-size:var(--fs-meta);line-height:1.4;color:var(--muted)}
+@container (max-width:19.5rem){.glp-def{-webkit-line-clamp:2;line-clamp:2}}
+.glp-none{margin:var(--s-4) 0 0;color:var(--muted)}
+#glp-msg .loading,#glp-msg .empty{margin-top:var(--s-4)}
+/* The definition sheet: a dialog.dlg capped at 70 % of the screen; its header (word, sense, ✕, the way back after a
+   « See also ») sticks on --paper like .sh-h, with a rule once the content has scrolled under it. */
+dialog.dlg.gl-dlg{--gl-pad:18px;max-height:calc(var(--vvh,100dvh)*.7);overflow:auto;overscroll-behavior:contain;padding-top:0;gap:0}
+dialog.dlg.gl-dlg[open]{display:block}
+@media (max-width:599.98px){dialog.dlg.gl-dlg{--gl-pad:16px}}
+.gl-top{position:sticky;top:0;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--s-2);margin:0 calc(-1*var(--gl-pad));padding:var(--gl-pad) var(--gl-pad) var(--s-2);background:var(--paper);border-bottom:1px solid transparent}
+.gl-dlg.scrolled .gl-top{border-bottom-color:var(--line)}
+.gl-top .share-x{grid-area:1/2}
+dialog.dlg .gl-top h2{grid-column:1;font:700 var(--fs-xl)/1.05 var(--display);text-transform:none;letter-spacing:normal;overflow-wrap:anywhere;padding-top:7px;outline:0}
+.gl-back{appearance:none;grid-area:1/1;justify-self:start;display:inline-flex;align-items:center;gap:.25em;min-height:44px;max-width:100%;padding:0;border:0;background:none;color:var(--accent);font:600 var(--fs-base)/1.2 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+dialog.dlg .gl-back~h2{padding-top:0}
+dialog.dlg .gl-of{grid-column:1;font-size:var(--fs-meta);color:var(--muted);margin:var(--s-1) 0 0}
+dialog.dlg .gl-sp{font-size:var(--fs-meta);color:var(--muted)}
+dialog.dlg .gl-def{font-size:var(--fs-base);line-height:1.45;color:var(--ink);margin:var(--s-1) 0 0}
+dialog.dlg.gl-dlg .note{margin:var(--s-2) 0 0}
+.gl-dlg .note b{display:block;font-weight:600}
+.gl-ph{margin:var(--s-4) 0 0}
+.gl-ph figure{margin:0;position:relative;border-radius:10px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+.gl-ph img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;cursor:zoom-in}
+.gl-ph img:focus-visible{outline:3px solid var(--ink);outline-offset:-3px}
+dialog.dlg .gl-cap{font-size:var(--fs-meta);line-height:1.4;color:var(--muted);margin:var(--s-1) 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gl-h{font:600 var(--fs-meta) var(--body);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:20px 0 var(--s-2)}
 details.rb-why{margin-top:22px}
 details.rb-why>summary>h2{margin:0;color:var(--ink)}
 .step img[data-ph]{cursor:zoom-in}
@@ -666,6 +736,19 @@ dialog.ph-dlg::backdrop{background:#000}
 #home .newsec,#home .sesssec{margin:var(--s-5) 0 0}
 #home #nb-h{margin-top:var(--s-5)}
 #count:empty{display:none}
+/* P11 G3b: the count line is a row, the count on the left and « Glossary 52 › » on the right (under it, left-aligned,
+   when the count is long). The row takes the margins #count had, so nothing around it moves; without a count, and on
+   the search page (where #count is only read out), the row is not a box at all. The link's 44 px target overflows
+   its line (negative margins): the row is as tall with the link as without, so the group chips do not move when the
+   glossary has been read. */
+#home .cnt-row{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;column-gap:var(--s-4);margin:0 0 14px}
+#home.nb .cnt-row{margin-top:var(--s-1)}
+#home .cnt-row #count{margin:0}
+#home.srch .cnt-row,#home .cnt-row:has(#count:empty){display:contents}
+#gl-go{font-size:var(--fs-meta);line-height:1.5}
+#gl-go:empty{display:none}
+a.gl-go{display:inline-flex;align-items:center;min-height:44px;margin-block:min(0px,calc((1.5em - 44px)/2));color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+a.gl-go:active{opacity:.6}
 /* New: 4:5 photo cards without a frame, a 4 px rule in the notebook's colour over the photo */
 .newrow .card{border:0;border-radius:0;background:none;overflow:visible}
 .newrow .card::before{content:"";position:absolute;z-index:1;inset:0 0 auto;height:16px;box-sizing:border-box;border-top:4px solid var(--t,var(--accent));border-radius:16px 16px 0 0;pointer-events:none}
@@ -1896,7 +1979,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   <button type="button" class="otw-band" id="otw-band" aria-haspopup="dialog" aria-controls="otw-dlg" hidden></button>
   <!-- P8 R1: an account with links sent and no sheet yet: the steps to its first sheet (instead of #welcome) -->
   <section class="firstcl" id="first-steps" aria-labelledby="first-h" hidden></section>
-  <p class="cnt" id="count" aria-live="polite"></p>
+  <!-- P11 G3b: on a notebook page that has a glossary, « Glossary 52 › » on the right of the count (written by glGoPaint) -->
+  <div class="cnt-row"><p class="cnt" id="count" aria-live="polite"></p><span id="gl-go"></span></div>
   <!-- P8 R14: a technique notebook's « 4 of 9 learned » and its gauge, under the cover -->
   <div class="nb-learned" id="nb-learned" hidden></div>
   <!-- L12: a notebook page's groups, with their counts; sticks to the top while scrolling -->
@@ -2074,6 +2158,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <div class="toast" role="status"><button type="button" id="nb-undo" hidden><span id="nb-toast"></span></button><p class="said" id="nb-said" hidden></p></div>
 <!-- ===== Sheet view ===== -->
 <div id="view" class="wide" hidden></div>
+<!-- P11 G3b: the « Glossary » page of a notebook (#<notebook>/glossary), read only: no control removes, corrects or
+     adds a word. A row opens the definition sheet (#gl-dlg). -->
+<div id="glossary" class="wrap" hidden>
+  <h1 id="glp-h">Glossary</h1>
+  <p class="glp-n" id="glp-n" role="status" hidden></p>
+  <p class="glp-by" id="glp-by" hidden>Definitions written by Reelbook.</p>
+  <div class="search" id="glp-search" hidden><input id="glp-q" type="search" enterkeyhint="search" autocomplete="off" aria-label="Search words" placeholder="Search words"></div>
+  <div id="glp-msg"></div>
+  <ul class="glp-list" id="glp-list" hidden></ul>
+</div>
 <!-- L27: the demo notebook (#demo), read only, from app/demo/ -->
 <div id="demo" class="demo" hidden></div>
 <!-- ===== L10: session player ===== -->
@@ -2160,6 +2254,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <dialog class="dlg act kind-dlg" id="kind-dlg" aria-labelledby="kind-h"></dialog>
 <!-- R6: « Share » from « ⋯ »: the text of the sheet, session or notebook shown (written by openShare, fresh each time) -->
 <dialog class="dlg share-dlg" id="share-dlg" aria-labelledby="share-h"></dialog>
+<!-- P11 G3a: the definition of a glossary word, opened by an underlined word of a sheet or a chip of « Words in this
+     sheet » (written by glFill, fresh each time; read only) -->
+<dialog class="dlg gl-dlg" id="gl-dlg" aria-labelledby="gl-h"><div id="gl-in"></div></dialog>
 <!-- P8 R7: the story card full screen (written by openStory, fresh each time) -->
 <dialog class="dlg story-dlg" id="story-dlg" aria-labelledby="story-h"></dialog>
 <!-- R11: « <sender> sent you a session », opened by a #s-<token> link (written by openReceived, fresh each time) -->
@@ -2188,7 +2285,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=14"></script>
 <script src="sessions.js?v=18"></script>
-<script src="sheet.js?v=6"></script>
+<script src="sheet.js?v=10"></script>
 <script src="landing.js?v=15"></script>
 <script>
 (() => {
@@ -2214,7 +2311,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // the day before west of Greenwich.
   const fmtDay = d => { const [y, m, dd] = String(d || '').split('-').map(Number); return y && m && dd ? fmtDate(new Date(y, m - 1, dd)) : ''; };
   const todayIso = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
-  const views = ['setup', 'auth', 'gate', 'home', 'welcome', 'settings', 'view', 'player', 'demo'];
+  const views = ['setup', 'auth', 'gate', 'home', 'welcome', 'settings', 'view', 'glossary', 'player', 'demo'];
   // L30: <html lang> is the landing's language on the screens it translates (auth, setup, welcome), English elsewhere
   // #intro lives in #auth, and body:has(#intro:not([hidden])) takes the page's padding: outside #auth it must not stay on,
   // as it did after a session found on a device with no rb.backend (a confirmation link in another browser), or #setup.
@@ -3186,7 +3283,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       // Already on screen: the home page is redrawn in place (no scroll jump); a sheet being read is left alone.
       // A link to a sheet the cached catalogue did not hold opens now.
       const tok = decodeURIComponent(location.hash.slice(1)), ses = RS.sessionSlugOf(tok);
-      if (!$('home').hidden) { if (bySlug.has(tok) || (ses && v2BySlug.has(ses))) route(); else renderHome(); }
+      if (!$('home').hidden) { if (bySlug.has(tok) || (ses && v2BySlug.has(ses)) || themeById.has(glRouteOf(tok))) route(); else renderHome(); }
       else if (!$('welcome').hidden) paintWelcome(); // L43: a sheet that just arrived ticks its steps
     } else if (!loadError && !sheets.length && !ls.get(welcomeKey()) && !location.hash && !shareIn && !keptShare()) {
       // P8 R1: #welcome only for an account with no sheet and no link; one with links sent sees them on the home page
@@ -3690,6 +3787,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     $('q').placeholder = t ? `Search ${t.title}` : 'Search all your sheets';
     const terms = sheets.length && (t || srch) ? searchTerms() : [], fac = srch && facetsHere(t), faceted = fac && facetsOn(), searching = terms.length || faceted;
     paintFacets(fac);
+    glGoOn = !!t && !searching; glGoPaint(); // P11 G3b: « Glossary 52 › » on the count line
     $('results').hidden = !searching;
     $('nb-h').hidden = $('portal').hidden; $('nb-n').textContent = themes.length ? String(themes.length) : ''; // P8 R4: NOTEBOOKS · n
     if (srch || searching) { $('nb-learned').hidden = true; $('nb-h').hidden = true; $('portal').hidden = true; $('groups').hidden = true; $('howto').hidden = true; $('picker').hidden = true; $('count').textContent = searching ? renderSearch(terms, t, faceted) : ''; }
@@ -4989,6 +5087,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (shown === slug && seatKey(seat) === seatKey(at) && !view.hidden) return;
     shown = slug; seat = at; sheetReady = {slug, state: 'loading'}; show('view');
     const load = ++sheetLoad;
+    glWant(e); // P11 G3a: the words are asked with the sheet, never waited for
     view.innerHTML = '<p class="loading">Loading the sheet…</p>'; document.title = e.title;
     const back = `<div class="wrap" id="sheet-top">${sheetTop(e)}</div>`;
     // Delete sheet (L17: in the « ⋯ » menu) stays there under a sheet that fails to load.
@@ -5005,6 +5104,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     wireNotes(slug);
     readPractice(slug);
     watchTitle(); settleScroll();
+    glLay();
   };
 
   // ---------- L7: « Something wrong? » ----------
@@ -5088,6 +5188,247 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const img = ev.target && ev.target.closest ? ev.target.closest('[data-ph]') : null;
     if (img && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openPhotos(img); }
   });
+
+  // ---------- P11 G3a: the glossary in a sheet ----------
+  // The words of the sheet's notebook (glossary_words: the account's rows of that theme, by RLS), asked with the
+  // sheet and kept for the visit of the notebook (route drops them on the way home or to another notebook). A backend
+  // without the table (glossGone: not asked again until the next start), a failed read (asked again with the next
+  // sheet) or a notebook without word: [], and the sheet shows as it always did. Read only: nothing here writes.
+  // Underlines and « Words in this sheet » are added to the page shown (glPaint), never to the sheet kept in `cache`.
+  const GL = SH && SH.glossary ? SH.glossary : null; // an installed app can run this page with the previous sheet.js
+  const GL_COLS = 'id,term,sense,forms,definition,confidence,doubt,spelling,photo,related,sheets';
+  let gloss = null, glossGone = null;
+  const glossaryOf = theme => {
+    if (!GL || !sb || !user || !theme || glossGone === sb) return Promise.resolve([]);
+    if (gloss && gloss.client === sb && gloss.uid === user.id && gloss.theme === theme) return gloss.words;
+    const mine = {client: sb, uid: user.id, theme};
+    mine.words = (async () => {
+      let data, error;
+      try { ({data, error} = await mine.client.from('glossary_words').select(GL_COLS).eq('theme', theme)); } catch (e) { error = e || {}; }
+      if (!error && Array.isArray(data)) try { return GL.read(data); } catch {}
+      const gone = !!error && ['PGRST205', '42P01'].includes(error.code);
+      if (gone) glossGone = mine.client;
+      if (gloss === mine) gloss = null;
+      return gone ? [] : Object.assign([], {failed: true}); // P11 G3b: the « Glossary » page says a failed read
+    })();
+    return (gloss = mine).words;
+  };
+  // glNow: the words of the sheet shown, {slug, words, by: key -> word}; glFrom: what opened the definition (an
+  // underlined word, its first piece when it has several, or a chip); glBand: the pieces of that word, which carry
+  // the band; glWord: the word shown; glSkip: history.back() calls of our own still on their way; glAsk: the reading
+  // the page shown waits for, {slug, load, words: null until the answer}. There is one at a time: a sheet shown
+  // (showSheet), « Move » to another notebook (glMoved) and a change of account or backend (glDrop) each take the
+  // place of the one before, so an answer asked for another sheet, another notebook or another account is never laid
+  // on the page, whether it comes before or after the answer the page waits for.
+  const glDlg = $('gl-dlg'), glIn = $('gl-in');
+  let glNow = null, glFrom = null, glBand = [], glWord = null, glSkip = 0, glAsk = null;
+  // The pieces of an underlined word: one, or several side by side when it runs over an inline tag (every .gw of the
+  // page with its key: a word is underlined once per sheet).
+  const glPieces = el => { const key = el.getAttribute('data-gw'); return [...view.querySelectorAll('.gw')].filter(x => x.getAttribute('data-gw') === key); };
+  const glHist = () => typeof history !== 'undefined' && history && history.pushState && history.back ? history : null;
+  // The words of the notebook the sheet is in now, asked for the page shown.
+  const glWant = e => {
+    const ask = glAsk = {slug: e.slug, load: sheetLoad, words: null};
+    glNow = null;
+    glossaryOf(e.theme).then(ws => { if (glAsk === ask) { ask.words = ws; glLay(); } });
+  };
+  // Laid once, when the answer and the sheet are both there, whichever comes first.
+  const glLay = () => {
+    const ask = glAsk;
+    if (!ask || !ask.words || ask.load !== sheetLoad || shown !== ask.slug || !sheetReady || sheetReady.slug !== ask.slug || sheetReady.state !== 'ok') return;
+    glAsk = null; glPaint(ask.slug, ask.words);
+  };
+  const glPaint = (slug, words) => {
+    glNow = {slug, words, by: new Map(words.map(w => [w.key, w]))};
+    if (!words.length || !view.querySelectorAll) return;
+    try {
+      GL.underline(view, words, slug);
+      // « Words in this sheet »: after the sheet's last section, before its source (its <footer>)
+      const e = bySlug.get(slug); // P11 G3b: « Glossary 52 › » after the chips, the notebook's whole count
+      const html = GL.endBlock(words, slug, e && glPageOk() ? GL.linkHtml(glHref(e.theme), words.length) : ''); if (!html) return;
+      const foot = [...view.querySelectorAll('footer')].pop(), notes = foot ? null : view.querySelector('.notes'), box = notes && notes.closest('.wrap');
+      if (foot) foot.insertAdjacentHTML('beforebegin', html);
+      else if (box) box.insertAdjacentHTML('beforebegin', `<div class="wrap" data-gl-box>${html}</div>`);
+      else view.insertAdjacentHTML('beforeend', `<div class="wrap" data-gl-box>${html}</div>`);
+    } catch {}
+  };
+  // The definition sheet's content, fresh for each word. A photo whose sheet is gone is not shown; one that does not
+  // load leaves (its place is kept 16:9 while it loads, so the sheet's height is known when it opens).
+  const glFill = (w, back) => {
+    const ph = w.photo && bySlug.has(w.photo.slug) ? w.photo : null;
+    const caption = ph ? (ph.slug === glNow.slug ? 'This sheet' : bySlug.get(ph.slug).title || '') : '';
+    glWord = w;
+    glIn.innerHTML = GL.defHtml(w, {words: glNow.words, back, caption, lang: glp ? glp.lang : (sheetReady && sheetReady.lang) || ''});
+    glDlg.scrollTop = 0; glDlg.classList.remove('scrolled');
+    if (ph && caption) glPhoto(w, ph);
+  };
+  const glPhoto = async (w, ph) => {
+    const img = glIn.querySelector('[data-gl-ph]'), box = img && img.closest('.gl-ph'); if (!img) return;
+    const drop = () => { if (box.isConnected) box.remove(); };
+    img.addEventListener('error', drop);
+    let url = '';
+    try { const path = spath(ph.slug, 'img/' + ph.file); url = (await signAll([path]))(path); } catch {}
+    if (glWord !== w || !img.isConnected) return;
+    if (url) img.src = vurl(url, bySlug.get(ph.slug).updated_at); else drop();
+  };
+  // The tapped word stays in view: when the sheet covers its line, the page scrolls to bring that line just above
+  // the sheet (it does not scroll back on close). offsetTop: where the sheet ends up, whatever its opening animation.
+  const glReveal = () => {
+    const rects = glBand.flatMap(x => x.getClientRects ? [...x.getClientRects()] : []); if (!rects.length) return;
+    const top = glDlg.offsetTop, low = Math.max(...rects.map(r => r.bottom)), high = Math.min(...rects.map(r => r.top));
+    if (high >= top + glDlg.offsetHeight) return; // a centred dialog (wide window) above the line: nothing covered
+    const need = low - (top - 12);
+    if (need > 0) window.scrollBy({top: need, behavior: reducedMotion() ? 'auto' : 'smooth'});
+  };
+  // One bottom sheet, never a sheet over a sheet; one history entry for it, whatever is opened inside: the browser's
+  // Back closes it (popstate), and closing it any other way takes that entry back.
+  const glOpen = el => {
+    const w = glNow && glNow.by.get(el.getAttribute('data-gw'));
+    if (!w || !GL || !glDlg || !glDlg.showModal || glDlg.open) return;
+    for (const x of view.querySelectorAll('.gw.on')) x.classList.remove('on');
+    const band = el.classList.contains('gw') ? glPieces(el) : []; // a word in several pieces is one word: one band
+    glFrom = band.find(x => x.hasAttribute('tabindex')) || el; glBand = band; glFill(w, null);
+    for (const x of band) x.classList.add('on');
+    openSheet(glDlg);
+    const x = $('gl-close'); if (x) x.focus({preventScroll: true});
+    const H = glHist();
+    if (H && !(H.state && H.state.gl)) try { H.pushState({...(H.state || {}), gl: 1}, ''); } catch {}
+    glReveal();
+  };
+  // « See also » and its one-level way back replace the content; the focus goes to the title.
+  const glSwap = (key, back) => {
+    const w = glNow && glNow.by.get(key); if (!w) return;
+    glFill(w, back); glReveal();
+    const h = $('gl-h'); if (h) h.focus({preventScroll: true});
+  };
+  const glZoom = img => {
+    if (!img.getAttribute('src') || !img.naturalWidth) return;
+    const cap = glIn.querySelector('.gl-cap');
+    openPhotos(img, [{img, src: img.getAttribute('src'), alt: img.getAttribute('alt') || '', title: glWord ? glWord.term : '', caption: cap ? cap.textContent : ''}]);
+  };
+  if (glDlg && glDlg.addEventListener) {
+    wireSheet(glDlg);
+    glDlg.addEventListener('click', ev => {
+      const at = sel => ev.target && ev.target.closest ? ev.target.closest(sel) : null;
+      let b;
+      if (at('#gl-close')) closeSheet(glDlg);
+      else if ((b = at('[data-gl-see]'))) glSwap(b.getAttribute('data-gl-see'), glWord);
+      else if ((b = at('[data-gl-back]'))) glSwap(b.getAttribute('data-gl-back'), null);
+      else if ((b = at('[data-gl-ph]'))) glZoom(b);
+    });
+    glDlg.addEventListener('keydown', ev => {
+      const img = ev.target && ev.target.closest ? ev.target.closest('[data-gl-ph]') : null;
+      if (img && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); glZoom(img); }
+    });
+    glDlg.addEventListener('scroll', () => glDlg.classList.toggle('scrolled', glDlg.scrollTop > 0), {passive: true});
+    glDlg.addEventListener('close', () => {
+      const o = glFrom, band = glBand; glFrom = null; glBand = []; glWord = null; glIn.innerHTML = '';
+      if (o && o.isConnected) {
+        o.focus({preventScroll: true});
+        if (band.length) setTimeout(() => { if (glFrom !== o) for (const x of band) x.classList.remove('on'); }, 800); // the band stays 800 ms
+      }
+      const H = glHist();
+      if (H && H.state && H.state.gl) { glSkip++; try { H.back(); } catch { glSkip--; } }
+    });
+    window.addEventListener('popstate', ev => {
+      if (glSkip) { glSkip--; return; }
+      if (glDlg.open) { if (phDlg && phDlg.open) phDlg.close(); closeSheet(glDlg); }
+      else if (ev && ev.state && ev.state.gl) { const H = glHist(); if (H) { glSkip++; try { H.back(); } catch { glSkip--; } } } // Forward onto a closed definition
+    });
+    // a page reloaded on the definition's entry: back to the sheet's own
+    try { const H = glHist(); if (H && H.state && H.state.gl) { glSkip++; H.back(); } } catch {}
+  }
+  view.addEventListener('keydown', ev => {
+    const w = ev.target && ev.target.closest ? ev.target.closest('.gw') : null;
+    if (w && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); glOpen(w); }
+  });
+  // A word in several pieces shows its focus ring on all of them (the first one has the focus).
+  view.addEventListener('focusin', ev => {
+    const w = ev.target && ev.target.closest ? ev.target.closest('.gw-a') : null; if (!w) return;
+    let ring = true; try { ring = w.matches(':focus-visible'); } catch {}
+    if (ring) for (const x of glPieces(w)) if (x !== w) x.classList.add('fo');
+  });
+  view.addEventListener('focusout', () => { for (const x of view.querySelectorAll ? view.querySelectorAll('.gw.fo') : []) x.classList.remove('fo'); });
+  // The page shown loses its words: underlines back to plain text, no « Words in this sheet ».
+  const glUnpaint = () => { try { if (GL && GL.clear && view.querySelectorAll) GL.clear(view); } catch {} };
+  // Another account, a session lost, another backend (boot): what is kept of the glossary belongs to the account
+  // left. The definition closes (the photo viewer over it too; its « close » takes the history entry back), the words
+  // read are forgotten, and the page, if it is still there, loses its underlines and its « Words in this sheet ».
+  // Called inside onAuthStateChange: nothing is awaited here.
+  const glDrop = () => {
+    glAsk = null; gloss = null; glNow = null;
+    if (glDlg && glDlg.open) { if (phDlg && phDlg.open) closeSheet(phDlg); closeSheet(glDlg); }
+    glFrom = null; glBand = []; glWord = null; if (glIn) glIn.innerHTML = '';
+    glUnpaint();
+    // P11 G3b: the « Glossary » page and the notebook's link hold words and a count of the account left
+    glp = null; glGoAt = null; glGoAsk = null; glGoN = 0; $('gl-go').innerHTML = '';
+    $('glp-list').innerHTML = ''; $('glp-msg').innerHTML = ''; $('glp-n').textContent = ''; $('glp-q').value = '';
+  };
+  // « Move » took the sheet shown to another notebook: the words on the page are those of the notebook left. They go,
+  // and the page is read again with the words of the notebook it now belongs to (none until the pass has run there).
+  // The reading asked before the move (the sheet still loading its words, or a move before this one) is given up.
+  const glMoved = e => {
+    if (glDlg && glDlg.open) closeSheet(glDlg);
+    glUnpaint(); glWant(e);
+  };
+  // ---------- P11 G3b: the « Glossary » page of a notebook, and its link ----------
+  // #<notebook>/glossary is a page of its own (as #<slug>/practice): it survives a reload and the browser's Back.
+  // Read only, like the rest of the glossary. With the previous sheet.js (an installed app half updated): no page,
+  // no link.
+  const GLOSSARY = 'glossary', GLP_SEARCH = 10;
+  const glRouteOf = tok => { const p = String(tok || '').split('/'); return p.length === 2 && p[0] && p[1] === GLOSSARY ? p[0] : null; };
+  const glHref = id => '#' + encodeURIComponent(id) + '/' + GLOSSARY;
+  const glPageOk = () => !!(GL && GL.rowsHtml);
+  // The link on a notebook page's count line. The glossary is read once per arrival on the page (route), never per
+  // redraw; the link shows when the read has answered with at least one entry: a notebook without entry, a backend
+  // without the table and a failed read all leave the line as it was. Nothing is reserved while it is read: on one
+  // line the link adds no height (style sheet), so nothing jumps. Not during a search in the notebook (the line then
+  // counts results). glGoAt: the notebook asked; glGoN: its entries; glGoOn: renderHome's « a notebook page, no search ».
+  // glGoAsk: the read waited for, one per arrival. Only its answer counts: A, B, then A again while the first read of
+  // A is still on its way makes two reads of A, and the older one (failed, or with other words) can answer last.
+  let glGoAt = null, glGoN = 0, glGoOn = false, glGoAsk = null;
+  const glGoPaint = () => { $('gl-go').innerHTML = glGoOn && glGoAt && glGoAt === currentTheme && glGoN ? GL.linkHtml(glHref(glGoAt), glGoN) : ''; };
+  const glEntry = id => {
+    glGoAt = id && glPageOk() ? id : null; glGoN = 0;
+    const ask = glGoAsk = glGoAt ? {} : null;
+    if (!ask) return;
+    const client = sb, uid = user && user.id;
+    glossaryOf(id).then(ws => { if (glGoAsk === ask && glGoAt === id && sb === client && user && user.id === uid) { glGoN = ws.length; glGoPaint(); } });
+  };
+  // glp: the page shown, {theme, words: null while they are read (then in the page's order), failed, lang}.
+  let glp = null;
+  // The search: every word typed must start a word of the entry's term or of one of its forms, accents and case
+  // ignored (the notebook search's own fold and wordStart). Offered from 10 entries.
+  const glpPaint = () => {
+    const p = glp; if (!p) return;
+    const all = p.words || [], n = all.length, q = $('glp-q').value.trim();
+    const res = n >= GLP_SEARCH ? fold(q).split(/\s+/).filter(Boolean).map(wordStart) : [];
+    const list = res.length ? all.filter(w => { const hay = fold([w.term, ...w.forms].join(' ')); return res.every(re => re.test(hay)); }) : all;
+    $('glp-search').hidden = n < GLP_SEARCH;
+    $('glp-n').hidden = $('glp-by').hidden = !n;
+    $('glp-n').textContent = !n ? '' : res.length ? `${list.length} of ${GL.count(n)}` : GL.count(n);
+    $('glp-list').hidden = !list.length; $('glp-list').innerHTML = GL.rowsHtml(list, all, p.lang);
+    $('glp-msg').innerHTML = !p.words ? '<p class="loading">Loading…</p>'
+      : p.failed ? '<p class="empty">The glossary could not be loaded.</p>'
+      : !n ? '<p class="glp-none">No word yet. They come from your sheets.</p>'
+      : !list.length ? `<p class="glp-none">No word for “${esc(q)}”.</p>` : '';
+  };
+  const showGlossary = id => {
+    if (glp && glp.theme === id && !$('glossary').hidden) return;
+    const t = themeById.get(id), mine = glp = {theme: id, words: null, failed: false, lang: ''};
+    shown = null; seat = null; glAsk = null; glNow = null; // no sheet is shown: a reading asked for one is given up
+    $('glp-q').value = ''; document.title = `Glossary · ${t.title} · Reelbook`;
+    glpPaint(); show('glossary');
+    glossaryOf(id).then(ws => {
+      if (glp !== mine) return; // another page, another account
+      mine.lang = RS.isFrench(ws.map(w => w.definition).join(' \n ')) ? 'fr' : '';
+      mine.words = GL.sorted(ws, mine.lang); mine.failed = !!ws.failed;
+      glNow = {slug: null, words: ws, by: new Map(ws.map(w => [w.key, w]))}; // a row opens the definition sheet (glOpen)
+      glpPaint(); settleScroll();
+    });
+  };
+  $('glp-q').addEventListener('input', glpPaint);
+  $('glp-list').addEventListener('click', ev => { const b = ev.target && ev.target.closest ? ev.target.closest('[data-gw]') : null; if (b) glOpen(b); });
 
 
   // ---------- L10: session player, one exercise per screen ----------
@@ -6239,8 +6580,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     $('mv-submit').disabled = true; err.hidden = true;
     try {
       touched(); const {data, error} = await sb.from('sheets').update({theme, group}).eq('slug', e.slug).select('slug'); if (error || !data || !data.length) throw error || new Error('no row');
-      e.theme = theme; e.group = group; saveCatalogue();
+      const left = e.theme; e.theme = theme; e.group = group; saveCatalogue();
       closeSheet(mdlg);
+      if (left !== theme && shown === e.slug) glMoved(e); // P11 G3a: the words of the notebook left do not follow
       const top = $('sheet-top');
       if (top && shown === e.slug) top.innerHTML = sheetTop(e) + `<p class="flash" role="status">Moved to ${esc(themeById.get(theme).title)} · ${esc(group)}.</p>`; syncNav();
     } catch { err.textContent = 'Could not move it right now. Try again in a moment.'; err.hidden = false; }
@@ -6446,6 +6788,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (at('#mv-open')) openMove();
     else if (at('#wake')) toggleWake();
     else if ((b = at('[data-ph]'))) openPhotos(b);
+    else if ((b = at('[data-gw]'))) glOpen(b); // P11 G3a: an underlined word, a chip of « Words in this sheet »
     else if (at('#as-open')) openAdd();
     else if (at('#ed-open')) { const s = shownSession(); if (s) { edit = draftOf(s); showSession(s.slug); } }
     else if (at('#sd-open')) openSheetDelete();
@@ -6834,6 +7177,8 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const nbUp = id => { const th = themeById.get(id); return th ? [th.id, th.title] : ['', 'Reelbook']; };
     if (!$('settings').hidden) return settingsSub ? {title: S_SUBS.get(settingsSub), up: ['settings', 'Settings']} : {title: 'Settings', up: ['', 'Reelbook']}; // P9 S
     if (!$('welcome').hidden) return {title: T('w.eyebrow', 'Welcome to Reelbook'), up: ['', 'Reelbook']};
+    // P11 G3b: « ‹ Kitesurf » in the notebook's colour and its band, as on a sheet; no « ⋯ » menu
+    if (!$('glossary').hidden && glp) { const th = themeById.get(glp.theme); return {title: 'Glossary', up: nbUp(glp.theme), tint: th, upNb: th}; }
     if (!view.hidden && shown) {
       const ses = RS.sessionSlugOf(shown), s = ses ? v2BySlug.get(ses) : null, e = s ? null : bySlug.get(shown);
       // P8 R4b: tint, the page's notebook (a 6 px band under the bar); upNb, the notebook « ‹ MMA » names (its colour)
@@ -6844,7 +7189,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     }
     if ($('home').hidden) return null;
     // A notebook page; while the catalogue loads or cannot be read, any route but home's is taken for one.
-    const tok = navHere || '', cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
+    const tok = glRouteOf(navHere) || navHere || '', cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok; // P11 G3b: a glossary whose notebook is not known yet
     if (/^search(\?|$)/.test(tok)) return null; // L23 / P8 R4: the search page, facets chosen or not
     const t = themeById.get(nb) || (nb && (loading || loadError || !themes.length) ? libById.get(nb) || {id: nb, title: nb} : null);
     if (!t) return null;
@@ -7741,6 +8086,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       edit = null;
     }
     navArrive(tok);
+    if (glp && glRouteOf(tok) !== glp.theme) glp = null; // P11 G3b: another page than this « Glossary »
     if (tok !== 'welcome') wBanner = null; // L43: « Account created » is for the first arrival, not a way back to it
     if (ended && tok !== ended.tok) { ended = null; dropCard('proud'); } // L11: another page drops the end screen (P8 R7: and its card)
     if (tech && tok !== practiceTok(tech.e.slug)) { if (tech.proud) dropCard('proud'); tech = null; } // P8 R14: another page drops the practice (P8 R19: and its card)
@@ -7767,12 +8113,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       return;
     }
     const ses = RS.sessionSlugOf(tok); if (ses && v2BySlug.has(ses)) { showSession(ses); return; }
+    // P11 G3b: #<notebook>/glossary, the notebook's « Glossary » page (an unknown notebook: the home page, as any token)
+    const gn = glRouteOf(tok); if (gn && themeById.has(gn) && glPageOk()) { showGlossary(gn); return; }
     // L12: #<notebook>~<group> is a group grid; back on the rows from it, the page opens at that group.
     const cut = tok.indexOf('~'), nb = cut > 0 ? tok.slice(0, cut) : tok;
     const from = currentTheme === nb && $('home').hidden === false ? groupOf(themeById.get(nb)) : null;
+    if (gloss && gloss.theme !== nb) gloss = null; // P11 G3a: the words are kept for the visit of their notebook
     shown = null; seat = null; chipPinned = ''; currentTheme = themeById.has(nb) && nb !== 'search' ? nb : null; currentGroup = currentTheme && cut > 0 ? tok.slice(cut + 1) : null;
     facetSel = readFacetHash(); // L23: #search?zone=…&gear=… (any other page: none chosen)
     searchOpen = !currentTheme && /^search(\?|$)/.test(tok); // P8 R4: the search page
+    glEntry(currentTheme); // P11 G3b: the notebook's glossary is asked on arrival, for its link
     if (!searchOpen) searchFrom = null;
     else { // P8 R4: the search entry carries the index of the page the loupe was tapped on (Cancel's way back)
       const H = hist(), st = entry();
@@ -7786,6 +8136,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // visibilitychange); « On the way » closes (a Ready row is a link to its sheet).
   window.addEventListener('hashchange', () => {
     closeSheet($('otw-dlg')); gmEnd(false); // P9 Q: the ghost's menu too (it belongs to the page left)
+    if (glDlg && glDlg.open) closeSheet(glDlg); // P11 G3a
     route();
     if (user && sb && !$('home').hidden) refreshQueue();
   });
@@ -7806,7 +8157,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       if (authSubscription) authSubscription.unsubscribe();
       authSubscription = null;
       booted = identity; peeked = false;
-      recvDrop(); kindDrop(); resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); copyingSlugs = new Set(); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); levels = new Map(); levelsOk = false; tech = null; practiceGen++; pageLog = null; ended = null; storyReset(); signed.clear(); cache.clear(); loadError = '';
+      recvDrop(); kindDrop(); glDrop(); resetQueue(); sb = null; user = null; sheets = []; bySlug = new Map(); setSessions([]); copyingSlugs = new Set(); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); levels = new Map(); levelsOk = false; tech = null; practiceGen++; pageLog = null; ended = null; storyReset(); signed.clear(); cache.clear(); loadError = '';
     }
     // L27: a visitor's demo creates no Supabase client; a device with an account kept starts it as usual (its own
     // sheet « demo » may live at #demo, and the banner leads back to it).
@@ -7841,7 +8192,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
         const changed = (next && next.id) !== (user && user.id);
         if (changed && user) clearUserCache(user.id); // signed out (button, reset, revoked session) or another account
         user = next;
-        if (changed) { recvDrop(); kindDrop(); resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); copyingSlugs = new Set(); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); levels = new Map(); levelsOk = false; tech = null; practiceGen++; pageLog = null; ended = null; storyReset(); signed.clear(); cache.clear(); loadError = ''; }
+        if (changed) { recvDrop(); kindDrop(); glDrop(); resetQueue(); sheets = []; bySlug = new Map(); setSessions([]); copyingSlugs = new Set(); sessionsOk = true; v1Hidden = 0; notesIndex = new Set(); noteBodies = new Map(); noteEdits.clear(); practiceOk = false; lastDone = new Map(); levels = new Map(); levelsOk = false; tech = null; practiceGen++; pageLog = null; ended = null; storyReset(); signed.clear(); cache.clear(); loadError = ''; }
         if (changed || ev === 'INITIAL_SESSION' || ev === 'PASSWORD_RECOVERY' || flowOver) route();
         if (changed && user) setTimeout(() => { if (client === sb && user) reload(); }, 0);
       });

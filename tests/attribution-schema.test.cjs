@@ -8,7 +8,8 @@ const path = require('node:path');
 
 const sql = fs.readFileSync(path.join(__dirname, '../supabase/schema.sql'), 'utf8');
 const start = sql.indexOf('-- Attribution (P8 R13)');
-const section = sql.slice(start);
+const next = sql.indexOf('-- Glossary (P11 G1)', start);   // P11 G1's section follows (tests/glossary-schema.test.cjs)
+const section = sql.slice(start, next > start ? next : undefined);
 const code = section.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
 const flat = code.replace(/\s+/g, ' ');
 const fnAt = (name, from = 0) => {   // the body of one function, from its create to its closing $$;
@@ -18,10 +19,11 @@ const fnAt = (name, from = 0) => {   // the body of one function, from its creat
 };
 const ORIGIN = "'^([a-z0-9-]{1,32}|[A-Za-z0-9_-]{22})$'";
 
-test('the section is the last one, after the alert, the beta locks and the invitations it redefines', () => {
+test('the section is the last one that defines a function, after the alert, the beta locks and the invitations it redefines', () => {
   assert.ok(start > -1);
   for (const s of ['-- Daily alert (L33)', '-- Invitations (P8 R12)', '-- Technique family (P8 R14)', '-- Session shares (P8 R11)']) assert.ok(start > sql.indexOf(s), s);
-  assert.equal(sql.indexOf('\n-- ---------------------------------------------------------------------------\n-- ', start + 10), -1, 'no section after it');
+  // what follows it (the glossary's table, P11 G1) defines no function: nothing redefines what this section redefined
+  assert.doesNotMatch(next > start ? sql.slice(next) : '', /create\s+(or\s+replace\s+)?function/i, 'no function after it');
 });
 
 test('additive and idempotent: one nullable column, nothing dropped, deleted or inserted', () => {

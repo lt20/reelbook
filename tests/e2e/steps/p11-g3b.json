@@ -1,0 +1,9 @@
+[
+  {"name": "p11g3b-01-notebook-link", "hash": "kitesurf", "actions": [{"wait": "#gl-go a"}, {"wait": 300}]},
+  {"name": "p11g3b-03-no-glossary", "hash": "strength", "actions": [{"wait": "#count >> text=sheets"}, {"wait": 400}]},
+  {"name": "p11g3b-04-list-top-two-senses", "hash": "kitesurf/glossary", "actions": [{"wait": ".glp-row"}, {"wait": 300}]},
+  {"name": "p11g3b-05-search-results", "hash": "kitesurf/glossary", "actions": [{"wait": ".glp-row"}, {"fill": "#glp-q", "value": "vent"}, {"wait": 300}]},
+  {"name": "p11g3b-06-search-none", "hash": "kitesurf/glossary", "actions": [{"wait": ".glp-row"}, {"fill": "#glp-q", "value": "kitelop"}, {"wait": ".glp-none"}, {"wait": 300}]},
+  {"name": "p11g3b-07-definition-from-list", "hash": "kitesurf/glossary", "actions": [{"wait": ".glp-row"}, {"click": ".glp-row[data-gw$='000007']"}, {"wait": "#gl-dlg[open] .note"}, {"wait": 700}]},
+  {"name": "p11g3b-08-end-block-link", "hash": "backroll", "actions": [{"wait": ".gl-end"}, {"click": ".gl-end summary"}, {"scroll": ".gl-end .gl-all"}, {"wait": 300}]}
+]

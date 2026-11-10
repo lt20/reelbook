@@ -1,6 +1,6 @@
 ---
 name: reelbook
-description: Turn an Instagram/TikTok/YouTube/Facebook video into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/reelbook", "/reelbook <link>", or pastes a reel, Short or video link while talking about an exercise.
+description: Turn an Instagram/TikTok/YouTube/Facebook video into a Reelbook exercise sheet (photos from the video + why / dose / key points / sequence) and publish it to the user's Reelbook backend. Use when the user says "process the queue", "/reelbook", "/reelbook <link>", or pastes a reel, Short or video link while talking about an exercise. Also "/reelbook glossary": the glossary pass of the technique notebooks.
 model: claude-opus-5-5
 ---
 
@@ -55,6 +55,7 @@ languages: translate the English column).
 | Tapping out (partner) | Control / tap | Contrôle / abandon |
 
 ## 1. Take the queue
+(`/reelbook glossary …` takes no queue and no video: go to section 5.)
 - `python3 tools/rb.py requeue-stuck` first: it puts back in the queue a request left « processing » for
   more than 6 h by a run that died (Mac asleep, crash). Never pass a shorter `--hours`: another run may be at work.
 - `python3 tools/rb.py themes` then `python3 tools/rb.py queue` lists queued requests (`id`, `url`, `theme` hint, `note`, `slug`, `created_at`), or
@@ -336,5 +337,55 @@ languages: translate the English column).
   A « no sessions table » stop is `other`. A « Redo: » request keeps its first line whatever the reason
   (`rb.py` puts the note after it), so the user can retry the correction from the app. A backend without
   the column (« no requests.reason column ») gets the error without its reason: nothing to do in the run.
-- Give the user the sheet link (a session: the links of its exercise sheets). Then take the next
-  queued request.
+- Give the user the sheet link (a session: the links of its exercise sheets). Then the glossary pass of
+  section 5, then the next queued request.
+
+## 5. Glossary pass (technique notebooks)
+A notebook of the technique family explains its own words: the app underlines them in its sheets and a tap opens
+the definition. The pass that finds them reads text only: no video, no image, no Chrome. Its rules are in
+`glossary.md`, next to this file: read it before the first pass of a run and apply it as written.
+
+**After each video, once its request is closed** (`rb.py done`, section 4). **A failed pass never fails a video**:
+whatever happens below, the request stays done, nothing is flagged with `rb.py error`, and what went wrong is one
+line of the end-of-run report.
+- `python3 tools/rb.py glossary pending` prints `<theme> <count>` for each notebook of the technique family that
+  has sheets the pass has not read yet. The notebook of the sheet just published is not listed: nothing to do.
+- It exits 1 (« no glossary yet »): this backend has no glossary. One line in the end-of-run report, nothing else,
+  and skip this section for the rest of the run.
+- Listed: run the pass on that notebook, the sheets just published first.
+
+**The pass on one notebook**, at most N sheets (10 unless told otherwise):
+1. `mkdir -p work/glossary && python3 tools/rb.py glossary sheets <theme> --pending > work/glossary/<theme>.in.json`:
+   what `glossary.md` receives (`notebook`, `glossary`, `sheets`). Do not print it: a notebook never read can hold
+   many sheets. Keep N of them, the ones named first:
+   `python3 -c "import json,sys; p,n,first=sys.argv[1],int(sys.argv[2]),sys.argv[3:]; d=json.load(open(p,encoding='utf-8')); d['sheets']=sorted(d['sheets'],key=lambda s:s['slug'] not in first)[:n]; json.dump(d,open(p,'w',encoding='utf-8'),ensure_ascii=False,indent=1); print(len(d['sheets']),'sheet(s) to read')" work/glossary/<theme>.in.json <N> [<slug just published> …]`
+2. Read `work/glossary/<theme>.in.json`, apply `glossary.md` to it, and write what it returns to
+   `work/glossary/<theme>.json`: `notebook`, `terms`, and `passed` with one `{"slug", "updated_at"}` per sheet
+   read, those without any word included. **For each sheet read, `terms` gives every entry that still applies to
+   it, those already in the glossary included**: `put` takes each sheet of `passed` off every entry of the notebook
+   that the file does not give again for that sheet (the entry stays, and so do its other sheets). A sheet that is
+   not in `passed` loses nothing.
+3. `python3 tools/rb.py glossary put <theme> work/glossary/<theme>.json`. It checks the whole file before it writes
+   anything, then prints `glossary <theme>: A inserted, B updated, C unchanged` (and, when sheets read again lost
+   words, `, D associations removed (sheets read again)` on the same line) and how many sheets it recorded as read.
+   - « N problem(s), nothing written »: read every message, fix the file **once** (a quote that is not word for
+     word, a form missing from `forms`…) and run `put` again. Fix the entry, do not drop it: an entry left out is
+     taken off the sheets read. Refused a second time: stop, leave the sheets
+     pending for a later run and say so in one line.
+   - « still lists a sheet read again » (exit 1): another command kept writing the same words; the entries are
+     written, no sheet is recorded as read. Run the same `put` once more; if it fails again, leave the sheets
+     pending and say so in one line.
+   - « passes not recorded »: the words are written, but this backend does not record which sheets were read, so
+     the next pass would read them all again. No other pass in this run; tell the user in one line (re-run
+     `supabase/schema.sql`, `docs/own-supabase.md`).
+
+**`/reelbook glossary [<notebook>] [at most N sheets]`**: the same pass without any video, for the sheets no pass
+has read yet (sheets made by another engine, or published before the glossary existed). No queue, no Chrome.
+1. `python3 tools/rb.py glossary pending`. Exit 1: say its line, nothing else. Nothing printed: « Glossary:
+   nothing to read », stop.
+2. Take the notebooks it lists, one after the other in that order, or only the one named (its id or its title;
+   not listed: nothing to read there, say so). N counts for the whole run (10 by default): the first notebook gets
+   at most N sheets, the next what is left of N; stop when N sheets were read. A `put` refused twice: go on with
+   the next notebook. « passes not recorded »: stop after that notebook and say why.
+3. End with one line per notebook: `<notebook>: X sheets read, Y words added, Z words updated` (what `put`
+   recorded as read, its « inserted », its « updated »), or why it was not read.

@@ -19,6 +19,15 @@ class Node {
   }
   appendChild(n) { return this.insertBefore(n, null); }
   remove() { if (this.parentNode) this.parentNode.removeChild(this); }
+  // as the DOM's: empty text nodes leave, text nodes side by side become one
+  normalize() {
+    for (let i = this.childNodes.length - 1; i >= 0; i--) {
+      const n = this.childNodes[i], prev = this.childNodes[i - 1];
+      if (n.nodeType === 1) n.normalize();
+      else if (n.nodeType === 3 && !n.data) this.removeChild(n);
+      else if (n.nodeType === 3 && prev && prev.nodeType === 3) { prev.data += n.data; this.removeChild(n); }
+    }
+  }
 }
 class Text extends Node { constructor(data) { super(3); this.data = data; } get outerHTML() { return this.data; } }
 class Comment extends Node { constructor(data) { super(8); this.data = data; } get outerHTML() { return `<!--${this.data}-->`; } }
@@ -66,6 +75,7 @@ class Element extends Node {
 class Document {
   constructor() { this.body = new Element('body', this); this.documentElement = this.body; }
   createElement(name) { return new Element(name, this); }
+  createTextNode(data) { return new Text(String(data)); }
   querySelectorAll(sel) { return this.body.querySelectorAll(sel); }
   querySelector(sel) { return this.body.querySelector(sel); }
 }

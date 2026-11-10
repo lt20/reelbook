@@ -17,6 +17,8 @@ const AUTHENTICATED = {
   user_themes: ['select, insert, delete', 'update (family)'], // P8 R14: the family is the only column edited
   practice_log: 'select, insert, delete', // P8 R5: Undo
   account_quotas: 'select',
+  glossary_words: 'select, insert, update, delete', // P11 G1: written by `rb.py glossary put`, read by the app
+  glossary_passes: 'select, insert, update, delete', // P11 G2a: which sheets the pass read; `rb.py glossary` only (put upserts)
 };
 // No client role reaches these; their triggers and definer functions do (cli_login_limits: L42a, the cli-login function).
 // P8 R12: share_admissions (lock 2 writes it) and share_pending (pending_share_invite reads it, ack_share_invite deletes it).
@@ -25,7 +27,10 @@ const NO_CLIENT = ['beta_settings', 'beta_waitlist', 'beta_daily', 'cli_login_li
 // P8 R11: share reads the share and the sender's rows, and writes the recipient's copy (supabase/functions/share/store.ts):
 // update marks the reserved session 'done' once its sheets are copied.
 const SERVICE_ROLE = {capture_tokens: 'select, update', requests: 'insert',
-  session_shares: 'select', sessions: 'select, insert, update, delete', sheets: 'select, insert, delete', user_themes: 'select, insert'};
+  session_shares: 'select', sessions: 'select, insert, update, delete', sheets: 'select, insert, delete', user_themes: 'select, insert',
+  // P11 G5: share copies the glossary words of the copied sheets (supabase/functions/share/words.ts); it never deletes,
+  // and has nothing on glossary_passes (a copied sheet stays to read by the recipient's own pass).
+  glossary_words: 'select, insert, update'};
 const OWN_RIGHTS = ['capture_tokens', 'session_shares'];
 
 const tableGrants = [...flat.matchAll(/ grant ([a-z, ()_]+?) on (?:table )?public\.([a-z_]+) to ([a-z_, ]+?);/g)]

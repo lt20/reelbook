@@ -526,7 +526,7 @@
     "platform": "YouTube"
    },
    "added_at": "2026-10-28T09:00:00Z",
-   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Rotation · 20 min</p>\n    <h1>Backroll</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Backroll\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Une rotation arrière sur l'axe du corps, en sautant depuis la carre : la première figure après le saut simple.</p>\n<div class=\"kit\"><span>twin-tip</span><span>aile 9–12 m</span><span>harnais et leash</span><span>casque</span></div>\n\n<h2>Prérequis</h2>\n<ul class=\"prereq\"><li>Sauts simples posés des deux côtés, sans perdre la voile.</li><li>Remontée au vent sur les deux bords.</li></ul>\n\n<h2>Conditions</h2>\n<div class=\"cond\">\n  <div class=\"c\"><b>15–25 nds</b><span>vent établi</span></div>\n  <div class=\"c\"><b>9–12 m</b><span>aile</span></div>\n  <div class=\"c\"><b>Plat</b><span>eau à la taille ou plus</span></div>\n</div>\n\n<h2>Go / no-go</h2>\n<div class=\"gonogo\">\n  <div class=\"go\"><h3>Go</h3><ul><li>Vent régulier, rafales de moins de 8 nds d'écart.</li><li>Au moins 50 m libres sous le vent.</li><li>Tu poses tes sauts simples à chaque essai.</li></ul></div>\n  <div class=\"nogo\"><h3>No-go</h3><ul><li>Vent de terre ou rafaleux.</li><li>Eau trop peu profonde ou du monde sous le vent.</li><li>Fatigue : tes réceptions deviennent approximatives.</li></ul></div>\n</div>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Rider en carre, voile haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Approche</h3><p>Vitesse moyenne, carre franche, voile à 11 h.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Rider qui décolle en tournant les épaules\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Appel</h3><p>Pop sur la carre, la tête et les épaules tournent vers l'arrière.</p></div>\n  <div class=\"step\"><figure><img src=\"img/03.jpg\" alt=\"Rider en rotation, genoux groupés\" loading=\"lazy\"><span class=\"k\">3</span></figure><h3>Rotation</h3><p>Genoux groupés, la barre près des hanches, le regard cherche la voile.</p></div>\n  <div class=\"step\"><figure><img src=\"img/04.jpg\" alt=\"Rider qui atterrit planche à plat\" loading=\"lazy\"><span class=\"k\">4</span></figure><h3>Réception</h3><p>Planche sous le vent, voile qui descend, tu repars en carre.</p></div>\n</div>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : barre tirée, rider soulevé trop haut\" loading=\"lazy\"></figure><h3>Barre tirée en tournant</h3><p>La voile remonte et te soulève trop : garde la barre au même endroit pendant la rotation.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>La tête d'abord.</b> Les épaules suivent le regard, le reste du corps suit les épaules.</li>\n  <li><b>Barre immobile.</b> Elle ne bouge pas pendant la rotation.</li>\n  <li><b>Repère la voile.</b> Dès que tu la revois, ouvre et prépare la réception.</li>\n</ol>\n\n<h2>Plan d'essais <small>suggestion, absente de la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3–5</b><span>essais par côté</span></div>\n  <div class=\"d\"><b>1</b><span>réception propre, puis l'autre côté</span></div>\n  <div class=\"d\"><b>20 min</b><span>puis navigue sans essayer</span></div>\n</div>\n<p class=\"note\">La vidéo ne donne ni nombre d'essais ni durée : plan suggéré.</p>\n\n<h2>Sécurité <small>conseil général, absent de la vidéo</small></h2>\n<div class=\"safety\"><ul><li>Casque et gilet d'impact tant que tu l'apprends.</li><li>Personne sous le vent, jamais près du bord.</li></ul></div>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0040\">Voir la vidéo</a>.</footer>\n</div>\n",
+   "html": "<div class=\"wrap fiche\">\n<header>\n  <div>\n    <p class=\"eyebrow\">Rotation · 20 min</p>\n    <h1>Backroll</h1>\n  </div>\n  <img src=\"img/thumb.jpg\" alt=\"Backroll\" width=\"112\" height=\"112\">\n</header>\n<p class=\"lead\">Une rotation arrière sur l'axe du corps, en sautant depuis la carre : la première figure après le saut simple.</p>\n<div class=\"kit\"><span>twin-tip</span><span>aile 9–12 m</span><span>harnais et leash</span><span>casque</span></div>\n\n<h2>Prérequis</h2>\n<ul class=\"prereq\"><li>Sauts simples posés des deux côtés, sans perdre la voile.</li><li>Remontée au vent sur les deux bords.</li></ul>\n\n<h2>Conditions</h2>\n<div class=\"cond\">\n  <div class=\"c\"><b>15–25 nds</b><span>vent établi</span></div>\n  <div class=\"c\"><b>9–12 m</b><span>aile</span></div>\n  <div class=\"c\"><b>Plat</b><span>eau à la taille ou plus</span></div>\n</div>\n\n<h2>Go / no-go</h2>\n<div class=\"gonogo\">\n  <div class=\"go\"><h3>Go</h3><ul><li>Vent régulier, rafales de moins de 8 nds d'écart.</li><li>Au moins <b>50 m libres sous</b> le vent.</li><li>Tu poses tes sauts simples à chaque essai.</li></ul></div>\n  <div class=\"nogo\"><h3>No-go</h3><ul><li>Vent de terre ou rafaleux.</li><li>Eau trop peu profonde ou du monde sous le vent.</li><li>Fatigue : tes réceptions deviennent approximatives.</li></ul></div>\n</div>\n</div>\n\n<div class=\"wide\">\n<h2>Étapes</h2>\n<div class=\"steps\">\n  <div class=\"step\"><figure><img src=\"img/01.jpg\" alt=\"Rider en carre, voile haute\" loading=\"lazy\"><span class=\"k\">1</span></figure><h3>Approche</h3><p>Vitesse moyenne, carre franche, voile à 11 h.</p></div>\n  <div class=\"step\"><figure><img src=\"img/02.jpg\" alt=\"Rider qui décolle en tournant les épaules\" loading=\"lazy\"><span class=\"k\">2</span></figure><h3>Appel</h3><p>Pop sur la carre, la tête et les épaules tournent vers l'arrière.</p></div>\n  <div class=\"step\"><figure><img src=\"img/03.jpg\" alt=\"Rider en rotation, genoux groupés\" loading=\"lazy\"><span class=\"k\">3</span></figure><h3>Rotation</h3><p>Genoux groupés, la barre près des hanches, le regard cherche la voile.</p></div>\n  <div class=\"step\"><figure><img src=\"img/04.jpg\" alt=\"Rider qui atterrit planche à plat\" loading=\"lazy\"><span class=\"k\">4</span></figure><h3>Réception</h3><p>Planche sous le vent, voile qui descend, tu repars en carre.</p></div>\n</div>\n<h2>Erreurs fréquentes</h2>\n<div class=\"steps\">\n  <div class=\"step bad\"><figure><img src=\"img/x1.jpg\" alt=\"Erreur : barre tirée, rider soulevé trop haut\" loading=\"lazy\"></figure><h3>Barre tirée en tournant</h3><p>La voile remonte et te soulève trop : garde la barre au même endroit pendant la rotation.</p></div>\n</div>\n</div>\n\n<div class=\"wrap\">\n<h2>Points clés</h2>\n<ol class=\"keys\">\n  <li><b>La tête d'abord.</b> Les épaules suivent le regard, le reste du corps suit les épaules.</li>\n  <li><b>Barre immobile.</b> Elle ne bouge pas pendant la rotation.</li>\n  <li><b>Repère la voile.</b> Dès que tu la revois, ouvre et prépare la réception.</li>\n</ol>\n\n<h2>Plan d'essais <small>suggestion, absente de la vidéo</small></h2>\n<div class=\"dose\">\n  <div class=\"d\"><b>3–5</b><span>essais par côté</span></div>\n  <div class=\"d\"><b>1</b><span>réception propre, puis l'autre côté</span></div>\n  <div class=\"d\"><b>20 min</b><span>puis navigue sans essayer</span></div>\n</div>\n<p class=\"note\">La vidéo ne donne ni nombre d'essais ni durée : plan suggéré.</p>\n\n<h2>Sécurité <small>conseil général, absent de la vidéo</small></h2>\n<div class=\"safety\"><ul><li>Casque et gilet d'impact tant que tu l'apprends.</li><li>Personne sous le vent, jamais près du bord.</li></ul></div>\n\n<footer>Photos : images de démonstration générées pour l'aperçu. <a href=\"https://www.youtube.com/shorts/PREVIEW0040\">Voir la vidéo</a>.</footer>\n</div>\n",
    "tags": {
     "zone": [],
     "gear": [
@@ -1039,6 +1039,509 @@
    "note": null,
    "created_at": "2026-10-31T18:00:00Z",
    "processed_at": "2026-11-01T22:10:00Z"
+  }
+ ],
+ "glossary_words": [
+  {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "carre",
+   "sense": null,
+   "forms": [
+    "carre"
+   ],
+   "kind": null,
+   "definition": "L'arête de la planche. Être en carre, c'est incliner la planche pour qu'elle morde l'eau et résiste à la traction de l'aile.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": {
+    "slug": "backroll",
+    "file": "01.jpg"
+   },
+   "related": [
+    "cranter",
+    "pop",
+    "planche"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "en sautant depuis la carre",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000002",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "pop",
+   "sense": null,
+   "forms": [
+    "pop",
+    "pops"
+   ],
+   "kind": null,
+   "definition": "L'impulsion donnée sur la carre, jambe arrière poussée d'un coup, pour décoller la planche de l'eau sans attendre l'aile.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "carre"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "Pop sur la carre, la tête",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000003",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "sous le vent",
+   "sense": null,
+   "forms": [
+    "sous le vent"
+   ],
+   "kind": null,
+   "definition": "Du côté vers lequel le vent souffle. Ce qui est sous le vent de toi reçoit le vent après toi : c'est là que tu dérives et que tu retombes.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "remontée au vent",
+    "bord (le rivage)"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "Au moins 50 m libres sous le vent.",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000004",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "remontée au vent",
+   "sense": null,
+   "forms": [
+    "remontée au vent",
+    "remonter au vent"
+   ],
+   "kind": null,
+   "definition": "Naviguer en gagnant du terrain vers d'où vient le vent, la planche sur la carre : c'est ce qui permet de revenir à son point de départ.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "carre",
+    "bord (la direction)",
+    "sous le vent"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "Remontée au vent sur les deux bords.",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000005",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "bord",
+   "sense": "la direction",
+   "forms": [
+    "bords",
+    "bord"
+   ],
+   "kind": null,
+   "definition": "Un trajet sans changer de direction, le vent toujours du même côté : on tire un bord vers la droite, puis un bord vers la gauche.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "remontée au vent"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "sur les deux bords",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000006",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "bord",
+   "sense": "le rivage",
+   "forms": [
+    "bord"
+   ],
+   "kind": null,
+   "definition": "La limite entre l'eau et la plage. Près du bord, l'eau est peu profonde et les obstacles sont proches.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "sous le vent",
+    "vent de terre"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "jamais près du bord",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000007",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "vent de terre",
+   "sense": null,
+   "forms": [
+    "vent de terre"
+   ],
+   "kind": null,
+   "definition": "Un vent qui souffle de la plage vers le large : il éloigne du bord et arrive irrégulier, perturbé par le relief.",
+   "confidence": "unsure",
+   "doubt": "Le mot peut aussi désigner un vent qui ne vient qu'en partie de la plage ; certains coachs disent « offshore ».",
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "bord (le rivage)"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "Vent de terre ou rafaleux.",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000008",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "aile",
+   "sense": null,
+   "forms": [
+    "aile",
+    "voile"
+   ],
+   "kind": null,
+   "definition": "Le cerf-volant qui tracte le rider, aussi appelé voile ou kite. Sa taille se donne en mètres carrés.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "11 h"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "voile à 11 h",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000009",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "11 h",
+   "sense": null,
+   "forms": [
+    "à 11 h",
+    "11 h"
+   ],
+   "kind": null,
+   "definition": "Une position de l'aile dans le ciel, lue comme sur un cadran : midi au-dessus de la tête, 11 h juste à côté, encore haute.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "aile"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "voile à 11 h.",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000010",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "gilet d'impact",
+   "sense": null,
+   "forms": [
+    "gilet d'impact"
+   ],
+   "kind": null,
+   "definition": "Un gilet rembourré qui amortit les chutes à plat sur l'eau ; il aide à flotter mais ne remplace pas un gilet de sauvetage.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "Casque et gilet d'impact pour apprendre",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000011",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "twin-tip",
+   "sense": null,
+   "forms": [
+    "twin-tip"
+   ],
+   "kind": null,
+   "definition": "La planche symétrique du kitesurf, qui navigue dans les deux sens sans changer les pieds de place.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "carre"
+   ],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "twin-tip",
+     "where": "chip"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000012",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "leash",
+   "sense": null,
+   "forms": [
+    "leash"
+   ],
+   "kind": null,
+   "definition": "La sangle qui relie le rider à son aile : après un largage, elle retient l'aile sans sa puissance.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": "lish",
+   "photo": null,
+   "related": [],
+   "sheets": [
+    {
+     "slug": "backroll",
+     "quote": "harnais et leash",
+     "where": "chip"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000013",
+   "user_id": "u1",
+   "theme": "kitesurf",
+   "term": "cranter",
+   "sense": null,
+   "forms": [
+    "cranter",
+    "crante",
+    "crantage"
+   ],
+   "kind": null,
+   "definition": "Appuyer fort sur la carre pour résister à la traction de l'aile : la planche ralentit, remonte au vent et la tension monte dans les lignes.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "carre",
+    "bord (la direction)"
+   ],
+   "sheets": [],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000020",
+   "user_id": "u1",
+   "theme": "fight",
+   "term": "garde",
+   "sense": null,
+   "forms": [
+    "garde"
+   ],
+   "kind": null,
+   "definition": "La position de base du boxeur : un pied devant, les poings aux joues, les coudes près des côtes, prêt à frapper ou à se protéger.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": {
+    "slug": "session-shadow-garde",
+    "file": "01.jpg"
+   },
+   "related": [
+    "jab"
+   ],
+   "sheets": [
+    {
+     "slug": "session-shadow-garde",
+     "quote": "En garde, petits pas avant",
+     "where": "text"
+    },
+    {
+     "slug": "session-shadow-esquives",
+     "quote": "En garde",
+     "where": "title"
+    },
+    {
+     "slug": "jab-cross",
+     "quote": "Ramène chaque poing à la garde",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000021",
+   "user_id": "u1",
+   "theme": "fight",
+   "term": "jab",
+   "sense": null,
+   "forms": [
+    "jab"
+   ],
+   "kind": null,
+   "definition": "Le direct du bras avant, rapide et peu appuyé : il mesure la distance et prépare le coup suivant.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": {
+    "slug": "jab-cross",
+    "file": "01.jpg"
+   },
+   "related": [
+    "cross",
+    "garde"
+   ],
+   "sheets": [
+    {
+     "slug": "jab-cross",
+     "quote": "un jab rapide",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000022",
+   "user_id": "u1",
+   "theme": "fight",
+   "term": "cross",
+   "sense": null,
+   "forms": [
+    "cross"
+   ],
+   "kind": null,
+   "definition": "Le direct du bras arrière, lancé par la rotation de la hanche et du pied arrière : le coup qui porte.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "jab"
+   ],
+   "sheets": [
+    {
+     "slug": "jab-cross",
+     "quote": "puis un cross qui part de la hanche",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000023",
+   "user_id": "u1",
+   "theme": "fight",
+   "term": "distance",
+   "sense": null,
+   "forms": [
+    "distance"
+   ],
+   "kind": null,
+   "definition": "L'écart entre toi et l'adversaire : à la bonne distance, ton jab touche bras tendu et son coup ne t'atteint pas.",
+   "confidence": "sure",
+   "doubt": null,
+   "spelling": null,
+   "photo": null,
+   "related": [
+    "jab",
+    "garde"
+   ],
+   "sheets": [
+    {
+     "slug": "jab-cross",
+     "quote": "Le jab mesure la distance",
+     "where": "text"
+    }
+   ],
+   "created_at": "2026-11-10T09:00:00Z",
+   "updated_at": "2026-11-10T09:00:00Z"
   }
  ]
 }

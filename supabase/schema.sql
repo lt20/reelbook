@@ -1514,3 +1514,101 @@ revoke execute on function public.join_waitlist(text, text, text, boolean, text)
 grant execute on function public.join_waitlist(text, text, text, boolean, text) to anon, authenticated;
 revoke execute on function public.join_waitlist(text, text, text, boolean, text, text) from public;
 grant execute on function public.join_waitlist(text, text, text, boolean, text, text) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Glossary (P11 G1): the notebook explains its own words. One row per entry of a notebook of an account: a word in
+-- one sense, its definition, the exact strings to underline (forms) and, per sheet, the place to underline (a verbatim
+-- quote of the sheet's text). Contract: docs/audit-design/P11-glossary.md › Data contract.
+--   - Written by tools/rb.py signed in as the account (`rb.py glossary put`, run by the glossary pass): it inserts an
+--     entry, or adds sheets to one that exists; it never deletes a row.
+--   - Read only by the app (underlines in a sheet, the definition, the notebook's Glossary page): the app never writes
+--     here, the reader can neither remove, edit nor add a word.
+--   - theme is user_themes.id, a slug of sheets or photo is sheets.slug: no foreign key on purpose. A slug that no
+--     longer exists is ignored by every reader; nothing cascades from sheets. Deleting the account deletes its rows.
+-- Added after the attribution: re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- Current accounts: nothing changes, the table is new and empty until a pass writes to it.
+-- A backend without it keeps working: the app shows no glossary and no error, `rb.py glossary get` prints an empty one.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.glossary_words (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  theme      text not null,     -- the notebook (user_themes.id)
+  term       text not null,     -- canonical form, in the sheets' language
+  sense      text,              -- short label when the notebook has another entry with the same term
+  forms      jsonb not null default '[]'::jsonb,  -- ["…", "…"]: the exact strings that can be underlined
+  kind       text,              -- kept as data, never shown
+  definition text not null,     -- one or two sentences
+  confidence text not null check (confidence in ('sure', 'unsure')),
+  doubt      text,              -- one sentence for the reader, when unsure
+  spelling   text,              -- a faulty spelling found in a sheet
+  photo      jsonb,             -- {"slug": "<sheet slug>", "file": "<file under img/>"}, one photo at most
+  related    jsonb not null default '[]'::jsonb,  -- ["term", "term (sense)"]
+  sheets     jsonb not null default '[]'::jsonb,  -- [{slug, quote, where}]; where: text | title | caption | chip
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- One entry per word and sense in a notebook, the term and the sense whatever their case: the identity `rb.py` gives
+-- an entry (_glossary_key ignores the case of both), so two `glossary put` at once cannot insert « le kite » and
+-- « Le Kite » as two rows for one word (the second is refused, 23505, and `rb.py` merges into the first).
+-- The first version of this index (glossary_words_one_entry) compared the sense as written: it is dropped once the
+-- new one exists, so a backend that had it is never without the rule, and a re-run rebuilds nothing.
+create unique index if not exists glossary_words_one_entry_ci
+  on public.glossary_words (user_id, theme, lower(term), lower(coalesce(sense, '')));
+drop index if exists public.glossary_words_one_entry;
+
+drop trigger if exists glossary_words_touch on public.glossary_words;
+create trigger glossary_words_touch before update on public.glossary_words
+  for each row execute function public.touch_updated_at();
+
+alter table public.glossary_words enable row level security;
+drop policy if exists "own glossary words" on public.glossary_words;
+create policy "own glossary words" on public.glossary_words
+  for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- The account on its own rows (RLS above decides which): `rb.py glossary put` inserts and updates, the app only selects.
+-- Nothing for anon.
+grant select, insert, update, delete on public.glossary_words to authenticated;
+
+-- Which sheets the glossary pass has read (P11 G2a, decision 9): one row per sheet of a notebook of an account, with
+-- the sheet's updated_at when the pass read it. A sheet needs the pass when it has no row here, or when its updated_at
+-- is later than sheet_updated_at (it was republished). A sheet where the pass found no word gets its row too, so it is
+-- not read again every night. Contract: docs/audit-design/P11-glossary.md › Data contract › Which sheets had the pass.
+--   - Written by tools/rb.py signed in as the account (`rb.py glossary put`, after the entries are written): one
+--     upsert on the primary key, so two commands at once (the computer and the hosted worker) leave one row per sheet.
+--   - Read by tools/rb.py only (`glossary sheets --pending`, `glossary pending`); the app does not use this table.
+--   - theme is user_themes.id, slug is sheets.slug: no foreign key on purpose, as glossary_words. A row whose sheet no
+--     longer exists is ignored; nothing in sheets or in `rb.py publish` changes. Deleting the account deletes its rows.
+-- Re-run this whole file to create it (idempotent, additive: nothing else changes).
+-- Current accounts: nothing changes, the table is new and empty until a pass records a sheet; until then every sheet
+-- of a technique notebook counts as not read yet.
+-- A backend without it keeps working: `glossary put` writes the entries and says that passes are not recorded,
+-- `glossary sheets --pending` and `glossary pending` take every sheet as not read yet.
+create table if not exists public.glossary_passes (
+  user_id          uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  theme            text not null,          -- the notebook (user_themes.id)
+  slug             text not null,          -- the sheet (sheets.slug)
+  sheet_updated_at timestamptz not null,   -- sheets.updated_at when the pass read the sheet
+  passed_at        timestamptz not null default now(),
+  primary key (user_id, theme, slug)
+);
+
+alter table public.glossary_passes enable row level security;
+drop policy if exists "own glossary passes" on public.glossary_passes;
+create policy "own glossary passes" on public.glossary_passes
+  for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- The account on its own rows (RLS above decides which): `rb.py glossary put` upserts, the readers select.
+-- Nothing for anon.
+grant select, insert, update, delete on public.glossary_passes to authenticated;
+
+-- service_role, for the Edge Function share (P11 G5, supabase/functions/share/words.ts): a session sent to a partner
+-- carries the glossary words of its sheets. Once the copy is done, the function reads the sender's entries of the
+-- copied sheets, inserts the entries the recipient does not have, and adds forms and sheets to those the recipient
+-- has (update). It never deletes. It has no right on glossary_passes and needs none: a copied sheet stays to read,
+-- the recipient's own pass reads it. RLS does not apply to service_role. Here and not in the share section: this
+-- table is created after it.
+-- Re-run this whole file (idempotent, additive). Current accounts and shares already made: nothing changes; the
+-- function without this right, or without this table, shares the session, sheets and photos as before.
+grant select, insert, update on public.glossary_words to service_role;

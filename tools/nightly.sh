@@ -2,14 +2,19 @@
 # nightly.sh — process the Reelbook queue unattended, once a night (macOS, launchd).
 #
 #   tools/nightly.sh check               what a run would do now (queue size, screen, claude path)
-#   tools/nightly.sh run [--max N]       process up to N queued requests now (default 5)
+#   tools/nightly.sh run [--max N] [--glossary-max N]
+#                                        process up to N queued requests now (default 5), then let the
+#                                        glossary pass read up to N sheets (default 10)
 #   tools/nightly.sh install [HH:MM]     run every night at HH:MM (default 02:00) via a LaunchAgent
 #   tools/nightly.sh uninstall           remove the LaunchAgent
 #
 # The run needs Chrome with the Claude in Chrome extension. A locked screen is fine: measured on
 # 2026-11-03, a session of 8 exercises processed with the screen locked all along, 31 sharp photos.
-# Empty queue or Mac on battery = Claude is not started (on battery, macOS sleeps despite
-# caffeinate and the run dies mid-way, 2026-11-01). The screen state is only logged.
+# Empty queue = no video run. Mac on battery = Claude is not started at all (on battery, macOS sleeps
+# despite caffeinate and the run dies mid-way, 2026-11-01). The screen state is only logged.
+# After the queue, and when it is empty too, the night catches up the glossary: the sheets of the technique
+# notebooks that no glossary pass has read yet (rb.py glossary pending; sheets made by another engine, or older
+# than the glossary) get one more Claude run, without Chrome, a few sheets a night.
 # Every run first puts back in the queue the requests a dead run left « processing » (rb.py requeue-stuck).
 # A Mac asleep at the scheduled time catches up on wake, but only within 3 hours: later, the
 # night is skipped rather than opening tabs in front of you.
@@ -80,6 +85,28 @@ on_battery() {
 screen_locked() {
   [ "$(ioreg -n Root -d1 -a | plutil -extract IOConsoleUsers.0.CGSSessionScreenIsLocked raw - 2>/dev/null)" = true ]
 }
+# glossary_count <rb.py glossary pending output>: the sheets waiting for the glossary pass, all notebooks together
+# (one line per notebook, `<theme> <count>`; no line = 0). Pure, tested.
+glossary_count() {
+  printf '%s\n' "$1" | awk 'NF >= 2 && $NF ~ /^[0-9]+$/ { n += $NF } END { print n + 0 }'
+}
+# glossary_notice <claude exit> <waiting after>: how the glossary run ended, for the log and the phone: the exit code
+# of the pass and the sheets still waiting after it (`?` = rb.py could not say). The sheets read are not worked out
+# from the count before and after: another engine may publish sheets while the pass runs, and the difference would
+# then call a pass that read some a failure. A failure is the pass's own (a non-zero exit). Pure, tested.
+glossary_notice() {
+  local status="$1" after="$2" msg
+  if [ "$status" = 0 ]; then msg="Glossary: run done (claude exit 0)"; else msg="Glossary run failed (claude exit $status)"; fi
+  case "$after" in
+    ''|*[!0-9]*) echo "$msg, rb.py glossary pending failed" ;;
+    *) echo "$msg · $after still waiting" ;;
+  esac
+}
+glossary_waiting() {  # number of sheets waiting for the glossary pass, fails with rb.py's exit code
+  local out
+  out="$(cd "$REPO" && python3 tools/rb.py glossary pending 2>/dev/null)" || return $?
+  glossary_count "$out"
+}
 queued() {  # number of queued requests, fails with rb.py's exit code
   local out
   out="$(cd "$REPO" && python3 tools/rb.py queue 2>/dev/null)" || return $?
@@ -90,17 +117,38 @@ cmd_check() {
   echo "repo:    $REPO"
   echo "claude:  ${CLAUDE:-not found}"
   echo "queued:  $(queued || echo 'rb.py failed: run rb.py login')"
+  local waiting
+  if waiting="$(glossary_waiting)"; then echo "glossary: $waiting sheet(s) waiting for the pass"
+  else echo "glossary: rb.py glossary pending failed (no glossary on this backend, or run rb.py login)"; fi
   echo "screen:  $(screen_locked && echo locked || echo unlocked)"
   echo "power:   $(on_battery && echo "battery (a run would be skipped)" || echo "AC")"
   echo "notify:  $([ -n "${REELBOOK_NOTIFY_URL:-${RALPH_NOTIFY_URL:-}}" ] && echo on || echo off)"
   if launchctl print "gui/$(id -u)/$LABEL" >/dev/null 2>&1; then echo "nightly: installed ($PLIST)"; else echo "nightly: not installed"; fi
 }
 
+# The glossary catch-up: one Claude run without Chrome (text only), when sheets wait for the pass. The caller has
+# checked the 3-hour window and the session; a screen locked or not does not matter here.
+cmd_glossary() {  # cmd_glossary <at most N sheets>
+  local gmax="$1" before after status notice
+  before="$(glossary_waiting)" || { log "glossary: rb.py glossary pending failed (exit $?): skipped"; return 0; }
+  [ "$before" -eq 0 ] && return 0
+  if on_battery; then log "glossary: $before sheet(s) waiting, Mac on battery: skipped"; return 0; fi
+  log "glossary: $before sheet(s) waiting, reading up to $gmax"
+  cd "$REPO" || return 1
+  caffeinate -ims "$CLAUDE" -p --model claude-opus-5-5 --permission-mode auto \
+    "/reelbook glossary, at most $gmax sheets" </dev/null
+  status=$?
+  after="$(glossary_waiting || echo '?')"
+  notice="$(glossary_notice "$status" "$after")"
+  log "$notice"; notify "$notice" "${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"
+}
+
 cmd_run() {
-  local max=5 at="" n rc left status since published notice
+  local max=5 gmax=10 at="" n rc left status since published notice
   while [ $# -gt 0 ]; do
     case "$1" in
       --max) max="$2"; shift 2 ;;
+      --glossary-max) gmax="$2"; shift 2 ;;
       --at) at="$2"; shift 2 ;;  # scheduled HH:MM, set by the LaunchAgent
       *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
@@ -115,7 +163,9 @@ cmd_run() {
   if [ "$rc" -ne 0 ]; then
     log "$(rb_failed_notice "$rc")"; notify "$(rb_failed_notice "$rc")"; exit 1
   fi
-  if [ "$n" -eq 0 ]; then log "queue empty"; exit 0; fi
+  # an empty queue is not the end of the night: another engine may have taken every video, and its sheets
+  # still wait for the glossary pass
+  if [ "$n" -eq 0 ]; then log "queue empty"; cmd_glossary "$gmax"; exit 0; fi
   if on_battery; then
     log "$n queued, Mac on battery: skipped"; notify "$n video(s) waiting, Mac was on battery: skipped (plug it in)"; exit 0
   fi
@@ -138,6 +188,7 @@ cmd_run() {
     if [ "$rc" = 3 ]; then log "$(rb_failed_notice 3)"; notify "$(rb_failed_notice 3) (claude exit $status)"
     else notify "Night run done (claude exit $status), $left still queued; rb.py list failed" "${REELBOOK_APP_URL:-https://lt20.github.io/reelbook/}"; fi
   fi
+  cmd_glossary "$gmax"
 }
 
 cmd_install() {
@@ -183,12 +234,13 @@ cmd_uninstall() {
   echo "Uninstalled."
 }
 
-# sourced (tests/rb-queue.test.py reads night_notice, tests/rb-auth.test.py rb_failed_notice): define the functions only
+# sourced (tests/rb-queue.test.py reads night_notice, tests/rb-auth.test.py rb_failed_notice,
+# tests/rb-glossary-pass.test.py the glossary functions): define the functions only
 [ "${BASH_SOURCE[0]}" = "$0" ] || return 0
 case "${1:-}" in
   check) cmd_check ;;
   run) shift; cmd_run "$@" ;;
   install) shift; cmd_install "$@" ;;
   uninstall) cmd_uninstall ;;
-  *) sed -n '2,13p' "$SELF" | sed 's/^# \{0,1\}//'; exit 2 ;;
+  *) sed -n '2,18p' "$SELF" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac

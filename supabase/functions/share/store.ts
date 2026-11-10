@@ -71,5 +71,20 @@ export function supabaseStore(client: Client): Store {
     async deleteSheets(uid, slugs) { check(await db('sheets').delete().eq('user_id', uid).in('slug', slugs)); },
     async copyFile(from, to) { check(await bucket().copy(from, to)); },
     async removeFiles(paths) { check(await bucket().remove(paths)); },
+    // The glossary (P11 G5). A notebook's glossary may pass the row cap: read page by page, by id (the primary key).
+    async words(uid, themes) {
+      const out: Row[] = [];
+      for (;;) {
+        const rows = (check(await db('glossary_words').select('*').eq('user_id', uid).in('theme', themes).order('id').range(out.length, out.length + PAGE - 1)) || []) as Row[];
+        if (!rows.length) return out;
+        out.push(...rows);
+      }
+    },
+    async insertWord(row) { check(await db('glossary_words').insert(row)); },
+    // One statement: « update … where id = <read> and updated_at = <read> » — an entry written meanwhile is not overwritten.
+    async updateWord(uid, id, seen, patch) {
+      const rows = check(await db('glossary_words').update(patch).eq('user_id', uid).eq('id', id).eq('updated_at', seen).select('id')) as Row[] | null;
+      return !!(rows && rows.length);
+    },
   };
 }

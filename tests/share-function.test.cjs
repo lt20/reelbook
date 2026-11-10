@@ -10,12 +10,12 @@ const {execFileSync, spawnSync} = require('node:child_process');
 const hasDeno = (() => { try { execFileSync('deno', ['--version'], {stdio: 'ignore'}); return true; } catch { return false; } })();
 const dir = path.join(__dirname, '../supabase/functions/share'), templates = path.join(__dirname, '../templates');
 
-test('share core and store: Deno unit tests (GET limits, revoke, dedup by URL and title, slug collision and cut, notes kept, photo paths, html cleaning, idempotence and reservation, quota, pages of share_files, no notes or log, backend without the table)', {skip: hasDeno ? false : 'deno is not installed'}, () => {
+test('share core and store: Deno unit tests (GET limits, revoke, dedup by URL and title, slug collision and cut, notes kept, photo paths, html cleaning, idempotence and reservation, quota, pages of share_files, no notes or log, backend without the table; P11 G5: the glossary words of the copied sheets, merge, passes, missing tables, failure, replay)', {skip: hasDeno ? false : 'deno is not installed'}, () => {
   const r = spawnSync('deno', ['test', '--no-remote', '--quiet', `--allow-read=${dir},${templates}`, path.join(dir, 'core.test.ts'), path.join(dir, 'store.test.ts')], {encoding: 'utf8', timeout: 60000, env: {...process.env, NO_COLOR: '1'}});
   assert.equal(r.status, 0, (r.stdout || '') + (r.stderr || ''));
 });
 
 test('share core and store type-check (deno check, no network)', {skip: hasDeno ? false : 'deno is not installed'}, () => {
-  const r = spawnSync('deno', ['check', '--no-remote', '--quiet', path.join(dir, 'core.ts'), path.join(dir, 'clean.ts'), path.join(dir, 'store.ts')], {encoding: 'utf8', timeout: 60000, env: {...process.env, NO_COLOR: '1'}});
+  const r = spawnSync('deno', ['check', '--no-remote', '--quiet', path.join(dir, 'core.ts'), path.join(dir, 'clean.ts'), path.join(dir, 'store.ts'), path.join(dir, 'words.ts')], {encoding: 'utf8', timeout: 60000, env: {...process.env, NO_COLOR: '1'}});
   assert.equal(r.status, 0, (r.stdout || '') + (r.stderr || ''));
 });

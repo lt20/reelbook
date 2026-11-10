@@ -1,0 +1,17 @@
+[
+  {"name": "p11g3a-01-first-screen", "hash": "backroll", "actions": [{"wait": ".gw"}]},
+  {"name": "p11g3a-02-steps", "hash": "backroll", "actions": [{"wait": ".gw"}, {"scroll": ".step:nth-child(4) p"}, {"wait": 300}]},
+  {"name": "p11g3a-03-definition-photo", "hash": "backroll", "actions": [{"wait": ".gw"}, {"click": ".gw[data-gw$='000001']"}, {"wait": "#gl-dlg[open] .gl-ph img[src]"}, {"wait": 700}]},
+  {"name": "p11g3a-04-definition-no-photo", "hash": "backroll", "actions": [{"wait": ".gw"}, {"click": ".gw[data-gw$='000002']"}, {"wait": "#gl-dlg[open]"}, {"wait": 700}]},
+  {"name": "p11g3a-05-not-sure", "hash": "backroll", "actions": [{"wait": ".gw"}, {"click": ".gw[data-gw$='000007']"}, {"wait": "#gl-dlg[open] .note"}, {"wait": 700}]},
+  {"name": "p11g3a-06-two-senses", "hash": "backroll", "actions": [{"wait": ".gw"}, {"click": ".gw[data-gw$='000005']"}, {"wait": "#gl-dlg[open] .gl-of"}, {"wait": 700}]},
+  {"name": "p11g3a-07-after-see-also", "hash": "backroll", "actions": [{"wait": ".gw"}, {"click": ".gw[data-gw$='000001']"}, {"wait": "#gl-dlg[open] [data-gl-see]"}, {"click": "[data-gl-see$='000013']"}, {"wait": ".gl-back"}, {"wait": 700}]},
+  {"name": "p11g3a-08-end-folded", "hash": "backroll", "actions": [{"wait": ".gl-end"}, {"scroll": ".gl-end"}, {"wait": 300}]},
+  {"name": "p11g3a-09-end-unfolded", "hash": "backroll", "actions": [{"wait": ".gl-end"}, {"click": ".gl-end summary"}, {"scroll": ".gl-end .gl-chip:last-child"}, {"wait": 300}]},
+  {"name": "p11g3a-10-spelling", "hash": "backroll", "actions": [{"wait": ".gl-end"}, {"click": ".gl-end summary"}, {"click": ".gl-chip[data-gw$='000012']"}, {"wait": "#gl-dlg[open] .gl-sp"}, {"wait": 700}]},
+  {"name": "p11g3a-11-photo-of-another-sheet", "hash": "session-shadow-esquives", "actions": [{"wait": ".gl-end"}, {"click": ".gl-end summary"}, {"click": ".gl-chip[data-gw$='000020']"}, {"wait": "#gl-dlg[open] .gl-ph img[src]"}, {"wait": 700}]},
+  {"name": "p11g3a-12-no-table-first-screen", "query": "missing=glossary_words", "hash": "backroll", "actions": [{"wait": "#play-start"}, {"wait": 400}]},
+  {"name": "p11g3a-13-no-table-end", "query": "missing=glossary_words", "hash": "backroll", "actions": [{"wait": "#play-start"}, {"scroll": "#view footer"}, {"wait": 300}]},
+  {"name": "p11g3a-14-word-over-a-tag", "hash": "backroll", "actions": [{"wait": ".gw-z"}, {"click": ".gw-z[data-gw$='000003']"}, {"wait": "#gl-dlg[open]"}, {"wait": 700}]},
+  {"name": "p11g3a-15-plain-paragraph-loop", "hash": "jab-cross", "actions": [{"wait": ".loop .gw"}, {"scroll": ".loop"}, {"wait": 300}]}
+]
