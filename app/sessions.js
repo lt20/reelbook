@@ -25,6 +25,8 @@
   // A backend set up before sessions v2 has no `sessions` table. PostgREST answers 42P01 (undefined table),
   // PGRST205 (table not in the schema cache) or a bare 404, depending on its version.
   const missingTable = (error, status) => !!error && (status === 404 || error.status === 404 || error.code === '42P01' || error.code === 'PGRST205');
+  // P12: a column the table does not have yet (Postgres « column does not exist », PostgREST « not in the schema cache »).
+  const missingColumn = error => !!error && (error.code === '42703' || error.code === 'PGRST204');
 
   // Old one-page sessions (v1: a `sheets` row with kind 'session') are not shown any more. An older self-hosted
   // backend may still hold some: the app keeps the other rows and counts these for a hint in Settings
@@ -512,6 +514,15 @@
       ? `${who} vous partage la séance «${NB}${t}${NB}» (${count(k, ['exercice', 'exercices'])}). Ouvrez-la dans Reelbook${NB}: ${u}`
       : `${who} is sharing the session “${t}” with you (${count(k, ['exercise', 'exercises'])}). Open it in Reelbook: ${u}`;
   };
+  // P12: one sheet, in the sheet's language, the same spacing:
+  //   fr « Laurent vous partage la fiche « <title> ». Ouvrez-la dans Reelbook : <link> »
+  //   en « Laurent is sharing the sheet “<title>” with you. Open it in Reelbook: <link> »
+  const sheetPartnerText = ({sender, title, url, lang} = {}) => {
+    const who = shareFirstName(sender), t = oneLine(title), u = oneLine(url);
+    return lang === 'fr'
+      ? `${who} vous partage la fiche «${NB}${t}${NB}». Ouvrez-la dans Reelbook${NB}: ${u}`
+      : `${who} is sharing the sheet “${t}” with you. Open it in Reelbook: ${u}`;
+  };
 
   // P8 R20: one video, one key, whatever the share sheet appended. An app's « Copy link » adds tracking parameters
   // (Instagram ?igsh= / ?utm_source=, ?dlrf= ; YouTube ?si= / ?feature= / ?pp= ; TikTok ?_r= / ?is_from_webapp= ;
@@ -542,12 +553,12 @@
     return host + path + (s ? `?${s}` : '');
   };
 
-  const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, splitV1, resolveItems, sessionsBySheet,
+  const api = {ROUTE, sessionHref, sessionItemHref, sessionSlugOf, sessionItemOf, missingTable, missingColumn, splitV1, resolveItems, sessionsBySheet,
     MAX, clip, keepOrClip, noteKey, uniqueSlug, toggle, addItem, moveItem, removeItem, cleanItems, toTry, parseDose, parseRest,
     catalogueSnapshot, restoreCatalogueSnapshot, catalogueCacheKey, refreshCatalogue, playHref, sheetPlayHref, playRoute, doseLabel,
     setCount, restRemaining, restClock, cleanChecks, checksOf, fitChecks, playTally, sheetItem, doneDose, weekStart, weekRhythm,
     ordinal, doseUp,
     isFrench, sessionLang, sessionHeading, setHeading, REELBOOK_URL, REF_CODE, refCodeOf, refUrl,
-    shareTokenOf, shareFirstName, sharePartnerText, cleanLink, linkKey};
+    shareTokenOf, shareFirstName, sharePartnerText, sheetPartnerText, cleanLink, linkKey};
   if (typeof module === 'object' && module.exports) module.exports = api; else root.RBSessions = api;
 })(typeof window !== 'undefined' ? window : globalThis);

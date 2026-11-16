@@ -66,7 +66,7 @@ test('lock 2: same lock and messages; only « beta: full » lets a live invite w
   const closed = lock.indexOf("message = 'beta: closed',"), full = lock.indexOf("message = 'beta: full'"), today = lock.indexOf("message = 'beta: closed today'");
   assert.ok(closed > -1 && closed < full && full < today, 'closed, then full, then the day: closed and the day still refuse an invited sign-up');
   assert.match(lock, /tok := new\.raw_user_meta_data->>'invite';/);
-  assert.match(lock, /sh\.token = tok and sh\.revoked_at is null and sh\.session_id is not null/);
+  assert.match(lock, /sh\.token = tok and sh\.revoked_at is null and \(sh\.session_id is not null or sh\.sheet_id is not null\)/, "a live link: a session's or a sheet's (P12)");
   assert.match(lock, /public\.share_invites_used\(host\) >= 2 then raise exception/);
   assert.match(lock, /insert into public\.share_admissions \(account, owner, token\) values \(new\.id, host, tok\);/);
   assert.ok(lock.indexOf('insert into public.share_admissions') < today, 'the admission rolls back with a refusal of the day');

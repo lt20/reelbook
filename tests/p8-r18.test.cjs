@@ -198,11 +198,9 @@ test('R18: without navigator.share the message is copied; closed by the person: 
   assert.equal(p3.element('share-toast').textContent, 'Select the message and copy it');
 });
 
-test('R18: no Share in the ⋯ of a sheet or a notebook; the session ⋯ keeps it first', async () => {
+test('R18: no Share in the ⋯ of a notebook; the session ⋯ keeps it first (P12: a sheet ⋯ has it first too, tests/share-partner.test.cjs)', async () => {
   const page = await open('#session/routine', {extra: {session_shares: []}});
   assert.match(await menu(page), /<div class="nav-list"><button type="button" class="nav-it" id="nav-share">Share<\/button>/);
-  const sheet = await open('#curl');
-  assert.doesNotMatch(await menu(sheet), /nav-share|>Share</);
   const nb = await open('#strength');
   assert.doesNotMatch(await menu(nb), /nav-share|>Share</);
 });

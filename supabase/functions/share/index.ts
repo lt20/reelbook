@@ -2,6 +2,8 @@
 //   GET  ?token=        the session's title, notebook, sender's first name and number of exercises (anon key or user);
 //   POST {token, dry_run: true}   what the recipient's sheet shows (signed in);
 //   POST {token, notebook?}       copies the session, its sheets and their photos into the caller's account.
+// P12: a link may hold one sheet instead (session_shares.sheet_id): the same three calls for that sheet (kind 'sheet').
+// Deployed before or after the P12 schema: without sheet_id, every link is read as a session's, as before.
 // The logic, tested without a network, is in core.ts; store.ts reads and writes with the service role
 // (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set by Supabase in every Edge Function).
 //

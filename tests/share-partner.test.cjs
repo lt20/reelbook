@@ -35,8 +35,8 @@ const submit = async page => { await page.element('share-form').listeners.submit
 const writesOf = (page, table) => page.clients[0].calls.filter(c => c[1] === table);
 
 // P8 R18: the message (English and French), the first name, the states of the sheet: tests/p8-r18.test.cjs.
-test('R11: a sheet or a notebook has no Share at all (sessions only, P8 R18)', async () => {
-  for (const hash of ['#strength', '#curl']) {
+test('R11: a notebook has no Share at all (P12: a sheet has, below)', async () => {
+  for (const hash of ['#strength']) {
     const page = await open(hash, {extra: {session_shares: []}});
     await page.fire('nav-more');
     assert.doesNotMatch(page.element('nav-actions').innerHTML, /nav-share/, hash);
@@ -92,10 +92,10 @@ test('R11: « Laurent sent you a session » — the exercises, « You have it »
   assert.match(h, /You get your own copy: the sheets with their photos, and the session\. Laurent(&#39;|')s notes and log stay private\./);
   assert.match(h, /<button class="btn" type="button" id="recv-add">Add to my Reelbook<\/button><button class="btn quiet" type="button" id="recv-no">Not now<\/button>/);
   assert.doesNotMatch(h, /<img/);
-  assert.deepEqual(page.invoked, [['share', {token: TOKEN, dry_run: true}]]);
+  assert.deepEqual(page.invoked, [['share', {token: TOKEN, dry_run: true, accepts: ['session', 'sheet']}]]);
   page.element('recv-nb').value = 'strength';
   await page.fire('recv-add'); await settle();
-  assert.deepEqual(page.invoked[1], ['share', {token: TOKEN, notebook: 'strength'}]);
+  assert.deepEqual(page.invoked[1], ['share', {token: TOKEN, notebook: 'strength', accepts: ['session', 'sheet']}]);
   assert.equal(page.location.hash, '#session/kicks');
   assert.equal(page.element('r11-toast').textContent, 'Added to MMA');
 });
@@ -195,5 +195,99 @@ test('R11 (Codex #114 pass 3): the sheet painted for A, then B signs in — it c
   await settle();
   assert.equal(page.element('recv-dlg').open, false);
   await page.fire('recv-add'); await settle();
-  assert.deepEqual(page.invoked, [['share', {token: TOKEN, dry_run: true}]], 'no copy asked for B by the sheet opened as A');
+  assert.deepEqual(page.invoked, [['share', {token: TOKEN, dry_run: true, accepts: ['session', 'sheet']}]], 'no copy asked for B by the sheet opened as A');
+});
+
+// ---------- P12: one sheet sent to a training partner ----------
+test('P12: the message of one sheet, English and French (non-breaking spaces as the session text)', () => {
+  assert.equal(RS.sheetPartnerText({sender: 'laurent', title: 'Hammer curl', url: 'https://x.test/#s-' + TOKEN, lang: 'en'}),
+    `Laurent is sharing the sheet “Hammer curl” with you. Open it in Reelbook: https://x.test/#s-${TOKEN}`);
+  assert.equal(RS.sheetPartnerText({sender: 'Laurent', title: 'Fente avant', url: 'https://x.test/#s-' + TOKEN, lang: 'fr'}),
+    `Laurent vous partage la fiche « Fente avant ». Ouvrez-la dans Reelbook : https://x.test/#s-${TOKEN}`);
+  assert.equal(RS.missingColumn({code: '42703'}), true); assert.equal(RS.missingColumn({code: 'PGRST204'}), true);
+  assert.equal(RS.missingColumn({code: '42P01'}), false); assert.equal(RS.missingColumn(null), false);
+});
+
+const openP12 = async (hash, opts = {}) => {
+  const page = await app({remembered: {mode: 'own', url: ownUrl, key: ownKey}, sessions: {[ownUrl]: user(opts.meta)}, tables: tables(opts.extra), failing: {}, writes: opts.writes || {},
+    missing: opts.missing || [], hash, dom: true, nav: opts.nav || {}, timerCap: 1000, href: 'https://lt20.github.io/reelbook/', auth: () => ({async updateUser(a) { page.updated = a; return {data: {user: user({...opts.meta, ...a.data})}, error: null}; }})});
+  await settle(); return page;
+};
+const menuOf = async page => { await page.fire('nav-more'); await settle(); return page.element('nav-actions').innerHTML; };
+
+test('P12: « Share » is the first item of a sheet ⋯ (a notebook still has none); once shared, « Stop sharing » revokes the sheet link', async () => {
+  const page = await openP12('#curl', {extra: {session_shares: [{token: TOKEN, session_slug: null, sheet_slug: 'curl'}]}});
+  const h = await menuOf(page);
+  assert.match(h, /<div class="nav-list"><button type="button" class="nav-it" id="nav-share">Share<\/button><button type="button" class="nav-it" id="sheet-unshare">Stop sharing<small>The link stops working\. Copies already made stay with their owners\.<\/small><\/button><button type="button" class="nav-it" id="mv-open">Move/);
+  clickIn(page, 'nav-actions', '#sheet-unshare'); await settle();
+  const w = writesOf(page, 'session_shares');
+  assert.equal(w.length, 1); assert.equal(w[0][0], 'update'); assert.ok(w[0][2].revoked_at); assert.deepEqual(w[0][3], [['sheet_slug', 'curl']]);
+  assert.equal(page.element('r11-toast').textContent, 'Sharing stopped');
+  const nb = await openP12('#strength', {extra: {session_shares: []}});
+  assert.doesNotMatch(await menuOf(nb), /nav-share/);
+});
+
+test('P12: a backend without the sheet columns — the sheet Share is listed, disabled, « Coming soon on this Reelbook »; a session is sent as before', async () => {
+  const shared = [];
+  const sheet = await openP12('#curl', {missing: ['session_shares.sheet_slug'], extra: {session_shares: []}});
+  assert.match(await menuOf(sheet), /<div class="nav-list"><button type="button" class="nav-it" id="nav-share" disabled>Share<small>Coming soon on this Reelbook<\/small><\/button>/);
+  assert.equal(sheet.element('r11-toast').hidden, true, 'no visible error');
+  const ses = await openP12('#session/routine', {meta: {share_name: 'Léa'}, missing: ['session_shares.sheet_slug'], extra: {session_shares: [{token: TOKEN, session_slug: 'routine'}]}, nav: {share: async d => { shared.push(d); }}});
+  assert.match(await menuOf(ses), /id="nav-share">Share<\/button><button type="button" class="nav-it" id="ses-unshare">Stop sharing/);
+  await share(ses); await submit(ses);
+  assert.equal(shared[0].text, `Léa is sharing the session “Routine” with you (2 exercises). Open it in Reelbook: https://lt20.github.io/reelbook/#s-${TOKEN}`);
+});
+
+test('P12: the sheet Share sheet — « Send “<title>” to a training partner », the first name, the link made for the sheet, the message', async () => {
+  const shared = [];
+  const page = await openP12('#curl', {meta: {share_name: 'Léa'}, extra: {session_shares: []}, writes: {session_shares: {data: {token: TOKEN}, error: null}}, nav: {share: async d => { shared.push(d); }}});
+  await share(page);
+  const h = page.element('share-dlg').innerHTML;
+  assert.match(h, /<h2 id="share-h">Send “Hammer curl” to a training partner<\/h2>/);
+  assert.equal(page.element('share-why').textContent, 'They get their own copy of the sheet, even without an account.');
+  assert.equal(page.element('share-send').disabled, false);
+  await submit(page);
+  const w = writesOf(page, 'session_shares');
+  assert.deepEqual(JSON.parse(JSON.stringify(w.map(x => [x[0], x[2]]))), [['insert', {sheet_slug: 'curl', sender_name: 'Léa'}]]);
+  assert.equal(shared[0].text, `Léa is sharing the sheet “Hammer curl” with you. Open it in Reelbook: https://lt20.github.io/reelbook/#s-${TOKEN}`);
+});
+
+test('P12: a French sheet is sent with the French message', async () => {
+  const shared = [];
+  const extra = {session_shares: [{token: TOKEN, sheet_slug: 'fente'}]};
+  const page = await openP12('#fente', {meta: {share_name: 'Léa'}, extra: {...extra, sheets: [...tables().sheets,
+    {slug: 'fente', kind: 'sheet', theme: 'strength', group: 'Jambes', title: 'Fente avant', summary: 'Une fente pour les jambes et le dos, avec le genou dans l’axe.', html: '<h1>Fente avant</h1>', exercises: [], added_at: '2026-10-03T10:00:00Z'}]},
+  nav: {share: async d => { shared.push(d); }}});
+  await share(page); await submit(page);
+  assert.equal(shared[0].text, `Léa vous partage la fiche « Fente avant ». Ouvrez-la dans Reelbook : https://lt20.github.io/reelbook/#s-${TOKEN}`);
+});
+
+test('P12: « Laurent sent you a sheet » — no exercise count, the credit, Into, the privacy line; Add copies it and opens the sheet', async () => {
+  const preview = {kind: 'sheet', sender_name: 'Laurent', title: 'Switch kick', count: 1, notebook: {id: 'fight', title: 'MMA'}, copy: null,
+    items: [{title: 'Switch kick', dose: '', author: '@kick', have: false, mine: null}]};
+  const page = await received(body => body.dry_run ? {data: preview, error: null} : {data: {kind: 'sheet', slug: 'switch-kick', notebook: {id: 'fight', title: 'MMA'}, existing: false}, error: null});
+  const h = page.element('recv-dlg').innerHTML;
+  assert.match(h, /<p class="recv-over">From Laurent<\/p><h2 id="recv-h">Laurent sent you a sheet<\/h2>/);
+  assert.match(h, /<span class="recv-t">Switch kick<\/span><span class="recv-meta">MMA<\/span>/);
+  assert.doesNotMatch(h, /exercise|session|<img/);
+  assert.match(h, /Video by @kick/);
+  assert.match(h, /<option value="fight" selected>MMA \(new notebook\)<\/option>/);
+  assert.match(h, /You get your own copy: the sheet with its photos\. Laurent(&#39;|')s notes and log stay private\./);
+  page.element('recv-nb').value = 'fight'; // the option selected (the harness does not read it from the markup)
+  await page.fire('recv-add'); await settle();
+  assert.deepEqual(page.invoked[1], ['share', {token: TOKEN, notebook: 'fight', accepts: ['session', 'sheet']}]);
+  assert.equal(page.location.hash, '#switch-kick');
+  assert.equal(page.element('r11-toast').textContent, 'Added to MMA');
+});
+
+test('P12: a sheet she already has — « You already have it », and « Open it » opens hers', async () => {
+  const preview = {kind: 'sheet', sender_name: 'Laurent', title: 'Hammer curl', count: 1, notebook: {id: 'strength', title: 'Strength'},
+    items: [{title: 'Hammer curl', dose: '', author: '', have: true, mine: 'Hammer curl'}], copy: {slug: 'curl', notebook: 'strength'}};
+  const page = await received(() => ({data: preview, error: null}));
+  const h = page.element('recv-dlg').innerHTML;
+  assert.match(h, /You already have it\./);
+  assert.doesNotMatch(h, /recv-add|recv-nb/);
+  await page.fire('recv-open'); await settle();
+  assert.equal(page.location.hash, '#curl');
+  assert.deepEqual(page.invoked, [['share', {token: TOKEN, dry_run: true, accepts: ['session', 'sheet']}]], 'nothing copied');
 });

@@ -14,6 +14,13 @@ const check = <T>(r: { data: T; error: any }): T => {
   return r.data;
 };
 
+// A column the table does not have yet: Postgres' « column does not exist », or PostgREST's « not in the schema cache ».
+// deno-lint-ignore no-explicit-any
+export const noColumn = (e: any): boolean => {
+  const c = String((e && e.code) || '');
+  return c === '42703' || c === 'PGRST204';
+};
+
 export function supabaseStore(client: Client): Store {
   const db = (t: string) => client.from(t);
   const bucket = () => client.storage.from('sheets');
@@ -22,14 +29,27 @@ export function supabaseStore(client: Client): Store {
       const { data, error } = await client.auth.getUser(jwt);
       return error || !data || !data.user ? null : String(data.user.id);
     },
+    // P12: with sheet_id; a table without that column (the function deployed before schema.sql is re-run) answers
+    // 42703, and the row is read as before: a session's link opens as today.
     async share(token) {
-      return check(await db('session_shares').select('token,owner,session_id,sender_name,revoked_at').eq('token', token).maybeSingle()) as Share | null;
+      const r = await db('session_shares').select('token,owner,session_id,sheet_id,sender_name,revoked_at').eq('token', token).maybeSingle();
+      if (r.error && noColumn(r.error)) {
+        return check(await db('session_shares').select('token,owner,session_id,sender_name,revoked_at').eq('token', token).maybeSingle()) as Share | null;
+      }
+      return check(r) as Share | null;
     },
     async session(owner, id) {
       return check(await db('sessions').select('*').eq('user_id', owner).eq('id', id).maybeSingle()) as Row | null;
     },
     async sheets(owner, slugs) {
       return (check(await db('sheets').select('*').eq('user_id', owner).in('slug', slugs)) || []) as Row[];
+    },
+    async sheet(owner, id) {
+      return check(await db('sheets').select('*').eq('user_id', owner).eq('id', id).maybeSingle()) as Row | null;
+    },
+    async sheetCopyOf(uid, token) {
+      const rows = check(await db('sheets').select('id,slug,theme,title,source').eq('user_id', uid).eq('source->>share', token).limit(1)) as Row[] | null;
+      return rows && rows.length ? rows[0] : null;
     },
     async theme(owner, id) {
       return check(await db('user_themes').select('id,title,description,groups,builtin,position').eq('user_id', owner).eq('id', id).maybeSingle()) as Theme | null;
@@ -68,6 +88,10 @@ export function supabaseStore(client: Client): Store {
     async insertSheet(row) { check(await db('sheets').insert(row)); },
     // One statement: « delete … where id = <observed> and share_state = 'copying' » — a copy finished meanwhile stays.
     async dropReservation(uid, id) { check(await db('sessions').delete().eq('user_id', uid).eq('id', id).eq('source->>share_state', 'copying')); },
+    async endReservation(uid, id) {
+      const rows = check(await db('sessions').delete().eq('user_id', uid).eq('id', id).eq('source->>share_state', 'copying').select('id')) as Row[] | null;
+      return !!(rows && rows.length);
+    },
     async deleteSheets(uid, slugs) { check(await db('sheets').delete().eq('user_id', uid).in('slug', slugs)); },
     async copyFile(from, to) { check(await bucket().copy(from, to)); },
     async removeFiles(paths) { check(await bucket().remove(paths)); },

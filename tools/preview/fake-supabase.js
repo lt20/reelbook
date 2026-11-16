@@ -31,6 +31,9 @@
 //   ?share=own   the link is one of this account's own · ?share=done  already copied once
 //   ?missing=session_shares  a backend without the table and the function (the share row says « Coming soon »)
 //   ?name        the account already has its share name (user_metadata.share_name = Laurent)
+// P12, a link to one sheet: #s-PREVIEWsheetToken00001 (with ?share) is the first of the two sheets above, alone (GET and
+//   dry run answer kind 'sheet'); ?share=have keeps that sheet in the account (« You already have it »);
+//   ?missing=session_shares.sheet_slug  a backend before P12 (the sheet's Share says « Coming soon on this Reelbook »)
 // R12, the same link signed out (?noauth&share&#s-PREVIEWshareToken00001): the GET (functions.invoke('share?token=…'))
 //   answers the title only; ?invites=<n>  share_invites and my_invites answer {left: n} (absent: PGRST202, no invite line);
 //   with ?seats=50 the beta is full (the invite line, or the waiting list with ?invites=0)
@@ -58,7 +61,8 @@
   // in files/, so the copy shows them under the same slugs); the session that held them goes too.
   const SHARE_TOKEN = 'PREVIEWshareToken00001', SENT = ['session-shadow-garde', 'session-shadow-esquives'];
   const pool = allSheets.filter(r => SENT.includes(r.slug));
-  if (params.has('share')) { // without it, the account's data stay as the other lots' captures know them
+  const SHEET_TOKEN = 'PREVIEWsheetToken00001'; // P12
+  if (params.has('share') && params.get('share') !== 'have') { // without it, the account's data stay as the other lots' captures know them
     D.sheets = (D.sheets || []).filter(r => !SENT.includes(r.slug));
     D.sessions = (D.sessions || []).filter(s => !(s.items || []).some(i => SENT.includes(i.slug)));
   }
@@ -67,9 +71,23 @@
     items: [[jab, '3 × 1 min'], [pool[0], '3 × 8'], [pool[1], '2 × 10']].filter(x => x[0])};
   let copied = params.get('share') === 'done' ? 'shadow-boxing-du-mardi' : null;
   const fnAnswer = (status, body) => ({data: null, error: Object.assign(new Error('Edge Function returned a non-2xx status code'), {name: 'FunctionsHttpError', context: new Response(JSON.stringify(body), {status})})});
+  // P12: the one sheet of SHEET_TOKEN (dry run, copy, « existing » when the account has it)
+  const invokeSheet = async body => {
+    const one = pool[0], mine = D.sheets.find(x => x.slug === one.slug);
+    if (!signedIn) return fnAnswer(401, {error: 'signin', message: 'Sign in to Reelbook to add this session.'});
+    if (body.dry_run) return {data: {kind: 'sheet', sender_name: sent.sender, title: one.title, count: 1, notebook: sent.notebook,
+      items: [{title: one.title, dose: '', author: (one.source || {}).author || '', have: !!mine, mine: mine ? mine.title : null}],
+      copy: mine ? {slug: mine.slug, notebook: mine.theme} : null}, error: null};
+    if (mine) return {data: {kind: 'sheet', slug: mine.slug, notebook: sent.notebook, existing: true}, error: null};
+    const nb = body.notebook || 'fight';
+    if (!(D.user_themes || []).some(t => t.id === nb)) D.user_themes.push({id: nb, title: sent.notebook.title, description: '', groups: [], builtin: true, position: 9, created_at: now()});
+    D.sheets.push({...clone(one), theme: nb, source: {...(one.source || {}), share: SHEET_TOKEN, shared_by: sent.sender}, added_at: now()});
+    return {data: {kind: 'sheet', slug: one.slug, notebook: {id: nb, title: ((D.user_themes || []).find(t => t.id === nb) || {}).title || sent.notebook.title}, existing: false, kept: 0, copied: 1}, error: null};
+  };
   const invokeShare = async body => {
     await new Promise(r => setTimeout(r, 150));
     if (missing.has('session_shares')) return fnAnswer(404, {code: 'NOT_FOUND', message: 'Requested function was not found'});
+    if (body && body.token === SHEET_TOKEN && params.has('share') && pool[0]) return invokeSheet(body);
     if (!body || body.token !== SHARE_TOKEN || params.get('share') === 'gone') return fnAnswer(404, {error: 'not_found', message: 'This link no longer works. Ask for a new one.'});
     if (!signedIn) return fnAnswer(401, {error: 'signin', message: 'Sign in to Reelbook to add this session.'});
     if (params.get('share') === 'own') return fnAnswer(409, {error: 'own', message: 'This session is already yours.'});
@@ -92,8 +110,9 @@
   const previewShare = async token => {
     await new Promise(r => setTimeout(r, 150));
     if (missing.has('session_shares')) return fnAnswer(404, {code: 'NOT_FOUND', message: 'Requested function was not found'});
+    if (token === SHEET_TOKEN && params.has('share') && pool[0]) return {data: {kind: 'sheet', sender_name: sent.sender, title: pool[0].title, notebook_title: sent.notebook.title, count: 1}, error: null}; // P12
     if (token !== SHARE_TOKEN || params.get('share') === 'gone') return fnAnswer(404, {error: 'not_found', message: 'This link no longer works. Ask for a new one.'});
-    return {data: {sender_name: sent.sender, title: sent.title, notebook_title: sent.notebook.title, count: sent.items.length}, error: null};
+    return {data: {kind: 'session', sender_name: sent.sender, title: sent.title, notebook_title: sent.notebook.title, count: sent.items.length}, error: null};
   };
   if (params.has('links')) D.requests = (D.requests || []).filter(r => r.status !== 'done').slice(0, Number(params.get('links')) || 0).map(r => ({...r, status: 'queued', note: null, processed_at: null}));
   // P8 R20: fixes of two sheets of the fixtures (pompes-inclinees, jab-cross), queued an hour ago

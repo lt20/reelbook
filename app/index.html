@@ -2284,7 +2284,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
 
 <script src="vendor/supabase.js?v=2"></script>
 <script src="config.js?v=14"></script>
-<script src="sessions.js?v=18"></script>
+<script src="sessions.js?v=19"></script>
 <script src="sheet.js?v=10"></script>
 <script src="landing.js?v=15"></script>
 <script>
@@ -7199,8 +7199,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     return one ? {title: one, up: [t.id, t.title], nb: t, upNb: t} : {title: t.title, up: ['', 'Reelbook'], nb: t, menu: themeById.has(t.id)};
   };
   // The « ⋯ » menu of a sheet or session page. An action this page cannot do stays listed, greyed, with the reason.
-  // R6: « Share » comes first. P8 R18: on a session page only (it sends the session to a training partner); a sheet's
-  // and a notebook's menus have no Share (a sheet alone cannot be sent yet: session_shares knows only sessions).
+  // R6: « Share » comes first. P8 R18: on a session page it sends the session to a training partner; P12: on a sheet
+  // page, that one sheet (never on a page of kind 'session', nor in a notebook's menu). A backend without the sheet
+  // columns of session_shares lists the sheet's Share greyed: « Coming soon on this Reelbook ».
   const shareIt = '<button type="button" class="nav-it" id="nav-share">Share</button>';
   const closeIt = '<div class="actions"><button class="btn ghost" type="button" id="nav-close">Close</button></div>';
   const menuNotebook = () => { const p = view.hidden ? navPage() : null; return p && p.nb && p.menu ? p.nb : null; };
@@ -7212,8 +7213,9 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (!x) return '';
     const it = (id, label, cls = '', why = '') => `<button type="button" class="nav-it${cls}" id="${id}"${why ? ' disabled' : ''}>${label}${why ? `<small>${why}</small>` : ''}</button>`;
     const wake = wakeApi() ? `<button type="button" class="nav-it wake" id="wake" aria-pressed="${wakeWanted()}">Keep screen on</button>` : it('wake', 'Keep screen on', '', 'Not available in this browser');
-    return `<h2 id="nav-actions-h">${esc(x.title)}</h2><div class="nav-list">` + (s ? shareIt : '')
-      + (s && sharedNow(s.slug) ? `<button type="button" class="nav-it" id="ses-unshare">Stop sharing<small>The link stops working. Copies already made stay with their owners.</small></button>` : '')
+    const one = e && e.kind !== 'session'; // P12: a sheet can be sent
+    return `<h2 id="nav-actions-h">${esc(x.title)}</h2><div class="nav-list">` + (s ? shareIt : one ? it('nav-share', 'Share', '', sheetShareSoon() ? 'Coming soon on this Reelbook' : '') : '')
+      + ((s && sharedNow(s.slug)) || (one && sheetSharedNow(e.slug)) ? `<button type="button" class="nav-it" id="${s ? 'ses-unshare' : 'sheet-unshare'}">Stop sharing<small>The link stops working. Copies already made stay with their owners.</small></button>` : '')
       + (s ? it('ed-open', 'Edit') : '') + it('mv-open', 'Move') + (e && sessionsOk ? it('as-open', 'Add to session') : '') + wake
       + it('nav-report', 'Something wrong?', '', httpUrl((x.source || {}).url) ? '' : 'No source video')
       + it(s ? 'ses-delete' : 'sd-open', s ? 'Delete session' : 'Delete sheet', ' danger') + '</div>' + closeIt;
@@ -7312,15 +7314,16 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   });
   navMore.addEventListener('click', () => {
     paintMenu(); if (!navMenu.open) openSheet(navMenu);
-    if (shownSession()) readShares().then(() => { if (navMenu.open) paintMenu(); }); // R11: « Stop sharing » once known
+    if (shownSession() || shownSheet()) readShares().then(() => { if (navMenu.open) paintMenu(); }); // R11, P12: « Stop sharing » once known
   });
-  const MENU = ['#nav-share', '#ses-unshare', '#nav-kind', '#nav-nb-delete', '#ed-open', '#mv-open', '#as-open', '#wake', '#nav-report', '#sd-open', '#ses-delete', '#nav-close'];
+  const MENU = ['#nav-share', '#ses-unshare', '#sheet-unshare', '#nav-kind', '#nav-nb-delete', '#ed-open', '#mv-open', '#as-open', '#wake', '#nav-report', '#sd-open', '#ses-delete', '#nav-close'];
   wireSheet(navMenu);
   navMenu.addEventListener('click', ev => {
     const hit = ev.target.closest ? MENU.find(sel => ev.target.closest(sel)) : null; if (!hit) return;
     if (hit !== '#wake') closeSheet(navMenu); // Keep screen on switches in place
     if (hit === '#nav-share') openShare();
     else if (hit === '#ses-unshare') stopSharing(RS.sessionSlugOf(shown));
+    else if (hit === '#sheet-unshare') stopSharing(shown, 'sheet');
     else if (hit === '#nav-kind') openKind(menuNotebook());
     else if (hit === '#nav-nb-delete') deleteNotebook(menuNotebook());
     else if (hit !== '#nav-close') pageAction(ev);
@@ -7404,14 +7407,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const shareDlg = $('share-dlg');
   const LOCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const frOr = texts => RS.isFrench(texts.filter(t => typeof t === 'string').join(' \n ')) ? 'fr' : 'en';
-  let shareGen = 0, partnerFor = '', shareOpens = 0; // partnerFor (R11): the session whose Share sheet is open; shareOpens: its openings
+  let shareGen = 0, partnerFor = '', shareOpens = 0; // partnerFor (R11, P12): « session/<slug> » or « sheet/<slug> », whose Share sheet is open; shareOpens: its openings
   const shareSay = msg => {
     const t = $('share-toast'), g = ++shareGen; t.textContent = msg; t.hidden = false;
     setTimeout(() => { if (g === shareGen) { t.hidden = true; t.textContent = ''; } }, 2500);
   };
+  // P12: what the Share sheet sends: the session shown, or the sheet shown ({kind, slug, title, x: its row}).
+  const tSession = s => s ? {kind: 'session', slug: s.slug, title: s.title, x: s} : null;
+  const tSheet = e => e && e.kind !== 'session' ? {kind: 'sheet', slug: e.slug, title: e.title, x: e} : null;
+  const tKey = t => `${t.kind}/${t.slug}`;
   const openShare = () => {
-    const s = view.hidden || edit ? null : shownSession(); if (!s) return;
-    partnerFor = s.slug; const opened = ++shareOpens;
+    const s = view.hidden || edit ? null : (tSession(shownSession()) || tSheet(shownSheet())); if (!s) return;
+    partnerFor = tKey(s); const opened = ++shareOpens;
     const why = partnerWhy(s);
     shareDlg.innerHTML = `<div class="share-top"><h2 id="share-h">Send “${esc(s.title)}” to a training partner</h2><button type="button" class="share-x" id="share-close" aria-label="Close">✕</button></div>
       <form class="share-form" id="share-form" novalidate>
@@ -7428,7 +7435,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     $('share-form').addEventListener('submit', ev => { ev.preventDefault(); sendToPartner(s); });
     // Codex #126 pass 3: the link known before this opening may have been revoked since (another tab, another device);
     // only a read made for this opening lets « Send » reuse it without asking the database again
-    readShares().then(() => { if (shareOpens === opened) sharesReadAt = opened; repaintPartner(s.slug); });
+    readShares().then(() => { if (shareOpens === opened) sharesReadAt = opened; repaintPartner(tKey(s)); });
     openSheet(shareDlg);
   };
 
@@ -7447,38 +7454,53 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   };
   const INFO = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
   const CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 12 5 5 9-10"/></svg>';
-  // shares: this account's live tokens by session slug; ok: false on a backend without the table, null until read.
-  let shares = {uid: null, client: null, ok: null, bySlug: new Map()};
-  const sharedNow = slug => !!(user && shares.uid === user.id && shares.client === sb && shares.bySlug.has(slug));
+  // shares: this account's live tokens by session slug (bySlug) and, P12, by sheet slug (bySheet); ok: false on a
+  // backend without the table, null until read; sheets: false on a table without the sheet columns (the app is
+  // deployed before the schema: a sheet's Share is « Coming soon », a session's works as before).
+  let shares = {uid: null, client: null, ok: null, sheets: null, bySlug: new Map(), bySheet: new Map()};
+  const sharesNow = () => !!(user && shares.uid === user.id && shares.client === sb);
+  const sharedNow = slug => sharesNow() && shares.bySlug.has(slug);
+  const sheetSharedNow = slug => sharesNow() && shares.bySheet.has(slug);
+  const sheetShareSoon = () => sharesNow() && (shares.ok === false || shares.sheets === false);
   const readShares = async () => {
     if (!user || !sb) return;
     const uid = user.id, client = sb;
-    let ok = true; const by = new Map();
+    let ok = true, sheetsOk = true; const by = new Map(), bySheet = new Map();
     try {
-      const {data, error, status} = await client.from('session_shares').select('token,session_slug').is('revoked_at', null);
-      if (error) ok = !RS.missingTable(error, status); // another error: the row stays on, the tap says what failed
-      else for (const r of data || []) by.set(r.session_slug, r.token);
+      let r = await client.from('session_shares').select('token,session_slug,sheet_slug').is('revoked_at', null);
+      if (r.error && RS.missingColumn(r.error)) { // P12: no sheet columns yet
+        sheetsOk = false;
+        r = await client.from('session_shares').select('token,session_slug').is('revoked_at', null);
+      }
+      const {data, error, status} = r;
+      if (error) { ok = !RS.missingTable(error, status); if (!ok) sheetsOk = false; } // another error: the row stays on, the tap says what failed
+      else for (const x of data || []) if (x.sheet_slug) bySheet.set(x.sheet_slug, x.token); else by.set(x.session_slug, x.token);
     } catch {}
     if (!user || user.id !== uid || client !== sb) return;
-    shares = {uid, client, ok, bySlug: by};
+    shares = {uid, client, ok, sheets: sheetsOk, bySlug: by, bySheet};
   };
+  const sharesOf = kind => kind === 'sheet' ? shares.bySheet : shares.bySlug;
   const shareName = () => String((user && user.user_metadata && user.user_metadata.share_name) || '').trim();
   // Why this session cannot be sent yet ('' when it can): the backend has no session_shares, the shares are still being
   // read, or the session has no exercise.
-  const partnerWhy = s => {
-    const known = user && shares.uid === user.id && shares.client === sb ? shares.ok : null;
+  // P12: a sheet, on a table without the sheet columns: « Sending a sheet … is coming soon ».
+  const partnerWhy = t => {
+    const known = sharesNow() ? shares.ok : null;
+    if (t.kind === 'sheet') return known === false || (known !== null && shares.sheets === false) ? 'Sending a sheet to a training partner is coming soon on this Reelbook.' : known === null ? 'Checking…' : '';
     return known === false ? 'Sending a session to a training partner is coming soon on this Reelbook.'
-      : known === null ? 'Checking…' : !RS.resolveItems(s, bySlug).length ? 'This session has no exercise yet. Add one, then send it.' : '';
+      : known === null ? 'Checking…' : !RS.resolveItems(t.x, bySlug).length ? 'This session has no exercise yet. Add one, then send it.' : '';
   };
-  const partnerLine = s => `They get their own copy of the ${plural(RS.resolveItems(s, bySlug).length, 'sheet')} and the session, even without an account.`;
+  const partnerLine = t => t.kind === 'sheet' ? 'They get their own copy of the sheet, even without an account.'
+    : `They get their own copy of the ${plural(RS.resolveItems(t.x, bySlug).length, 'sheet')} and the session, even without an account.`;
   const paintPartner = s => {
     const why = partnerWhy(s), lead = $('share-why'), go = $('share-send');
     if (lead) { lead.textContent = why || partnerLine(s); lead.className = 'share-lead' + (why ? ' why' : ''); }
     if (go) go.disabled = !!why;
   };
-  const repaintPartner = slug => {
-    if (!shareDlg.open || partnerFor !== slug || shareBusy) return;
-    const s = v2BySlug.get(slug); if (s) paintPartner(s);
+  const repaintPartner = key => {
+    if (!shareDlg.open || partnerFor !== key || shareBusy) return;
+    const [kind, ...rest] = key.split('/'), slug = rest.join('/');
+    const t = kind === 'sheet' ? tSheet(bySlug.get(slug)) : tSession(v2BySlug.get(slug)); if (t) paintPartner(t);
   };
   let shareBusy = false, sharesReadAt = -1; // shareBusy: the send under way (its lock); sharesReadAt: see openShare
   const partnerSay = msg => { const e = $('share-partner-err'); if (e) { e.textContent = msg || ''; e.hidden = !msg; } };
@@ -7498,19 +7520,21 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       return true;
     } catch { return false; }
   };
-  // The session's live token: the one already made, or a new one (two at once: the unique index keeps one).
-  const shareToken = async (slug, name, who) => {
+  // The session's (P12: or the sheet's) live token: the one already made, or a new one (two at once: the unique index
+  // keeps one).
+  const shareToken = async (slug, name, who, kind = 'session') => {
+    const col = kind === 'sheet' ? 'sheet_slug' : 'session_slug';
     const still = () => { if (shareGone(who)) throw new Error(ACCOUNT); };
     const live = async () => {
       still();
-      const {data, error} = await who.client.from('session_shares').select('token').eq('session_slug', slug).is('revoked_at', null).limit(1);
+      const {data, error} = await who.client.from('session_shares').select('token').eq(col, slug).is('revoked_at', null).limit(1);
       still();
       if (error) throw error;
       return data && data[0] ? data[0].token : null;
     };
     const had = await live(); if (had) return had;
     still();
-    const {data, error} = await who.client.from('session_shares').insert({session_slug: slug, sender_name: name}).select('token').single();
+    const {data, error} = await who.client.from('session_shares').insert({[col]: slug, sender_name: name}).select('token').single();
     still();
     if (!error && data && data.token) return data.token;
     if (error && error.code === '23505') { const t = await live(); if (t) return t; }
@@ -7535,15 +7559,17 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     const go = $('share-send'); if (go) go.disabled = true;
     const ready = () => { if (here()) { const g = $('share-send'); if (g) g.disabled = !!partnerWhy(s); } else if (shareDlg.open && !shareBusy) repaintPartner(partnerFor); };
     try {
-      let token = sharesReadAt === opened && shares.uid === who.uid && shares.client === who.client ? shares.bySlug.get(s.slug) : null;
+      let token = sharesReadAt === opened && shares.uid === who.uid && shares.client === who.client ? sharesOf(s.kind).get(s.slug) : null;
       if (!token) {
-        try { token = await shareToken(s.slug, name, who); }
+        try { token = await shareToken(s.slug, name, who, s.kind); }
         catch (e) { if (here() && !shareGone(who) && !(e && e.message === ACCOUNT)) partnerSay('Reelbook could not make the link. Check the connection and try again.'); return; }
       }
       if (shareGone(who) || !here()) return;
-      if (shares.uid === who.uid) shares.bySlug.set(s.slug, token);
+      if (shares.uid === who.uid) sharesOf(s.kind).set(s.slug, token);
       const saving = name === shareName() ? null : saveShareName(name, who);
-      const text = RS.sharePartnerText({sender: name, title: s.title, count: RS.resolveItems(s, bySlug).length, url: `${appUrl()}#s-${token}`, lang: RS.sessionLang(s)});
+      const url = `${appUrl()}#s-${token}`;
+      const text = s.kind === 'sheet' ? RS.sheetPartnerText({sender: name, title: s.title, url, lang: sheetShareLang(s.x)})
+        : RS.sharePartnerText({sender: name, title: s.title, count: RS.resolveItems(s.x, bySlug).length, url, lang: RS.sessionLang(s.x)});
       const how = await sendLink(s.title, text, () => here() && !shareGone(who));
       free(); ready();
       const saved = saving ? await saving : true;
@@ -7570,11 +7596,18 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       shareSay('Select the message and copy it'); return 'shown';
     }
   };
-  const stopSharing = async slug => {
+  // P12: the language of a sheet's message: the one its page was drawn in (loadSheet's <div lang>), else its title,
+  // summary and group read by RS.isFrench; French or English.
+  const sheetShareLang = e => {
+    const m = /^<div lang="([A-Za-z]{2})/.exec(String(cache.get(e.slug) || ''));
+    if (m) return m[1].toLowerCase() === 'fr' ? 'fr' : 'en';
+    return RS.isFrench([e.title, e.summary, e.group].filter(v => typeof v === 'string').join(' \n ')) ? 'fr' : 'en';
+  };
+  const stopSharing = async (slug, kind = 'session') => {
     if (!slug || !sb) return;
-    const {error} = await sb.from('session_shares').update({revoked_at: new Date().toISOString()}).eq('session_slug', slug).is('revoked_at', null);
+    const {error} = await sb.from('session_shares').update({revoked_at: new Date().toISOString()}).eq(kind === 'sheet' ? 'sheet_slug' : 'session_slug', slug).is('revoked_at', null);
     if (error) { r11Say('Reelbook could not stop it. Try again.'); return; }
-    if (user && shares.uid === user.id) shares.bySlug.delete(slug);
+    if (user && shares.uid === user.id) sharesOf(kind).delete(slug);
     r11Say('Sharing stopped');
   };
 
@@ -7593,7 +7626,10 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       return {error: 'not_ready', message: CANT}; // the gateway's own answer: no such function here
     } catch { return {error: 'offline', message: 'Reelbook could not reach the server. Check the connection and try again.'}; }
   };
-  const callShare = body => fnShare(sb, 'share', {body});
+  // P12 (Codex pass 1): every POST says this app opens a sheet's link too; the function refuses a sheet's link to an app
+  // that does not say it (made before P12: it would route the copy to a session), and writes nothing.
+  const SHARE_ACCEPTS = ['session', 'sheet'];
+  const callShare = body => fnShare(sb, 'share', {body: {...body, accepts: SHARE_ACCEPTS}});
   let recvGen = 0, recvShown = null; // recvShown: the sender's notebook of the « sent you a session » sheet on screen
   // Codex #114 pass 3: the sheet belongs to the account that opened the link (its generation and user id). Another
   // signed-in user (sign-out, another account) closes it, and its pending answers and buttons do nothing.
@@ -7626,7 +7662,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   const RECV_AGAIN = new Set(['offline', 'not_ready', 'failed', 'signin', 'copying']);
   const openReceived = async (token, done) => {
     const g = ++recvGen, uid = user && user.id; recvShown = null;
-    recvDlg.innerHTML = recvTop('Opening the session…') + '<p class="hint" role="status">One moment.</p>';
+    recvDlg.innerHTML = recvTop('Opening the link…') + '<p class="hint" role="status">One moment.</p>';
     recvWire(); if (!recvDlg.open) openSheet(recvDlg);
     const r = await callShare({token, dry_run: true});
     if (!recvLive(g, uid) || !recvDlg.open) return;
@@ -7634,7 +7670,10 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (done) done();
     paintReceived(token, r.data, g, uid);
   };
+  // P12: a link to one sheet (d.kind 'sheet'): « <sender> sent you a sheet », no exercise count; the sheet she already
+  // has (the copy made from this link, or the same exercise): « You already have it » and « Open it » opens hers.
   const paintReceived = (token, d, g, uid) => {
+    if (d.kind === 'sheet') return paintReceivedSheet(token, d, g, uid);
     const who = String(d.sender_name || 'Someone'), list = Array.isArray(d.items) ? d.items : [];
     const nb = d.notebook && d.notebook.id ? d.notebook : {id: '', title: ''}, mine = themeById.get(nb.id);
     const t = mine || libById.get(nb.id) || (nb.id ? {id: nb.id} : null), color = t ? colorOf(t) : '';
@@ -7664,6 +7703,37 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       if (!recvLive(g, uid)) return;
       closeSheet(recvDlg);
       location.hash = RS.sessionHref(out.slug);
+      r11Say(out.existing ? `Already in ${title || 'your Reelbook'}` : `Added to ${title || 'your Reelbook'}`);
+    }));
+  };
+
+  const paintReceivedSheet = (token, d, g, uid) => {
+    const who = String(d.sender_name || 'Someone'), it = Array.isArray(d.items) && d.items[0] ? d.items[0] : {};
+    const nb = d.notebook && d.notebook.id ? d.notebook : {id: '', title: ''}, mine = themeById.get(nb.id);
+    const t = mine || libById.get(nb.id) || (nb.id ? {id: nb.id} : null), color = t ? colorOf(t) : '';
+    const done = d.copy && d.copy.slug;
+    recvShown = done ? null : nb;
+    recvDlg.innerHTML = recvTop(`${who} sent you a sheet`, `From ${who}`)
+      + `<div class="recv-card"${color ? ` style="--t:${color}"` : ''}><span class="recv-t">${esc(d.title || '')}</span><span class="recv-meta">${esc((mine && mine.title) || nb.title || '')}</span>`
+      + (it.author ? `<ul class="recv-list"><li><span><small>Video by ${esc(it.author)}</small></span></li></ul>` : '') + '</div>'
+      + (done ? `<p class="share-note" style="color:var(--ink)">${INFO}<span>You already have it.</span></p>`
+        : `<label class="recv-into">Into: <select id="recv-nb">${recvOptions(nb, nb.id)}</select></label>`
+        + `<p class="share-note">${LOCK}<span>You get your own copy: the sheet with its photos. ${esc(who)}'s notes and log stay private.</span></p>`)
+      + '<p class="err" id="recv-err" role="alert" hidden></p>'
+      + `<div class="actions">${done ? '<button class="btn" type="button" id="recv-open">Open it</button>' : '<button class="btn" type="button" id="recv-add">Add to my Reelbook</button>'}<button class="btn quiet" type="button" id="recv-no">Not now</button></div>`;
+    recvWire();
+    if (done) { $('recv-open').addEventListener('click', () => { if (!recvLive(g, uid)) return; closeSheet(recvDlg); location.hash = d.copy.slug; }); return; }
+    $('recv-add').addEventListener('click', whileBusy(recvDlg, async () => {
+      if (!recvLive(g, uid)) return;
+      const btn = $('recv-add'), err = $('recv-err'); btn.disabled = true; err.hidden = true;
+      const r = await callShare({token, notebook: $('recv-nb').value});
+      if (!recvLive(g, uid)) return;
+      if (r.error) { btn.disabled = false; err.textContent = r.message; err.hidden = false; return; }
+      const out = r.data, title = (out.notebook && out.notebook.title) || '';
+      await reload({shown: true}).catch(() => {});
+      if (!recvLive(g, uid)) return;
+      closeSheet(recvDlg);
+      location.hash = out.slug;
       r11Say(out.existing ? `Already in ${title || 'your Reelbook'}` : `Added to ${title || 'your Reelbook'}`);
     }));
   };
@@ -7737,13 +7807,13 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     if (!d) {
       full.hidden = true;
       body.innerHTML = gate.err ? `<h1 class="gate-err">${esc(gate.err)}</h1><div class="gate-acts"><button class="btn ghost" type="button" id="gate-home">Go to Reelbook</button></div>`
-        : '<p class="hint" role="status">Opening the session…</p>';
+        : '<p class="hint" role="status">Opening the link…</p>';
       const h = $('gate-home'); if (gate.err && h) h.addEventListener('click', () => leaveGate('in', false));
       return;
     }
-    const who = gateWho(), blocked = gateBlocked();
-    body.innerHTML = `<div class="recv-card gate-card"><p class="recv-over">${esc(who)} sent you a session</p><h1>${esc(d.title || '')}</h1><span class="recv-meta">${esc([d.notebook_title, plural(Number(d.count) || 0, 'exercise')].filter(Boolean).join(' · '))}</span></div>`
-      + `<p class="share-note">${LOCK}<span>The exercises open in your own Reelbook, with their photos.</span></p>`
+    const who = gateWho(), blocked = gateBlocked(), one = d.kind === 'sheet'; // P12: a link to one sheet, no count
+    body.innerHTML = `<div class="recv-card gate-card"><p class="recv-over">${esc(who)} sent you a ${one ? 'sheet' : 'session'}</p><h1>${esc(d.title || '')}</h1><span class="recv-meta">${esc((one ? [d.notebook_title] : [d.notebook_title, plural(Number(d.count) || 0, 'exercise')]).filter(Boolean).join(' · '))}</span></div>`
+      + `<p class="share-note">${LOCK}<span>${one ? 'The sheet opens in your own Reelbook, with its photos.' : 'The exercises open in your own Reelbook, with their photos.'}</span></p>`
       // Codex #118: « I already have an account » in every branch, the waiting list's too (signing in needs no seat)
       + `<div class="gate-acts">${blocked ? '' : '<button class="btn" type="button" id="gate-create">Create my account to open it</button>'}<button class="btn ghost" type="button" id="gate-signin">I already have an account</button>`
         + (!blocked && gate.left > 0 ? `<p class="gate-ok">${CHECK}<span>${esc(who)}’s invite: you skip the waiting list</span></p>` : '') + '</div>';
@@ -7760,17 +7830,17 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
   // The waiting list's promise: the session kept with the address (join_waitlist, five arguments), or, joined without
   // the link, only what holds: the email, and the link itself.
   const paintGateWords = () => {
-    const who = gateWho(), lost = !!gate.token && gateWlLost === gate.token;
-    $('gate-full-p').textContent = lost ? 'Join the waiting list.' : 'Join the waiting list: we’ll keep their session for you.';
-    $('g-wl-ok').textContent = lost ? `When a spot opens we’ll email you. Keep ${who}’s link: it opens their session once you have your account.`
-      : `When a spot opens we’ll email you, and ${who}’s session will be waiting.`;
+    const who = gateWho(), lost = !!gate.token && gateWlLost === gate.token, what = gate.d && gate.d.kind === 'sheet' ? 'sheet' : 'session';
+    $('gate-full-p').textContent = lost ? 'Join the waiting list.' : `Join the waiting list: we’ll keep their ${what} for you.`;
+    $('g-wl-ok').textContent = lost ? `When a spot opens we’ll email you. Keep ${who}’s link: it opens their ${what} once you have your account.`
+      : `When a spot opens we’ll email you, and ${who}’s ${what} will be waiting.`;
   };
   // Off to the sign-up or sign-in screen, the token kept (keep) with what the page showed.
   const leaveGate = (m, keep) => {
     if (keep && gate.token && backend) {
       const d = gate.d || {};
       ls.set(SHARE_KEY, JSON.stringify({token: gate.token, url: backend.url, at: Date.now(), sender: String(d.sender_name || '').trim(), title: String(d.title || ''),
-        notebook: String(d.notebook_title || ''), count: Number(d.count) || 0, invite: gate.left > 0 && gateRefused !== gate.token}));
+        notebook: String(d.notebook_title || ''), count: Number(d.count) || 0, kind: d.kind === 'sheet' ? 'sheet' : 'session', invite: gate.left > 0 && gateRefused !== gate.token}));
     }
     gate = {...GATE0, gen: gate.gen + 1};
     introOpen = false; if (m === 'up') signupBackendChosen = true;
@@ -7814,7 +7884,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
     shareRun = {client, uid, token: p.token};
     const live = () => recvLive(g, uid) && client === sb;
     recvShown = null;
-    recvDlg.innerHTML = recvTop(p.title ? `Adding “${p.title}”…` : 'Adding the session…', p.sender ? `From ${p.sender}` : '') + '<p class="hint" role="status">One moment.</p>';
+    recvDlg.innerHTML = recvTop(p.title ? `Adding “${p.title}”…` : `Adding the ${p.kind === 'sheet' ? 'sheet' : 'session'}…`, p.sender ? `From ${p.sender}` : '') + '<p class="hint" role="status">One moment.</p>';
     recvWire(); if (!recvDlg.open) openSheet(recvDlg);
     const drop = () => { const k = keptShare(); if (k && k.token === p.token) dropShare(); };
     (async () => {
@@ -7833,7 +7903,7 @@ html[lang="fr"] #intro .lp-l2>[lang="en"],html[lang="en"] #intro .lp-l2>[lang="f
       await reload({shown: true}).catch(() => {});
       if (!live()) return;
       closeSheet(recvDlg);
-      if (out.slug) location.hash = RS.sessionHref(out.slug);
+      if (out.slug) location.hash = out.kind === 'sheet' ? out.slug : RS.sessionHref(out.slug); // P12: a sheet opens as a sheet
       r11Say(out.existing ? `Already in ${nb || 'your Reelbook'}` : `Added to ${nb || 'your Reelbook'}`);
     })().finally(free);
     return true;

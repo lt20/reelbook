@@ -999,10 +999,28 @@ create unique index if not exists session_shares_one_live on public.session_shar
 -- then is revoked, never bound by its slug (the session may be a later one): sharing again makes a new link.
 alter table public.session_shares add column if not exists session_id uuid references public.sessions (id) on delete cascade;
 create index if not exists session_shares_session_idx on public.session_shares (session_id);
-update public.session_shares set revoked_at = now() where session_id is null and revoked_at is null;
+update public.session_shares set revoked_at = now() where session_id is null and session_slug is not null and revoked_at is null;
 
--- The owner shares its own sessions, reads its own rows and revokes them. Nobody else reads the table (the function
--- reads it with the service role).
+-- P12: one sheet can be sent too (the sheet's ⋯ › Share). A row holds a session (session_slug, session_id) or one sheet
+-- (sheet_slug, sheet_id), never both nor neither. The guard binds sheet_id from (owner, sheet_slug), a sheet of kind
+-- 'sheet' only, as it binds session_id; deleting the sheet deletes its shares. One live token per (owner, sheet), as
+-- per (owner, session). The link is the same `#s-<token>`; the function tells the two apart by the row.
+-- « A live link » for the invitations and the waiting list (R12 section: lock 2, share_invites, join_waitlist with a
+-- token) is a session's or a sheet's: not revoked, with session_id or sheet_id.
+-- Rows made before (sessions) are unchanged: sheet_slug and sheet_id stay null, their links open as before. A function
+-- deployed before this block reads every row as a session's; the app shows the sheet's Share as « Coming soon » until
+-- the columns exist.
+alter table public.session_shares add column if not exists sheet_slug text check (char_length(sheet_slug) between 1 and 200);
+alter table public.session_shares add column if not exists sheet_id uuid references public.sheets (id) on delete cascade;
+alter table public.session_shares alter column session_slug drop not null;
+alter table public.session_shares drop constraint if exists session_shares_one_kind;
+alter table public.session_shares add constraint session_shares_one_kind check (num_nonnulls(session_slug, sheet_slug) = 1);
+create unique index if not exists session_shares_one_live_sheet on public.session_shares (owner, sheet_slug)
+  where revoked_at is null and sheet_slug is not null;
+create index if not exists session_shares_sheet_idx on public.session_shares (sheet_id);
+
+-- The owner shares its own sessions and sheets (P12), reads its own rows and revokes them. Nobody else reads the table
+-- (the function reads it with the service role).
 alter table public.session_shares enable row level security;
 drop policy if exists "own session shares read" on public.session_shares;
 drop policy if exists "own session shares insert" on public.session_shares;
@@ -1011,27 +1029,39 @@ create policy "own session shares read" on public.session_shares for select to a
   using (owner = auth.uid());
 create policy "own session shares insert" on public.session_shares for insert to authenticated
   with check (owner = auth.uid()
-    and exists (select 1 from public.sessions s where s.user_id = auth.uid() and s.slug = session_slug));
+    and (exists (select 1 from public.sessions s where s.user_id = auth.uid() and s.slug = session_slug)
+      or exists (select 1 from public.sheets e where e.user_id = auth.uid() and e.slug = sheet_slug and e.kind = 'sheet')));
 create policy "own session shares revoke" on public.session_shares for update to authenticated
   using (owner = auth.uid()) with check (owner = auth.uid());
 
--- The app writes a share (session, first name) and a revocation; the token, the owner and the dates are the database's.
+-- The app writes a share (a session or a sheet, first name) and a revocation; the token, the owner, the ids and the
+-- dates are the database's.
 revoke all on public.session_shares from anon, authenticated;
 grant select on public.session_shares to authenticated;
-grant insert (session_slug, sender_name), update (revoked_at) on public.session_shares to authenticated;
+grant insert (session_slug, sheet_slug, sender_name), update (revoked_at) on public.session_shares to authenticated;
 
 create or replace function public.session_shares_guard() returns trigger
 language plpgsql set search_path = '' as $$
 begin
   if tg_op = 'INSERT' then
     new.created_at := now(); new.revoked_at := null; new.sender_name := btrim(new.sender_name);
-    -- the session itself, by its id: the share goes with it (on delete cascade)
-    new.session_id := (select s.id from public.sessions s where s.user_id = new.owner and s.slug = new.session_slug);
-    if new.session_id is null then
-      raise exception 'session_shares: no such session' using errcode = '23503';
+    new.session_id := null; new.sheet_id := null;
+    if new.sheet_slug is not null then
+      -- P12: one sheet (never a page of kind 'session'), by its id: the share goes with it (on delete cascade)
+      new.sheet_id := (select e.id from public.sheets e where e.user_id = new.owner and e.slug = new.sheet_slug and e.kind = 'sheet');
+      if new.sheet_id is null then
+        raise exception 'session_shares: no such sheet' using errcode = '23503';
+      end if;
+    else
+      -- the session itself, by its id: the share goes with it (on delete cascade)
+      new.session_id := (select s.id from public.sessions s where s.user_id = new.owner and s.slug = new.session_slug);
+      if new.session_id is null then
+        raise exception 'session_shares: no such session' using errcode = '23503';
+      end if;
     end if;
   else
     new.token := old.token; new.owner := old.owner; new.session_slug := old.session_slug; new.session_id := old.session_id;
+    new.sheet_slug := old.sheet_slug; new.sheet_id := old.sheet_id;
     new.sender_name := old.sender_name; new.created_at := old.created_at;
     -- revoked once, at the server's time; a revoked token is never live again
     new.revoked_at := case when old.revoked_at is not null then old.revoked_at
@@ -1056,6 +1086,12 @@ create unique index if not exists sessions_one_copy_per_share on public.sessions
 -- only by its id and while it is still 'copying'.
 create unique index if not exists sessions_one_copying on public.sessions (user_id)
   where (source->>'share_state') = 'copying';
+-- P12: a link to one sheet makes no session. Its copy is reserved by the same kind of row in sessions (source {share:
+-- <token>, share_state: 'copying', share_kind: 'sheet'}, no items: the app hides it), so both indexes above hold for it
+-- too: one copy per (recipient, token), and one copy at a time per recipient, sessions and sheets together. Once the
+-- sheet is written, its mark is sheets.source->>'share' (the token; source->>'shared_by', the sender's first name)
+-- and the reservation is deleted (by id, only while it is one). Opening the link again finds the marked sheet; a sheet
+-- the recipient already had (the same exercise) is answered as hers and nothing is written. Nothing new to create.
 
 -- What the function needs to plan a copy, in one call each (service role only).
 -- The photos of some sheets of one account: the files under <owner>/<slug>/, with their size.
@@ -1069,8 +1105,9 @@ language sql stable security definer set search_path = '' as $$
   order by o.name
 $$;
 
--- The recipient's side: its sheets with one of these video URLs (the function keeps those that are the same exercise),
--- the slugs in use that start like these stems (a copy takes a free one; a stem is the slug cut as the function cuts
+-- The recipient's side: its sheets (kind 'sheet': a v1 session page, kind 'session', is no exercise the app shows, so
+-- it never makes a copy « already yours »; P12, Codex pass 1) with one of these video URLs (the function keeps those
+-- that are the same exercise), the slugs in use (every kind: a v1 page's slug is still taken) that start like these stems (a copy takes a free one; a stem is the slug cut as the function cuts
 -- it for a « -n » suffix):
 --   taken      sheet slugs: its sheets, folders of its storage, and the notes of deleted sheets (a note is keyed by
 --              the sheet slug: an old note never lands on a copied sheet);
@@ -1084,7 +1121,7 @@ language plpgsql volatile security definer set search_path = '' as $$
 declare have jsonb; taken jsonb; ses_taken jsonb; room jsonb; lock_msg text; lock_hint text; ses_pat text;
 begin
   select coalesce(jsonb_agg(jsonb_build_object('url', s.source->>'url', 'slug', s.slug, 'title', s.title) order by s.slug), '[]'::jsonb)
-    into have from public.sheets s where s.user_id = p_uid and s.source->>'url' = any (p_urls);
+    into have from public.sheets s where s.user_id = p_uid and s.kind = 'sheet' and s.source->>'url' = any (p_urls);
   with b as (select replace(replace(replace(x, '\', '\\'), '%', '\%'), '_', '\_') || '%' as pat from unnest(p_stems) x),
        used as (
          select s.slug from public.sheets s, b where s.user_id = p_uid and s.slug like b.pat
@@ -1257,7 +1294,7 @@ begin
       tok := new.raw_user_meta_data->>'invite';
       if tok ~ '^[A-Za-z0-9_-]{22}$' then
         select sh.owner into host from public.session_shares sh
-        where sh.token = tok and sh.revoked_at is null and sh.session_id is not null;
+        where sh.token = tok and sh.revoked_at is null and (sh.session_id is not null or sh.sheet_id is not null);
       end if;
       -- one account's admissions are counted under the sign-up lock: two at once cannot both take its last invite
       if host is null or host = new.id or public.share_invites_used(host) >= 2 then
@@ -1307,7 +1344,7 @@ create or replace function public.share_invites(p_token text) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select jsonb_build_object('left', greatest(2 - public.share_invites_used(sh.owner), 0))
   from public.session_shares sh, public.beta_settings b
-  where b.id and sh.token = p_token and sh.revoked_at is null and sh.session_id is not null
+  where b.id and sh.token = p_token and sh.revoked_at is null and (sh.session_id is not null or sh.sheet_id is not null)
 $$;
 
 -- Settings › Reelbook: the signed-in account's invites ({left, total}); null when signed out or the locks are off.
@@ -1334,7 +1371,7 @@ begin
   perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('waitlist'));
   r := public.join_waitlist(join_waitlist.first_name, join_waitlist.email, join_waitlist.lang, join_waitlist.consent);
   if tok ~ '^[A-Za-z0-9_-]{22}$'
-     and exists (select 1 from public.session_shares sh where sh.token = tok and sh.revoked_at is null and sh.session_id is not null) then
+     and exists (select 1 from public.session_shares sh where sh.token = tok and sh.revoked_at is null and (sh.session_id is not null or sh.sheet_id is not null)) then
     update public.beta_waitlist w set share_token = tok where lower(w.email) = lower(mail) and w.share_token is null;
   end if;
   return r;
@@ -1430,7 +1467,7 @@ begin
   perform pg_advisory_xact_lock(hashtext('reelbook beta'), hashtext('waitlist'));
   r := public.join_waitlist(join_waitlist.first_name, join_waitlist.email, join_waitlist.lang, join_waitlist.consent);
   if tok ~ '^[A-Za-z0-9_-]{22}$' then
-    if exists (select 1 from public.session_shares sh where sh.token = tok and sh.revoked_at is null and sh.session_id is not null) then
+    if exists (select 1 from public.session_shares sh where sh.token = tok and sh.revoked_at is null and (sh.session_id is not null or sh.sheet_id is not null)) then
       update public.beta_waitlist w set share_token = tok where lower(w.email) = lower(mail) and w.share_token is null;
     end if;
     update public.beta_waitlist w set ref = tok where lower(w.email) = lower(mail) and w.ref is null;

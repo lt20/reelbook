@@ -2,7 +2,7 @@
 //   deno test --no-remote supabase/functions/share/core.test.ts
 // (also run by tests/share-function.test.cjs when Deno is installed).
 import { mergeWord, planWords } from './words.ts';
-import { cleanHtml, freeSlug, handle, rewritePaths, sameExercise, slugStem, STALE_MS, type Recipient, type Row, type Share, type Store, type Theme } from './core.ts';
+import { cleanHtml, freeSlug, handle, rewritePaths, sameExercise, slugStem, STALE_MS, UPDATE_APP, type Recipient, type Row, type Share, type Store, type Theme } from './core.ts';
 
 const eq = (a: unknown, b: unknown, msg = '') => {
   if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${msg} expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
@@ -30,6 +30,7 @@ type World = {
   copyGate?: Promise<void>;    // the next Storage copy waits for this (a copy still on its way)
   failCopy?: boolean;          // Storage copy fails
   dropGate?: Promise<void>;    // the next reservation delete waits for this (a request that observed it, delayed)
+  failEnd?: boolean;           // P12: ending a sheet's reservation fails (the database answers an error)
   failThemeReadOf?: string;    // reading one of this user's notebooks fails (user_themes down)
   // P11 G5, the glossary: rows of glossary_words and glossary_passes (both empty unless a test fills them). The store
   // below has no way to read or write `passes` (Codex pass 1 on #145): only a test, playing somebody's pass, fills it.
@@ -91,6 +92,12 @@ function store(w: World): Store {
     async share(token) { gone(); log('read session_shares'); const s = w.shares.find(x => x.token === token); return s ? { ...s } : null; },
     async session(owner, id) { log('read sessions'); const s = w.sessions.find(x => x.user_id === owner && x.id === id); return s ? structuredClone(s) : null; },
     async sheets(owner, slugs) { log('read sheets'); return w.sheets.filter(x => x.user_id === owner && slugs.includes(String(x.slug))).map(x => structuredClone(x)); },
+    async sheet(owner, id) { log('read sheets'); const s = w.sheets.find(x => x.user_id === owner && x.id === id); return s ? structuredClone(s) : null; },
+    async sheetCopyOf(uid, token) {
+      log('read sheets');
+      const s = w.sheets.find(x => x.user_id === uid && (x.source as Row || {}).share === token);
+      return s ? structuredClone({ id: s.id, slug: s.slug, theme: s.theme, title: s.title, source: s.source }) : null;
+    },
     async theme(owner, id) { log('read user_themes'); if (owner === w.failThemeReadOf) throw { code: '500', message: 'user_themes down' }; const t = w.themes.find(x => x.user_id === owner && x.id === id); return t ? { ...t } : null; },
     async themes(uid) { log('read user_themes'); return w.themes.filter(x => x.user_id === uid).map(x => ({ ...x })); },
     async copyOf(uid, token) {
@@ -115,7 +122,7 @@ function store(w: World): Store {
       const used = w.files.filter(f => f.name.startsWith(uid + '/')).reduce((n, f) => n + f.size, 0);
       const q = w.quota[uid];
       return {
-        have: mine.filter(x => urls.includes(String((x.source as Row || {}).url))).map(x => ({ url: String((x.source as Row).url), slug: String(x.slug), title: String(x.title) })),
+        have: mine.filter(x => (x.kind ?? 'sheet') === 'sheet' && urls.includes(String((x.source as Row || {}).url))).map(x => ({ url: String((x.source as Row).url), slug: String(x.slug), title: String(x.title) })),
         taken: [...new Set([...mine.map(x => String(x.slug)), ...folders, ...notes.filter(n => !n.includes('/'))].filter(starts))],
         ses_taken: sesStem ? [...new Set([...w.sessions.filter(x => x.user_id === uid).map(x => String(x.slug)), ...sesNotes].filter(s => s.startsWith(sesStem)))] : [],
         room: q ? { storage_bytes: used, max_storage_mb: q.max_storage_mb, sheets: mine.length, max_sheets: q.max_sheets } : null,
@@ -147,6 +154,14 @@ function store(w: World): Store {
       log('delete sessions');
       if (w.dropGate) { const g = w.dropGate; w.dropGate = undefined; await g; }
       w.sessions = w.sessions.filter(x => !(x.user_id === uid && x.id === id && (x.source as Row || {}).share_state === 'copying'));
+    },
+    async endReservation(uid, id) {
+      log('delete sessions');
+      if (w.dropGate) { const g = w.dropGate; w.dropGate = undefined; await g; }
+      if (w.failEnd) throw { code: '500', message: 'sessions down' };
+      const before = w.sessions.length;
+      w.sessions = w.sessions.filter(x => !(x.user_id === uid && x.id === id && (x.source as Row || {}).share_state === 'copying'));
+      return w.sessions.length < before;
     },
     async insertSheet(row) {
       log('insert sheets');
@@ -199,12 +214,15 @@ function store(w: World): Store {
 const get = (token: string, auth = 'Bearer anon-key') => new Request(`https://fn.example.test/share?token=${encodeURIComponent(token)}`, { headers: { authorization: auth } });
 const post = (body: unknown, auth: string | null = 'Bearer jwt-lea') =>
   new Request('https://fn.example.test/share', { method: 'POST', headers: auth ? { authorization: auth } : {}, body: typeof body === 'string' ? body : JSON.stringify(body) });
+// the app since P12 says it opens a sheet's link too (accepts); `post` alone is an app made before P12
+const NEW_APP = ['session', 'sheet'];
+const spost = (body: Row, auth?: string | null) => post({ ...body, accepts: NEW_APP }, auth);
 const call = async (w: World, req: Request) => { const r = await handle(req, store(w)); return { status: r.status, body: await r.json().catch(() => null), headers: r.headers }; };
 
 Deno.test('GET: only the sender, the title, the notebook and the count — no photo, no exercise list', async () => {
   const w = world(), r = await call(w, get(TOK));
   eq(r.status, 200);
-  eq(r.body, { sender_name: 'Laurent', title: 'Kicks du mardi', notebook_title: 'MMA', count: 3 }, 'the 3 exercises that still exist');
+  eq(r.body, { kind: 'session', sender_name: 'Laurent', title: 'Kicks du mardi', notebook_title: 'MMA', count: 3 }, 'the 3 exercises that still exist');
   const text = JSON.stringify(r.body);
   for (const leak of ['img/', 'jpg', 'Low kick', 'html', LAU, 'thumbnail', '3 × 8']) ok(!text.includes(leak), `GET leaks ${leak}`);
   eq(r.headers.get('access-control-allow-origin'), '*');
@@ -759,4 +777,235 @@ Deno.test('G5: planWords and mergeWord — malformed rows of the sender are left
   const patch = mergeWord(old, rows[0]);
   eq(patch, { sheets: [it('z', 'x'), 'odd', it('a-2', 'q')] }, 'forms already there (case ignored); the item of a slug already listed takes its place; nothing of the stored entry is dropped');
   eq(mergeWord({ ...old, ...patch }, rows[0]), {}, 'a second merge writes nothing');
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// P12: a link to one sheet (session_shares.sheet_id). In world(), Laurent sends his switch kick (s2: two photos,
+// another video than Léa's own switch-kick) or his low kick (s1: Léa has the same exercise, my-low-kick).
+const SHEET_TOK = 'ShEeTtOkEnAbCdEfGhIjKl';
+function sheetWorld(sheetId = 's2'): World {
+  const w = world();
+  w.shares.push({ token: SHEET_TOK, owner: LAU, session_id: null, sheet_id: sheetId, sender_name: 'Laurent', revoked_at: null });
+  return w;
+}
+const leaSessions = (w: World) => w.sessions.filter(s => s.user_id === LEA);
+const wait = async () => { for (let i = 0; i < 20; i++) await Promise.resolve(); await new Promise(r => setTimeout(r, 0)); };
+
+Deno.test('P12 GET of a sheet: kind sheet, the sender, its title, its notebook, count 1 — no photo, no html', async () => {
+  const w = sheetWorld(), r = await call(w, get(SHEET_TOK));
+  eq([r.status, r.body], [200, { kind: 'sheet', sender_name: 'Laurent', title: 'Switch kick', notebook_title: 'MMA', count: 1 }]);
+  for (const leak of ['img/', 'jpg', 'html', LAU, '@kick', URL2]) ok(!JSON.stringify(r.body).includes(leak), `GET leaks ${leak}`);
+});
+
+Deno.test('P12 POST dry_run of a sheet: the sheet, its credit, the sender notebook — and writes nothing', async () => {
+  const w = sheetWorld(), before = copyOnly(w), r = await call(w, spost({ token: SHEET_TOK, dry_run: true }));
+  eq([r.status, r.body], [200, { kind: 'sheet', sender_name: 'Laurent', title: 'Switch kick', count: 1, notebook: { id: 'fight', title: 'MMA' },
+    items: [{ title: 'Switch kick', dose: '', author: '@kick', have: false, mine: null }], copy: null }]);
+  eq(copyOnly(w), before);
+});
+
+Deno.test('P12 POST: the sheet, its photos and its fields are copied, marked with the link, into the sender notebook created for her; no session left', async () => {
+  const w = sheetWorld(), r = await call(w, spost({ token: SHEET_TOK }));
+  eq([r.status, r.body], [201, { kind: 'sheet', slug: 'switch-kick-3', notebook: { id: 'fight', title: 'MMA' }, existing: false, kept: 0, copied: 1 }]);
+  const s = w.sheets.find(x => x.user_id === LEA && x.slug === 'switch-kick-3')!;
+  eq([s.theme, s.group, s.title, s.kind], ['fight', 'Kicks', 'Switch kick', 'sheet']);
+  eq(s.source, { url: URL2, author: '@kick', share: SHEET_TOK, shared_by: 'Laurent' });
+  ok(String(s.html).includes(`${LEA}/switch-kick-3/img/02.jpg`) && !String(s.html).includes(LAU), 'paths rewritten');
+  eq(w.files.filter(f => f.name.startsWith(`${LEA}/switch-kick-3/`)).map(f => f.name).sort(), [`${LEA}/switch-kick-3/img/01.jpg`, `${LEA}/switch-kick-3/img/02.jpg`]);
+  ok(w.themes.some(t => t.user_id === LEA && t.id === 'fight' && t.title === 'MMA'), 'the notebook, with the sender title');
+  eq(leaSessions(w).map(x => x.id), ['ses-lea'], 'the reservation is gone, no session made');
+  eq(w.sheets.filter(x => x.user_id === LEA).length, 3, 'one sheet more');
+});
+
+Deno.test('P12 decision 2: she already has the exercise — her own sheet comes back, « existing », nothing written', async () => {
+  const w = sheetWorld('s1'), before = copyOnly(w);
+  const d = await call(w, spost({ token: SHEET_TOK, dry_run: true }));
+  eq([d.body.items[0].have, d.body.items[0].mine, d.body.copy], [true, 'low  Kick', { slug: 'my-low-kick', notebook: 'yoga' }]);
+  journal.length = 0;
+  const r = await call(w, spost({ token: SHEET_TOK }));
+  eq([r.status, r.body], [200, { kind: 'sheet', slug: 'my-low-kick', notebook: { id: 'yoga', title: 'Yoga' }, existing: true }]);
+  eq(copyOnly(w), before);
+  ok(!journal.some(j => /^(insert|update|delete|storage)/.test(j)), journal.join(', '));
+});
+
+Deno.test('P12 replay: the same link twice — the copy comes back, never a second one (also for a sheet without a video URL)', async () => {
+  for (const url of [URL2, '']) {
+    const w = sheetWorld(); (w.sheets.find(x => x.id === 's2')!.source as Row).url = url;
+    eq((await call(w, spost({ token: SHEET_TOK }))).status, 201);
+    const again = await call(w, spost({ token: SHEET_TOK }));
+    eq([again.status, again.body], [200, { kind: 'sheet', slug: 'switch-kick-3', notebook: { id: 'fight', title: 'MMA' }, existing: true }]);
+    eq(w.sheets.filter(x => x.user_id === LEA).length, 3, 'one copy only');
+    eq((await call(w, spost({ token: SHEET_TOK, dry_run: true }))).body.copy, { slug: 'switch-kick-3', notebook: 'fight' });
+  }
+});
+
+Deno.test('P12 over quota (photos, sheets, beta photo lock, the trigger mid-copy) → 403 « for this sheet »; nothing left written', async () => {
+  const cases: [string, (w: World) => void][] = [
+    ['MB of photos', w => { w.quota[LEA] = { max_storage_mb: 0, max_sheets: 300 }; }],
+    ['sheets', w => { w.quota[LEA] = { max_storage_mb: 200, max_sheets: 2 }; }],
+    ['lock', w => { w.lock = { message: 'beta: photos', hint: 'No new photos during the beta.' }; }],
+    ['trigger', w => { w.failSheetInsert = 1; }],
+  ];
+  for (const [what, set] of cases) {
+    const w = sheetWorld(), before = copyOnly(w); set(w);
+    const r = await call(w, spost({ token: SHEET_TOK }));
+    eq([r.status, r.body.error], [403, 'quota'], what);
+    ok(what === 'lock' ? r.body.message === 'No new photos during the beta.' : /for this sheet/.test(r.body.message), r.body.message);
+    // the trigger refuses once the plan has passed: as for a session (test « the sheet quota trigger refusing
+    // mid-copy »), the notebook made for the copy stays; the sheet, its photos and the reservation go
+    const strip = (x: string) => JSON.stringify(JSON.parse(x).filter((_: unknown, i: number) => i !== 2));
+    eq(what === 'trigger' ? strip(copyOnly(w)) : copyOnly(w), what === 'trigger' ? strip(before) : before, `${what}: nothing written, the reservation gone`);
+  }
+});
+
+Deno.test('P12 one copy at a time: a second POST of the sheet, or of a session link, while the sheet is copied → « still copying »', async () => {
+  const w = sheetWorld(); let open!: () => void;
+  w.copyGate = new Promise(r => { open = r; });
+  const first = call(w, spost({ token: SHEET_TOK }));
+  await wait();
+  const reservation = leaSessions(w).find(s => (s.source as Row).share === SHEET_TOK)!;
+  eq([(reservation.source as Row).share_state, (reservation.source as Row).share_kind, reservation.items], ['copying', 'sheet', []]);
+  const second = await call(w, spost({ token: SHEET_TOK }));
+  eq([second.status, second.body.message], [409, 'Still copying this sheet. Try again in a moment.']);
+  const other = await call(w, post({ token: TOK }));
+  eq([other.status, other.body.message], [409, 'Still copying a session. Try again in a moment.'], 'a session link waits too');
+  open();
+  eq((await first).status, 201);
+  eq((await call(w, spost({ token: SHEET_TOK }))).body.existing, true);
+  eq((await call(w, post({ token: TOK }))).status, 201, 'then the session link copies');
+});
+
+Deno.test('P12 a session link being copied blocks a sheet link of the same account', async () => {
+  const w = sheetWorld(); let open!: () => void;
+  w.copyGate = new Promise(r => { open = r; });
+  const first = call(w, post({ token: TOK }));
+  await wait();
+  const r = await call(w, spost({ token: SHEET_TOK }));
+  eq([r.status, r.body.message], [409, 'Still copying a session. Try again in a moment.']);
+  open(); eq((await first).status, 201);
+});
+
+Deno.test('P12 a reservation left by a run that died is made again; one taken away meanwhile undoes the copy', async () => {
+  const w = sheetWorld();
+  w.sessions.push({ id: 'dead', user_id: LEA, slug: 'switch-kick', theme: 'fight', title: 'Switch kick', items: [], created_at: '2026-01-01T00:00:00Z',
+    source: { share: SHEET_TOK, shared_by: 'Laurent', share_state: 'copying', share_kind: 'sheet' } });
+  eq((await call(w, spost({ token: SHEET_TOK }))).status, 201);
+  eq(leaSessions(w).map(x => x.id), ['ses-lea'], 'the dead one and the new one both gone');
+
+  const v = sheetWorld(); let open!: () => void;
+  v.copyGate = new Promise(r => { open = r; });
+  const run = call(v, spost({ token: SHEET_TOK }));
+  await wait();
+  v.sessions = v.sessions.filter(s => (s.source as Row).share !== SHEET_TOK); // taken up as dead by another request
+  open();
+  eq((await run).status, 500);
+  ok(!v.sheets.some(x => x.user_id === LEA && x.slug === 'switch-kick-3') && !v.files.some(f => f.name.startsWith(`${LEA}/switch-kick-3/`)), 'undone');
+});
+
+// Codex pass 2 on #149: two tabs add the same sheet link; the first has written the sheet but not yet ended its
+// reservation, then ending it fails and the copy is undone. Before the fix the second tab got 200 « existing » (the
+// mark, or the same exercise) and opened a sheet deleted right after.
+Deno.test('P12 (Codex pass 2) a sheet written by a copy not yet finalised is never « existing »; its finalisation failing leaves nothing, a retry copies', async () => {
+  const w = sheetWorld(), TOK2 = 'ShEeTtOkEnAbCdEfGhIjK2'; let open!: () => void;
+  w.shares.push({ token: TOK2, owner: LAU, session_id: null, sheet_id: 's2', sender_name: 'Laurent', revoked_at: null }); // a second link to the same sheet
+  w.dropGate = new Promise(r => { open = r; }); w.failEnd = true;
+  const first = call(w, spost({ token: SHEET_TOK }));
+  await wait();
+  const written = w.sheets.find(x => x.user_id === LEA && (x.source as Row).share === SHEET_TOK);
+  ok(written && leaSessions(w).some(s => (s.source as Row).share_state === 'copying'), 'the sheet is written, its reservation not yet ended');
+  for (const [body, msg] of [
+    [{ token: SHEET_TOK, dry_run: true }, 'Still copying this sheet. Try again in a moment.'],
+    [{ token: SHEET_TOK }, 'Still copying this sheet. Try again in a moment.'],
+    [{ token: TOK2, dry_run: true }, 'Still copying a session. Try again in a moment.'], // the same exercise (dedup)
+    [{ token: TOK2 }, 'Still copying a session. Try again in a moment.'],
+  ] as [Row, string][]) {
+    const r = await call(w, spost(body));
+    eq([r.status, r.body.error, r.body.message], [409, 'copying', msg], JSON.stringify(body));
+  }
+  open();
+  eq((await first).status, 500);
+  ok(!w.sheets.some(x => x.user_id === LEA && x.slug === written!.slug) && !w.files.some(f => f.name.startsWith(`${LEA}/${written!.slug}/`)), 'the sheet and its photos undone');
+  eq(leaSessions(w).map(x => x.id), ['ses-lea'], 'the reservation gone');
+  w.failEnd = false;
+  const dry = await call(w, spost({ token: SHEET_TOK, dry_run: true }));
+  eq([dry.status, dry.body.copy, dry.body.items[0].have], [200, null, false]);
+  const again = await call(w, spost({ token: SHEET_TOK }));
+  eq([again.status, again.body.existing], [201, false]);
+  eq((await call(w, spost({ token: TOK2 }))).body.existing, true, 'once finalised, the same exercise is hers');
+});
+
+Deno.test('P12 the glossary words of the sheet come along, in the notebook of the copy, with the copied slug only', async () => {
+  const w = sheetWorld();
+  w.words = [word('g1', LAU, 'fight', 'Chamber', [it('switch-kick', 'lift the chamber'), it('low-kick', 'chamber first')]),
+    word('g2', LAU, 'fight', 'Teep', [it('teep', 'push')])];
+  eq((await call(w, spost({ token: SHEET_TOK, notebook: 'strength' }))).status, 201);
+  const got = wordsOf(w, LEA);
+  eq(got.map(x => [x.term, x.theme, (x.sheets as Row[]).map(i => i.slug)]), [['Chamber', 'strength', ['switch-kick-3']]]);
+});
+
+Deno.test('P12 a deleted sheet, a page of kind session, a revoked link → 404; the sender itself → 409', async () => {
+  const gone = sheetWorld(); gone.sheets = gone.sheets.filter(x => x.id !== 's2');
+  eq([(await call(gone, get(SHEET_TOK))).status, (await call(gone, spost({ token: SHEET_TOK }))).status], [404, 404]);
+  const page = sheetWorld(); page.sheets.find(x => x.id === 's2')!.kind = 'session';
+  eq((await call(page, get(SHEET_TOK))).status, 404);
+  const off = sheetWorld(); off.shares[1].revoked_at = '2026-11-16T00:00:00Z';
+  eq((await call(off, get(SHEET_TOK))).status, 404);
+  const own = await call(sheetWorld(), spost({ token: SHEET_TOK }, 'Bearer jwt-lau'));
+  eq([own.status, own.body.message], [409, 'This sheet is already yours.']);
+});
+
+Deno.test('P12 a sheet received from a link, sent on in a session: its copy never carries the first link mark', async () => {
+  const w = world(), teep = w.sheets.find(x => x.id === 's3')!;
+  teep.source = { url: URL3, share: SHEET_TOK, shared_by: 'Zoé' };
+  eq((await call(w, post({ token: TOK }))).status, 201);
+  eq(w.sheets.find(x => x.user_id === LEA && x.slug === 'teep')!.source, { url: URL3 });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// P12, Codex pass 1. An app made before P12 (its JavaScript still loaded) routes every copy to a session: a sheet's
+// link is refused to it, nothing written, with a code that app keeps the link on ('not_ready').
+Deno.test('P12 (Codex pass 1) an app made before P12 asks for a sheet link — 409 not_ready « Update Reelbook », nothing read for her, nothing written', async () => {
+  for (const extra of [{}, { accepts: ['session'] }, { accepts: 'sheet' }]) {
+    const w = sheetWorld(), before = copyOnly(w);
+    journal.length = 0;
+    for (const body of [{ token: SHEET_TOK, dry_run: true, ...extra }, { token: SHEET_TOK, ...extra }, { token: SHEET_TOK, notebook: 'strength', ...extra }]) {
+      const r = await call(w, post(body));
+      eq([r.status, r.body], [409, { error: 'not_ready', reason: 'update_app', message: UPDATE_APP }], JSON.stringify(body));
+    }
+    eq(copyOnly(w), before);
+    ok(!journal.some(j => /^(insert|update|delete|storage|rpc)/.test(j)), journal.join(', '));
+  }
+  eq(UPDATE_APP, 'Update Reelbook to open this sheet: close the app and open it again.');
+  // the GET (the gate, signed out) answers as before: it writes nothing and the old gate draws it
+  eq((await call(sheetWorld(), get(SHEET_TOK))).status, 200);
+});
+
+Deno.test('P12 (Codex pass 1) a session link: the same answers with or without accepts (old and new apps)', async () => {
+  const a = world(), b = world();
+  const d1 = await call(a, post({ token: TOK, dry_run: true })), d2 = await call(b, spost({ token: TOK, dry_run: true }));
+  eq([d1.status, d1.body], [d2.status, d2.body]);
+  const c1 = await call(a, post({ token: TOK })), c2 = await call(b, spost({ token: TOK }));
+  eq([c1.status, c1.body], [c2.status, c2.body]);
+  eq(c1.status, 201);
+  eq(copyOnly(a), copyOnly(b));
+});
+
+// A v1 session page (sheets.kind 'session', hidden by the app: RS.splitV1) is no exercise of hers: never « already
+// yours », for a sheet's link as for a session's; its slug is still taken.
+Deno.test('P12 (Codex pass 1) dedup: a v1 session page with the same video and title is not hers — the sheet is copied, its slug stays taken', async () => {
+  const legacy = (w: World, slug: string, url: string, title: string) =>
+    w.sheets.push({ id: `v1-${slug}`, user_id: LEA, slug, kind: 'session', theme: 'yoga', group: '', title, html: 'x', source: { url } });
+  const w = sheetWorld(); legacy(w, 'switch-kick-3', URL2, 'Switch kick');
+  const d = await call(w, spost({ token: SHEET_TOK, dry_run: true }));
+  eq([d.body.items[0].have, d.body.copy], [false, null]);
+  const r = await call(w, spost({ token: SHEET_TOK }));
+  eq([r.status, r.body.slug, r.body.existing], [201, 'switch-kick-4', false]);
+  eq(w.sheets.find(x => x.id === 'v1-switch-kick-3')!.source, { url: URL2 }, 'the v1 page is untouched');
+
+  const s = world(); legacy(s, 'teep', URL3, 'Teep');
+  const ds = await call(s, post({ token: TOK, dry_run: true }));
+  eq(ds.body.items.map((i: Row) => i.have), [true, false, false], 'only the real low kick is hers');
+  eq((await call(s, post({ token: TOK }))).status, 201);
+  const ses = s.sessions.find(x => x.user_id === LEA && x.slug === 'kicks-2')!;
+  eq((ses.items as Row[]).map(i => i.slug), ['my-low-kick', 'switch-kick-3', 'teep-2'], 'the teep is copied beside the v1 page');
 });

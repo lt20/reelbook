@@ -69,3 +69,41 @@ Deno.test('pass 2 #2. the reservation is deleted and finished by id and state, n
   eq(c.calls[1], [['from', 'sessions'], ['update', { items: [] }], ['eq', 'user_id', 'u1'], ['eq', 'id', 'r1'], ['eq', 'source->>share_state', 'copying'], ['select', 'id']]);
   ok(!JSON.stringify(c.calls).includes('slug'), 'no slug in either');
 });
+
+// P12: a client whose session_shares has no sheet_id column yet (`fresh`: false) or has it.
+function sharesClient(fresh: boolean) {
+  const calls: unknown[][] = [];
+  return {
+    calls,
+    from(table: string) {
+      const ops: unknown[][] = [['from', table]];
+      const b: Record<string, unknown> = {};
+      for (const k of ['select', 'eq', 'limit', 'delete']) b[k] = (...a: unknown[]) => { ops.push([k, ...a]); return b; };
+      const answer = () => {
+        calls.push(ops);
+        const cols = String((ops.find(o => o[0] === 'select') || [])[1] || '');
+        if (cols.includes('sheet_id') && !fresh) return { data: null, error: { code: '42703', message: 'column session_shares.sheet_id does not exist' } };
+        if (ops.some(o => o[0] === 'delete')) return { data: [], error: null };
+        return { data: { token: 't', owner: 'o', session_id: 's', ...(cols.includes('sheet_id') ? { sheet_id: null } : {}), sender_name: 'L', revoked_at: null }, error: null };
+      };
+      b.maybeSingle = () => Promise.resolve(answer());
+      b.then = (ok: (v: unknown) => unknown) => Promise.resolve(answer()).then(ok);
+      return b;
+    },
+  };
+}
+
+Deno.test('P12: a table without sheet_id (the function deployed before the SQL) — the share is read as before, a session link opens', async () => {
+  const old = sharesClient(false), got = await supabaseStore(old).share('t');
+  eq(got, { token: 't', owner: 'o', session_id: 's', sender_name: 'L', revoked_at: null });
+  eq(old.calls.length, 2, 'asked with sheet_id, then without');
+  const now = sharesClient(true);
+  eq((await supabaseStore(now).share('t'))!.sheet_id, null);
+  eq(now.calls.length, 1, 'one read once the column exists');
+});
+
+Deno.test('P12: the end of a sheet copy deletes its reservation by id and state, and says whether one was deleted', async () => {
+  const c = sharesClient(true);
+  eq(await supabaseStore(c).endReservation('u1', 'r1'), false, 'nothing deleted');
+  eq(c.calls[0], [['from', 'sessions'], ['delete'], ['eq', 'user_id', 'u1'], ['eq', 'id', 'r1'], ['eq', 'source->>share_state', 'copying'], ['select', 'id']]);
+});

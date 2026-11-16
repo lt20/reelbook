@@ -165,7 +165,7 @@ test('R12: signed in, the kept token is copied once — the catalogue first (def
   const seeded = calls.findIndex(c => c[0] === 'insert' && c[1] === 'user_themes'), copied = calls.findIndex(c => c[0] === 'invoke');
   assert.ok(seeded > -1, 'the default notebooks were made');
   assert.ok(copied > seeded, 'before the copy (R11 debt)');
-  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN}}]]);
+  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, accepts: ['session', 'sheet']}}]]);
   assert.equal(page.location.hash, '#session/kicks-du-mardi');
   assert.equal(page.storage.has('rb.share'), false);
   assert.deepEqual(JSON.parse(page.storage.get('rb.first.u1')), {title: 'Kicks du mardi', sender: 'Laurent', notebook: 'MMA', count: 4});
@@ -209,7 +209,7 @@ test('R12: a token the waiting list kept opens « <sender> sent you a session »
   await settle();
   withFn(page, (name, o) => ({data: {sender_name: 'Laurent', title: 'Kicks du mardi', count: 1, notebook: {id: 'mma', title: 'MMA'}, items: [{title: 'Teep kick', dose: '3 × 8'}]}, error: null}));
   page.clients[0].authListener('SIGNED_IN', {user: {id: 'u1', email: 'sam@example.test', user_metadata: {}}}); await settle();
-  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, dry_run: true}}]], 'a dry run: nothing copied unasked');
+  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, dry_run: true, accepts: ['session', 'sheet']}}]], 'a dry run: nothing copied unasked');
   assert.match(page.element('recv-dlg').innerHTML, /Laurent sent you a session/);
   assert.match(page.element('recv-dlg').innerHTML, /id="recv-add">Add to my Reelbook/);
 });
@@ -256,7 +256,7 @@ test('Codex #118 (1, pass 2): the server keeps the waiting list\'s token until t
   for (const fn of [() => ({data: null, error: {name: 'FunctionsFetchError'}}), () => httpErr(503, 'not_ready', "This link can't be opened yet.")]) {
     const acks = [];
     const page = await waitlisted({fn, acks});
-    assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, dry_run: true}}]]);
+    assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, dry_run: true, accepts: ['session', 'sheet']}}]]);
     assert.deepEqual(acks, [], 'not acknowledged: offered again at the next start');
     assert.equal(page.storage.has('rb.shareTok.u1'), false, 'the server keeps it, not the device');
   }
@@ -288,7 +288,7 @@ test('Codex #118 (1, pass 2): a link refused for good (revoked) is acknowledged;
   assert.deepEqual(acks, []);
   page.who = 'u1'; page.clients[0].authListener('SIGNED_IN', {user: {id: 'u1', email: 'sam@example.test', user_metadata: {}}}); await settle();
   for (const r of waiting.splice(0)) r(); await settle();
-  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, dry_run: true}}]], 'u1 back: offered');
+  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, dry_run: true, accepts: ['session', 'sheet']}}]], 'u1 back: offered');
   assert.deepEqual(acks, [TOKEN]);
 });
 
@@ -332,7 +332,7 @@ test('Codex #118 (3): joined without the link (four arguments) — no promise to
   assert.equal(held(page, 'sam@example.test'), TOKEN);
   // later, that address signs in on this device: the token is the account's, and « Laurent sent you a session » opens
   const later = await waitlisted({taken: null, stored: {'rb.shareTok.sam@example.test': page.storage.get('rb.shareTok.sam@example.test')}});
-  assert.deepEqual(invoked(later), [['invoke', 'share', {body: {token: TOKEN, dry_run: true}}]]);
+  assert.deepEqual(invoked(later), [['invoke', 'share', {body: {token: TOKEN, dry_run: true, accepts: ['session', 'sheet']}}]]);
   assert.equal(later.storage.has('rb.shareTok.sam@example.test'), false);
   assert.equal(later.storage.has('rb.shareTok.u1'), false, 'gone once the sheet has opened');
 });
@@ -404,7 +404,7 @@ test('Codex #118 (2, pass 2): a kept link survives every answer that may change 
 
 test('Codex #118 (4, pass 2): the copy lock holds one token for one sign-in — sign out, open another link, sign in again: the new one is copied', async () => {
   const page = await signedIn();
-  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN}}]]);
+  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, accepts: ['session', 'sheet']}}]]);
   page.clients[0].authListener('SIGNED_OUT', null); await settle();
   const OTHER = 'ZyXwVuTsRqPoNmLkJiHgFe';
   page.storage.set('rb.share', JSON.stringify({token: OTHER, url: hostedUrl, at: Date.now(), sender: 'Olga', title: 'Arms', notebook: 'MMA', count: 2, invite: false}));
@@ -466,4 +466,31 @@ test('Codex #118 (pass 3, 3): while the copy of a kept link runs, the waiting li
   assert.equal(page.location.hash, '#session/kicks-du-mardi', 'the copy\'s session opens');
   assert.equal(page.storage.has('rb.share'), false);
   assert.deepEqual(invoked(page).filter(c => c[2].body.dry_run), [], 'no sheet over it');
+});
+
+// ---------- P12: a link to one sheet, signed out, then through sign-up ----------
+const SHEET_GET = {kind: 'sheet', sender_name: 'Laurent', title: 'Switch kick', notebook_title: 'MMA', count: 1};
+
+test('P12: signed out, a sheet link shows « Laurent sent you a sheet », its notebook, no count, no photo', async () => {
+  const page = await gatePage({fn: () => ({data: SHEET_GET, error: null})});
+  const body = page.element('gate-body').innerHTML;
+  assert.match(body, /<p class="recv-over">Laurent sent you a sheet<\/p><h1>Switch kick<\/h1><span class="recv-meta">MMA<\/span>/);
+  assert.match(body, /The sheet opens in your own Reelbook, with its photos\./);
+  assert.doesNotMatch(body, /exercise|session|<img/);
+  assert.match(body, /id="gate-create">Create my account to open it</);
+  // the waiting list words say « sheet » too, and the token is kept with its kind
+  const full = await gatePage({fn: () => ({data: SHEET_GET, error: null}), left: 0});
+  assert.equal(full.element('gate-full').hidden, false);
+  assert.equal(full.element('gate-full-p').textContent, 'Join the waiting list: we’ll keep their sheet for you.');
+  assert.equal(full.element('g-wl-ok').textContent, 'When a spot opens we’ll email you, and Laurent’s sheet will be waiting.');
+  await page.fire('gate-create'); await settle();
+  assert.equal(JSON.parse(page.storage.get('rb.share')).kind, 'sheet');
+});
+
+test('P12: signed in after the gate, the kept sheet token is copied and the sheet opens (not a session route)', async () => {
+  const kept = JSON.stringify({token: TOKEN, url: hostedUrl, at: Date.now(), sender: 'Laurent', title: 'Switch kick', notebook: 'MMA', count: 1, kind: 'sheet', invite: true});
+  const page = await signedIn({stored: {'rb.share': kept}, fn: () => ({data: {kind: 'sheet', slug: 'switch-kick', notebook: {id: 'fight', title: 'MMA'}, existing: false}, error: null})});
+  assert.deepEqual(invoked(page), [['invoke', 'share', {body: {token: TOKEN, accepts: ['session', 'sheet']}}]]);
+  assert.equal(page.location.hash, '#switch-kick');
+  assert.equal(page.storage.has('rb.share'), false);
 });
